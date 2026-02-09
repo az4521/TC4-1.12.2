@@ -68,7 +68,11 @@ public class WorldGenEldritchRing extends WorldGenerator {
                if (x != i - 3 && x != i + 3 || z != k - 3 && z != k + 3) {
                   for(int q = -4; q < 5; ++q) {
                      Block bb = world.getBlock(x, j + q, z);
-                     if (q <= 0 || bb.isReplaceable(world, x, j + q, z) || !bb.getMaterial().blocksMovement() || bb.isFoliage(world, x, j + q, z)) {
+                     if (q <= 0
+                             || bb.isReplaceable(world, x, j + q, z)
+                             || !bb.getMaterial().blocksMovement()
+                             || bb.isFoliage(world, x, j + q, z)//however,once > 0 it's always air,all tries are useless.
+                     ) {
                         if (rand.nextInt(4) == 0) {
                            world.setBlock(x, j + q, z, Blocks.obsidian);
                         } else {

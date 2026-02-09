@@ -556,7 +556,8 @@ public class TileNode extends TileThaumcraft implements INode, IWandable {
    }
 
    private boolean handleDischarge(boolean change) {
-      if (this.worldObj.getBlock(this.xCoord, this.yCoord, this.zCoord) == ConfigBlocks.blockAiry && this.getLock() != 1) {
+      if (this.worldObj.getBlock(this.xCoord, this.yCoord, this.zCoord) == ConfigBlocks.blockAiry
+              && this.getLock() != 1) {
          if (this.getNodeModifier() == NodeModifier.FADING) {
             return change;
          } else {
@@ -618,7 +619,8 @@ public class TileNode extends TileThaumcraft implements INode, IWandable {
                }
             }
          }
-      } else {
+      }
+      else {
          return change;
       }
    }
@@ -701,7 +703,8 @@ public class TileNode extends TileThaumcraft implements INode, IWandable {
             if (this.getBlockType() == ConfigBlocks.blockAiry) {
                this.worldObj.setBlockToAir(this.xCoord, this.yCoord, this.zCoord);
             } else if (this.getBlockType() == ConfigBlocks.blockMagicalLog) {
-               this.worldObj.setBlockMetadataWithNotify(this.xCoord, this.yCoord, this.zCoord, this.worldObj.getBlockMetadata(this.xCoord, this.yCoord, this.zCoord) - 1, 3);
+               this.worldObj.setBlockMetadataWithNotify(this.xCoord, this.yCoord, this.zCoord,
+                       this.worldObj.getBlockMetadata(this.xCoord, this.yCoord, this.zCoord) - 1, 3);
             }
          }
       }
@@ -877,7 +880,8 @@ public class TileNode extends TileThaumcraft implements INode, IWandable {
       if ((this.count <= 1 || this.count % 50 == 0) && this.yCoord > 0 && this.getBlockType() == ConfigBlocks.blockAiry) {
          byte oldLock = this.nodeLock;
          this.nodeLock = 0;
-         if (!this.worldObj.isBlockIndirectlyGettingPowered(this.xCoord, this.yCoord - 1, this.zCoord) && this.worldObj.getBlock(this.xCoord, this.yCoord - 1, this.zCoord) == ConfigBlocks.blockStoneDevice) {
+         if (!this.worldObj.isBlockIndirectlyGettingPowered(this.xCoord, this.yCoord - 1, this.zCoord)
+                 && this.worldObj.getBlock(this.xCoord, this.yCoord - 1, this.zCoord) == ConfigBlocks.blockStoneDevice) {
             if (this.worldObj.getBlockMetadata(this.xCoord, this.yCoord - 1, this.zCoord) == 9) {
                this.nodeLock = 1;
             } else if (this.worldObj.getBlockMetadata(this.xCoord, this.yCoord - 1, this.zCoord) == 10) {

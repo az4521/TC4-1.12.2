@@ -88,7 +88,8 @@ public class PacketAspectCombinationToServer implements IMessage, IMessageHandle
          Entity player = world.getEntityByID(message.playerid);
          if (player instanceof EntityPlayer && message.aspect1 != null) {
             Aspect combo = ResearchManager.getCombinationResult(message.aspect1, message.aspect2);
-            if ((Thaumcraft.proxy.playerKnowledge.getAspectPoolFor(player.getCommandSenderName(), message.aspect1) > 0 || message.ab1) && (Thaumcraft.proxy.playerKnowledge.getAspectPoolFor(player.getCommandSenderName(), message.aspect2) > 0 || message.ab2)) {
+            if ((Thaumcraft.proxy.playerKnowledge.getAspectPoolFor(player.getCommandSenderName(), message.aspect1) > 0 || message.ab1)
+                    && (Thaumcraft.proxy.playerKnowledge.getAspectPoolFor(player.getCommandSenderName(), message.aspect2) > 0 || message.ab2)) {
                TileEntity rt = player.worldObj.getTileEntity(message.x, message.y, message.z);
                if (Thaumcraft.proxy.playerKnowledge.getAspectPoolFor(player.getCommandSenderName(), message.aspect1) <= 0 && message.ab1) {
                   if (rt instanceof TileResearchTable) {

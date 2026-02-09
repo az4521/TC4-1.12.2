@@ -220,7 +220,6 @@ public class TileNodeRenderer extends TileEntitySpecialRenderer {
             UtilsFX.drawFloatyLine(d3, d4 + d6, d5, (double)drainCollision.blockX + (double)0.5F, (double)drainCollision.blockY + (double)0.5F, (double)drainCollision.blockZ + (double)0.5F, partialTicks, ((TileNode)tile).color.getRGB(), "textures/misc/wispy.png", -0.02F, (float)Math.min(iiud, 10) / 10.0F);
             GL11.glPopMatrix();
          }
-
       }
    }
 }

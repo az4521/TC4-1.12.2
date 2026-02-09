@@ -14,3 +14,5 @@ UnicodeFontFixer is still recommended because i don't know what they actually di
 -------------------
 
 going to migrate to 1.20.1,but needs a far way.(api migration almost finished,thx to chatGPT i can know apis and migrations fast.)
+
+see [OpenTC4-Architectury](https://github.com/IgnoreLicensesCN/OpenTC4-Architectury) for progress(commits) of this part

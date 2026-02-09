@@ -14,7 +14,7 @@ import thaumcraft.common.config.ConfigBlocks;
 public class WorldGenSilverwoodTrees extends WorldGenAbstractTree {
    private final int minTreeHeight;
    private final int randomTreeHeight;
-   boolean worldgen = false;
+   boolean worldgen;
 
    public WorldGenSilverwoodTrees(boolean doBlockNotify, int minTreeHeight, int randomTreeHeight) {
       super(doBlockNotify);
@@ -23,6 +23,7 @@ public class WorldGenSilverwoodTrees extends WorldGenAbstractTree {
       this.randomTreeHeight = randomTreeHeight;
    }
 
+   @Override
    public boolean generate(World world, Random random, int x, int y, int z) {
       int height = random.nextInt(this.randomTreeHeight) + this.minTreeHeight;
       boolean flag = true;
@@ -41,7 +42,8 @@ public class WorldGenSilverwoodTrees extends WorldGenAbstractTree {
                for(int k1 = z - spread; k1 <= z + spread && flag; ++k1) {
                   if (i1 >= 0 && i1 < 256) {
                      Block block = world.getBlock(j1, i1, k1);
-                     if (!block.isAir(world, j1, i1, k1) && !block.isLeaves(world, j1, i1, k1) && !block.isReplaceable(world, j1, i1, k1) && i1 > y) {
+                     if (!block.isAir(world, j1, i1, k1)
+                             && !block.isLeaves(world, j1, i1, k1) && !block.isReplaceable(world, j1, i1, k1) && i1 > y) {
                         flag = false;
                      }
                   } else {
@@ -83,7 +85,9 @@ public class WorldGenSilverwoodTrees extends WorldGenAbstractTree {
                int var29;
                for(var29 = 0; var29 < height; ++var29) {
                   Block block2 = world.getBlock(x, y + var29, z);
-                  if (block2.isAir(world, x, y + var29, z) || block2.isLeaves(world, x, y + var29, z) || block2.isReplaceable(world, x, y + var29, z)) {
+                  if (block2.isAir(world, x, y + var29, z)
+                          || block2.isLeaves(world, x, y + var29, z)
+                          || block2.isReplaceable(world, x, y + var29, z)) {
                      if (var29 > 0 && !lastblock && random.nextInt(chance) == 0) {
                         this.setBlockAndNotifyAdequately(world, x, y + var29, z, ConfigBlocks.blockMagicalLog, 2);
                         ThaumcraftWorldGenerator.createRandomNodeAt(world, x, y + var29, z, random, true, false, false);

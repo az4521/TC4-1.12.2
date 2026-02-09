@@ -281,7 +281,10 @@ public class EntityWisp extends EntityFlying implements IMob {
       int count = 0;
 
       try {
-         List l = this.worldObj.getEntitiesWithinAABB(EntityWisp.class, this.boundingBox.expand(16.0F, 16.0F, 16.0F));
+         List l = this.worldObj.getEntitiesWithinAABB(
+                 EntityWisp.class,
+                 this.boundingBox.expand(16.0F, 16.0F, 16.0F)
+         );
          if (l != null) {
             count = l.size();
          }

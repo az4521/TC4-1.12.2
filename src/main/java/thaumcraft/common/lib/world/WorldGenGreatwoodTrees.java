@@ -340,6 +340,7 @@ public class WorldGenGreatwoodTrees extends WorldGenAbstractTree {
       }
    }
 
+   @Override
    public void setScale(double par1, double par3, double par5) {
    }
 
@@ -420,6 +421,7 @@ public class WorldGenGreatwoodTrees extends WorldGenAbstractTree {
       }
    }
 
+   @Override
    public boolean generate(World var1, Random var2, int var3, int var4, int var5) {
       return this.generate(var1, var2, var3, var4, var5, var2.nextInt(8) == 0);
    }

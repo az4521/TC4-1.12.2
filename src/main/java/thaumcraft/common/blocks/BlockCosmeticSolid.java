@@ -33,6 +33,22 @@ import thaumcraft.common.tiles.TileWardingStone;
 import java.util.List;
 import java.util.Random;
 
+//tile.blockCosmeticSolid.0.name=Obsidian Totem
+//tile.blockCosmeticSolid.1.name=Obsidian Tile
+//tile.blockCosmeticSolid.2.name=Paving Stone of Travel
+//tile.blockCosmeticSolid.3.name=Paving Stone of Warding
+//tile.blockCosmeticSolid.4.name=Thaumium Block
+//tile.blockCosmeticSolid.5.name=Tallow Block
+//tile.blockCosmeticSolid.6.name=Arcane Stone Block
+//tile.blockCosmeticSolid.7.name=Arcane Stone Bricks
+//tile.blockCosmeticSolid.8.name=Charged Obsidian Totem
+//tile.blockCosmeticSolid.9.name=Golem Fetter
+//tile.blockCosmeticSolid.10.name=Active Golem Fetter
+//tile.blockCosmeticSolid.11.name=Ancient Stone
+//tile.blockCosmeticSolid.12.name=Ancient Rock
+//tile.blockCosmeticSolid.13.name=Ancient Stone
+//tile.blockCosmeticSolid.14.name=Crusted Stone
+//tile.blockCosmeticSolid.15.name=Ancient Stone Pedestal
 public class BlockCosmeticSolid extends Block {
    public IIcon[] icon = new IIcon[27];
 
@@ -316,7 +332,7 @@ public class BlockCosmeticSolid extends Block {
    }
 
    public boolean isBeaconBase(IBlockAccess worldObj, int x, int y, int z, int beaconX, int beaconY, int beaconZ) {
-      return worldObj.getBlock(x, y, z) == this;
+      return worldObj.getBlock(x, y, z) == this;//anazor drunk too much so that a lot of blocks can be used to activate beacon
    }
 
    public void onNeighborBlockChange(World world, int x, int y, int z, Block block) {

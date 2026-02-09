@@ -206,7 +206,8 @@ public class TileResearchTable extends TileThaumcraft implements IInventory {
                         this.bonusAspects.merge(Aspect.AIR, 1);
                         return;
                      }
-                  } else if (bm != Material.fire && bm != Material.lava && (bi != ConfigBlocks.blockCustomOre || md != 2)) {
+                  }
+                  else if (bm != Material.fire && bm != Material.lava && (bi != ConfigBlocks.blockCustomOre || md != 2)) {
                      if (bi == ConfigBlocks.blockCrystal && md == 1) {
                         if (this.bonusAspects.getAmount(Aspect.FIRE) < 1 && this.worldObj.rand.nextInt(10) == 0) {
                            this.bonusAspects.merge(Aspect.FIRE, 1);
@@ -258,7 +259,8 @@ public class TileResearchTable extends TileThaumcraft implements IInventory {
                               this.bonusAspects.merge(Aspect.ENTROPY, 1);
                               return;
                            }
-                        } else if (bi == ConfigBlocks.blockCrystal && md == 5 && this.bonusAspects.getAmount(Aspect.ENTROPY) < 1 && this.worldObj.rand.nextInt(10) == 0) {
+                        } else if (bi == ConfigBlocks.blockCrystal && md == 5
+                                && this.bonusAspects.getAmount(Aspect.ENTROPY) < 1 && this.worldObj.rand.nextInt(10) == 0) {
                            this.bonusAspects.merge(Aspect.ENTROPY, 1);
                            return;
                         }
@@ -266,12 +268,18 @@ public class TileResearchTable extends TileThaumcraft implements IInventory {
                         this.bonusAspects.merge(Aspect.ORDER, 1);
                         return;
                      }
-                  } else if (this.bonusAspects.getAmount(Aspect.FIRE) < 1 && this.worldObj.rand.nextInt(20) == 0) {
+                  }
+                  else if (this.bonusAspects.getAmount(Aspect.FIRE) < 1 && this.worldObj.rand.nextInt(20) == 0) {
                      this.bonusAspects.merge(Aspect.FIRE, 1);
                      return;
                   }
 
-                  if (bi == Blocks.bookshelf && this.worldObj.rand.nextInt(300) == 0 || bi == ConfigBlocks.blockJar && md == 1 && this.worldObj.rand.nextInt(200) == 0) {
+                  if ((bi == Blocks.bookshelf
+                          && this.worldObj.rand.nextInt(300) == 0)
+                          ||
+                          (bi == ConfigBlocks.blockJar
+                                  && md == 1
+                                  && this.worldObj.rand.nextInt(200) == 0)) {
                      Aspect[] aspects = new Aspect[0];
                      aspects = Aspect.aspects.values().toArray(aspects);
                      this.bonusAspects.merge(aspects[this.worldObj.rand.nextInt(aspects.length)], 1);
@@ -401,7 +409,13 @@ public class TileResearchTable extends TileThaumcraft implements IInventory {
          this.gatherResults();
       }
 
-      if (this.contents[1] != null && this.contents[1].getItem() instanceof ItemResearchNotes && this.data != null && this.contents[1].getItemDamage() == 64 && InventoryUtils.isPlayerCarrying(player, new ItemStack(Items.paper)) >= 0 && InventoryUtils.isPlayerCarrying(player, new ItemStack(Items.dye, 1, 0)) >= 0) {
+      if (this.contents[1] != null
+              && this.contents[1].getItem() instanceof ItemResearchNotes
+              && this.contents[1].getItemDamage() == 64
+              && this.data != null
+              && InventoryUtils.isPlayerCarrying(player, new ItemStack(Items.paper)) >= 0
+              && InventoryUtils.isPlayerCarrying(player, new ItemStack(Items.dye, 1, 0)) >= 0
+      ) {
          ResearchItem rr = ResearchCategories.getResearch(this.data.key);
 
          for(Aspect aspect : rr.tags.getAspects()) {
@@ -425,6 +439,5 @@ public class TileResearchTable extends TileThaumcraft implements IInventory {
          this.worldObj.markBlockForUpdate(this.xCoord, this.yCoord, this.zCoord);
          this.markDirty();
       }
-
    }
 }

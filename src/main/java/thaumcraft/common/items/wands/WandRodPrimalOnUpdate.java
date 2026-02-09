@@ -20,15 +20,16 @@ public class WandRodPrimalOnUpdate implements IWandRodOnUpdate {
    }
 
    public void onUpdate(ItemStack itemstack, EntityPlayer player) {
+      int upperBound = ((ItemWandCasting)itemstack.getItem()).getMaxVis(itemstack) / 10;
       if (this.aspect != null) {
-         if (player.ticksExisted % 200 == 0 && ((ItemWandCasting)itemstack.getItem()).getVis(itemstack, this.aspect) < ((ItemWandCasting)itemstack.getItem()).getMaxVis(itemstack) / 10) {
+         if (player.ticksExisted % 200 == 0 && ((ItemWandCasting)itemstack.getItem()).getVis(itemstack, this.aspect) < upperBound) {
             ((ItemWandCasting)itemstack.getItem()).addVis(itemstack, this.aspect, 1, true);
          }
       } else if (player.ticksExisted % 50 == 0) {
          ArrayList<Aspect> q = new ArrayList<>();
 
          for(Aspect as : this.primals) {
-            if (((ItemWandCasting)itemstack.getItem()).getVis(itemstack, as) < ((ItemWandCasting)itemstack.getItem()).getMaxVis(itemstack) / 10) {
+            if (((ItemWandCasting)itemstack.getItem()).getVis(itemstack, as) < upperBound) {
                q.add(as);
             }
          }
