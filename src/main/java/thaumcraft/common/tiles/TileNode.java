@@ -579,16 +579,16 @@ public class TileNode extends TileThaumcraft implements INode, IWandable {
                            return change;
                         }
 
-                        INode nd = (INode)te;
-                        int ndavg = (nd.getAspects().visSize() + nd.getAspectsBase().visSize()) / 2;
+                        INode anotherNode = (INode)te;
+                        int ndavg = (anotherNode.getAspects().visSize() + anotherNode.getAspectsBase().visSize()) / 2;
                         int thisavg = (this.getAspects().visSize() + this.getAspectsBase().visSize()) / 2;
-                        if (ndavg < thisavg && nd.getAspects().size() > 0) {
-                           Aspect a = nd.getAspects().getAspects()[this.worldObj.rand.nextInt(nd.getAspects().size())];
+                        if (ndavg < thisavg && anotherNode.getAspects().size() > 0) {
+                           Aspect a = anotherNode.getAspects().getAspects()[this.worldObj.rand.nextInt(anotherNode.getAspects().size())];
                            boolean u = false;
-                           if (this.getAspects().getAmount(a) < this.getNodeVisBase(a) && nd.takeFromContainer(a, 1)) {
+                           if (this.getAspects().getAmount(a) < this.getNodeVisBase(a) && anotherNode.takeFromContainer(a, 1)) {
                               this.addToContainer(a, 1);
                               u = true;
-                           } else if (nd.takeFromContainer(a, 1)) {
+                           } else if (anotherNode.takeFromContainer(a, 1)) {
                               if (this.worldObj.rand.nextInt(1 + (int)((double)this.getNodeVisBase(a) / (shiny ? (double)1.5F : (double)1.0F))) == 0) {
                                  this.aspectsBase.add(a, 1);
                                  if (this.getNodeModifier() == NodeModifier.PALE && this.worldObj.rand.nextInt(100) == 0) {
@@ -597,7 +597,7 @@ public class TileNode extends TileThaumcraft implements INode, IWandable {
                                  }
 
                                  if (this.worldObj.rand.nextInt(3) == 0) {
-                                    nd.setNodeVisBase(a, (short)(nd.getNodeVisBase(a) - 1));
+                                    anotherNode.setNodeVisBase(a, (short)(anotherNode.getNodeVisBase(a) - 1));
                                  }
                               }
 

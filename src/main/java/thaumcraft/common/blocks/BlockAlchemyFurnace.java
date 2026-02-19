@@ -132,7 +132,8 @@ public class BlockAlchemyFurnace extends BlockContainer {
 
     @Override
     public Item getItemDropped(int md, Random par2Random, int par3) {
-        return md == 0 ? Item.getItemFromBlock(ConfigBlocks.blockStoneDevice) : (md != 1 && md != 2 && md != 3 && md != 4 ? Item.getItemById(0) : Item.getItemFromBlock(ConfigBlocks.blockMetalDevice));
+        return md == 0 ? Item.getItemFromBlock(ConfigBlocks.blockStoneDevice) :
+                (md != 1 && md != 2 && md != 3 && md != 4 ? Item.getItemById(0) : Item.getItemFromBlock(ConfigBlocks.blockMetalDevice));
     }
 
     @Override
@@ -206,9 +207,7 @@ public class BlockAlchemyFurnace extends BlockContainer {
                forEachBlockInStruct((xOffset, yOffset, zOffset) -> {
                   Block blockCurrent = world.getBlock(x + xOffset, y + yOffset, z + zOffset);
                   int metaCurrent = world.getBlockMetadata(x + xOffset, y + yOffset, z + zOffset);
-
-                  if (blockCurrent == BlockAlchemyFurnace.this
-                          && metaCurrent == 0) {
+                  if (blockCurrent == BlockAlchemyFurnace.this && metaCurrent == 0) {
                      TileAlchemyFurnaceAdvanced tile =
                              (TileAlchemyFurnaceAdvanced) world.getTileEntity(x + xOffset, y + yOffset, z + zOffset);
                      if (tile != null) {
@@ -218,20 +217,20 @@ public class BlockAlchemyFurnace extends BlockContainer {
                   }
                   return false;
                });
-            } else {
-               forEachBlockInStruct((xOffset,yOffset,zOffset)->{
-                     if (xOffset != 0 || yOffset != 0 || zOffset != 0
-                             && world.getBlock(x + xOffset, y + yOffset, z + zOffset) == BlockAlchemyFurnace.this
-                     ) {
-                        int m = world.getBlockMetadata(x + xOffset, y + yOffset, z + zOffset);
-                        world.setBlock(x + xOffset, y + yOffset, z + zOffset,
-                                Block.getBlockFromItem(BlockAlchemyFurnace.this.getItemDropped(m, world.rand, 0)), BlockAlchemyFurnace.this.damageDropped(m), 3);
-
-                     }
-                     return false;
-
-               });
             }
+//            it has been handled by AlchemyFurnace BE
+//            else {
+//               forEachBlockInStruct((xOffset,yOffset,zOffset)->{
+//                     if (world.getBlock(x + xOffset, y + yOffset, z + zOffset) == BlockAlchemyFurnace.this) {
+//                        int m = world.getBlockMetadata(x + xOffset, y + yOffset, z + zOffset);
+//                        world.setBlock(x + xOffset, y + yOffset, z + zOffset,
+//                                Block.getBlockFromItem(BlockAlchemyFurnace.this.getItemDropped(m, world.rand, 0)),
+//                                BlockAlchemyFurnace.this.damageDropped(m), 3);
+//                     }
+//                     return false;
+//
+//               });
+//            }
         }
 
     }

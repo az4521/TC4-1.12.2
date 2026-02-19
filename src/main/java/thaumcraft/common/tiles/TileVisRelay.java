@@ -34,7 +34,7 @@ public class TileVisRelay extends TileVisNode implements IWandable {
    protected int px;
    protected int py;
    protected int pz;
-   protected boolean parentLoaded = false;
+   protected boolean needToLoadParent = false;
 
    @SideOnly(Side.CLIENT)
    public AxisAlignedBB getRenderBoundingBox() {
@@ -83,7 +83,7 @@ public class TileVisRelay extends TileVisNode implements IWandable {
 
    protected void drawEffect() {
       if (this.worldObj.isRemote) {
-         if (this.parentLoaded) {
+         if (this.needToLoadParent) {
             if (this.px == 0 && this.py == 0 && this.pz == 0) {
                this.setParent(null);
             } else {
@@ -102,7 +102,7 @@ public class TileVisRelay extends TileVisNode implements IWandable {
                }
             }
 
-            this.parentLoaded = false;
+            this.needToLoadParent = false;
             this.parentChanged();
          }
 
@@ -207,7 +207,7 @@ public class TileVisRelay extends TileVisNode implements IWandable {
       this.px = nbttagcompound.getByte("px");
       this.py = nbttagcompound.getByte("py");
       this.pz = nbttagcompound.getByte("pz");
-      this.parentLoaded = true;
+      this.needToLoadParent = true;
    }
 
    public void writeCustomNBT(NBTTagCompound nbttagcompound) {

@@ -254,131 +254,140 @@ public class VisNetHandler {
 	 public static boolean canNodeBeSeen(TileVisNode source,TileVisNode target)
 	 {
 		 World world = source.getWorldObj();
-		 Vec3 v1 = Vec3.createVectorHelper((double) source.xCoord + 0.5D, (double) source.yCoord + 0.5D, (double) source.zCoord + 0.5D);
-		 Vec3 v2 = Vec3.createVectorHelper((double) target.xCoord + 0.5D, (double) target.yCoord + 0.5D, (double) target.zCoord + 0.5D);
-		 if (Double.isNaN(v1.xCoord) || Double.isNaN(v1.yCoord) || Double.isNaN(v1.zCoord)) return true;
-		 if (Double.isNaN(v2.xCoord) || Double.isNaN(v2.yCoord) || Double.isNaN(v2.zCoord)) return true;
-		 int x2 = MathHelper.floor_double(v2.xCoord);
-		 int y2 = MathHelper.floor_double(v2.yCoord);
-		 int z2 = MathHelper.floor_double(v2.zCoord);
-		 int x1 = MathHelper.floor_double(v1.xCoord);
-		 int y1 = MathHelper.floor_double(v1.yCoord);
-		 int z1 = MathHelper.floor_double(v1.zCoord);
+		 Vec3 sourceAt = Vec3.createVectorHelper((double) source.xCoord + 0.5D, (double) source.yCoord + 0.5D, (double) source.zCoord + 0.5D);
+		 Vec3 targetAt = Vec3.createVectorHelper((double) target.xCoord + 0.5D, (double) target.yCoord + 0.5D, (double) target.zCoord + 0.5D);
+		 if (Double.isNaN(sourceAt.xCoord) || Double.isNaN(sourceAt.yCoord) || Double.isNaN(sourceAt.zCoord)) return true;
+		 if (Double.isNaN(targetAt.xCoord) || Double.isNaN(targetAt.yCoord) || Double.isNaN(targetAt.zCoord)) return true;
+		 int sourceAtX = MathHelper.floor_double(sourceAt.xCoord);
+		 int sourceAtY = MathHelper.floor_double(sourceAt.yCoord);
+		 int sourceAtZ = MathHelper.floor_double(sourceAt.zCoord);
+		 int targetAtX = MathHelper.floor_double(targetAt.xCoord);
+		 int targetAtY = MathHelper.floor_double(targetAt.yCoord);
+		 int targetAtZ = MathHelper.floor_double(targetAt.zCoord);
 		 int maxStep = source.getRange() * 5; // mathematician please help. likely not * 5...
 
 		 while (maxStep-- >= 0) {
-			 if (Double.isNaN(v1.xCoord) || Double.isNaN(v1.yCoord) || Double.isNaN(v1.zCoord)) {
+			 if (
+					 Double.isNaN(sourceAt.xCoord)
+							 || Double.isNaN(sourceAt.yCoord)
+							 || Double.isNaN(sourceAt.zCoord)) {
 				 return true;
 			 }
 
-			 if (x1 != x2 || y1 != y2 || z1 != z2) {
-				 boolean xDiff = true;
-				 boolean yDIff = true;
-				 boolean zDiff = true;
+			 if (
+					 sourceAtX != targetAtX
+							 || sourceAtY != targetAtY
+							 || sourceAtZ != targetAtZ
+			 ) {
+				 boolean xDiff = targetAtX != sourceAtX;
+				 boolean yDIff = targetAtY != sourceAtY;
+				 boolean zDiff = targetAtZ != sourceAtZ;
+				 //why 999?
 				 double x0 = 999.0D;
 				 double y0 = 999.0D;
 				 double z0 = 999.0D;
-				 if (x2 > x1) {
-					 x0 = (double) x1 + 1.0D;
-				 } else if (x2 < x1) {
-					 x0 = (double) x1 + 0.0D;
-				 } else {
-					 xDiff = false;
+				 if (targetAtX > sourceAtX) {
+					 x0 = (double) sourceAtX + 1.0D;
+				 } else if (targetAtX < sourceAtX) {
+					 x0 = (double) sourceAtX + 0.0D;
 				 }
 
-				 if (y2 > y1) {
-					 y0 = (double) y1 + 1.0D;
-				 } else if (y2 < y1) {
-					 y0 = (double) y1 + 0.0D;
-				 } else {
-					 yDIff = false;
+				 if (targetAtY > sourceAtY) {
+					 y0 = (double) sourceAtY + 1.0D;
+				 } else if (targetAtY < sourceAtY) {
+					 y0 = (double) sourceAtY + 0.0D;
 				 }
 
-				 if (z2 > z1) {
-					 z0 = (double) z1 + 1.0D;
-				 } else if (z2 < z1) {
-					 z0 = (double) z1 + 0.0D;
-				 } else {
-					 zDiff = false;
+				 if (targetAtZ > sourceAtZ) {
+					 z0 = (double) sourceAtZ + 1.0D;
+				 } else if (targetAtZ < sourceAtZ) {
+					 z0 = (double) sourceAtZ + 0.0D;
 				 }
 
 				 double xpercent = 999.0D;
 				 double ypercent = 999.0D;
 				 double zpercent = 999.0D;
-				 double dx = v2.xCoord - v1.xCoord;
-				 double dy = v2.yCoord - v1.yCoord;
-				 double dz = v2.zCoord - v1.zCoord;
+				 double dx = targetAt.xCoord - sourceAt.xCoord;
+				 double dy = targetAt.yCoord - sourceAt.yCoord;
+				 double dz = targetAt.zCoord - sourceAt.zCoord;
 				 if (xDiff) {
-					 xpercent = (x0 - v1.xCoord) / dx;
+					 xpercent = (x0 - sourceAt.xCoord) / dx;
 				 }
 
 				 if (yDIff) {
-					 ypercent = (y0 - v1.yCoord) / dy;
+					 ypercent = (y0 - sourceAt.yCoord) / dy;
 				 }
 
 				 if (zDiff) {
-					 zpercent = (z0 - v1.zCoord) / dz;
+					 //targetAtZ < sourceAtZ -> z0 = sourceAtZ -> zpercent == 0
+					 //targetAtZ > sourceAtZ -> z0 = sourceAtZ + 1 -> zpercent = 1/dz
+					 //targetAtZ == sourceAtZ -> zpercent == 999
+					 zpercent = (z0 - sourceAt.zCoord) / dz;
 				 }
 
 				 byte checkType;
-				 if (xpercent < ypercent && xpercent < zpercent) {
+				 //i should call this part MENTAL ILLNESS
+				 double minPercent = Math.min(xpercent,Math.min(ypercent,zpercent));
+				 if (minPercent == xpercent) {
 					 // x changes next
-					 if (x2 > x1) {
+					 if (targetAtX > sourceAtX) {
 						 checkType = 4;
 					 } else {
 						 checkType = 5;
 					 }
 
-					 v1.xCoord = x0;
-					 v1.yCoord += dy * xpercent;
-					 v1.zCoord += dz * xpercent;
-				 } else if (ypercent < zpercent) {
+					 sourceAt.xCoord = x0;
+					 sourceAt.yCoord += dy * xpercent;
+					 sourceAt.zCoord += dz * xpercent;
+				 } else if (minPercent == ypercent) {
 					 // y changes next
-					 if (y2 > y1) {
+					 if (targetAtY > sourceAtY) {
 						 checkType = 0;
 					 } else {
 						 checkType = 1;
 					 }
 
-					 v1.xCoord += dx * ypercent;
-					 v1.yCoord = y0;
-					 v1.zCoord += dz * ypercent;
-				 } else {
+					 sourceAt.xCoord += dx * ypercent;
+					 sourceAt.yCoord = y0;
+					 sourceAt.zCoord += dz * ypercent;
+				 } else {//minPercent == zpercent
 					 // z changes next
-					 if (z2 > z1) {
+					 if (targetAtZ > sourceAtZ) {
 						 checkType = 2;
 					 } else {
 						 checkType = 3;
 					 }
 
-					 v1.xCoord += dx * zpercent;
-					 v1.yCoord += dy * zpercent;
-					 v1.zCoord = z0;
+					 sourceAt.xCoord += dx * zpercent;
+					 sourceAt.yCoord += dy * zpercent;
+					 sourceAt.zCoord = z0;
 				 }
 
-				 x1 = MathHelper.floor_double(v1.xCoord);
+				 sourceAtX = MathHelper.floor_double(sourceAt.xCoord);
 				 if (checkType == 5) {
-					 --x1;
+					 --sourceAtX;
 				 }
 
-				 y1 = MathHelper.floor_double(v1.yCoord);
+				 sourceAtY = MathHelper.floor_double(sourceAt.yCoord);
 				 if (checkType == 1) {
-					 --y1;
+					 --sourceAtY;
 				 }
 
-				 z1 = MathHelper.floor_double(v1.zCoord);
+				 sourceAtZ = MathHelper.floor_double(sourceAt.zCoord);
 				 if (checkType == 3) {
-					 --z1;
+					 --sourceAtZ;
 				 }
 
-				 if (x1 == target.xCoord && y1 == target.yCoord && z1 == target.zCoord)
+				 if (sourceAtX == target.xCoord
+						 && sourceAtY == target.yCoord
+						 && sourceAtZ == target.zCoord)
 					 return true;
 
-				 Block block = world.getBlock(x1, y1, z1);
-				 int meta = world.getBlockMetadata(x1, y1, z1);
+				 Block block = world.getBlock(sourceAtX, sourceAtY, sourceAtZ);
+				 int meta = world.getBlockMetadata(sourceAtX, sourceAtY, sourceAtZ);
 				 if (block.canCollideCheck(meta, false)) {
-					 if (block.getCollisionBoundingBoxFromPool(world, x1, y1, z1) != null) {
-						 MovingObjectPosition movingobjectposition1 = block.collisionRayTrace(world, x1, y1, z1, v1, v2);
+					 if (block.getCollisionBoundingBoxFromPool(world, sourceAtX, sourceAtY, sourceAtZ) != null) {
+						 MovingObjectPosition movingobjectposition1 = block.collisionRayTrace(world, sourceAtX, sourceAtY, sourceAtZ, sourceAt, targetAt);
 						 if (movingobjectposition1 != null && movingobjectposition1.typeOfHit != MovingObjectPosition.MovingObjectType.MISS) {
 							 return false;
 						 }
