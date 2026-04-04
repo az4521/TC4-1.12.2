@@ -11,7 +11,6 @@ import java.util.List;
 public class AICultistHurtByTarget extends EntityAITarget {
    boolean entityCallsForHelp;
    private int field_142052_b;
-   private static final String __OBFID = "CL_00001619";
 
    public AICultistHurtByTarget(EntityCreature p_i1660_1_, boolean p_i1660_2_) {
       super(p_i1660_1_, false);

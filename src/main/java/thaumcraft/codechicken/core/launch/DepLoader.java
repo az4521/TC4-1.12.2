@@ -33,11 +33,12 @@ import javax.swing.*;
 import javax.swing.event.HyperlinkEvent.EventType;
 
 import net.minecraft.launchwrapper.LaunchClassLoader;
-import thaumcraft.client.ClientProxy;
 
 public class DepLoader implements IFMLLoadingPlugin, IFMLCallHook {
     private static ByteBuffer downloadBuffer = ByteBuffer.allocateDirect(8388608);
     private static final String owner = "CB's DepLoader";
+    public static boolean dev = false;
+
     private static DepLoadInst inst;
 
     public static void load() {
@@ -61,7 +62,7 @@ public class DepLoader implements IFMLLoadingPlugin, IFMLCallHook {
     }
 
     public void injectData(Map<String, Object> data) {
-        ClientProxy.dev = !(boolean) data.get("runtimeDeobfuscationEnabled");
+        DepLoader.dev = !(boolean) data.get("runtimeDeobfuscationEnabled");
     }
 
     public Void call() {

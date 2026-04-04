@@ -1,51 +1,95 @@
-/** The root of the build. Exposed for flexibility, but you shouldn't edit it
-    unless you have to. Edit project.gradle instead. */
-
 buildscript {
     repositories {
-        mavenCentral()
-        maven {
-            name = "forge"
-            url = "https://maven.minecraftforge.net/"
-        }
-        maven {
-            url = "https://jitpack.io"
-        }
+        jcenter()
+        maven { url = "https://files.minecraftforge.net/maven" }
     }
     dependencies {
-        classpath('com.github.GTNewHorizons:ForgeGradle:1.2.11') {
-            // This transitive dependency breaks plugins for some reason. Only GTNH-FG has this issue.
-            exclude group: "org.eclipse.equinox"
+        classpath 'net.minecraftforge.gradle:ForgeGradle:2.3-SNAPSHOT'
+    }
+}
+
+apply plugin: 'net.minecraftforge.gradle.forge'
+apply plugin: 'java'
+apply plugin: 'maven-publish'
+
+group = 'anazor.thaumcraft'
+archivesBaseName = 'Thaumcraft-1.12.2'
+
+def getCommitVersion() {
+    try {
+        def proc = "python ${projectDir}/publish/get_version.py".execute()
+        proc.waitFor()
+        if (proc.exitValue() == 0) return proc.text.trim()
+        println proc.err.text
+    } catch (Exception e) {
+        println "Failed to run get_version.py: " + e.message
+    }
+    return "UNKNOWN"
+}
+version = getCommitVersion()
+
+sourceCompatibility = JavaVersion.VERSION_1_8
+targetCompatibility = JavaVersion.VERSION_1_8
+
+minecraft {
+    version = "1.12.2-14.23.5.2860"
+    runDir = "run"
+    mappings = "stable_39"
+    useDepAts = true
+}
+
+repositories {
+    maven {
+        name = "Curse Maven"
+        url = "https://www.cursemaven.com"
+    }
+    maven {
+        name = "chickenbones"
+        url = "https://chickenbones.net/maven/"
+    }
+    maven {
+        name = "tehnut"
+        url = "https://tehnut.info/maven/"
+    }
+}
+
+configurations {
+    embed
+    shade
+    compile.extendsFrom(embed)
+    compile.extendsFrom(shade)
+}
+
+dependencies {
+    // Baubles 1.12.2
+    deobfCompile 'curse.maven:baubles-227083:2518667'
+    // CodeChickenLib 1.12.2
+    deobfCompile "codechicken:CodeChickenLib:1.12.2-3.2.3.358:deobf"
+}
+
+jar {
+    from configurations.embed.collect {
+        exclude '**/LICENSE', '**/LICENSE.txt'
+        it.isDirectory() ? it : zipTree(it)
+    }
+    configurations.shade.each { dep ->
+        from(project.zipTree(dep)) {
+            exclude '**/LICENSE', '**/LICENSE.txt', 'META-INF', 'META-INF/**'
         }
     }
-}
-
-plugins {
-    id 'java-library'
-    id 'maven-publish'
-}
-
-if(project.enable_lombok.toBoolean()) {
-    dependencies {
-        compileOnly 'org.projectlombok:lombok:1.18.4'
+    manifest {
+        attributes(
+            'FMLCorePlugin': 'thaumcraft.codechicken.core.launch.DepLoader',
+            'FMLCorePluginContainsFMLMod': 'true'
+        )
     }
 }
 
-apply from: "buildscript/forge-1.7.gradle"
-
-
-task sourcesJar(type: Jar, dependsOn: classes) {
-    classifier = 'sources'
-    from sourceSets.main.allSource
+processResources {
+    inputs.property 'version', project.version
+    filesMatching('*.info') {
+        expand project.properties
+    }
 }
 
-task javadocJar(type: Jar, dependsOn: javadoc) {
-    classifier = 'javadoc'
-    from javadoc.destinationDir
-}
-//
-//artifacts {
-//    archives sourcesJar
-//    archives javadocJar
-//}
 compileJava.options.encoding = 'UTF-8'

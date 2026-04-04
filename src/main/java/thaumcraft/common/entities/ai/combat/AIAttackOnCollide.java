@@ -20,7 +20,6 @@ public class AIAttackOnCollide extends EntityAIBase {
    private double targetX;
    private double targetY;
    private double targetZ;
-   private static final String __OBFID = "CL_00001595";
    private int failedPathFindingPenalty;
 
    public AIAttackOnCollide(EntityCreature attacker, Class<?> classTarget, double speedTowardsTarget, boolean longMemory) {

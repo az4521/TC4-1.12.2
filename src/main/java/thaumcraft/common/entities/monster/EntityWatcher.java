@@ -315,7 +315,6 @@ public class EntityWatcher extends EntityMob {
     class AIGuardianAttack extends EntityAIBase {
         private EntityWatcher field_179456_a = EntityWatcher.this;
         private int field_179455_b;
-        private static final String __OBFID = "CL_00002211";
 
         public AIGuardianAttack() {
             this.setMutexBits(3);

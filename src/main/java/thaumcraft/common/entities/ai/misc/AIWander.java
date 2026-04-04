@@ -12,7 +12,6 @@ public class AIWander extends EntityAIBase {
    private double zPosition;
    private double speed;
    private boolean field_179482_g;
-   private static final String __OBFID = "CL_00001608";
 
    public AIWander(EntityCreature p_i1648_1_, double p_i1648_2_) {
       this.entity = p_i1648_1_;

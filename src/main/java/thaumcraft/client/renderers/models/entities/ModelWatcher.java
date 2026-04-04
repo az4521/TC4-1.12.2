@@ -16,7 +16,6 @@ public class ModelWatcher extends ModelBase {
    private ModelRenderer guardianEye;
    private ModelRenderer[] guardianSpines;
    private ModelRenderer[] guardianTail;
-   private static final String __OBFID = "CL_00002628";
 
    public ModelWatcher() {
       this.textureWidth = 64;

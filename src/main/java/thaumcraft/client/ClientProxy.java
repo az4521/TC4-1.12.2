@@ -1100,10 +1100,11 @@ public class ClientProxy extends CommonProxy {
       MinecraftForge.EVENT_BUS.register(this);
    }
 
-   public static boolean dev = false;//!(boolean) data.get("runtimeDeobfuscationEnabled");
+   public static boolean dev = false; // mirrors DepLoader.dev, set during preInit
 
    @Override
    public void preInit(FMLPreInitializationEvent e) {
+      dev = thaumcraft.codechicken.core.launch.DepLoader.dev;
       super.preInit(e);
       ConfigurationHandler.INSTANCE.setGUISettings();
       try {
