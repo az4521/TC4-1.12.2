@@ -69,12 +69,12 @@ public class TileWandPedestalRenderer extends TileEntitySpecialRenderer<TileWand
       Tessellator tess = Tessellator.getInstance();
       BufferBuilder buf = tess.getBuffer();
 
-      // Base (0-0.25) — full width
-      drawBox(buf, tess, side, top, 0, 0, 0, 1, 0.25F, 1);
-      // Pillar (0.25-0.75) — thin middle
-      drawBox(buf, tess, side, top, 0.25F, 0.25F, 0.25F, 0.75F, 0.75F, 0.75F);
-      // Top cap (0.75-1.0) — wider top
-      drawBox(buf, tess, side, top, 0.125F, 0.75F, 0.125F, 0.875F, 1.0F, 0.875F);
+      // Base (0-0.25)
+      drawBox(buf, tess, side, top, 0, 0, 0, 1, 0.25F, 1, 0, 0, 12, 0, 0, 0, 0, 0);
+      // Pillar (0.25-0.5)
+      drawBox(buf, tess, side, top, 0.125F, 0.25F, 0.125F, 0.875F, 0.5F, 0.875F, 2, 2, 8, 4, 2, 2, 2, 2);
+      // Top cap (0.5-1.0)
+      drawBox(buf, tess, side, top, 0.25F, 0.5F, 0.25F, 0.75F, 1.0F, 0.75F, 4, 4, 0, 8, 4, 4, 4, 4);
 
       RenderHelper.enableStandardItemLighting();
       GlStateManager.popMatrix();
@@ -85,9 +85,21 @@ public class TileWandPedestalRenderer extends TileEntitySpecialRenderer<TileWand
    }
 
    private void drawBox(BufferBuilder buf, Tessellator tess, TextureAtlasSprite side, TextureAtlasSprite top,
-                         float x1, float y1, float z1, float x2, float y2, float z2) {
-      float su0 = side.getMinU(), su1 = side.getMaxU(), sv0 = side.getMinV(), sv1 = side.getMaxV();
-      float tu0 = top.getMinU(), tu1 = top.getMaxU(), tv0 = top.getMinV(), tv1 = top.getMaxV();
+                         float x1, float y1, float z1, float x2, float y2, float z2,
+                         float sideUMinOffset, float sideUMaxOffset, float sideVMinOffset, float sideVMaxOffset,
+                         float topUMinOffset, float topUMaxOffset, float topVMinOffset, float topVMaxOffset) {
+      //grab a section of the texture
+      float su0 = side.getInterpolatedU(sideUMinOffset);
+      float su1 = side.getInterpolatedU(16f - sideUMaxOffset);
+      float sv0 = side.getInterpolatedV(sideVMinOffset);
+      float sv1 = side.getInterpolatedV(16f - sideVMaxOffset);
+
+      float tu0 = top.getInterpolatedU(topUMinOffset);
+      float tu1 = top.getInterpolatedU(16f - topUMaxOffset);
+      float tv0 = top.getInterpolatedV(topVMinOffset);
+      float tv1 = top.getInterpolatedV(16f - topVMaxOffset);
+
+      //3d box drawing
       buf.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX);
       buf.pos(x1, y1, z2).tex(tu0, tv1).endVertex();
       buf.pos(x1, y1, z1).tex(tu0, tv0).endVertex();
