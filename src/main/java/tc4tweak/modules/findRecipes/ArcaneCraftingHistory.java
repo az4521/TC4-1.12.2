@@ -23,7 +23,7 @@ class ArcaneCraftingHistory extends FlushableCache<ThreadLocal<LinkedList<IArcan
             LinkedList<IArcaneRecipe> history = getCache().get();
             for (Iterator<IArcaneRecipe> iterator = history.iterator(); iterator.hasNext(); ) {
                 IArcaneRecipe recipe = iterator.next();
-                if (recipe.matches(inv, player.worldObj, player)) {
+                if (recipe.matches(inv, player.world, player)) {
                     iterator.remove();
                     history.addFirst(recipe);
                     return recipe;

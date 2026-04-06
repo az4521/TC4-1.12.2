@@ -3,6 +3,7 @@ package thaumcraft.common.tiles;
 import net.minecraft.block.Block;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.math.BlockPos;
 
 public class TileMemory extends TileEntity {
    public Block oldblock;
@@ -27,16 +28,16 @@ public class TileMemory extends TileEntity {
    }
 
    public void recreateTileEntity() {
-      if (this.tileEntityCompound != null && this.worldObj.getTileEntity(this.xCoord, this.yCoord, this.zCoord) != null) {
-         this.worldObj.setBlock(this.xCoord, this.yCoord, this.zCoord, this.oldblock, this.oldmeta, 0);
-         this.tileEntityCompound.setInteger("x", this.xCoord);
-         this.tileEntityCompound.setInteger("y", this.yCoord);
-         this.tileEntityCompound.setInteger("z", this.zCoord);
-         this.worldObj.getTileEntity(this.xCoord, this.yCoord, this.zCoord).readFromNBT(this.tileEntityCompound);
+      if (this.tileEntityCompound != null && this.world.getTileEntity(this.getPos()) != null) {
+         this.world.setBlockState(this.getPos(), this.oldblock.getStateFromMeta(this.oldmeta), 0);
+         this.tileEntityCompound.setInteger("x", this.getPos().getX());
+         this.tileEntityCompound.setInteger("y", this.getPos().getY());
+         this.tileEntityCompound.setInteger("z", this.getPos().getZ());
+         this.world.getTileEntity(this.getPos()).readFromNBT(this.tileEntityCompound);
       }
 
       this.markDirty();
-      this.worldObj.markBlockForUpdate(this.xCoord, this.yCoord, this.zCoord);
+      { net.minecraft.block.state.IBlockState _bs = this.world.getBlockState(this.pos); this.world.notifyBlockUpdate(this.pos, _bs, _bs, 3); }
    }
 
    public void readFromNBT(NBTTagCompound nbttagcompound) {
@@ -49,13 +50,14 @@ public class TileMemory extends TileEntity {
 
    }
 
-   public void writeToNBT(NBTTagCompound nbttagcompound) {
+   @Override
+   public NBTTagCompound writeToNBT(NBTTagCompound nbttagcompound) {
       super.writeToNBT(nbttagcompound);
       nbttagcompound.setInteger("oldblock", Block.getIdFromBlock(this.oldblock));
       nbttagcompound.setInteger("oldmeta", this.oldmeta);
       if (this.tileEntityCompound != null) {
          nbttagcompound.setTag("TileEntity", this.tileEntityCompound);
       }
-
+      return nbttagcompound;
    }
 }

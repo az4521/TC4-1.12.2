@@ -1,14 +1,14 @@
 package thaumcraft.client.renderers.tile;
 
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraft.client.renderer.ItemRenderer;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.texture.TextureMap;
 import net.minecraft.client.renderer.tileentity.TileEntitySpecialRenderer;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.IIcon;
-import org.lwjgl.opengl.GL11;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+
 import thaumcraft.api.IScribeTools;
 import thaumcraft.client.lib.UtilsFX;
 import thaumcraft.client.renderers.models.ModelResearchTable;
@@ -18,63 +18,68 @@ import thaumcraft.common.config.ConfigItems;
 import thaumcraft.common.lib.research.ResearchManager;
 import thaumcraft.common.lib.research.ResearchNoteData;
 import thaumcraft.common.tiles.TileResearchTable;
+import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.client.renderer.BufferBuilder;
+import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 
 @SideOnly(Side.CLIENT)
-public class TileResearchTableRenderer extends TileEntitySpecialRenderer {
+public class TileResearchTableRenderer extends TileEntitySpecialRenderer<TileResearchTable> {
    private ModelResearchTable tableModel = new ModelResearchTable();
 
-   public void renderTileEntityAt(TileResearchTable table, double par2, double par4, double par6, float par8) {
+   @Override
+   public void render(TileResearchTable table, double par2, double par4, double par6, float par8, int destroyStage, float alpha) {
       int md = 0;
-      if (table.getWorldObj() != null) {
-         md = table.getBlockMetadata();
+      if (table.getWorld() != null) {
+         md = table.getWorld().getBlockState(table.getPos()).getBlock().getMetaFromState(table.getWorld().getBlockState(table.getPos()));
       }
 
-      GL11.glPushMatrix();
+      GlStateManager.pushMatrix();
       UtilsFX.bindTexture("textures/models/restable.png");
-      GL11.glTranslatef((float)par2 + 0.5F, (float)par4 + 1.0F, (float)par6 + 0.5F);
-      GL11.glRotatef(180.0F, 1.0F, 0.0F, 0.0F);
+      GlStateManager.translate((float)par2 + 0.5F, (float)par4 + 1.0F, (float)par6 + 0.5F);
+      GlStateManager.rotate(180.0F, 1.0F, 0.0F, 0.0F);
       switch (md) {
          case 2:
-            GL11.glRotatef(270.0F, 0.0F, 1.0F, 0.0F);
+            GlStateManager.rotate(270.0F, 0.0F, 1.0F, 0.0F);
             break;
          case 3:
-            GL11.glRotatef(90.0F, 0.0F, 1.0F, 0.0F);
+            GlStateManager.rotate(90.0F, 0.0F, 1.0F, 0.0F);
             break;
          case 4:
-            GL11.glRotatef(180.0F, 0.0F, 1.0F, 0.0F);
+            GlStateManager.rotate(180.0F, 0.0F, 1.0F, 0.0F);
       }
 
       this.tableModel.renderAll();
-      if (table.getStackInSlot(0) != null && table.getStackInSlot(0).getItem() instanceof IScribeTools) {
+      if (!table.getStackInSlot(0).isEmpty() && table.getStackInSlot(0).getItem() instanceof IScribeTools) {
          this.tableModel.renderInkwell();
-         GL11.glPushMatrix();
-         GL11.glRotatef(-90.0F, 0.0F, 1.0F, 0.0F);
-         GL11.glRotatef(180.0F, 1.0F, 0.0F, 0.0F);
-         GL11.glTranslatef(-0.17F, 0.1F, -0.15F);
-         GL11.glRotatef(15.0F, 0.0F, 1.0F, 0.0F);
-         IIcon icon = ((BlockTable)ConfigBlocks.blockTable).iconQuill;
-         float f1 = icon.getMaxU();
-         float f2 = icon.getMinV();
-         float f3 = icon.getMinU();
-         float f4 = icon.getMaxV();
-         Tessellator tessellator = Tessellator.instance;
-         GL11.glScalef(0.5F, 0.5F, 0.5F);
-         this.field_147501_a.field_147553_e.bindTexture(TextureMap.locationBlocksTexture);
-         ItemRenderer.renderItemIn2D(tessellator, f1, f2, f3, f4, icon.getIconWidth(), icon.getIconHeight(), 0.025F);
-         GL11.glPopMatrix();
+         GlStateManager.pushMatrix();
+         GlStateManager.rotate(-90.0F, 0.0F, 1.0F, 0.0F);
+         GlStateManager.rotate(180.0F, 1.0F, 0.0F, 0.0F);
+         GlStateManager.translate(-0.17F, 0.1F, -0.15F);
+         GlStateManager.rotate(15.0F, 0.0F, 1.0F, 0.0F);
+         GlStateManager.scale(0.5F, 0.5F, 0.5F);
+         UtilsFX.bindTexture("textures/blocks/tablequill.png");
+         Tessellator tessellator = Tessellator.getInstance();
+         BufferBuilder buffer = tessellator.getBuffer();
+         buffer.begin(org.lwjgl.opengl.GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX);
+         buffer.pos(0, 1, 0).tex(1, 0).endVertex();
+         buffer.pos(1, 1, 0).tex(0, 0).endVertex();
+         buffer.pos(1, 0, 0).tex(0, 1).endVertex();
+         buffer.pos(0, 0, 0).tex(1, 1).endVertex();
+         tessellator.draw();
+         GlStateManager.popMatrix();
       }
 
       for(int a = 0; a < 6; ++a) {
-         GL11.glPushMatrix();
-         GL11.glTranslatef(0.1F, -0.01F - (float)a * 0.015F, 0.35F);
-         GL11.glRotatef(90.0F, -1.0F, 0.0F, 0.0F);
-         GL11.glRotatef((float)(15 + a % 3 * 2), 0.0F, 0.0F, 1.0F);
-         GL11.glScalef(0.5F, 0.6F, 0.6F);
+         GlStateManager.pushMatrix();
+         GlStateManager.translate(0.1F, -0.01F - (float)a * 0.015F, 0.35F);
+         GlStateManager.rotate(90.0F, -1.0F, 0.0F, 0.0F);
+         GlStateManager.rotate((float)(15 + a % 3 * 2), 0.0F, 0.0F, 1.0F);
+         GlStateManager.scale(0.5F, 0.6F, 0.6F);
          UtilsFX.renderQuad("textures/misc/parchment.png", 771, 1.0F);
-         GL11.glPopMatrix();
+         GlStateManager.popMatrix();
       }
 
-      if (table.getStackInSlot(1) != null && table.getStackInSlot(1).getItem() == ConfigItems.itemResearchNotes) {
+      if (!table.getStackInSlot(1).isEmpty() && table.getStackInSlot(1).getItem() == ConfigItems.itemResearchNotes) {
          UtilsFX.bindTexture("textures/models/restable2.png");
          ResearchNoteData rd = ResearchManager.getData(table.getStackInSlot(1));
          int color = 10066329;
@@ -85,10 +90,7 @@ public class TileResearchTableRenderer extends TileEntitySpecialRenderer {
          this.tableModel.renderScroll(color);
       }
 
-      GL11.glPopMatrix();
+      GlStateManager.popMatrix();
    }
 
-   public void renderTileEntityAt(TileEntity tileEntity, double par2, double par4, double par6, float par8) {
-      this.renderTileEntityAt((TileResearchTable)tileEntity, par2, par4, par6, par8);
-   }
 }

@@ -1,10 +1,10 @@
 package thaumcraft.common.lib.network.misc;
 
-import cpw.mods.fml.common.network.NetworkRegistry;
-import cpw.mods.fml.common.network.simpleimpl.IMessage;
-import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
-import cpw.mods.fml.common.network.simpleimpl.MessageContext;
-import cpw.mods.fml.relauncher.Side;
+import net.minecraftforge.fml.common.network.NetworkRegistry;
+import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
+import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
+import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
+import net.minecraftforge.fml.relauncher.Side;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.tileentity.TileEntityNote;
@@ -13,6 +13,7 @@ import net.minecraftforge.common.DimensionManager;
 import thaumcraft.common.Thaumcraft;
 import thaumcraft.common.lib.network.PacketHandler;
 import thaumcraft.common.tiles.TileSensor;
+import net.minecraft.util.math.BlockPos;
 
 public class PacketNote implements IMessage, IMessageHandler<PacketNote,IMessage> {
    private int x;
@@ -59,7 +60,7 @@ public class PacketNote implements IMessage, IMessageHandler<PacketNote,IMessage
    public IMessage onMessage(PacketNote message, MessageContext ctx) {
       if (ctx.side == Side.CLIENT) {
          if (message.note >= 0) {
-            TileEntity tile = Thaumcraft.proxy.getClientWorld().getTileEntity(message.x, message.y, message.z);
+            TileEntity tile = Thaumcraft.proxy.getClientWorld().getTileEntity(new BlockPos(message.x, message.y, message.z));
             if (tile instanceof TileEntityNote) {
                ((TileEntityNote)tile).note = message.note;
             } else if (tile instanceof TileSensor) {
@@ -72,7 +73,7 @@ public class PacketNote implements IMessage, IMessageHandler<PacketNote,IMessage
             return null;
          }
 
-         TileEntity tile = world.getTileEntity(message.x, message.y, message.z);
+         TileEntity tile = world.getTileEntity(new BlockPos(message.x, message.y, message.z));
          byte note = -1;
          if (tile instanceof TileEntityNote) {
             note = ((TileEntityNote)tile).note;

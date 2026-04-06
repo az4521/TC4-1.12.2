@@ -1,0 +1,42 @@
+{
+  "ambientocclusion": false,
+  "textures": {
+    "frame": "thaumcraft:blocks/mirrorframe",
+    "pane": "thaumcraft:blocks/mirrorpane",
+    "particle": "thaumcraft:blocks/mirrorframe"
+  },
+  "elements": [
+    {
+      "from": [
+        3,
+        1,
+        7
+      ],
+      "to": [
+        13,
+        13,
+        9
+      ],
+      "faces": {
+        "north": {
+          "texture": "#pane"
+        },
+        "south": {
+          "texture": "#pane"
+        },
+        "west": {
+          "texture": "#frame"
+        },
+        "east": {
+          "texture": "#frame"
+        },
+        "down": {
+          "texture": "#frame"
+        },
+        "up": {
+          "texture": "#frame"
+        }
+      }
+    }
+  ]
+}

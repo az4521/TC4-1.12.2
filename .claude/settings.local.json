@@ -5,7 +5,10 @@
       "WebSearch",
       "Bash(./gradlew build:*)",
       "WebFetch(domain:nexus.gtnewhorizons.com)",
-      "Bash(*)"
+      "Bash(*)",
+      "Read(//c/Users/az4521/Documents/programming/OpenTC4-Architectury/common/src/main/java/thaumcraft/client/fx/migrated/**)",
+      "Read(//c/Users/az4521/Documents/programming/opentc4/src/main/java/thaumcraft/common/entities/monster/**)",
+      "Read(//c/Users/az4521/Documents/programming/opentc4/src/main/java/thaumcraft/common/blocks/**)"
     ]
   }
 }

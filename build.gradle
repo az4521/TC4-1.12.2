@@ -1,14 +1,14 @@
 buildscript {
     repositories {
-        jcenter()
-        maven { url = "https://files.minecraftforge.net/maven" }
+        maven { url = 'https://maven.minecraftforge.net/' }
+        mavenCentral()
     }
     dependencies {
-        classpath 'net.minecraftforge.gradle:ForgeGradle:2.3-SNAPSHOT'
+        classpath 'net.minecraftforge.gradle:ForgeGradle:3.+'
     }
 }
 
-apply plugin: 'net.minecraftforge.gradle.forge'
+apply plugin: 'net.minecraftforge.gradle'
 apply plugin: 'java'
 apply plugin: 'maven-publish'
 
@@ -28,14 +28,22 @@ def getCommitVersion() {
 }
 version = getCommitVersion()
 
-sourceCompatibility = JavaVersion.VERSION_1_8
-targetCompatibility = JavaVersion.VERSION_1_8
+sourceCompatibility = targetCompatibility = compileJava.sourceCompatibility = compileJava.targetCompatibility = '1.8'
 
 minecraft {
-    version = "1.12.2-14.23.5.2860"
-    runDir = "run"
-    mappings = "stable_39"
-    useDepAts = true
+    mappings channel: 'stable', version: '39-1.12'
+
+    runs {
+        client {
+            workingDirectory project.file('run')
+            property 'forge.logging.markers', 'SCAN,REGISTRIES,REGISTRYDUMP'
+            property 'forge.logging.console.level', 'debug'
+        }
+        server {
+            property 'forge.logging.markers', 'SCAN,REGISTRIES,REGISTRYDUMP'
+            property 'forge.logging.console.level', 'debug'
+        }
+    }
 }
 
 repositories {
@@ -47,10 +55,6 @@ repositories {
         name = "chickenbones"
         url = "https://chickenbones.net/maven/"
     }
-    maven {
-        name = "tehnut"
-        url = "https://tehnut.info/maven/"
-    }
 }
 
 configurations {
@@ -61,10 +65,12 @@ configurations {
 }
 
 dependencies {
+    minecraft 'net.minecraftforge:forge:1.12.2-14.23.5.2859'
+
     // Baubles 1.12.2
-    deobfCompile 'curse.maven:baubles-227083:2518667'
-    // CodeChickenLib 1.12.2
-    deobfCompile "codechicken:CodeChickenLib:1.12.2-3.2.3.358:deobf"
+    compile fg.deobf('curse.maven:baubles-227083:2518667')
+    // CodeChickenLib 1.12.2 (already deobfuscated — do not wrap in fg.deobf)
+    compile "codechicken:CodeChickenLib:1.12.2-3.2.3.358:deobf"
 }
 
 jar {
@@ -77,13 +83,10 @@ jar {
             exclude '**/LICENSE', '**/LICENSE.txt', 'META-INF', 'META-INF/**'
         }
     }
-    manifest {
-        attributes(
-            'FMLCorePlugin': 'thaumcraft.codechicken.core.launch.DepLoader',
-            'FMLCorePluginContainsFMLMod': 'true'
-        )
-    }
+    // DepLoader coremod disabled for 1.12.2 - was causing classloader NPE
 }
+
+jar.finalizedBy('reobfJar')
 
 processResources {
     inputs.property 'version', project.version

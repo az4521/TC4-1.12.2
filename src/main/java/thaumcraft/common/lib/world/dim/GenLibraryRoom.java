@@ -2,7 +2,7 @@ package thaumcraft.common.lib.world.dim;
 
 import java.util.Random;
 import net.minecraft.world.World;
-import net.minecraftforge.common.util.ForgeDirection;
+import net.minecraft.util.EnumFacing;
 import thaumcraft.common.config.ConfigBlocks;
 
 public class GenLibraryRoom extends GenCommon {
@@ -55,46 +55,45 @@ public class GenLibraryRoom extends GenCommon {
                }
 
                if (a == 5 && b == 5 || a == 5 && b == 11 || a == 11 && b == 5 || a == 11 && b == 11) {
-                  world.setBlock(x + a, y + 3, z + b, ConfigBlocks.blockCosmeticSolid, 15, 3);
-                  world.setBlock(x + a, y + 8, z + b, ConfigBlocks.blockCosmeticSolid, 15, 3);
+        world.setBlockState(new net.minecraft.util.math.BlockPos(x + a, y + 3, z + b), (ConfigBlocks.blockCosmeticSolid).getStateFromMeta(15), 3);
+        world.setBlockState(new net.minecraft.util.math.BlockPos(x + a, y + 8, z + b), (ConfigBlocks.blockCosmeticSolid).getStateFromMeta(15), 3);
                }
             }
          }
       }
 
       for(int g = 0; g < 5; ++g) {
-         placeBlock(world, x + 6 + g, y + 2, z + 4, 10, ForgeDirection.NORTH, cell);
-         placeBlock(world, x + 6 + g, y + 2, z + 12, 10, ForgeDirection.SOUTH, cell);
-         placeBlock(world, x + 12, y + 2, z + 6 + g, 10, ForgeDirection.EAST, cell);
-         placeBlock(world, x + 4, y + 2, z + 6 + g, 10, ForgeDirection.WEST, cell);
-         placeBlock(world, x + 6 + g, y + 9, z + 4, 11, ForgeDirection.NORTH, cell);
-         placeBlock(world, x + 6 + g, y + 9, z + 12, 11, ForgeDirection.SOUTH, cell);
-         placeBlock(world, x + 12, y + 9, z + 6 + g, 11, ForgeDirection.EAST, cell);
-         placeBlock(world, x + 4, y + 9, z + 6 + g, 11, ForgeDirection.WEST, cell);
+         placeBlock(world, x + 6 + g, y + 2, z + 4, 10, EnumFacing.NORTH, cell);
+         placeBlock(world, x + 6 + g, y + 2, z + 12, 10, EnumFacing.SOUTH, cell);
+         placeBlock(world, x + 12, y + 2, z + 6 + g, 10, EnumFacing.EAST, cell);
+         placeBlock(world, x + 4, y + 2, z + 6 + g, 10, EnumFacing.WEST, cell);
+         placeBlock(world, x + 6 + g, y + 9, z + 4, 11, EnumFacing.NORTH, cell);
+         placeBlock(world, x + 6 + g, y + 9, z + 12, 11, EnumFacing.SOUTH, cell);
+         placeBlock(world, x + 12, y + 9, z + 6 + g, 11, EnumFacing.EAST, cell);
+         placeBlock(world, x + 4, y + 9, z + 6 + g, 11, EnumFacing.WEST, cell);
       }
-
-      world.setBlock(x + 5, y + 4, z + 5, ConfigBlocks.blockEldritch, 5, 3);
-      world.setBlock(x + 5, y + 5, z + 5, ConfigBlocks.blockSlabStone, 1, 3);
-      world.setBlock(x + 5, y + 4, z + 11, ConfigBlocks.blockEldritch, 5, 3);
-      world.setBlock(x + 5, y + 5, z + 11, ConfigBlocks.blockSlabStone, 1, 3);
-      world.setBlock(x + 11, y + 4, z + 5, ConfigBlocks.blockEldritch, 5, 3);
-      world.setBlock(x + 11, y + 5, z + 5, ConfigBlocks.blockSlabStone, 1, 3);
-      world.setBlock(x + 11, y + 4, z + 11, ConfigBlocks.blockEldritch, 5, 3);
-      world.setBlock(x + 11, y + 5, z + 11, ConfigBlocks.blockSlabStone, 1, 3);
-      world.setBlock(x + 5, y + 7, z + 5, ConfigBlocks.blockEldritch, 5, 3);
-      world.setBlock(x + 5, y + 6, z + 5, ConfigBlocks.blockSlabStone, 9, 3);
-      world.setBlock(x + 5, y + 7, z + 11, ConfigBlocks.blockEldritch, 5, 3);
-      world.setBlock(x + 5, y + 6, z + 11, ConfigBlocks.blockSlabStone, 9, 3);
-      world.setBlock(x + 11, y + 7, z + 5, ConfigBlocks.blockEldritch, 5, 3);
-      world.setBlock(x + 11, y + 6, z + 5, ConfigBlocks.blockSlabStone, 9, 3);
-      world.setBlock(x + 11, y + 7, z + 11, ConfigBlocks.blockEldritch, 5, 3);
-      world.setBlock(x + 11, y + 6, z + 11, ConfigBlocks.blockSlabStone, 9, 3);
-      world.setBlock(x + 8, y + 2, z + 8, ConfigBlocks.blockCosmeticSolid, 15, 3);
-      world.setBlock(x + 8, y + 3, z + 8, ConfigBlocks.blockEldritch, 5, 3);
-      world.setBlock(x + 8, y + 4, z + 8, ConfigBlocks.blockSlabStone, 1, 3);
-      world.setBlock(x + 8, y + 9, z + 8, ConfigBlocks.blockCosmeticSolid, 15, 3);
-      world.setBlock(x + 8, y + 8, z + 8, ConfigBlocks.blockEldritch, 5, 3);
-      world.setBlock(x + 8, y + 7, z + 8, ConfigBlocks.blockSlabStone, 9, 3);
+        world.setBlockState(new net.minecraft.util.math.BlockPos(x + 5, y + 4, z + 5), (ConfigBlocks.blockEldritch).getStateFromMeta(5), 3);
+        world.setBlockState(new net.minecraft.util.math.BlockPos(x + 5, y + 5, z + 5), (ConfigBlocks.blockSlabStone).getStateFromMeta(1), 3);
+        world.setBlockState(new net.minecraft.util.math.BlockPos(x + 5, y + 4, z + 11), (ConfigBlocks.blockEldritch).getStateFromMeta(5), 3);
+        world.setBlockState(new net.minecraft.util.math.BlockPos(x + 5, y + 5, z + 11), (ConfigBlocks.blockSlabStone).getStateFromMeta(1), 3);
+        world.setBlockState(new net.minecraft.util.math.BlockPos(x + 11, y + 4, z + 5), (ConfigBlocks.blockEldritch).getStateFromMeta(5), 3);
+        world.setBlockState(new net.minecraft.util.math.BlockPos(x + 11, y + 5, z + 5), (ConfigBlocks.blockSlabStone).getStateFromMeta(1), 3);
+        world.setBlockState(new net.minecraft.util.math.BlockPos(x + 11, y + 4, z + 11), (ConfigBlocks.blockEldritch).getStateFromMeta(5), 3);
+        world.setBlockState(new net.minecraft.util.math.BlockPos(x + 11, y + 5, z + 11), (ConfigBlocks.blockSlabStone).getStateFromMeta(1), 3);
+        world.setBlockState(new net.minecraft.util.math.BlockPos(x + 5, y + 7, z + 5), (ConfigBlocks.blockEldritch).getStateFromMeta(5), 3);
+        world.setBlockState(new net.minecraft.util.math.BlockPos(x + 5, y + 6, z + 5), (ConfigBlocks.blockSlabStone).getStateFromMeta(9), 3);
+        world.setBlockState(new net.minecraft.util.math.BlockPos(x + 5, y + 7, z + 11), (ConfigBlocks.blockEldritch).getStateFromMeta(5), 3);
+        world.setBlockState(new net.minecraft.util.math.BlockPos(x + 5, y + 6, z + 11), (ConfigBlocks.blockSlabStone).getStateFromMeta(9), 3);
+        world.setBlockState(new net.minecraft.util.math.BlockPos(x + 11, y + 7, z + 5), (ConfigBlocks.blockEldritch).getStateFromMeta(5), 3);
+        world.setBlockState(new net.minecraft.util.math.BlockPos(x + 11, y + 6, z + 5), (ConfigBlocks.blockSlabStone).getStateFromMeta(9), 3);
+        world.setBlockState(new net.minecraft.util.math.BlockPos(x + 11, y + 7, z + 11), (ConfigBlocks.blockEldritch).getStateFromMeta(5), 3);
+        world.setBlockState(new net.minecraft.util.math.BlockPos(x + 11, y + 6, z + 11), (ConfigBlocks.blockSlabStone).getStateFromMeta(9), 3);
+        world.setBlockState(new net.minecraft.util.math.BlockPos(x + 8, y + 2, z + 8), (ConfigBlocks.blockCosmeticSolid).getStateFromMeta(15), 3);
+        world.setBlockState(new net.minecraft.util.math.BlockPos(x + 8, y + 3, z + 8), (ConfigBlocks.blockEldritch).getStateFromMeta(5), 3);
+        world.setBlockState(new net.minecraft.util.math.BlockPos(x + 8, y + 4, z + 8), (ConfigBlocks.blockSlabStone).getStateFromMeta(1), 3);
+        world.setBlockState(new net.minecraft.util.math.BlockPos(x + 8, y + 9, z + 8), (ConfigBlocks.blockCosmeticSolid).getStateFromMeta(15), 3);
+        world.setBlockState(new net.minecraft.util.math.BlockPos(x + 8, y + 8, z + 8), (ConfigBlocks.blockEldritch).getStateFromMeta(5), 3);
+        world.setBlockState(new net.minecraft.util.math.BlockPos(x + 8, y + 7, z + 8), (ConfigBlocks.blockSlabStone).getStateFromMeta(9), 3);
       GenCommon.generateConnections(world, random, cx, cz, y, cell, 3, true);
    }
 }

@@ -5,10 +5,12 @@ import net.minecraft.client.model.ModelRenderer;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.monster.EntitySkeleton;
 import net.minecraft.entity.monster.EntityZombie;
-import net.minecraft.util.MathHelper;
-import org.lwjgl.opengl.GL11;
+import net.minecraft.util.math.MathHelper;
+
+import net.minecraft.client.renderer.GlStateManager;
 
 public class ModelRobe extends ModelBiped {
+   public float onGround = 0.0F;
    ModelRenderer Hood1;
    ModelRenderer Hood2;
    ModelRenderer Hood3;
@@ -412,26 +414,26 @@ public class ModelRobe extends ModelBiped {
       this.ClothBackR2.rotateAngleX = this.ClothBackL2.rotateAngleX = this.ClothBackR3.rotateAngleX = this.ClothBackL3.rotateAngleX = -c + 0.2268928F;
       if (this.isChild) {
          float f6 = 2.0F;
-         GL11.glPushMatrix();
-         GL11.glScalef(1.5F / f6, 1.5F / f6, 1.5F / f6);
-         GL11.glTranslatef(0.0F, 16.0F * f5, 0.0F);
+         GlStateManager.pushMatrix();
+         GlStateManager.scale(1.5F / f6, 1.5F / f6, 1.5F / f6);
+         GlStateManager.translate(0.0F, 16.0F * f5, 0.0F);
          this.bipedHead.render(f5);
-         GL11.glPopMatrix();
-         GL11.glPushMatrix();
-         GL11.glScalef(1.0F / f6, 1.0F / f6, 1.0F / f6);
-         GL11.glTranslatef(0.0F, 24.0F * f5, 0.0F);
+         GlStateManager.popMatrix();
+         GlStateManager.pushMatrix();
+         GlStateManager.scale(1.0F / f6, 1.0F / f6, 1.0F / f6);
+         GlStateManager.translate(0.0F, 24.0F * f5, 0.0F);
          this.bipedBody.render(f5);
          this.bipedRightArm.render(f5);
          this.bipedLeftArm.render(f5);
          this.bipedRightLeg.render(f5);
          this.bipedLeftLeg.render(f5);
          this.bipedHeadwear.render(f5);
-         GL11.glPopMatrix();
+         GlStateManager.popMatrix();
       } else {
-         GL11.glPushMatrix();
-         GL11.glScalef(1.01F, 1.01F, 1.01F);
+         GlStateManager.pushMatrix();
+         GlStateManager.scale(1.01F, 1.01F, 1.01F);
          this.bipedHead.render(f5);
-         GL11.glPopMatrix();
+         GlStateManager.popMatrix();
          this.bipedBody.render(f5);
          this.bipedRightArm.render(f5);
          this.bipedLeftArm.render(f5);
@@ -448,8 +450,8 @@ public class ModelRobe extends ModelBiped {
       model.rotateAngleZ = z;
    }
 
-   public void setRotationAnglesZombie(float p_78087_1_, float p_78087_2_, float p_78087_3_, float p_78087_4_, float p_78087_5_, float p_78087_6_, Entity p_78087_7_) {
-      super.setRotationAngles(p_78087_1_, p_78087_2_, p_78087_3_, p_78087_4_, p_78087_5_, p_78087_6_, p_78087_7_);
+   public void setRotationAnglesZombie(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scaleFactor, Entity entityIn) {
+      super.setRotationAngles(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scaleFactor, entityIn);
       float f6 = MathHelper.sin(this.onGround * (float)Math.PI);
       float f7 = MathHelper.sin((1.0F - (1.0F - this.onGround) * (1.0F - this.onGround)) * (float)Math.PI);
       this.bipedRightArm.rotateAngleZ = 0.0F;
@@ -463,12 +465,12 @@ public class ModelRobe extends ModelBiped {
       var10000 = this.bipedLeftArm;
       var10000.rotateAngleX -= f6 * 1.2F - f7 * 0.4F;
       var10000 = this.bipedRightArm;
-      var10000.rotateAngleZ += MathHelper.cos(p_78087_3_ * 0.09F) * 0.05F + 0.05F;
+      var10000.rotateAngleZ += MathHelper.cos(ageInTicks * 0.09F) * 0.05F + 0.05F;
       var10000 = this.bipedLeftArm;
-      var10000.rotateAngleZ -= MathHelper.cos(p_78087_3_ * 0.09F) * 0.05F + 0.05F;
+      var10000.rotateAngleZ -= MathHelper.cos(ageInTicks * 0.09F) * 0.05F + 0.05F;
       var10000 = this.bipedRightArm;
-      var10000.rotateAngleX += MathHelper.sin(p_78087_3_ * 0.067F) * 0.05F;
+      var10000.rotateAngleX += MathHelper.sin(ageInTicks * 0.067F) * 0.05F;
       var10000 = this.bipedLeftArm;
-      var10000.rotateAngleX -= MathHelper.sin(p_78087_3_ * 0.067F) * 0.05F;
+      var10000.rotateAngleX -= MathHelper.sin(ageInTicks * 0.067F) * 0.05F;
    }
 }

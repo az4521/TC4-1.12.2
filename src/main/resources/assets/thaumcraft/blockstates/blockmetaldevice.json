@@ -1,0 +1,52 @@
+{
+  "variants": {
+    "meta=0": {
+      "model": "thaumcraft:blockmetaldevice"
+    },
+    "meta=1": {
+      "model": "thaumcraft:blockmetaldevice"
+    },
+    "meta=2": {
+      "model": "thaumcraft:blockmetaldevice_lamp"
+    },
+    "meta=3": {
+      "model": "thaumcraft:blockmetaldevice"
+    },
+    "meta=4": {
+      "model": "thaumcraft:blockmetaldevice"
+    },
+    "meta=5": {
+      "model": "thaumcraft:blockmetaldevice_ear"
+    },
+    "meta=6": {
+      "model": "thaumcraft:blockmetaldevice_ear"
+    },
+    "meta=7": {
+      "model": "thaumcraft:blockmetaldevice"
+    },
+    "meta=8": {
+      "model": "thaumcraft:blockmetaldevice"
+    },
+    "meta=9": {
+      "model": "thaumcraft:blockmetaldevice"
+    },
+    "meta=10": {
+      "model": "thaumcraft:blockmetaldevice"
+    },
+    "meta=11": {
+      "model": "thaumcraft:blockmetaldevice"
+    },
+    "meta=12": {
+      "model": "thaumcraft:blockmetaldevice"
+    },
+    "meta=13": {
+      "model": "thaumcraft:blockmetaldevice"
+    },
+    "meta=14": {
+      "model": "thaumcraft:blockmetaldevice"
+    },
+    "meta=15": {
+      "model": "thaumcraft:blockmetaldevice"
+    }
+  }
+}

@@ -1,91 +1,97 @@
 package thaumcraft.common.blocks;
 
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockContainer;
 import net.minecraft.block.material.Material;
-import net.minecraft.client.particle.EffectRenderer;
-import net.minecraft.client.renderer.texture.IIconRegister;
+import net.minecraft.block.state.IBlockState;
+import net.minecraft.client.particle.ParticleManager;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.EnumCreatureType;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.AxisAlignedBB;
-import net.minecraft.util.IIcon;
-import net.minecraft.util.MovingObjectPosition;
-import net.minecraft.util.Vec3;
+import net.minecraft.util.math.AxisAlignedBB;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.world.Explosion;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 import net.minecraftforge.common.IPlantable;
-import net.minecraftforge.common.util.ForgeDirection;
+import net.minecraft.util.EnumFacing;
 import thaumcraft.common.Thaumcraft;
-import thaumcraft.common.config.ConfigBlocks;
 import thaumcraft.common.tiles.TileWarded;
 
-import java.util.List;
 import java.util.Random;
 
 public class BlockWarded extends BlockContainer {
-   public IIcon icon;
-   public IIcon iconRune;
-   int sc = 0;
+   public static final net.minecraft.block.properties.PropertyInteger META =
+         net.minecraft.block.properties.PropertyInteger.create("meta", 0, 15);
+
+   @Override
+   protected net.minecraft.block.state.BlockStateContainer createBlockState() {
+      return new net.minecraft.block.state.BlockStateContainer(this, META);
+   }
+
+   @Override
+   public net.minecraft.block.state.IBlockState getStateFromMeta(int meta) {
+      return this.getDefaultState().withProperty(META, meta);
+   }
+
+   @Override
+   public int getMetaFromState(net.minecraft.block.state.IBlockState state) {
+      return state.getValue(META);
+   }
+
 
    public BlockWarded() {
-      super(Material.rock);
-      this.setStepSound(soundTypeStone);
+      super(Material.ROCK);
+      // setStepSound removed in 1.12.2 — sound is now data-driven
       this.disableStats();
       this.setResistance(999.0F);
       this.setBlockUnbreakable();
    }
 
-   @SideOnly(Side.CLIENT)
-   public void registerBlockIcons(IIconRegister ir) {
-      this.icon = ir.registerIcon("thaumcraft:blank");
-      this.iconRune = ir.registerIcon("thaumcraft:runeborder");
-   }
+   // registerBlockIcons removed — textures handled by JSON models in 1.12.2
+   // getIcon removed — textures handled by JSON models in 1.12.2
 
-   public IIcon getIcon(int i, int m) {
-      return this.icon;
-   }
-
-   public boolean isOpaqueCube() {
+   @Override
+   public boolean isOpaqueCube(IBlockState state) {
       return false;
    }
 
-   public boolean renderAsNormalBlock() {
+   @Override
+   public boolean isFullCube(IBlockState state) {
       return false;
    }
 
-   public boolean addHitEffects(World worldObj, MovingObjectPosition target, EffectRenderer effectRenderer) {
-      float f = (float)target.hitVec.xCoord - (float)target.blockX;
-      float f1 = (float)target.hitVec.yCoord - (float)target.blockY;
-      float f2 = (float)target.hitVec.zCoord - (float)target.blockZ;
-      Thaumcraft.proxy.blockWard(worldObj, target.blockX, target.blockY, target.blockZ, ForgeDirection.getOrientation(target.sideHit), f, f1, f2);
+   @Override
+   public boolean addHitEffects(IBlockState state, World world, RayTraceResult target, ParticleManager effectRenderer) {
+      BlockPos pos = target.getBlockPos();
+      float f  = (float)target.hitVec.x - (float)pos.getX();
+      float f1 = (float)target.hitVec.y - (float)pos.getY();
+      float f2 = (float)target.hitVec.z - (float)pos.getZ();
+      Thaumcraft.proxy.blockWard(world, pos.getX(), pos.getY(), pos.getZ(), target.sideHit, f, f1, f2);
       return true;
    }
 
-   public int getRenderType() {
-      return ConfigBlocks.blockWardedRI;
-   }
+   // getRenderType() removed — defaults to MODEL in 1.12.2
 
    public Block getBlock(World world, int x, int y, int z) {
       if (this.sc > 5) {
          this.sc = 0;
-         return Blocks.stone;
+         return Blocks.STONE;
       } else {
          ++this.sc;
-         TileEntity tile = world.getTileEntity(x, y, z);
+         TileEntity tile = world.getTileEntity(new BlockPos(x, y, z));
          if (tile instanceof TileWarded) {
             this.sc = 0;
             return ((TileWarded)tile).block;
          } else {
-            return Blocks.stone;
+            return Blocks.STONE;
          }
       }
    }
@@ -93,178 +99,140 @@ public class BlockWarded extends BlockContainer {
    public Block getBlock(IBlockAccess world, int x, int y, int z) {
       if (this.sc > 5) {
          this.sc = 0;
-         return Blocks.stone;
+         return Blocks.STONE;
       } else {
          ++this.sc;
-         TileEntity tile = world.getTileEntity(x, y, z);
+         TileEntity tile = world.getTileEntity(new BlockPos(x, y, z));
          if (tile instanceof TileWarded) {
             this.sc = 0;
             return ((TileWarded)tile).block;
          } else {
-            return Blocks.stone;
+            return Blocks.STONE;
          }
       }
    }
 
-   public Item getItemDropped(int par1, Random par2Random, int par3) {
+   int sc = 0;
+
+   @Override
+   public Item getItemDropped(IBlockState state, Random rand, int fortune) {
       return Item.getItemById(0);
    }
 
-   public int damageDropped(int par1) {
-      return par1;
+   @Override
+   public int damageDropped(IBlockState state) {
+      return state.getBlock().getMetaFromState(state);
    }
 
-   public int getMobilityFlag() {
-      return 2;
+   // getMobilityFlag() removed in 1.12.2 — use getPushReaction(IBlockState)
+   @Override
+   public net.minecraft.block.material.EnumPushReaction getPushReaction(IBlockState state) {
+      return net.minecraft.block.material.EnumPushReaction.BLOCK;
    }
 
+   @Override
    public TileEntity createNewTileEntity(World var1, int md) {
       return new TileWarded();
    }
 
-   public boolean canBeReplacedByLeaves(IBlockAccess world, int x, int y, int z) {
+   // canBeReplacedByLeaves(IBlockAccess,int,int,int) not available in 1.12.2 with those params;
+   // override the IBlockState variant:
+   @Override
+   public boolean canBeReplacedByLeaves(IBlockState state, IBlockAccess world, BlockPos pos) {
       return false;
    }
 
-   public boolean canEntityDestroy(IBlockAccess world, int x, int y, int z, Entity entity) {
+   @Override
+   public boolean canEntityDestroy(IBlockState state, IBlockAccess world, BlockPos pos, Entity entity) {
       return false;
    }
 
-   public boolean canCreatureSpawn(EnumCreatureType type, IBlockAccess world, int x, int y, int z) {
+   @Override
+   public boolean canCreatureSpawn(IBlockState state, IBlockAccess world, BlockPos pos,
+         net.minecraft.entity.EntityLiving.SpawnPlacementType type) {
       return false;
    }
 
-   @SideOnly(Side.CLIENT)
-   public IIcon getIcon(IBlockAccess ba, int x, int y, int z, int par5) {
-      return this.getBlock(ba, x, y, z).getIcon(ba, x, y, z, par5);
-   }
-
-   @SideOnly(Side.CLIENT)
-   public int colorMultiplier(IBlockAccess ba, int x, int y, int z) {
-      return this.getBlock(ba, x, y, z).colorMultiplier(ba, x, y, z);
-   }
-
-   public int getDamageValue(World world, int x, int y, int z) {
-      return this.getBlock(world, x, y, z).getDamageValue(world, x, y, z);
-   }
-
-   public int getMixedBrightnessForBlock(IBlockAccess ba, int x, int y, int z) {
-      return this.getBlock(ba, x, y, z).getMixedBrightnessForBlock(ba, x, y, z);
-   }
-
-   public boolean shouldSideBeRendered(IBlockAccess ba, int x, int y, int z, int par5) {
-      return this.getBlock(ba, x, y, z).shouldSideBeRendered(ba, x, y, z, par5);
-   }
-
-   public boolean isBlockSolid(IBlockAccess ba, int x, int y, int z, int par5) {
-      return this.getBlock(ba, x, y, z).isBlockSolid(ba, x, y, z, par5);
-   }
-
-   public AxisAlignedBB getSelectedBoundingBoxFromPool(World ba, int x, int y, int z) {
-      return this.getBlock(ba, x, y, z).getSelectedBoundingBoxFromPool(ba, x, y, z);
-   }
-
-   public AxisAlignedBB getCollisionBoundingBoxFromPool(World ba, int x, int y, int z) {
-      return this.getBlock(ba, x, y, z).getCollisionBoundingBoxFromPool(ba, x, y, z);
-   }
-
-   public void randomDisplayTick(World ba, int x, int y, int z, Random par5Random) {
-      this.getBlock(ba, x, y, z).randomDisplayTick(ba, x, y, z, par5Random);
-   }
-
-   public boolean canPlaceBlockOnSide(World ba, int x, int y, int z, int par5) {
-      return this.getBlock(ba, x, y, z).canPlaceBlockOnSide(ba, x, y, z, par5);
-   }
-
-   public void onEntityWalking(World ba, int x, int y, int z, Entity par5Entity) {
-      this.getBlock(ba, x, y, z).onEntityWalking(ba, x, y, z, par5Entity);
-   }
-
-   public void onBlockClicked(World ba, int x, int y, int z, EntityPlayer par5EntityPlayer) {
-      this.getBlock(ba, x, y, z).onBlockClicked(ba, x, y, z, par5EntityPlayer);
-   }
-
-   public void velocityToAddToEntity(World ba, int x, int y, int z, Entity par5Entity, Vec3 par6Vec3) {
-      this.getBlock(ba, x, y, z).velocityToAddToEntity(ba, x, y, z, par5Entity, par6Vec3);
-   }
-
-   public void setBlockBoundsBasedOnState(IBlockAccess ba, int x, int y, int z) {
-      this.getBlock(ba, x, y, z).setBlockBoundsBasedOnState(ba, x, y, z);
-   }
-
-   public void addCollisionBoxesToList(World ba, int x, int y, int z, AxisAlignedBB aabb, List list, Entity entity) {
-      this.getBlock(ba, x, y, z).addCollisionBoxesToList(ba, x, y, z, aabb, list, entity);
-   }
-
-   public void onEntityCollidedWithBlock(World ba, int x, int y, int z, Entity par5Entity) {
-      this.getBlock(ba, x, y, z).onEntityCollidedWithBlock(ba, x, y, z, par5Entity);
-   }
-
-   public void onFallenUpon(World ba, int x, int y, int z, Entity par5Entity, float par6) {
-      this.getBlock(ba, x, y, z).onFallenUpon(ba, x, y, z, par5Entity, par6);
-   }
-
-   public Item getItem(World ba, int x, int y, int z) {
-      return this.getBlock(ba, x, y, z).getItem(ba, x, y, z);
-   }
-
-   public int getLightValue(IBlockAccess world, int x, int y, int z) {
-      TileEntity tile = world.getTileEntity(x, y, z);
+   @Override
+   public int getLightValue(IBlockState state, IBlockAccess world, BlockPos pos) {
+      TileEntity tile = world.getTileEntity(pos);
       return tile instanceof TileWarded ? ((TileWarded)tile).light : 0;
    }
 
-   public boolean isLadder(IBlockAccess world, int x, int y, int z, EntityLivingBase entity) {
-      return this.getBlock(world, x, y, z).isLadder(world, x, y, z, entity);
+   @Override
+   public boolean isLadder(IBlockState state, IBlockAccess world, BlockPos pos, EntityLivingBase entity) {
+      return this.getBlock(world, pos.getX(), pos.getY(), pos.getZ())
+            .isLadder(world.getBlockState(pos), world, pos, entity);
    }
 
-   public boolean isNormalCube(IBlockAccess world, int x, int y, int z) {
-      return this.getBlock(world, x, y, z).isNormalCube(world, x, y, z);
+   @Override
+   public boolean isSideSolid(IBlockState state, IBlockAccess world, BlockPos pos, EnumFacing side) {
+      return this.getBlock(world, pos.getX(), pos.getY(), pos.getZ())
+            .isSideSolid(world.getBlockState(pos), world, pos, side);
    }
 
-   public boolean isSideSolid(IBlockAccess world, int x, int y, int z, ForgeDirection side) {
-      return this.getBlock(world, x, y, z).isSideSolid(world, x, y, z, side);
+   @Override
+   public boolean canSustainLeaves(IBlockState state, IBlockAccess world, BlockPos pos) {
+      return this.getBlock(world, pos.getX(), pos.getY(), pos.getZ())
+            .canSustainLeaves(world.getBlockState(pos), world, pos);
    }
 
-   public boolean canSustainLeaves(IBlockAccess world, int x, int y, int z) {
-      return this.getBlock(world, x, y, z).canSustainLeaves(world, x, y, z);
+   @Override
+   public ItemStack getPickBlock(IBlockState state, RayTraceResult target, World world, BlockPos pos,
+         EntityPlayer player) {
+      return this.getBlock(world, pos.getX(), pos.getY(), pos.getZ())
+            .getPickBlock(world.getBlockState(pos), target, world, pos, player);
    }
 
-   public boolean canPlaceTorchOnTop(World world, int x, int y, int z) {
-      return this.getBlock(world, x, y, z).canPlaceTorchOnTop(world, x, y, z);
+   @Override
+   public boolean isFoliage(IBlockAccess world, BlockPos pos) {
+      return this.getBlock(world, pos.getX(), pos.getY(), pos.getZ())
+            .isFoliage(world, pos);
    }
 
-   public ItemStack getPickBlock(MovingObjectPosition target, World world, int x, int y, int z) {
-      return this.getBlock(world, x, y, z).getPickBlock(target, world, x, y, z);
+   @Override
+   public boolean canSustainPlant(IBlockState state, IBlockAccess world, BlockPos pos,
+         EnumFacing direction, IPlantable plant) {
+      return this.getBlock(world, pos.getX(), pos.getY(), pos.getZ())
+            .canSustainPlant(world.getBlockState(pos), world, pos, direction, plant);
    }
 
-   public boolean isFoliage(IBlockAccess world, int x, int y, int z) {
-      return this.getBlock(world, x, y, z).isFoliage(world, x, y, z);
+   @Override
+   public boolean isFertile(World world, BlockPos pos) {
+      return this.getBlock(world, pos.getX(), pos.getY(), pos.getZ())
+            .isFertile(world, pos);
    }
 
-   public boolean canSustainPlant(IBlockAccess world, int x, int y, int z, ForgeDirection direction, IPlantable plant) {
-      return this.getBlock(world, x, y, z).canSustainPlant(world, x, y, z, direction, plant);
+   @Override
+   public int getLightOpacity(IBlockState state, IBlockAccess world, BlockPos pos) {
+      return this.getBlock(world, pos.getX(), pos.getY(), pos.getZ())
+            .getLightOpacity(world.getBlockState(pos), world, pos);
    }
 
-   public boolean isFertile(World world, int x, int y, int z) {
-      return this.getBlock(world, x, y, z).isFertile(world, x, y, z);
+   @Override
+   public boolean isBeaconBase(IBlockAccess world, BlockPos pos, BlockPos beacon) {
+      return this.getBlock(world, pos.getX(), pos.getY(), pos.getZ())
+            .isBeaconBase(world, pos, beacon);
    }
 
-   public int getLightOpacity(IBlockAccess world, int x, int y, int z) {
-      return this.getBlock(world, x, y, z).getLightOpacity(world, x, y, z);
+   @Override
+   public float getEnchantPowerBonus(World world, BlockPos pos) {
+      return this.getBlock(world, pos.getX(), pos.getY(), pos.getZ())
+            .getEnchantPowerBonus(world, pos);
    }
 
-   public boolean isBeaconBase(IBlockAccess world, int x, int y, int z, int beaconX, int beaconY, int beaconZ) {
-      return this.getBlock(world, x, y, z).isBeaconBase(world, x, y, z, beaconX, beaconY, beaconZ);
-   }
-
-   public float getEnchantPowerBonus(World world, int x, int y, int z) {
-      return this.getBlock(world, x, y, z).getEnchantPowerBonus(world, x, y, z);
-   }
-
-   public boolean canHarvestBlock(EntityPlayer player, int meta) {
+   @Override
+   public boolean canHarvestBlock(IBlockAccess world, BlockPos pos, EntityPlayer player) {
       return true;
    }
 
-   public void onBlockExploded(World world, int x, int y, int z, Explosion explosion) {
+   @Override
+   public void onBlockExploded(World world, BlockPos pos, Explosion explosion) {
+      // warded blocks are immune to explosions
+   }
+
+   @Override
+   public net.minecraft.util.EnumBlockRenderType getRenderType(net.minecraft.block.state.IBlockState state) {
+      return net.minecraft.util.EnumBlockRenderType.MODEL;
    }
 }

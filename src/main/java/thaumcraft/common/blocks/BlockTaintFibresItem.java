@@ -1,13 +1,8 @@
 package thaumcraft.common.blocks;
 
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
 import net.minecraft.block.Block;
 import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.IIcon;
-import thaumcraft.common.config.ConfigBlocks;
-import thaumcraft.common.lib.world.ThaumcraftWorldGenerator;
 
 public class BlockTaintFibresItem extends ItemBlock {
    public BlockTaintFibresItem(Block par1) {
@@ -16,20 +11,17 @@ public class BlockTaintFibresItem extends ItemBlock {
       this.setHasSubtypes(true);
    }
 
+   @Override
    public int getMetadata(int par1) {
       return par1;
    }
 
-   public int getColorFromItemStack(ItemStack par1ItemStack, int par2) {
-      return ThaumcraftWorldGenerator.biomeTaint.color;
+   @Override
+   public String getTranslationKey(ItemStack par1ItemStack) {
+      return super.getTranslationKey() + "." + par1ItemStack.getItemDamage();
    }
 
-   public String getUnlocalizedName(ItemStack par1ItemStack) {
-      return super.getUnlocalizedName() + "." + par1ItemStack.getItemDamage();
-   }
-
-   @SideOnly(Side.CLIENT)
-   public IIcon getIconFromDamage(int meta) {
-      return ((BlockTaintFibres)ConfigBlocks.blockTaintFibres).icon[meta];
-   }
+   // Item tint color is registered via Minecraft.getMinecraft().getItemColors()
+   // .registerItemColorHandler() on the client side in 1.12.2 — not an Item override.
+   // getIconFromDamage removed — textures handled by JSON models in 1.12.2.
 }

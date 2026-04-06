@@ -1,7 +1,7 @@
 package thaumcraft.client.lib;
 
-import cpw.mods.fml.client.FMLClientHandler;
-import cpw.mods.fml.relauncher.ReflectionHelper;
+import net.minecraftforge.fml.client.FMLClientHandler;
+import net.minecraftforge.fml.relauncher.ReflectionHelper;
 import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.io.InputStream;
@@ -11,27 +11,29 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import javax.imageio.ImageIO;
+
+import org.lwjgl.opengl.GL11;
+
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.inventory.GuiContainer;
-import net.minecraft.client.particle.EffectRenderer;
 import net.minecraft.client.renderer.ActiveRenderInfo;
 import net.minecraft.client.renderer.ItemRenderer;
 import net.minecraft.client.renderer.Tessellator;
-import net.minecraft.client.renderer.entity.RenderItem;
+import net.minecraft.client.renderer.RenderItem;
 import net.minecraft.client.renderer.texture.TextureMap;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.util.IIcon;
-import net.minecraft.util.MathHelper;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.Timer;
-import net.minecraft.util.Vec3;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
-import org.lwjgl.opengl.GL11;
+
 import thaumcraft.api.aspects.Aspect;
 import thaumcraft.client.fx.ParticleEngine;
 import thaumcraft.client.fx.particles.FXScorch;
@@ -39,7 +41,9 @@ import thaumcraft.client.fx.particles.FXSparkle;
 import thaumcraft.common.Thaumcraft;
 import thaumcraft.common.config.Config;
 
-import static tc4tweak.ClientUtils.fieldParticleTexture;
+import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.client.renderer.BufferBuilder;
+import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 
 public class UtilsFX {
    public static final String[] colorNames = new String[]{"White", "Orange", "Magenta", "Light Blue", "Yellow", "Lime", "Pink", "Gray", "Light Gray", "Cyan", "Purple", "Blue", "Brown", "Green", "Red", "Black"};
@@ -98,199 +102,208 @@ public class UtilsFX {
    }
 
    public static void shootFire(World world, EntityPlayer p, boolean offset, int range, boolean lance) {
-      Vec3 vec3d = p.getLook((float)range);
+      Vec3d vec3d = p.getLook((float)range);
       double px = p.posX - (double)(MathHelper.cos(p.rotationYaw / 180.0F * 3.141593F) * 0.1F);
       double py = p.posY - (double)0.08F;
       double pz = p.posZ - (double)(MathHelper.sin(p.rotationYaw / 180.0F * 3.141593F) * 0.1F);
-      if (p.getEntityId() != FMLClientHandler.instance().getClient().thePlayer.getEntityId()) {
-         py = p.boundingBox.minY + (double)(p.height / 2.0F) + (double)0.25F;
+      if (p.getEntityId() != FMLClientHandler.instance().getClient().player.getEntityId()) {
+         py = p.getEntityBoundingBox().minY + (double)(p.height / 2.0F) + (double)0.25F;
       }
 
       for(int q = 0; q < 3; ++q) {
-         FXScorch ef = new FXScorch(p.worldObj, px, py, pz, vec3d, (float)range, lance);
-         ef.posX += vec3d.xCoord * (double)0.3F;
-         ef.posY += vec3d.yCoord * (double)0.3F;
-         ef.posZ += vec3d.zCoord * (double)0.3F;
-         ef.prevPosX = ef.posX;
-         ef.prevPosY = ef.posY;
-         ef.prevPosZ = ef.posZ;
-         ef.posX += vec3d.xCoord * (double)0.3F;
-         ef.posY += vec3d.yCoord * (double)0.3F;
-         ef.posZ += vec3d.zCoord * (double)0.3F;
+         FXScorch ef = new FXScorch(p.world, px, py, pz, vec3d, (float)range, lance);
+         ef.applySpawnOffset(vec3d.x * 0.3, vec3d.y * 0.3, vec3d.z * 0.3);
          ParticleEngine.instance.addEffect(world, ef);
       }
 
    }
 
    public static void renderFacingQuad(double px, double py, double pz, float angle, float scale, float alpha, int frames, int cframe, float partialTicks, int color) {
-      if (Minecraft.getMinecraft().renderViewEntity instanceof EntityPlayer) {
-         Tessellator tessellator = Tessellator.instance;
-         float arX = ActiveRenderInfo.rotationX;
-         float arZ = ActiveRenderInfo.rotationZ;
-         float arYZ = ActiveRenderInfo.rotationYZ;
-         float arXY = ActiveRenderInfo.rotationXY;
-         float arXZ = ActiveRenderInfo.rotationXZ;
-         EntityPlayer player = (EntityPlayer)Minecraft.getMinecraft().renderViewEntity;
+      if (Minecraft.getMinecraft().getRenderViewEntity() instanceof EntityPlayer) {
+         Tessellator tessellator = Tessellator.getInstance();
+         BufferBuilder buffer = tessellator.getBuffer();
+         EntityPlayer player = (EntityPlayer)Minecraft.getMinecraft().getRenderViewEntity();
+         float[] _ar = thaumcraft.client.lib.UtilsFX.getBillboardRotations(player, partialTicks);
+         float arX = _ar[0]; float arZ = _ar[1]; float arYZ = _ar[2]; float arXY = _ar[3]; float arXZ = _ar[4];
          double iPX = player.prevPosX + (player.posX - player.prevPosX) * (double)partialTicks;
          double iPY = player.prevPosY + (player.posY - player.prevPosY) * (double)partialTicks;
          double iPZ = player.prevPosZ + (player.posZ - player.prevPosZ) * (double)partialTicks;
-         GL11.glTranslated(-iPX, -iPY, -iPZ);
-         tessellator.startDrawingQuads();
-         tessellator.setBrightness(220);
-         tessellator.setColorRGBA_I(color, (int)(alpha * 255.0F));
-         Vec3 v1 = Vec3.createVectorHelper(-arX * scale - arYZ * scale, -arXZ * scale, -arZ * scale - arXY * scale);
-         Vec3 v2 = Vec3.createVectorHelper(-arX * scale + arYZ * scale, arXZ * scale, -arZ * scale + arXY * scale);
-         Vec3 v3 = Vec3.createVectorHelper(arX * scale + arYZ * scale, arXZ * scale, arZ * scale + arXY * scale);
-         Vec3 v4 = Vec3.createVectorHelper(arX * scale - arYZ * scale, -arXZ * scale, arZ * scale - arXY * scale);
+         GlStateManager.translate(-iPX, -iPY, -iPZ);
+         buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX); 
+        
+         Vec3d v1 = new Vec3d(-arX * scale - arYZ * scale, -arXZ * scale, -arZ * scale - arXY * scale);
+         Vec3d v2 = new Vec3d(-arX * scale + arYZ * scale, arXZ * scale, -arZ * scale + arXY * scale);
+         Vec3d v3 = new Vec3d(arX * scale + arYZ * scale, arXZ * scale, arZ * scale + arXY * scale);
+         Vec3d v4 = new Vec3d(arX * scale - arYZ * scale, -arXZ * scale, arZ * scale - arXY * scale);
          if (angle != 0.0F) {
-            Vec3 pvec = Vec3.createVectorHelper(iPX, iPY, iPZ);
-            Vec3 tvec = Vec3.createVectorHelper(px, py, pz);
-            Vec3 qvec = pvec.subtract(tvec).normalize();
-            QuadHelper.setAxis(qvec, angle).rotate(v1);
-            QuadHelper.setAxis(qvec, angle).rotate(v2);
-            QuadHelper.setAxis(qvec, angle).rotate(v3);
-            QuadHelper.setAxis(qvec, angle).rotate(v4);
+            Vec3d pvec = new Vec3d(iPX, iPY, iPZ);
+            Vec3d tvec = new Vec3d(px, py, pz);
+            Vec3d qvec = pvec.subtract(tvec).normalize();
+            v1 = QuadHelper.setAxis(qvec, angle).rotate(v1);
+            v2 = QuadHelper.setAxis(qvec, angle).rotate(v2);
+            v3 = QuadHelper.setAxis(qvec, angle).rotate(v3);
+            v4 = QuadHelper.setAxis(qvec, angle).rotate(v4);
          }
 
          float f2 = (float)cframe / (float)frames;
          float f3 = (float)(cframe + 1) / (float)frames;
          float f4 = 0.0F;
          float f5 = 1.0F;
-         tessellator.setNormal(0.0F, 0.0F, -1.0F);
-         tessellator.addVertexWithUV(px + v1.xCoord, py + v1.yCoord, pz + v1.zCoord, f2, f5);
-         tessellator.addVertexWithUV(px + v2.xCoord, py + v2.yCoord, pz + v2.zCoord, f3, f5);
-         tessellator.addVertexWithUV(px + v3.xCoord, py + v3.yCoord, pz + v3.zCoord, f3, f4);
-         tessellator.addVertexWithUV(px + v4.xCoord, py + v4.yCoord, pz + v4.zCoord, f2, f4);
+        
+         buffer.pos(px + v1.x, py + v1.y, pz + v1.z).tex(f2, f5)
+        .endVertex();
+         buffer.pos(px + v2.x, py + v2.y, pz + v2.z).tex(f3, f5)
+        .endVertex();
+         buffer.pos(px + v3.x, py + v3.y, pz + v3.z).tex(f3, f4)
+        .endVertex();
+         buffer.pos(px + v4.x, py + v4.y, pz + v4.z).tex(f2, f4)
+        .endVertex();
          tessellator.draw();
       }
 
    }
 
    public static void renderFacingStrip(double px, double py, double pz, float angle, float scale, float alpha, int frames, int strip, int frame, float partialTicks, int color) {
-      if (Minecraft.getMinecraft().renderViewEntity instanceof EntityPlayer) {
-         Tessellator tessellator = Tessellator.instance;
-         float arX = ActiveRenderInfo.rotationX;
-         float arZ = ActiveRenderInfo.rotationZ;
-         float arYZ = ActiveRenderInfo.rotationYZ;
-         float arXY = ActiveRenderInfo.rotationXY;
-         float arXZ = ActiveRenderInfo.rotationXZ;
-         EntityPlayer player = (EntityPlayer)Minecraft.getMinecraft().renderViewEntity;
+      if (Minecraft.getMinecraft().getRenderViewEntity() instanceof EntityPlayer) {
+         Tessellator tessellator = Tessellator.getInstance();
+         BufferBuilder buffer = tessellator.getBuffer();
+         EntityPlayer player = (EntityPlayer)Minecraft.getMinecraft().getRenderViewEntity();
+         float[] _ar = thaumcraft.client.lib.UtilsFX.getBillboardRotations(player, partialTicks);
+         float arX = _ar[0]; float arZ = _ar[1]; float arYZ = _ar[2]; float arXY = _ar[3]; float arXZ = _ar[4];
          double iPX = player.prevPosX + (player.posX - player.prevPosX) * (double)partialTicks;
          double iPY = player.prevPosY + (player.posY - player.prevPosY) * (double)partialTicks;
          double iPZ = player.prevPosZ + (player.posZ - player.prevPosZ) * (double)partialTicks;
-         GL11.glTranslated(-iPX, -iPY, -iPZ);
-         tessellator.startDrawingQuads();
-         tessellator.setBrightness(220);
-         tessellator.setColorRGBA_I(color, (int)(alpha * 255.0F));
-         Vec3 v1 = Vec3.createVectorHelper(-arX * scale - arYZ * scale, -arXZ * scale, -arZ * scale - arXY * scale);
-         Vec3 v2 = Vec3.createVectorHelper(-arX * scale + arYZ * scale, arXZ * scale, -arZ * scale + arXY * scale);
-         Vec3 v3 = Vec3.createVectorHelper(arX * scale + arYZ * scale, arXZ * scale, arZ * scale + arXY * scale);
-         Vec3 v4 = Vec3.createVectorHelper(arX * scale - arYZ * scale, -arXZ * scale, arZ * scale - arXY * scale);
+         GlStateManager.translate(-iPX, -iPY, -iPZ);
+         buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX); 
+        
+         Vec3d v1 = new Vec3d(-arX * scale - arYZ * scale, -arXZ * scale, -arZ * scale - arXY * scale);
+         Vec3d v2 = new Vec3d(-arX * scale + arYZ * scale, arXZ * scale, -arZ * scale + arXY * scale);
+         Vec3d v3 = new Vec3d(arX * scale + arYZ * scale, arXZ * scale, arZ * scale + arXY * scale);
+         Vec3d v4 = new Vec3d(arX * scale - arYZ * scale, -arXZ * scale, arZ * scale - arXY * scale);
          if (angle != 0.0F) {
-            Vec3 pvec = Vec3.createVectorHelper(iPX, iPY, iPZ);
-            Vec3 tvec = Vec3.createVectorHelper(px, py, pz);
-            Vec3 qvec = pvec.subtract(tvec).normalize();
-            QuadHelper.setAxis(qvec, angle).rotate(v1);
-            QuadHelper.setAxis(qvec, angle).rotate(v2);
-            QuadHelper.setAxis(qvec, angle).rotate(v3);
-            QuadHelper.setAxis(qvec, angle).rotate(v4);
+            Vec3d pvec = new Vec3d(iPX, iPY, iPZ);
+            Vec3d tvec = new Vec3d(px, py, pz);
+            Vec3d qvec = pvec.subtract(tvec).normalize();
+            v1 = QuadHelper.setAxis(qvec, angle).rotate(v1);
+            v2 = QuadHelper.setAxis(qvec, angle).rotate(v2);
+            v3 = QuadHelper.setAxis(qvec, angle).rotate(v3);
+            v4 = QuadHelper.setAxis(qvec, angle).rotate(v4);
          }
 
          float f2 = (float)frame / (float)frames;
          float f3 = (float)(frame + 1) / (float)frames;
          float f4 = (float)strip / (float)frames;
          float f5 = ((float)strip + 1.0F) / (float)frames;
-         tessellator.setNormal(0.0F, 0.0F, -1.0F);
-         tessellator.addVertexWithUV(px + v1.xCoord, py + v1.yCoord, pz + v1.zCoord, f3, f5);
-         tessellator.addVertexWithUV(px + v2.xCoord, py + v2.yCoord, pz + v2.zCoord, f3, f4);
-         tessellator.addVertexWithUV(px + v3.xCoord, py + v3.yCoord, pz + v3.zCoord, f2, f4);
-         tessellator.addVertexWithUV(px + v4.xCoord, py + v4.yCoord, pz + v4.zCoord, f2, f5);
+        
+         buffer.pos(px + v1.x, py + v1.y, pz + v1.z).tex(f3, f5)
+        .endVertex();
+         buffer.pos(px + v2.x, py + v2.y, pz + v2.z).tex(f3, f4)
+        .endVertex();
+         buffer.pos(px + v3.x, py + v3.y, pz + v3.z).tex(f2, f4)
+        .endVertex();
+         buffer.pos(px + v4.x, py + v4.y, pz + v4.z).tex(f2, f5)
+        .endVertex();
          tessellator.draw();
       }
 
    }
 
    public static void renderAnimatedQuad(float scale, float alpha, int frames, int cframe, float partialTicks, int color) {
-      if (Minecraft.getMinecraft().renderViewEntity instanceof EntityPlayer) {
-         Tessellator tessellator = Tessellator.instance;
-         tessellator.startDrawingQuads();
-         tessellator.setBrightness(220);
-         tessellator.setColorRGBA_I(color, (int)(alpha * 255.0F));
+      if (Minecraft.getMinecraft().getRenderViewEntity() instanceof EntityPlayer) {
+         Tessellator tessellator = Tessellator.getInstance();
+         BufferBuilder buffer = tessellator.getBuffer();
+         buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX); 
+        
          float f2 = (float)cframe / (float)frames;
          float f3 = (float)(cframe + 1) / (float)frames;
          float f4 = 0.0F;
          float f5 = 1.0F;
-         tessellator.setNormal(0.0F, 0.0F, -1.0F);
-         tessellator.addVertexWithUV((double)-0.5F * (double)scale, (double)0.5F * (double)scale, 0.0F, f2, f5);
-         tessellator.addVertexWithUV((double)0.5F * (double)scale, (double)0.5F * (double)scale, 0.0F, f3, f5);
-         tessellator.addVertexWithUV((double)0.5F * (double)scale, (double)-0.5F * (double)scale, 0.0F, f3, f4);
-         tessellator.addVertexWithUV((double)-0.5F * (double)scale, (double)-0.5F * (double)scale, 0.0F, f2, f4);
+        
+         buffer.pos((double)-0.5F * (double)scale, (double)0.5F * (double)scale, 0.0F).tex(f2, f5)
+        .endVertex();
+         buffer.pos((double)0.5F * (double)scale, (double)0.5F * (double)scale, 0.0F).tex(f3, f5)
+        .endVertex();
+         buffer.pos((double)0.5F * (double)scale, (double)-0.5F * (double)scale, 0.0F).tex(f3, f4)
+        .endVertex();
+         buffer.pos((double)-0.5F * (double)scale, (double)-0.5F * (double)scale, 0.0F).tex(f2, f4)
+        .endVertex();
          tessellator.draw();
       }
 
    }
 
    public static void renderAnimatedQuadStrip(float scale, float alpha, int frames, int strip, int cframe, float partialTicks, int color) {
-      if (Minecraft.getMinecraft().renderViewEntity instanceof EntityPlayer) {
-         Tessellator tessellator = Tessellator.instance;
-         tessellator.startDrawingQuads();
-         tessellator.setBrightness(220);
-         tessellator.setColorRGBA_I(color, (int)(alpha * 255.0F));
+      if (Minecraft.getMinecraft().getRenderViewEntity() instanceof EntityPlayer) {
+         Tessellator tessellator = Tessellator.getInstance();
+         BufferBuilder buffer = tessellator.getBuffer();
+         buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX); 
+        
          float f2 = (float)cframe / (float)frames;
          float f3 = (float)(cframe + 1) / (float)frames;
          float f4 = (float)strip / (float)frames;
          float f5 = (float)(strip + 1) / (float)frames;
-         tessellator.setNormal(0.0F, 0.0F, -1.0F);
-         tessellator.addVertexWithUV((double)-0.5F * (double)scale, (double)0.5F * (double)scale, 0.0F, f2, f5);
-         tessellator.addVertexWithUV((double)0.5F * (double)scale, (double)0.5F * (double)scale, 0.0F, f3, f5);
-         tessellator.addVertexWithUV((double)0.5F * (double)scale, (double)-0.5F * (double)scale, 0.0F, f3, f4);
-         tessellator.addVertexWithUV((double)-0.5F * (double)scale, (double)-0.5F * (double)scale, 0.0F, f2, f4);
+        
+         buffer.pos((double)-0.5F * (double)scale, (double)0.5F * (double)scale, 0.0F).tex(f2, f5)
+        .endVertex();
+         buffer.pos((double)0.5F * (double)scale, (double)0.5F * (double)scale, 0.0F).tex(f3, f5)
+        .endVertex();
+         buffer.pos((double)0.5F * (double)scale, (double)-0.5F * (double)scale, 0.0F).tex(f3, f4)
+        .endVertex();
+         buffer.pos((double)-0.5F * (double)scale, (double)-0.5F * (double)scale, 0.0F).tex(f2, f4)
+        .endVertex();
          tessellator.draw();
       }
 
    }
 
-   public static Vec3 perpendicular(Vec3 v) {
-      return v.zCoord == (double)0.0F ? zCrossProduct(v) : xCrossProduct(v);
+   /** Compute billboard rotation components using ActiveRenderInfo for correct camera orientation. */
+   public static float[] getBillboardRotations(net.minecraft.entity.Entity ent, float partialTicks) {
+      return new float[]{
+         net.minecraft.client.renderer.ActiveRenderInfo.getRotationX(),
+         net.minecraft.client.renderer.ActiveRenderInfo.getRotationZ(),
+         net.minecraft.client.renderer.ActiveRenderInfo.getRotationYZ(),
+         net.minecraft.client.renderer.ActiveRenderInfo.getRotationXY(),
+         net.minecraft.client.renderer.ActiveRenderInfo.getRotationXZ()
+      };
    }
 
-   public static Vec3 xCrossProduct(Vec3 v) {
-      double d = v.zCoord;
-      double d1 = -v.yCoord;
-      v.xCoord = 0.0F;
-      v.yCoord = d;
-      v.zCoord = d1;
-      return v;
+   public static Vec3d perpendicular(Vec3d v) {
+      return v.z == 0.0 ? zCrossProduct(v) : xCrossProduct(v);
    }
 
-   public static Vec3 zCrossProduct(Vec3 v) {
-      double d = v.yCoord;
-      double d1 = -v.xCoord;
-      v.xCoord = d;
-      v.yCoord = d1;
-      v.zCoord = 0.0F;
-      return v;
+   public static Vec3d xCrossProduct(Vec3d v) {
+      return new Vec3d(0.0, v.z, -v.y);
+   }
+
+   public static Vec3d zCrossProduct(Vec3d v) {
+      return new Vec3d(v.y, -v.x, 0.0);
    }
 
    public static void drawTexturedQuad(int par1, int par2, int par3, int par4, int par5, int par6, double zLevel) {
       float var7 = 0.00390625F;
       float var8 = 0.00390625F;
-      Tessellator var9 = Tessellator.instance;
-      var9.startDrawingQuads();
-      var9.addVertexWithUV(par1, par2 + par6, zLevel, (float)(par3) * var7, (float)(par4 + par6) * var8);
-      var9.addVertexWithUV(par1 + par5, par2 + par6, zLevel, (float)(par3 + par5) * var7, (float)(par4 + par6) * var8);
-      var9.addVertexWithUV(par1 + par5, par2, zLevel, (float)(par3 + par5) * var7, (float)(par4) * var8);
-      var9.addVertexWithUV(par1, par2, zLevel, (float)(par3) * var7, (float)(par4) * var8);
+      Tessellator var9 = Tessellator.getInstance();
+      BufferBuilder var9Buf = var9.getBuffer();
+      var9Buf.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX); 
+      var9Buf.pos(par1, par2 + par6, zLevel).tex((float)(par3) * var7, (float)(par4 + par6) * var8).endVertex();
+      var9Buf.pos(par1 + par5, par2 + par6, zLevel).tex((float)(par3 + par5) * var7, (float)(par4 + par6) * var8).endVertex();
+      var9Buf.pos(par1 + par5, par2, zLevel).tex((float)(par3 + par5) * var7, (float)(par4) * var8).endVertex();
+      var9Buf.pos(par1, par2, zLevel).tex((float)(par3) * var7, (float)(par4) * var8).endVertex();
       var9.draw();
    }
 
    public static void drawTexturedQuadFull(int par1, int par2, double zLevel) {
-      Tessellator var9 = Tessellator.instance;
-      var9.startDrawingQuads();
-      var9.addVertexWithUV(par1, par2 + 16, zLevel, 0.0F, 1.0F);
-      var9.addVertexWithUV(par1 + 16, par2 + 16, zLevel, 1.0F, 1.0F);
-      var9.addVertexWithUV(par1 + 16, par2, zLevel, 1.0F, 0.0F);
-      var9.addVertexWithUV(par1, par2, zLevel, 0.0F, 0.0F);
+      Tessellator var9 = Tessellator.getInstance();
+      BufferBuilder var9Buf = var9.getBuffer();
+      var9Buf.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX); 
+      var9Buf.pos(par1, par2 + 16, zLevel).tex(0.0F, 1.0F)
+        .endVertex();
+      var9Buf.pos(par1 + 16, par2 + 16, zLevel).tex(1.0F, 1.0F)
+        .endVertex();
+      var9Buf.pos(par1 + 16, par2, zLevel).tex(1.0F, 0.0F)
+        .endVertex();
+      var9Buf.pos(par1, par2, zLevel).tex(0.0F, 0.0F)
+        .endVertex();
       var9.draw();
    }
 
@@ -304,21 +317,26 @@ public class UtilsFX {
 
    public static void renderQuad(String texture, int blend, float trans, float r, float g, float b) {
       bindTexture(texture);
-      Tessellator tessellator = Tessellator.instance;
-      GL11.glEnable(32826);
-      GL11.glEnable(GL11.GL_BLEND);
-      GL11.glBlendFunc(770, blend);
-      GL11.glColor4f(r, g, b, trans);
-      tessellator.startDrawingQuads();
-      tessellator.setColorRGBA_F(r, g, b, trans);
-      tessellator.setNormal(0.0F, 0.0F, -1.0F);
-      tessellator.addVertexWithUV(0.0F, 1.0F, 0.0F, 0.0F, 1.0F);
-      tessellator.addVertexWithUV(1.0F, 1.0F, 0.0F, 1.0F, 1.0F);
-      tessellator.addVertexWithUV(1.0F, 0.0F, 0.0F, 1.0F, 0.0F);
-      tessellator.addVertexWithUV(0.0F, 0.0F, 0.0F, 0.0F, 0.0F);
+      Tessellator tessellator = Tessellator.getInstance();
+      BufferBuilder buffer = tessellator.getBuffer();
+      GlStateManager.enableRescaleNormal();
+      GlStateManager.enableBlend();
+      GlStateManager.blendFunc(770, blend);
+      GlStateManager.color(r, g, b, trans);
+      buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX); 
+     
+     
+      buffer.pos(0.0F, 1.0F, 0.0F).tex(0.0F, 1.0F)
+        .endVertex();
+      buffer.pos(1.0F, 1.0F, 0.0F).tex(1.0F, 1.0F)
+        .endVertex();
+      buffer.pos(1.0F, 0.0F, 0.0F).tex(1.0F, 0.0F)
+        .endVertex();
+      buffer.pos(0.0F, 0.0F, 0.0F).tex(0.0F, 0.0F)
+        .endVertex();
       tessellator.draw();
-      GL11.glDisable(GL11.GL_BLEND);
-      GL11.glDisable(32826);
+      GlStateManager.disableBlend();
+      GlStateManager.disableRescaleNormal();
    }
 
    public static void renderQuadCenteredFromTexture(String texture, float scale, float red, float green, float blue, int brightness, int blend, float opacity) {
@@ -332,23 +350,28 @@ public class UtilsFX {
    }
 
    public static void renderQuadCenteredFromTexture(float scale, float red, float green, float blue, int brightness, int blend, float opacity) {
-      Tessellator tessellator = Tessellator.instance;
-      GL11.glScalef(scale, scale, scale);
-      GL11.glEnable(GL11.GL_BLEND);
-      GL11.glBlendFunc(770, blend);
-      GL11.glColor4f(1.0F, 1.0F, 1.0F, opacity);
-      tessellator.startDrawingQuads();
+      Tessellator tessellator = Tessellator.getInstance();
+      BufferBuilder buffer = tessellator.getBuffer();
+      GlStateManager.scale(scale, scale, scale);
+      GlStateManager.enableBlend();
+      GlStateManager.blendFunc(770, blend);
+      GlStateManager.color(red, green, blue, opacity);
+      buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX);
       if (brightness > 0) {
-         tessellator.setBrightness(brightness);
+        
       }
 
-      tessellator.setColorRGBA_F(red, green, blue, opacity);
-      tessellator.addVertexWithUV(-0.5F, 0.5F, 0.0F, 0.0F, 1.0F);
-      tessellator.addVertexWithUV(0.5F, 0.5F, 0.0F, 1.0F, 1.0F);
-      tessellator.addVertexWithUV(0.5F, -0.5F, 0.0F, 1.0F, 0.0F);
-      tessellator.addVertexWithUV(-0.5F, -0.5F, 0.0F, 0.0F, 0.0F);
+     
+      buffer.pos(-0.5F, 0.5F, 0.0F).tex(0.0F, 1.0F)
+        .endVertex();
+      buffer.pos(0.5F, 0.5F, 0.0F).tex(1.0F, 1.0F)
+        .endVertex();
+      buffer.pos(0.5F, -0.5F, 0.0F).tex(1.0F, 0.0F)
+        .endVertex();
+      buffer.pos(-0.5F, -0.5F, 0.0F).tex(0.0F, 0.0F)
+        .endVertex();
       tessellator.draw();
-      GL11.glDisable(GL11.GL_BLEND);
+      GlStateManager.disableBlend();
    }
 
    public static void renderQuadFromTexture(String texture, int tileSize, int icon, float scale, float red, float green, float blue, int brightness, int blend, float opacity) {
@@ -358,90 +381,98 @@ public class UtilsFX {
       float float_sizeMinus0_01 = (float)size - 0.01F;
       float float_texNudge = 1.0F / ((float)size * (float)size * 2.0F);
       float float_reciprocal = 1.0F / (float)size;
-      Tessellator tessellator = Tessellator.instance;
+      Tessellator tessellator = Tessellator.getInstance();
+      BufferBuilder buffer = tessellator.getBuffer();
       float f = ((float)(icon % tileSize * size) + 0.0F) / size16;
       float f1 = ((float)(icon % tileSize * size) + float_sizeMinus0_01) / size16;
       float f2 = ((float)(icon / tileSize * size) + 0.0F) / size16;
       float f3 = ((float)(icon / tileSize * size) + float_sizeMinus0_01) / size16;
       float f5 = 0.0F;
       float f6 = 0.3F;
-      GL11.glEnable(32826);
-      GL11.glScalef(scale, scale, scale);
-      GL11.glEnable(GL11.GL_BLEND);
-      GL11.glBlendFunc(770, blend);
-      GL11.glColor4f(1.0F, 1.0F, 1.0F, opacity);
-      tessellator.startDrawingQuads();
-      tessellator.setBrightness(brightness);
-      tessellator.setColorRGBA_F(red, green, blue, opacity);
-      tessellator.setNormal(0.0F, 0.0F, -1.0F);
-      tessellator.addVertexWithUV(0.0F, 1.0F, 0.0F, f1, f2);
-      tessellator.addVertexWithUV(1.0F, 1.0F, 0.0F, f, f2);
-      tessellator.addVertexWithUV(1.0F, 0.0F, 0.0F, f, f3);
-      tessellator.addVertexWithUV(0.0F, 0.0F, 0.0F, f1, f3);
+      GlStateManager.enableRescaleNormal();
+      GlStateManager.scale(scale, scale, scale);
+      GlStateManager.enableBlend();
+      GlStateManager.blendFunc(770, blend);
+      GlStateManager.color(red, green, blue, opacity);
+      buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX);
+      buffer.pos(0.0F, 1.0F, 0.0F).tex(f1, f2).endVertex();
+      buffer.pos(1.0F, 1.0F, 0.0F).tex(f, f2).endVertex();
+      buffer.pos(1.0F, 0.0F, 0.0F).tex(f, f3).endVertex();
+      buffer.pos(0.0F, 0.0F, 0.0F).tex(f1, f3).endVertex();
       tessellator.draw();
-      GL11.glDisable(GL11.GL_BLEND);
-      GL11.glDisable(32826);
+      GlStateManager.disableBlend();
+      GlStateManager.disableRescaleNormal();
    }
 
-   public static void renderQuadFromIcon(boolean isBlock, IIcon icon, float scale, float red, float green, float blue, int brightness, int blend, float opacity) {
+   public static void renderQuadFromIcon(boolean isBlock, TextureAtlasSprite icon, float scale, float red, float green, float blue, int brightness, int blend, float opacity) {
       if (isBlock) {
-         Minecraft.getMinecraft().renderEngine.bindTexture(TextureMap.locationBlocksTexture);
+         Minecraft.getMinecraft().renderEngine.bindTexture(TextureMap.LOCATION_BLOCKS_TEXTURE);
       } else {
-         Minecraft.getMinecraft().renderEngine.bindTexture(TextureMap.locationItemsTexture);
+         Minecraft.getMinecraft().renderEngine.bindTexture(TextureMap.LOCATION_BLOCKS_TEXTURE);
       }
 
-      Tessellator tessellator = Tessellator.instance;
+      Tessellator tessellator = Tessellator.getInstance();
+      BufferBuilder buffer = tessellator.getBuffer();
       float f1 = icon.getMaxU();
       float f2 = icon.getMinV();
       float f3 = icon.getMinU();
       float f4 = icon.getMaxV();
-      GL11.glScalef(scale, scale, scale);
-      GL11.glEnable(GL11.GL_BLEND);
-      GL11.glBlendFunc(770, blend);
-      GL11.glColor4f(red, green, blue, opacity);
-      tessellator.startDrawingQuads();
+      GlStateManager.scale(scale, scale, scale);
+      GlStateManager.enableBlend();
+      GlStateManager.blendFunc(770, blend);
+      GlStateManager.color(red, green, blue, opacity);
+      buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX); 
       if (brightness > -1) {
-         tessellator.setBrightness(brightness);
+        
       }
 
-      tessellator.setColorRGBA_F(red, green, blue, opacity);
-      tessellator.setNormal(0.0F, 0.0F, 1.0F);
-      tessellator.addVertexWithUV(0.0F, 0.0F, 0.0F, f1, f4);
-      tessellator.addVertexWithUV(1.0F, 0.0F, 0.0F, f3, f4);
-      tessellator.addVertexWithUV(1.0F, 1.0F, 0.0F, f3, f2);
-      tessellator.addVertexWithUV(0.0F, 1.0F, 0.0F, f1, f2);
+     
+     
+      buffer.pos(0.0F, 0.0F, 0.0F).tex(f1, f4)
+        .endVertex();
+      buffer.pos(1.0F, 0.0F, 0.0F).tex(f3, f4)
+        .endVertex();
+      buffer.pos(1.0F, 1.0F, 0.0F).tex(f3, f2)
+        .endVertex();
+      buffer.pos(0.0F, 1.0F, 0.0F).tex(f1, f2)
+        .endVertex();
       tessellator.draw();
-      GL11.glDisable(GL11.GL_BLEND);
+      GlStateManager.disableBlend();
    }
 
-   public static void renderQuadCenteredFromIcon(boolean isBlock, IIcon icon, float scale, float red, float green, float blue, int brightness, int blend, float opacity) {
+   public static void renderQuadCenteredFromIcon(boolean isBlock, TextureAtlasSprite icon, float scale, float red, float green, float blue, int brightness, int blend, float opacity) {
       if (isBlock) {
-         Minecraft.getMinecraft().renderEngine.bindTexture(TextureMap.locationBlocksTexture);
+         Minecraft.getMinecraft().renderEngine.bindTexture(TextureMap.LOCATION_BLOCKS_TEXTURE);
       } else {
-         Minecraft.getMinecraft().renderEngine.bindTexture(TextureMap.locationItemsTexture);
+         Minecraft.getMinecraft().renderEngine.bindTexture(TextureMap.LOCATION_BLOCKS_TEXTURE);
       }
 
-      Tessellator tessellator = Tessellator.instance;
+      Tessellator tessellator = Tessellator.getInstance();
+      BufferBuilder buffer = tessellator.getBuffer();
       float f1 = icon.getMaxU();
       float f2 = icon.getMinV();
       float f3 = icon.getMinU();
       float f4 = icon.getMaxV();
-      GL11.glEnable(32826);
-      GL11.glScalef(scale, scale, scale);
-      GL11.glEnable(GL11.GL_BLEND);
-      GL11.glBlendFunc(770, blend);
-      GL11.glColor4f(red, green, blue, opacity);
-      tessellator.startDrawingQuads();
-      tessellator.setBrightness(brightness);
-      tessellator.setColorRGBA_F(red, green, blue, opacity);
-      tessellator.setNormal(0.0F, 0.0F, 1.0F);
-      tessellator.addVertexWithUV(-0.5F, 0.5F, 0.0F, f1, f4);
-      tessellator.addVertexWithUV(0.5F, 0.5F, 0.0F, f3, f4);
-      tessellator.addVertexWithUV(0.5F, -0.5F, 0.0F, f3, f2);
-      tessellator.addVertexWithUV(-0.5F, -0.5F, 0.0F, f1, f2);
+      GlStateManager.enableRescaleNormal();
+      GlStateManager.scale(scale, scale, scale);
+      GlStateManager.enableBlend();
+      GlStateManager.blendFunc(770, blend);
+      GlStateManager.color(red, green, blue, opacity);
+      buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX); 
+     
+     
+     
+      buffer.pos(-0.5F, 0.5F, 0.0F).tex(f1, f4)
+        .endVertex();
+      buffer.pos(0.5F, 0.5F, 0.0F).tex(f3, f4)
+        .endVertex();
+      buffer.pos(0.5F, -0.5F, 0.0F).tex(f3, f2)
+        .endVertex();
+      buffer.pos(-0.5F, -0.5F, 0.0F).tex(f1, f2)
+        .endVertex();
       tessellator.draw();
-      GL11.glDisable(GL11.GL_BLEND);
-      GL11.glDisable(32826);
+      GlStateManager.disableBlend();
+      GlStateManager.disableRescaleNormal();
    }
 
    public static int getTextureAnimationSize(String s) {
@@ -487,12 +518,12 @@ public class UtilsFX {
    }
 
    public static int getBrightnessForRender(Entity entity, double x, double z) {
-      int var2 = MathHelper.floor_double(x);
-      int var3 = MathHelper.floor_double(z);
-      if (entity.worldObj.blockExists(var2, 0, var3)) {
-         double var4 = (entity.boundingBox.maxY - entity.boundingBox.minY) * 0.66;
-         int var6 = MathHelper.floor_double(entity.posY - (double)entity.yOffset + var4);
-         return entity.worldObj.getLightBrightnessForSkyBlocks(var2, var6, var3, 2);
+      int var2 = MathHelper.floor(x);
+      int var3 = MathHelper.floor(z);
+      if (entity.world.isBlockLoaded(new net.minecraft.util.math.BlockPos(var2, 0, var3))) {
+         double var4 = (entity.getEntityBoundingBox().maxY - entity.getEntityBoundingBox().minY) * 0.66;
+         int var6 = MathHelper.floor(entity.posY - (double)0.0f + var4);
+         return entity.world.getCombinedLight(new net.minecraft.util.math.BlockPos(var2, var6, var3), 2);
       } else {
          return 0;
       }
@@ -544,37 +575,41 @@ public class UtilsFX {
       if (aspect != null) {
          Minecraft mc = Minecraft.getMinecraft();
          Color color = new Color(aspect.getColor());
-         GL11.glPushMatrix();
-         GL11.glDisable(2896);
-         GL11.glAlphaFunc(516, 0.003921569F);
-         GL11.glEnable(GL11.GL_BLEND);
-         GL11.glBlendFunc(770, blend);
-         GL11.glPushMatrix();
+         GlStateManager.pushMatrix();
+         GlStateManager.disableLighting();
+         GlStateManager.alphaFunc(516, 0.003921569F);
+         GlStateManager.enableBlend();
+         GlStateManager.blendFunc(770, blend);
+         GlStateManager.pushMatrix();
          mc.renderEngine.bindTexture(aspect.getImage());
          if (!bw) {
-            GL11.glColor4f((float)color.getRed() / 255.0F, (float)color.getGreen() / 255.0F, (float)color.getBlue() / 255.0F, alpha);
+            GlStateManager.color((float)color.getRed() / 255.0F, (float)color.getGreen() / 255.0F, (float)color.getBlue() / 255.0F, alpha);
          } else {
-            GL11.glColor4f(0.1F, 0.1F, 0.1F, alpha * 0.8F);
+            GlStateManager.color(0.1F, 0.1F, 0.1F, alpha * 0.8F);
          }
 
-         Tessellator var9 = Tessellator.instance;
-         var9.startDrawingQuads();
+         Tessellator var9 = Tessellator.getInstance();
+         BufferBuilder var9Buf = var9.getBuffer();
+         var9Buf.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX); 
          if (!bw) {
-            var9.setColorRGBA_F((float)color.getRed() / 255.0F, (float)color.getGreen() / 255.0F, (float)color.getBlue() / 255.0F, alpha);
          } else {
-            var9.setColorRGBA_F(0.1F, 0.1F, 0.1F, alpha * 0.8F);
+           
          }
 
-         var9.addVertexWithUV(x + (double)0.0F, y + (double)16.0F, z, 0.0F, 1.0F);
-         var9.addVertexWithUV(x + (double)16.0F, y + (double)16.0F, z, 1.0F, 1.0F);
-         var9.addVertexWithUV(x + (double)16.0F, y + (double)0.0F, z, 1.0F, 0.0F);
-         var9.addVertexWithUV(x + (double)0.0F, y + (double)0.0F, z, 0.0F, 0.0F);
+         var9Buf.pos(x + (double)0.0F, y + (double)16.0F, z).tex(0.0F, 1.0F)
+        .endVertex();
+         var9Buf.pos(x + (double)16.0F, y + (double)16.0F, z).tex(1.0F, 1.0F)
+        .endVertex();
+         var9Buf.pos(x + (double)16.0F, y + (double)0.0F, z).tex(1.0F, 0.0F)
+        .endVertex();
+         var9Buf.pos(x + (double)0.0F, y + (double)0.0F, z).tex(0.0F, 0.0F)
+        .endVertex();
          var9.draw();
-         GL11.glPopMatrix();
+         GlStateManager.popMatrix();
          if (amount > 0.0F) {
-            GL11.glPushMatrix();
-            GL11.glScalef(0.5F, 0.5F, 0.5F);
-            GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+            GlStateManager.pushMatrix();
+            GlStateManager.scale(0.5F, 0.5F, 0.5F);
+            GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
             String am = myFormatter.format(amount);
             int sw = mc.fontRenderer.getStringWidth(am);
             if (blend > 1) {
@@ -588,17 +623,17 @@ public class UtilsFX {
             }
 
             mc.fontRenderer.drawString(am, 32 - sw + (int)x * 2, 32 - mc.fontRenderer.FONT_HEIGHT + (int)y * 2, 16777215);
-            GL11.glPopMatrix();
+            GlStateManager.popMatrix();
          }
 
          if (bonus > 0) {
-            GL11.glPushMatrix();
+            GlStateManager.pushMatrix();
             bindTexture(ParticleEngine.particleTexture);
-            GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
-            int px = 16 * (mc.thePlayer.ticksExisted % 16);
+            GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
+            int px = 16 * (mc.player.ticksExisted % 16);
             drawTexturedQuad((int)x - 4, (int)y - 4, px, 80, 16, 16, z);
             if (bonus > 1) {
-               GL11.glScalef(0.5F, 0.5F, 0.5F);
+               GlStateManager.scale(0.5F, 0.5F, 0.5F);
                String am = "" + bonus;
                int sw = mc.fontRenderer.getStringWidth(am) / 2;
                if (blend > 1) {
@@ -614,14 +649,14 @@ public class UtilsFX {
                mc.fontRenderer.drawString(am, 8 - sw + (int)x * 2, 15 - mc.fontRenderer.FONT_HEIGHT + (int)y * 2, 16777215);
             }
 
-            GL11.glPopMatrix();
+            GlStateManager.popMatrix();
          }
 
-         GL11.glDisable(GL11.GL_BLEND);
-         GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
-         GL11.glAlphaFunc(516, 0.1F);
-         GL11.glEnable(2896);
-         GL11.glPopMatrix();
+         GlStateManager.disableBlend();
+         GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
+         GlStateManager.alphaFunc(516, 0.1F);
+         GlStateManager.enableLighting();
+         GlStateManager.popMatrix();
       }
    }
 
@@ -656,8 +691,8 @@ public class UtilsFX {
    }
 
    public static void drawCustomTooltip(GuiScreen gui, RenderItem itemRenderer, FontRenderer fr, List<String> var4, int par2, int par3, int subTipColor) {
-      GL11.glDisable(32826);
-      GL11.glDisable(2929);
+      GlStateManager.disableRescaleNormal();
+      GlStateManager.disableDepth();
       if (!var4.isEmpty()) {
          int var5 = 0;
 
@@ -707,7 +742,7 @@ public class UtilsFX {
       }
 
       itemRenderer.zLevel = 0.0F;
-      GL11.glEnable(2929);
+      GlStateManager.enableDepth();
    }
 
    public static void drawGradientRect(int par1, int par2, int par3, int par4, int par5, int par6) {
@@ -719,24 +754,23 @@ public class UtilsFX {
       float var12 = (float)(par6 >> 16 & 255) / 255.0F;
       float var13 = (float)(par6 >> 8 & 255) / 255.0F;
       float var14 = (float)(par6 & 255) / 255.0F;
-      GL11.glDisable(3553);
-      GL11.glEnable(GL11.GL_BLEND);
-      GL11.glDisable(3008);
-      GL11.glBlendFunc(770, 771);
-      GL11.glShadeModel(7425);
-      Tessellator var15 = Tessellator.instance;
-      var15.startDrawingQuads();
-      var15.setColorRGBA_F(var8, var9, var10, var7);
-      var15.addVertex(par3, par2, 300.0F);
-      var15.addVertex(par1, par2, 300.0F);
-      var15.setColorRGBA_F(var12, var13, var14, var11);
-      var15.addVertex(par1, par4, 300.0F);
-      var15.addVertex(par3, par4, 300.0F);
+      GlStateManager.disableTexture2D();
+      GlStateManager.enableBlend();
+      GlStateManager.disableAlpha();
+      GlStateManager.blendFunc(770, 771);
+      GlStateManager.shadeModel(7425);
+      Tessellator var15 = Tessellator.getInstance();
+      BufferBuilder var15Buf = var15.getBuffer();
+      var15Buf.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_COLOR);
+      var15Buf.pos(par3, par2, 300.0F).color(var8, var9, var10, var7).endVertex();
+      var15Buf.pos(par1, par2, 300.0F).color(var8, var9, var10, var7).endVertex();
+      var15Buf.pos(par1, par4, 300.0F).color(var12, var13, var14, var11).endVertex();
+      var15Buf.pos(par3, par4, 300.0F).color(var12, var13, var14, var11).endVertex();
       var15.draw();
-      GL11.glShadeModel(7424);
-      GL11.glDisable(GL11.GL_BLEND);
-      GL11.glEnable(3008);
-      GL11.glEnable(3553);
+      GlStateManager.shadeModel(7424);
+      GlStateManager.disableBlend();
+      GlStateManager.enableAlpha();
+      GlStateManager.enableTexture2D();
    }
 
    public static void drawFloatyLine(double x, double y, double z, double x2, double y2, double z2, float partialTicks, int color, String texture, float speed, float distance) {
@@ -744,33 +778,34 @@ public class UtilsFX {
    }
 
    public static void drawFloatyLine(double x, double y, double z, double x2, double y2, double z2, float partialTicks, int color, String texture, float speed, float distance, float width) {
-      EntityLivingBase player = Minecraft.getMinecraft().renderViewEntity;
+      Entity player = Minecraft.getMinecraft().getRenderViewEntity();
       double iPX = player.prevPosX + (player.posX - player.prevPosX) * (double)partialTicks;
       double iPY = player.prevPosY + (player.posY - player.prevPosY) * (double)partialTicks;
       double iPZ = player.prevPosZ + (player.posZ - player.prevPosZ) * (double)partialTicks;
-      GL11.glTranslated(-iPX + x2, -iPY + y2, -iPZ + z2);
+      GlStateManager.translate(-iPX + x2, -iPY + y2, -iPZ + z2);
       float time = (float)(System.nanoTime() / 30000000L);
       Color co = new Color(color);
       float r = (float)co.getRed() / 255.0F;
       float g = (float)co.getGreen() / 255.0F;
       float b = (float)co.getBlue() / 255.0F;
-      GL11.glDepthMask(false);
-      GL11.glEnable(GL11.GL_BLEND);
-      GL11.glBlendFunc(770, 1);
-      Tessellator tessellator = Tessellator.instance;
+      GlStateManager.depthMask(false);
+      GlStateManager.enableBlend();
+      GlStateManager.blendFunc(770, 1);
+      Tessellator tessellator = Tessellator.getInstance();
+      BufferBuilder buffer = tessellator.getBuffer();
       double dc1x = (float)(x - x2);
       double dc1y = (float)(y - y2);
       double dc1z = (float)(z - z2);
       bindTexture(texture);
-      GL11.glDisable(2884);
-      tessellator.startDrawing(5);
+      GlStateManager.disableCull();
+      buffer.begin(GL11.GL_TRIANGLE_STRIP, DefaultVertexFormats.POSITION_TEX); 
       double dx2 = 0.0F;
       double dy2 = 0.0F;
       double dz2 = 0.0F;
       double d3 = x - x2;
       double d4 = y - y2;
       double d5 = z - z2;
-      float dist = MathHelper.sqrt_double(d3 * d3 + d4 * d4 + d5 * d5);
+      float dist = MathHelper.sqrt(d3 * d3 + d4 * d4 + d5 * d5);
       float blocks = (float)Math.round(dist);
       float length = blocks * ((float)Config.golemLinkQuality / 2.0F);
       float f9 = 0.0F;
@@ -784,14 +819,16 @@ public class UtilsFX {
          double dx = dc1x + (double)(MathHelper.sin((float)((z % (double)16.0F + (double)(dist * (1.0F - f2) * (float)Config.golemLinkQuality / 2.0F) - (double)(time % 32767.0F / 5.0F)) / (double)4.0F)) * 0.5F * f3);
          double dy = dc1y + (double)(MathHelper.sin((float)((x % (double)16.0F + (double)(dist * (1.0F - f2) * (float)Config.golemLinkQuality / 2.0F) - (double)(time % 32767.0F / 5.0F)) / (double)3.0F)) * 0.5F * f3);
          double dz = dc1z + (double)(MathHelper.sin((float)((y % (double)16.0F + (double)(dist * (1.0F - f2) * (float)Config.golemLinkQuality / 2.0F) - (double)(time % 32767.0F / 5.0F)) / (double)2.0F)) * 0.5F * f3);
-         tessellator.setColorRGBA_F(r, g, b, f3);
+        
          float f13 = (1.0F - f2) * dist - time * speed;
-         tessellator.addVertexWithUV(dx * (double)f2, dy * (double)f2 - (double)width, dz * (double)f2, f13, f10);
-         tessellator.addVertexWithUV(dx * (double)f2, dy * (double)f2 + (double)width, dz * (double)f2, f13, f9);
+         buffer.pos(dx * (double)f2, dy * (double)f2 - (double)width, dz * (double)f2).tex(f13, f10)
+        .endVertex();
+         buffer.pos(dx * (double)f2, dy * (double)f2 + (double)width, dz * (double)f2).tex(f13, f9)
+        .endVertex();
       }
 
       tessellator.draw();
-      tessellator.startDrawing(5);
+      buffer.begin(GL11.GL_TRIANGLE_STRIP, DefaultVertexFormats.POSITION_TEX); 
 
       for(int var84 = 0; (float)var84 <= length * distance; ++var84) {
          float f2 = (float)var84 / length;
@@ -801,39 +838,42 @@ public class UtilsFX {
          double dx = dc1x + (double)(MathHelper.sin((float)((z % (double)16.0F + (double)(dist * (1.0F - f2) * (float)Config.golemLinkQuality / 2.0F) - (double)(time % 32767.0F / 5.0F)) / (double)4.0F)) * 0.5F * f3);
          double dy = dc1y + (double)(MathHelper.sin((float)((x % (double)16.0F + (double)(dist * (1.0F - f2) * (float)Config.golemLinkQuality / 2.0F) - (double)(time % 32767.0F / 5.0F)) / (double)3.0F)) * 0.5F * f3);
          double dz = dc1z + (double)(MathHelper.sin((float)((y % (double)16.0F + (double)(dist * (1.0F - f2) * (float)Config.golemLinkQuality / 2.0F) - (double)(time % 32767.0F / 5.0F)) / (double)2.0F)) * 0.5F * f3);
-         tessellator.setColorRGBA_F(r, g, b, f3);
+        
          float f13 = (1.0F - f2) * dist - time * speed;
-         tessellator.addVertexWithUV(dx * (double)f2 - (double)width, dy * (double)f2, dz * (double)f2, f13, f10);
-         tessellator.addVertexWithUV(dx * (double)f2 + (double)width, dy * (double)f2, dz * (double)f2, f13, f9);
+         buffer.pos(dx * (double)f2 - (double)width, dy * (double)f2, dz * (double)f2).tex(f13, f10)
+        .endVertex();
+         buffer.pos(dx * (double)f2 + (double)width, dy * (double)f2, dz * (double)f2).tex(f13, f9)
+        .endVertex();
       }
 
       tessellator.draw();
-      GL11.glEnable(2884);
-      GL11.glDisable(GL11.GL_BLEND);
-      GL11.glDepthMask(true);
+      GlStateManager.enableCull();
+      GlStateManager.disableBlend();
+      GlStateManager.depthMask(true);
    }
 
    public static void drawFloatyGUILine(double x, double y, double x2, double y2, float partialTicks, int color, String texture, float speed, float distance) {
-      GL11.glPushMatrix();
-      GL11.glTranslated(x2, y2, 0.0F);
+      GlStateManager.pushMatrix();
+      GlStateManager.translate(x2, y2, 0.0F);
       float time = (float)(System.nanoTime() / 30000000L);
       Color co = new Color(color);
       float r = (float)co.getRed() / 255.0F;
       float g = (float)co.getGreen() / 255.0F;
       float b = (float)co.getBlue() / 255.0F;
-      GL11.glEnable(GL11.GL_BLEND);
-      GL11.glBlendFunc(770, 771);
-      Tessellator tessellator = Tessellator.instance;
+      GlStateManager.enableBlend();
+      GlStateManager.blendFunc(770, 771);
+      Tessellator tessellator = Tessellator.getInstance();
+      BufferBuilder buffer = tessellator.getBuffer();
       double dc1x = (float)(x - x2);
       double dc1y = (float)(y - y2);
       bindTexture(texture);
-      tessellator.startDrawing(5);
+      buffer.begin(GL11.GL_TRIANGLE_STRIP, DefaultVertexFormats.POSITION_TEX); 
       double d3 = x - x2;
       double d4 = y - y2;
-      float dist = MathHelper.sqrt_double(d3 * d3 + d4 * d4);
+      float dist = MathHelper.sqrt(d3 * d3 + d4 * d4);
       double dx = d3 / (double)dist;
       double var10000 = d4 / (double)dist;
-      GL11.glRotated((float)(-(Math.atan2(d3, d4) * (double)180.0F / Math.PI)) + 90.0F, 0.0F, 0.0F, 1.0F);
+      GlStateManager.rotate((float)(-(Math.atan2(d3, d4) * (double)180.0F / Math.PI)) + 90.0F, 0.0F, 0.0F, 1.0F);
       float blocks = (float)Math.round(dist);
       float length = blocks * distance;
       float f9 = 0.0F;
@@ -842,22 +882,24 @@ public class UtilsFX {
 
       for(int i = 0; (float)i <= length; ++i) {
          float f2 = (float)i / length;
-         tessellator.setColorRGBA_F(r, g, b, 1.0F);
+        
          float f13 = (1.0F - f2) * length;
          float f14 = (1.0F - f2) * length + sec;
          float width = 1.0F;
-         tessellator.addVertexWithUV(dx * (double)i, 0.0F - width, 0.0F, f13 / width, f10);
-         tessellator.addVertexWithUV(dx * (double)i, 0.0F + width, 0.0F, f14 / width, f9);
+         buffer.pos(dx * (double)i, 0.0F - width, 0.0F).tex(f13 / width, f10)
+        .endVertex();
+         buffer.pos(dx * (double)i, 0.0F + width, 0.0F).tex(f14 / width, f9)
+        .endVertex();
       }
 
       tessellator.draw();
-      GL11.glDisable(GL11.GL_BLEND);
-      GL11.glPopMatrix();
+      GlStateManager.disableBlend();
+      GlStateManager.popMatrix();
    }
 
    public static float getEquippedProgress(ItemRenderer ir) {
       try {
-         return ReflectionHelper.getPrivateValue(ItemRenderer.class, ir, new String[]{"equippedProgress", "f", "field_78454_c"});
+         return ReflectionHelper.getPrivateValue(ItemRenderer.class, ir, new String[]{"equippedProgress", "f", "equippedProgress"});
       } catch (Exception var2) {
          return 0.0F;
       }
@@ -865,7 +907,7 @@ public class UtilsFX {
 
    public static float getPrevEquippedProgress(ItemRenderer ir) {
       try {
-         return ReflectionHelper.getPrivateValue(ItemRenderer.class, ir, new String[]{"prevEquippedProgress", "g", "field_78451_d"});
+         return ReflectionHelper.getPrivateValue(ItemRenderer.class, ir, new String[]{"prevEquippedProgress", "g", "prevEquippedProgress"});
       } catch (Exception var2) {
          return 0.0F;
       }
@@ -873,7 +915,7 @@ public class UtilsFX {
 
    public static Timer getTimer(Minecraft mc) {
       try {
-         return ReflectionHelper.getPrivateValue(Minecraft.class, mc, new String[]{"timer", "Q", "field_71428_T"});
+         return ReflectionHelper.getPrivateValue(Minecraft.class, mc, new String[]{"timer", "Q", "timer"});
       } catch (Exception var2) {
          return new Timer(20.0F);
       }
@@ -881,7 +923,7 @@ public class UtilsFX {
 
    public static int getGuiXSize(GuiContainer gui) {
       try {
-         return ReflectionHelper.getPrivateValue(GuiContainer.class, gui, new String[]{"xSize", "f", "field_146999_f"});
+         return ReflectionHelper.getPrivateValue(GuiContainer.class, gui, new String[]{"xSize", "f", "xSize"});
       } catch (Exception var2) {
          return 0;
       }
@@ -889,7 +931,7 @@ public class UtilsFX {
 
    public static int getGuiYSize(GuiContainer gui) {
       try {
-         return ReflectionHelper.getPrivateValue(GuiContainer.class, gui, new String[]{"ySize", "g", "field_147000_g"});
+         return ReflectionHelper.getPrivateValue(GuiContainer.class, gui, new String[]{"ySize", "g", "ySize"});
       } catch (Exception var2) {
          return 0;
       }
@@ -897,31 +939,16 @@ public class UtilsFX {
 
    public static float getGuiZLevel(Gui gui) {
       try {
-         return ReflectionHelper.getPrivateValue(Gui.class, gui, new String[]{"zLevel", "e", "field_77023_b"});
+         return ReflectionHelper.getPrivateValue(Gui.class, gui, new String[]{"zLevel", "e", "zLevel"});
       } catch (Exception var2) {
          return 0.0F;
       }
    }
 
+   // In 1.12.2 the particle texture atlas lives at this fixed path
+   private static final ResourceLocation PARTICLE_TEXTURES = new ResourceLocation("textures/particle/particles.png");
+
    public static ResourceLocation getParticleTexture() {
-      try {
-         if (fieldParticleTexture == null)
-            fieldParticleTexture = ReflectionHelper.findField(
-                    EffectRenderer.class,
-                    "particleTextures", "b", "field_110737_b");
-         return (ResourceLocation) fieldParticleTexture.get(null);
-      } catch (Exception ignored) {
-         return null;
-      }
-//      try {
-//         return ReflectionHelper.getPrivateValue(
-//
-//                 EffectRenderer.class,
-//                 null,
-//                 new String[]{"particleTextures", "b", "field_110737_b"}
-//         );
-//      } catch (Exception var1) {
-//         return null;
-//      }
+      return PARTICLE_TEXTURES;
    }
 }

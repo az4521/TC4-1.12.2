@@ -3,10 +3,12 @@ package thaumcraft.client.renderers.models.entities;
 import net.minecraft.client.model.ModelBase;
 import net.minecraft.client.model.ModelRenderer;
 import net.minecraft.entity.Entity;
-import net.minecraft.util.MathHelper;
+import net.minecraft.util.math.MathHelper;
 import thaumcraft.common.entities.monster.EntityPech;
 
 public class ModelPech extends ModelBase {
+   // onGround removed from ModelBase in 1.12.2; add locally for animation
+   public float onGround = -9999.0F;
    ModelRenderer Body;
    ModelRenderer RightLeg;
    ModelRenderer LeftLeg;

@@ -3,7 +3,8 @@ package thaumcraft.client.renderers.models;
 import java.awt.Color;
 import net.minecraft.client.model.ModelBase;
 import net.minecraft.client.model.ModelRenderer;
-import org.lwjgl.opengl.GL11;
+
+import net.minecraft.client.renderer.GlStateManager;
 
 public class ModelResearchTable extends ModelBase {
    ModelRenderer Top;
@@ -85,23 +86,23 @@ public class ModelResearchTable extends ModelBase {
    }
 
    public void renderInkwell() {
-      GL11.glPushMatrix();
-      GL11.glEnable(GL11.GL_BLEND);
-      GL11.glBlendFunc(770, 771);
+      GlStateManager.pushMatrix();
+      GlStateManager.enableBlend();
+      GlStateManager.blendFunc(770, 771);
       this.Inkwell.render(0.0625F);
-      GL11.glDisable(GL11.GL_BLEND);
-      GL11.glPopMatrix();
+      GlStateManager.disableBlend();
+      GlStateManager.popMatrix();
    }
 
    public void renderScroll(int color) {
-      GL11.glPushMatrix();
+      GlStateManager.pushMatrix();
       this.ScrollTube.render(0.0625F);
       Color c = new Color(color);
-      GL11.glColor4f((float)c.getRed() / 255.0F, (float)c.getGreen() / 255.0F, (float)c.getBlue() / 255.0F, 1.0F);
-      GL11.glScalef(1.2F, 1.2F, 1.2F);
+      GlStateManager.color((float)c.getRed() / 255.0F, (float)c.getGreen() / 255.0F, (float)c.getBlue() / 255.0F, 1.0F);
+      GlStateManager.scale(1.2F, 1.2F, 1.2F);
       this.ScrollRibbon.render(0.0625F);
-      GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
-      GL11.glPopMatrix();
+      GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
+      GlStateManager.popMatrix();
    }
 
    private void setRotation(ModelRenderer model, float x, float y, float z) {

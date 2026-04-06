@@ -8,6 +8,7 @@ import net.minecraft.block.IGrowable;
 import net.minecraft.init.Blocks;
 import net.minecraft.item.ItemStack;
 import net.minecraft.world.World;
+import net.minecraft.util.math.BlockPos;
 
 public class CropUtils {
    public static ArrayList<String> clickableCrops = new ArrayList<>();
@@ -19,14 +20,14 @@ public class CropUtils {
       if (Block.getBlockFromItem(stack.getItem()) != null) {
          if (grownMeta == 32767) {
             for(int a = 0; a < 16; ++a) {
-               standardCrops.add(Block.getBlockFromItem(stack.getItem()).getUnlocalizedName() + a);
+               standardCrops.add(Block.getBlockFromItem(stack.getItem()).getTranslationKey() + a);
             }
          } else {
-            standardCrops.add(Block.getBlockFromItem(stack.getItem()).getUnlocalizedName() + grownMeta);
+            standardCrops.add(Block.getBlockFromItem(stack.getItem()).getTranslationKey() + grownMeta);
          }
 
          if (Block.getBlockFromItem(stack.getItem()) instanceof BlockCrops && grownMeta != 7) {
-            standardCrops.add(Block.getBlockFromItem(stack.getItem()).getUnlocalizedName() + "7");
+            standardCrops.add(Block.getBlockFromItem(stack.getItem()).getTranslationKey() + "7");
          }
 
       }
@@ -36,14 +37,14 @@ public class CropUtils {
       if (Block.getBlockFromItem(stack.getItem()) != null) {
          if (grownMeta == 32767) {
             for(int a = 0; a < 16; ++a) {
-               clickableCrops.add(Block.getBlockFromItem(stack.getItem()).getUnlocalizedName() + a);
+               clickableCrops.add(Block.getBlockFromItem(stack.getItem()).getTranslationKey() + a);
             }
          } else {
-            clickableCrops.add(Block.getBlockFromItem(stack.getItem()).getUnlocalizedName() + grownMeta);
+            clickableCrops.add(Block.getBlockFromItem(stack.getItem()).getTranslationKey() + grownMeta);
          }
 
          if (Block.getBlockFromItem(stack.getItem()) instanceof BlockCrops && grownMeta != 7) {
-            clickableCrops.add(Block.getBlockFromItem(stack.getItem()).getUnlocalizedName() + "7");
+            clickableCrops.add(Block.getBlockFromItem(stack.getItem()).getTranslationKey() + "7");
          }
 
       }
@@ -58,36 +59,37 @@ public class CropUtils {
    public static void addStackedCrop(Block block, int grownMeta) {
       if (grownMeta == 32767) {
          for(int a = 0; a < 16; ++a) {
-            stackedCrops.add(block.getUnlocalizedName() + a);
+            stackedCrops.add(block.getTranslationKey() + a);
          }
       } else {
-         stackedCrops.add(block.getUnlocalizedName() + grownMeta);
+         stackedCrops.add(block.getTranslationKey() + grownMeta);
       }
 
       if (block instanceof BlockCrops && grownMeta != 7) {
-         stackedCrops.add(block.getUnlocalizedName() + "7");
+         stackedCrops.add(block.getTranslationKey() + "7");
       }
 
    }
 
    public static boolean isGrownCrop(World world, int x, int y, int z) {
-      if (world.isAirBlock(x, y, z)) {
+      if (world.isAirBlock(new BlockPos(x, y, z))) {
          return false;
       } else {
          boolean found = false;
-         Block bi = world.getBlock(x, y, z);
+         Block bi = world.getBlockState(new BlockPos(x, y, z)).getBlock();
 
          for(int a = 0; a < 16; ++a) {
-            if (standardCrops.contains(bi.getUnlocalizedName() + a) || clickableCrops.contains(bi.getUnlocalizedName() + a) || stackedCrops.contains(bi.getUnlocalizedName() + a)) {
+            if (standardCrops.contains(bi.getTranslationKey() + a) || clickableCrops.contains(bi.getTranslationKey() + a) || stackedCrops.contains(bi.getTranslationKey() + a)) {
                found = true;
                break;
             }
          }
 
-         world.getBlock(x, y + 1, z);
-         Block biB = world.getBlock(x, y - 1, z);
-         int md = world.getBlockMetadata(x, y, z);
-         return bi instanceof IGrowable && !((IGrowable)bi).func_149851_a(world, x, y, z, world.isRemote) && !(bi instanceof BlockStem) || bi instanceof BlockCrops && md == 7 && !found || bi == Blocks.nether_wart && md >= 3 || bi == Blocks.cocoa && (md & 12) >> 2 >= 2 || standardCrops.contains(bi.getUnlocalizedName() + md) || clickableCrops.contains(bi.getUnlocalizedName() + md) || stackedCrops.contains(bi.getUnlocalizedName() + md) && biB == bi;
+         world.getBlockState(new net.minecraft.util.math.BlockPos(x, y + 1, z)).getBlock();
+         Block biB = world.getBlockState(new net.minecraft.util.math.BlockPos(x, y - 1, z)).getBlock();
+         int md =
+        world.getBlockState(new net.minecraft.util.math.BlockPos(x, y, z)).getBlock().getMetaFromState(world.getBlockState(new net.minecraft.util.math.BlockPos(x, y, z)));
+         return bi instanceof IGrowable && !((IGrowable)bi).canGrow(world, new BlockPos(x, y, z), world.getBlockState(new BlockPos(x, y, z)), world.isRemote) && !(bi instanceof BlockStem) || bi instanceof BlockCrops && md == 7 && !found || bi == Blocks.NETHER_WART && md >= 3 || bi == Blocks.COCOA && (md & 12) >> 2 >= 2 || standardCrops.contains(bi.getTranslationKey() + md) || clickableCrops.contains(bi.getTranslationKey() + md) || stackedCrops.contains(bi.getTranslationKey() + md) && biB == bi;
       }
    }
 
@@ -95,18 +97,19 @@ public class CropUtils {
       if (Block.getBlockFromItem(stack.getItem()) != null) {
          if (meta == 32767) {
             for(int a = 0; a < 16; ++a) {
-               lampBlacklist.add(Block.getBlockFromItem(stack.getItem()).getUnlocalizedName() + a);
+               lampBlacklist.add(Block.getBlockFromItem(stack.getItem()).getTranslationKey() + a);
             }
          } else {
-            lampBlacklist.add(Block.getBlockFromItem(stack.getItem()).getUnlocalizedName() + meta);
+            lampBlacklist.add(Block.getBlockFromItem(stack.getItem()).getTranslationKey() + meta);
          }
 
       }
    }
 
    public static boolean doesLampGrow(World world, int x, int y, int z) {
-      Block bi = world.getBlock(x, y, z);
-      int md = world.getBlockMetadata(x, y, z);
-      return !lampBlacklist.contains(bi.getUnlocalizedName() + md);
+      Block bi = world.getBlockState(new BlockPos(x, y, z)).getBlock();
+      int md =
+        world.getBlockState(new net.minecraft.util.math.BlockPos(x, y, z)).getBlock().getMetaFromState(world.getBlockState(new net.minecraft.util.math.BlockPos(x, y, z)));
+      return !lampBlacklist.contains(bi.getTranslationKey() + md);
    }
 }

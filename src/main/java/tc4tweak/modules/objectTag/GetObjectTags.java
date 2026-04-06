@@ -114,7 +114,7 @@ public class GetObjectTags {
             ItemWandCasting wand = (ItemWandCasting) itemstack.getItem();
             if (tmp == null) tmp = new AspectList();
             addWandTags(itemstack, tmp, wand);
-        } else if (item == Items.potionitem) {
+        } else if (item == Items.POTIONITEM) {
             if (tmp == null) tmp = new AspectList();
             addPotionTags(itemstack, (ItemPotion) item, tmp);
         }
@@ -151,54 +151,54 @@ public class GetObjectTags {
     @SuppressWarnings("unchecked")
     private static void addPotionTags(ItemStack itemstack, ItemPotion item, AspectList tmp) {
         tmp.merge(Aspect.WATER, 1);
-        List<PotionEffect> effects = item.getEffects(itemstack.getItemDamage());
+        List<PotionEffect> effects = net.minecraft.potion.PotionUtils.getEffectsFromStack(itemstack);
         if (effects != null) {
-            if (ItemPotion.isSplash(itemstack.getItemDamage())) {
+            if ((item instanceof net.minecraft.item.ItemSplashPotion)) {
                 tmp.merge(Aspect.ENTROPY, 2);
             }
 
             for (PotionEffect effect : effects) {
                 int amplifier = effect.getAmplifier();
-                int potionID = effect.getPotionID();
+                int potionID = Potion.getIdFromPotion(effect.getPotion());
                 tmp.merge(Aspect.MAGIC, (amplifier + 1) * 2);
-                if (potionID == Potion.blindness.id) {
+                if (effect.getPotion() == net.minecraft.init.MobEffects.BLINDNESS) {
                     tmp.merge(Aspect.DARKNESS, (amplifier + 1) * 3);
-                } else if (potionID == Potion.confusion.id) {
+                } else if (effect.getPotion() == net.minecraft.init.MobEffects.NAUSEA) {
                     tmp.merge(Aspect.ELDRITCH, (amplifier + 1) * 3);
-                } else if (potionID == Potion.damageBoost.id) {
+                } else if (effect.getPotion() == net.minecraft.init.MobEffects.STRENGTH) {
                     tmp.merge(Aspect.WEAPON, (amplifier + 1) * 3);
-                } else if (potionID == Potion.digSlowdown.id) {
+                } else if (effect.getPotion() == net.minecraft.init.MobEffects.MINING_FATIGUE) {
                     tmp.merge(Aspect.TRAP, (amplifier + 1) * 3);
-                } else if (potionID == Potion.digSpeed.id) {
+                } else if (effect.getPotion() == net.minecraft.init.MobEffects.HASTE) {
                     tmp.merge(Aspect.TOOL, (amplifier + 1) * 3);
-                } else if (potionID == Potion.fireResistance.id) {
+                } else if (effect.getPotion() == net.minecraft.init.MobEffects.FIRE_RESISTANCE) {
                     tmp.merge(Aspect.ARMOR, amplifier + 1);
                     tmp.merge(Aspect.FIRE, (amplifier + 1) * 2);
-                } else if (potionID == Potion.harm.id) {
+                } else if (effect.getPotion() == net.minecraft.init.MobEffects.INSTANT_DAMAGE) {
                     tmp.merge(Aspect.DEATH, (amplifier + 1) * 3);
-                } else if (potionID == Potion.heal.id) {
+                } else if (effect.getPotion() == net.minecraft.init.MobEffects.INSTANT_HEALTH) {
                     tmp.merge(Aspect.HEAL, (amplifier + 1) * 3);
-                } else if (potionID == Potion.hunger.id) {
+                } else if (effect.getPotion() == net.minecraft.init.MobEffects.HUNGER) {
                     tmp.merge(Aspect.DEATH, (amplifier + 1) * 3);
-                } else if (potionID == Potion.invisibility.id) {
+                } else if (effect.getPotion() == net.minecraft.init.MobEffects.INVISIBILITY) {
                     tmp.merge(Aspect.SENSES, (amplifier + 1) * 3);
-                } else if (potionID == Potion.jump.id) {
+                } else if (effect.getPotion() == net.minecraft.init.MobEffects.JUMP_BOOST) {
                     tmp.merge(Aspect.FLIGHT, (amplifier + 1) * 3);
-                } else if (potionID == Potion.moveSlowdown.id) {
+                } else if (effect.getPotion() == net.minecraft.init.MobEffects.SLOWNESS) {
                     tmp.merge(Aspect.TRAP, (amplifier + 1) * 3);
-                } else if (potionID == Potion.moveSpeed.id) {
+                } else if (effect.getPotion() == net.minecraft.init.MobEffects.SPEED) {
                     tmp.merge(Aspect.MOTION, (amplifier + 1) * 3);
-                } else if (potionID == Potion.nightVision.id) {
+                } else if (effect.getPotion() == net.minecraft.init.MobEffects.NIGHT_VISION) {
                     tmp.merge(Aspect.SENSES, (amplifier + 1) * 3);
-                } else if (potionID == Potion.poison.id) {
+                } else if (effect.getPotion() == net.minecraft.init.MobEffects.POISON) {
                     tmp.merge(Aspect.POISON, (amplifier + 1) * 3);
-                } else if (potionID == Potion.regeneration.id) {
+                } else if (effect.getPotion() == net.minecraft.init.MobEffects.REGENERATION) {
                     tmp.merge(Aspect.HEAL, (amplifier + 1) * 3);
-                } else if (potionID == Potion.resistance.id) {
+                } else if (effect.getPotion() == net.minecraft.init.MobEffects.RESISTANCE) {
                     tmp.merge(Aspect.ARMOR, (amplifier + 1) * 3);
-                } else if (potionID == Potion.waterBreathing.id) {
+                } else if (effect.getPotion() == net.minecraft.init.MobEffects.WATER_BREATHING) {
                     tmp.merge(Aspect.AIR, (amplifier + 1) * 3);
-                } else if (potionID == Potion.weakness.id) {
+                } else if (effect.getPotion() == net.minecraft.init.MobEffects.WEAKNESS) {
                     tmp.merge(Aspect.DEATH, (amplifier + 1) * 3);
                 }
             }

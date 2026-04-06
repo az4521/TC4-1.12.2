@@ -1,11 +1,15 @@
 package thaumcraft.common.tiles;
 
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.util.AxisAlignedBB;
+import net.minecraft.util.ITickable;
+import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.SoundCategory;
+import net.minecraft.util.SoundEvent;
+import net.minecraft.util.math.AxisAlignedBB;
 import thaumcraft.api.aspects.Aspect;
 import thaumcraft.api.aspects.AspectList;
 import thaumcraft.api.visnet.VisNetHandler;
@@ -13,8 +17,9 @@ import thaumcraft.api.wands.FocusUpgradeType;
 import thaumcraft.api.wands.ItemFocusBasic;
 import thaumcraft.common.Thaumcraft;
 import thaumcraft.common.lib.research.ResearchManager;
+import net.minecraft.util.math.BlockPos;
 
-public class TileFocalManipulator extends TileThaumcraftInventory {
+public class TileFocalManipulator extends TileThaumcraftInventory implements ITickable {
    public AspectList aspects = new AspectList();
    public int size = 0;
    public int upgrade = -1;
@@ -49,16 +54,12 @@ public class TileFocalManipulator extends TileThaumcraftInventory {
 
    @SideOnly(Side.CLIENT)
    public AxisAlignedBB getRenderBoundingBox() {
-      return AxisAlignedBB.getBoundingBox(this.xCoord, this.yCoord - 1, this.zCoord, this.xCoord + 1, this.yCoord + 1, this.zCoord + 1);
-   }
-
-   public boolean canUpdate() {
-       return super.canUpdate();
+      return new AxisAlignedBB(this.getPos().getX(), this.getPos().getY() - 1, this.getPos().getZ(), this.getPos().getX() + 1, this.getPos().getY() + 1, this.getPos().getZ() + 1);
    }
 
    public void setInventorySlotContents(int par1, ItemStack par2ItemStack) {
       super.setInventorySlotContents(par1, par2ItemStack);
-      if (this.worldObj.isRemote) {
+      if (this.world.isRemote) {
          this.reset = true;
       } else {
          this.aspects = new AspectList();
@@ -66,54 +67,55 @@ public class TileFocalManipulator extends TileThaumcraftInventory {
 
    }
 
-   public void updateEntity() {
+   @Override
+   public void update() {
       boolean complete = false;
-      if (!this.worldObj.isRemote) {
+      if (!this.world.isRemote) {
          if (this.rank < 0) {
             this.rank = 0;
          }
 
          ++this.ticks;
          if (this.ticks % 5 == 0) {
-            if (this.size > 0 && (this.aspects.visSize() <= 0 || this.getStackInSlot(0) == null)) {
+            if (this.size > 0 && (this.aspects.visSize() <= 0 || this.getStackInSlot(0).isEmpty())) {
                complete = true;
-               this.worldObj.playSoundEffect(this.xCoord, this.yCoord, this.zCoord, "thaumcraft:craftfail", 0.33F, 1.0F);
+               this.world.playSound(null, this.getPos(), SoundEvent.REGISTRY.getObject(new ResourceLocation("thaumcraft", "craftfail")), SoundCategory.BLOCKS, 0.33F, 1.0F);
             }
 
             if (this.size > 0) {
                for(Aspect aspect : this.aspects.getAspectsSortedAmount()) {
-                  int drain = VisNetHandler.drainVis(this.worldObj, this.xCoord, this.yCoord, this.zCoord, aspect, Math.min(100, this.aspects.getAmount(aspect)));
+                  int drain = VisNetHandler.drainVis(this.world, this.getPos().getX(), this.getPos().getY(), this.getPos().getZ(), aspect, Math.min(100, this.aspects.getAmount(aspect)));
                   if (drain > 0) {
                      this.aspects.reduce(aspect, drain);
-                     this.worldObj.markBlockForUpdate(this.xCoord, this.yCoord, this.zCoord);
+                     { net.minecraft.block.state.IBlockState _bs = this.world.getBlockState(this.pos); this.world.notifyBlockUpdate(this.pos, _bs, _bs, 3); }
                      this.markDirty();
                   }
                }
 
-               if (this.aspects.visSize() <= 0 && this.getStackInSlot(0) != null) {
+               if (this.aspects.visSize() <= 0 && !this.getStackInSlot(0).isEmpty()) {
                   complete = true;
                   ItemFocusBasic focus = (ItemFocusBasic)this.getStackInSlot(0).getItem();
                   focus.applyUpgrade(this.getStackInSlot(0), FocusUpgradeType.types[this.upgrade], this.rank);
-                  this.worldObj.playSoundEffect(this.xCoord, this.yCoord, this.zCoord, "thaumcraft:wand", 1.0F, 1.0F);
+                  this.world.playSound(null, this.getPos(), SoundEvent.REGISTRY.getObject(new ResourceLocation("thaumcraft", "wand")), SoundCategory.BLOCKS, 1.0F, 1.0F);
                }
             }
          }
       } else if (this.size > 0) {
-         Thaumcraft.proxy.drawGenericParticles(this.getWorldObj(), (double)this.xCoord + (double)0.5F + (double)((this.worldObj.rand.nextFloat() - this.worldObj.rand.nextFloat()) * 0.3F), (double)this.yCoord + (double)1.25F + (double)((this.worldObj.rand.nextFloat() - this.worldObj.rand.nextFloat()) * 0.3F), (double)this.zCoord + (double)0.5F + (double)((this.worldObj.rand.nextFloat() - this.worldObj.rand.nextFloat()) * 0.3F), 0.0F, 0.0F, 0.0F, 0.5F + this.getWorldObj().rand.nextFloat() * 0.4F, 1.0F - this.getWorldObj().rand.nextFloat() * 0.4F, 1.0F - this.getWorldObj().rand.nextFloat() * 0.4F, 0.8F, false, 112, 9, 1, 6 + this.worldObj.rand.nextInt(5), 0, 0.7F + this.getWorldObj().rand.nextFloat() * 0.4F);
+         Thaumcraft.proxy.drawGenericParticles(this.world, (double)this.getPos().getX() + (double)0.5F + (double)((this.world.rand.nextFloat() - this.world.rand.nextFloat()) * 0.3F), (double)this.getPos().getY() + (double)1.25F + (double)((this.world.rand.nextFloat() - this.world.rand.nextFloat()) * 0.3F), (double)this.getPos().getZ() + (double)0.5F + (double)((this.world.rand.nextFloat() - this.world.rand.nextFloat()) * 0.3F), 0.0F, 0.0F, 0.0F, 0.5F + this.world.rand.nextFloat() * 0.4F, 1.0F - this.world.rand.nextFloat() * 0.4F, 1.0F - this.world.rand.nextFloat() * 0.4F, 0.8F, false, 112, 9, 1, 6 + this.world.rand.nextInt(5), 0, 0.7F + this.world.rand.nextFloat() * 0.4F);
       }
 
       if (complete) {
          this.size = 0;
          this.rank = -1;
          this.aspects = new AspectList();
-         this.worldObj.markBlockForUpdate(this.xCoord, this.yCoord, this.zCoord);
+         { net.minecraft.block.state.IBlockState _bs = this.world.getBlockState(this.pos); this.world.notifyBlockUpdate(this.pos, _bs, _bs, 3); }
          this.markDirty();
       }
 
    }
 
    public boolean startCraft(int id, EntityPlayer p) {
-      if (this.size <= 0 && this.getStackInSlot(0) != null && this.getStackInSlot(0).getItem() instanceof ItemFocusBasic) {
+      if (this.size <= 0 && !this.getStackInSlot(0).isEmpty() && this.getStackInSlot(0).getItem() instanceof ItemFocusBasic) {
          ItemFocusBasic focus = (ItemFocusBasic)this.getStackInSlot(0).getItem();
          short[] s = focus.getAppliedUpgrades(this.getStackInSlot(0));
 
@@ -160,8 +162,8 @@ public class TileFocalManipulator extends TileThaumcraftInventory {
                   }
 
                   this.markDirty();
-                  this.worldObj.markBlockForUpdate(this.xCoord, this.yCoord, this.zCoord);
-                  this.worldObj.playSoundEffect(this.xCoord, this.yCoord, this.zCoord, "thaumcraft:craftstart", 0.25F, 1.0F);
+                  { net.minecraft.block.state.IBlockState _bs = this.world.getBlockState(this.pos); this.world.notifyBlockUpdate(this.pos, _bs, _bs, 3); }
+                  this.world.playSound(null, this.getPos(), SoundEvent.REGISTRY.getObject(new ResourceLocation("thaumcraft", "craftstart")), SoundCategory.BLOCKS, 0.25F, 1.0F);
                   return true;
                } else {
                   return false;

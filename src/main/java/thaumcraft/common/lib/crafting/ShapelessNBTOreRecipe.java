@@ -23,7 +23,7 @@ public class ShapelessNBTOreRecipe extends ShapelessOreRecipe {
    }
 
    public ShapelessNBTOreRecipe(ItemStack result, Object... recipe) {
-      super(result, recipe);
+      super((net.minecraft.util.ResourceLocation)null, result, recipe);
       this.output = null;
       this.input = new ArrayList<>();
       this.output = result.copy();

@@ -1,8 +1,8 @@
 package thaumcraft.client.renderers.block;
 
-import cpw.mods.fml.client.registry.ISimpleBlockRenderingHandler;
+import thaumcraft.client.renderers.compat.ISimpleBlockRenderingHandler;
 import net.minecraft.block.Block;
-import net.minecraft.client.renderer.RenderBlocks;
+import thaumcraft.client.renderers.compat.RenderBlocks;
 import net.minecraft.world.IBlockAccess;
 import thaumcraft.common.blocks.BlockWarded;
 import thaumcraft.common.config.ConfigBlocks;
@@ -12,7 +12,8 @@ public class BlockWardedRenderer extends BlockRenderer implements ISimpleBlockRe
    }
 
    public boolean renderWorldBlock(IBlockAccess world, int x, int y, int z, Block block, int modelId, RenderBlocks renderer) {
-      return renderer.renderBlockByRenderType(((BlockWarded)block).getBlock(world, x, y, z), x, y, z);
+      renderer.renderBlockByRenderType(((BlockWarded)block).getBlock(world, x, y, z), x, y, z);
+      return false;
    }
 
    public boolean shouldRender3DInInventory(int modelId) {

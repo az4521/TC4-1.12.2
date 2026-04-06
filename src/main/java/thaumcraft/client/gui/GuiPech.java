@@ -1,14 +1,15 @@
 package thaumcraft.client.gui;
 
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.world.World;
-import org.lwjgl.opengl.GL11;
+
 import thaumcraft.client.lib.UtilsFX;
 import thaumcraft.common.entities.ContainerPech;
 import thaumcraft.common.entities.monster.EntityPech;
+import net.minecraft.client.renderer.GlStateManager;
 
 @SideOnly(Side.CLIENT)
 public class GuiPech extends GuiContainer {
@@ -26,19 +27,19 @@ public class GuiPech extends GuiContainer {
 
    protected void drawGuiContainerBackgroundLayer(float par1, int par2, int par3) {
       UtilsFX.bindTexture("textures/gui/gui_pech.png");
-      GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+      GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
       int var5 = (this.width - this.xSize) / 2;
       int var6 = (this.height - this.ySize) / 2;
-      GL11.glEnable(GL11.GL_BLEND);
+      GlStateManager.enableBlend();
       this.drawTexturedModalRect(var5, var6, 0, 0, this.xSize, this.ySize);
       if (this.pech.isValued(this.inventorySlots.getSlot(0).getStack()) && this.inventorySlots.getSlot(0).getStack() != null && this.inventorySlots.getSlot(1).getStack() == null && this.inventorySlots.getSlot(2).getStack() == null && this.inventorySlots.getSlot(3).getStack() == null && this.inventorySlots.getSlot(4).getStack() == null) {
          this.drawTexturedModalRect(var5 + 67, var6 + 24, 176, 0, 25, 25);
       }
 
-      GL11.glDisable(GL11.GL_BLEND);
+      GlStateManager.disableBlend();
    }
 
-   protected void mouseClicked(int mx, int my, int par3) {
+   protected void mouseClicked(int mx, int my, int par3) throws java.io.IOException {
       super.mouseClicked(mx, my, par3);
       int gx = (this.width - this.xSize) / 2;
       int gy = (this.height - this.ySize) / 2;
@@ -51,6 +52,6 @@ public class GuiPech extends GuiContainer {
    }
 
    private void playButton() {
-      this.mc.renderViewEntity.worldObj.playSound(this.mc.renderViewEntity.posX, this.mc.renderViewEntity.posY, this.mc.renderViewEntity.posZ, "thaumcraft:pech_dice", 0.5F, 0.95F + this.mc.renderViewEntity.worldObj.rand.nextFloat() * 0.1F, false);
+      { net.minecraft.entity.Entity _rve = this.mc.getRenderViewEntity(); if (_rve != null) { net.minecraft.util.SoundEvent _snd = net.minecraft.util.SoundEvent.REGISTRY.getObject(new net.minecraft.util.ResourceLocation("thaumcraft:pech_dice")); if (_snd != null) _rve.world.playSound(null, new net.minecraft.util.math.BlockPos(_rve.posX, _rve.posY, _rve.posZ), _snd, net.minecraft.util.SoundCategory.NEUTRAL, 0.5F, 0.95F + _rve.world.rand.nextFloat() * 0.1F); } }
    }
 }

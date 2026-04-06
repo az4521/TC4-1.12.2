@@ -1,13 +1,18 @@
 package thaumcraft.client.fx.particles;
 
-import cpw.mods.fml.client.FMLClientHandler;
-import net.minecraft.client.particle.EntityFX;
+import net.minecraftforge.fml.client.FMLClientHandler;
+import net.minecraft.client.particle.Particle;
+import net.minecraft.entity.Entity;
 import net.minecraft.client.renderer.Tessellator;
-import net.minecraft.util.MathHelper;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
-import org.lwjgl.opengl.GL11;
 
-public class FXSparkle extends EntityFX {
+import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.client.renderer.BufferBuilder;
+import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
+import net.minecraft.util.math.BlockPos;
+
+public class FXSparkle extends Particle {
    public boolean leyLineEffect;
    public int multiplier;
    public boolean shrink;
@@ -39,7 +44,7 @@ public class FXSparkle extends EntityFX {
       this.particleScale *= f;
       this.particleMaxAge = 3 * m;
       this.multiplier = m;
-      this.noClip = false;
+      this.canCollide = true;
       this.setSize(0.01F, 0.01F);
       this.prevPosX = this.posX;
       this.prevPosY = this.posY;
@@ -104,8 +109,8 @@ public class FXSparkle extends EntityFX {
       this.motionZ = dz / (double)this.particleMaxAge;
    }
 
-   public void renderParticle(Tessellator tessellator, float f, float f1, float f2, float f3, float f4, float f5) {
-      GL11.glColor4f(1.0F, 1.0F, 1.0F, 0.75F);
+   public void renderParticle(BufferBuilder buffer, Entity entityIn, float f, float f1, float f2, float f3, float f4, float f5) {
+      GlStateManager.color(1.0F, 1.0F, 1.0F, 0.75F);
       int part = this.particle + this.particleAge / this.multiplier;
       float var8 = (float)(part % 4) / 16.0F;
       float var9 = var8 + 0.0624375F;
@@ -120,12 +125,14 @@ public class FXSparkle extends EntityFX {
       float var14 = (float)(this.prevPosY + (this.posY - this.prevPosY) * (double)f - interpPosY);
       float var15 = (float)(this.prevPosZ + (this.posZ - this.prevPosZ) * (double)f - interpPosZ);
       float var16 = 1.0F;
-      tessellator.setBrightness(240);
-      tessellator.setColorRGBA_F(this.particleRed * var16, this.particleGreen * var16, this.particleBlue * var16, 1.0F);
-      tessellator.addVertexWithUV(var13 - f1 * var12 - f4 * var12, var14 - f2 * var12, var15 - f3 * var12 - f5 * var12, var9, var11);
-      tessellator.addVertexWithUV(var13 - f1 * var12 + f4 * var12, var14 + f2 * var12, var15 - f3 * var12 + f5 * var12, var9, var10);
-      tessellator.addVertexWithUV(var13 + f1 * var12 + f4 * var12, var14 + f2 * var12, var15 + f3 * var12 + f5 * var12, var8, var10);
-      tessellator.addVertexWithUV(var13 + f1 * var12 - f4 * var12, var14 - f2 * var12, var15 + f3 * var12 - f5 * var12, var8, var11);
+      buffer.pos(var13 - f1 * var12 - f4 * var12, var14 - f2 * var12, var15 - f3 * var12 - f5 * var12).tex(var9, var11).color(this.particleRed, this.particleGreen, this.particleBlue, 1.0F)
+        .endVertex();
+      buffer.pos(var13 - f1 * var12 + f4 * var12, var14 + f2 * var12, var15 - f3 * var12 + f5 * var12).tex(var9, var10).color(this.particleRed, this.particleGreen, this.particleBlue, 1.0F)
+        .endVertex();
+      buffer.pos(var13 + f1 * var12 + f4 * var12, var14 + f2 * var12, var15 + f3 * var12 + f5 * var12).tex(var8, var10).color(this.particleRed, this.particleGreen, this.particleBlue, 1.0F)
+        .endVertex();
+      buffer.pos(var13 + f1 * var12 - f4 * var12, var14 - f2 * var12, var15 + f3 * var12 - f5 * var12).tex(var8, var11).color(this.particleRed, this.particleGreen, this.particleBlue, 1.0F)
+        .endVertex();
    }
 
    public int getFXLayer() {
@@ -136,17 +143,17 @@ public class FXSparkle extends EntityFX {
       this.prevPosX = this.posX;
       this.prevPosY = this.posY;
       this.prevPosZ = this.posZ;
-      if (this.particleAge == 0 && this.tinkle && this.worldObj.rand.nextInt(10) == 0) {
-         this.worldObj.playSoundAtEntity(this, "random.orb", 0.02F, 0.7F * ((this.worldObj.rand.nextFloat() - this.worldObj.rand.nextFloat()) * 0.6F + 2.0F));
+      if (this.particleAge == 0 && this.tinkle && this.world.rand.nextInt(10) == 0) {
+         { net.minecraft.util.SoundEvent _snd = net.minecraft.util.SoundEvent.REGISTRY.getObject(new net.minecraft.util.ResourceLocation("random.orb")); if (_snd != null) this.world.playSound(null, new net.minecraft.util.math.BlockPos(this.posX, this.posY, this.posZ), _snd, net.minecraft.util.SoundCategory.NEUTRAL, 0.02F, 0.7F * ((this.world.rand.nextFloat() - this.world.rand.nextFloat()) * 0.6F + 2.0F)); }
       }
 
       if (this.particleAge++ >= this.particleMaxAge) {
-         this.setDead();
+         this.setExpired();
       }
 
       this.motionY -= 0.04 * (double)this.particleGravity;
-      if (!this.noClip) {
-         this.pushOutOfBlocks(this.posX, (this.boundingBox.minY + this.boundingBox.maxY) / (double)2.0F, this.posZ);
+      if (this.canCollide) {
+         this.pushOutOfBlocks(this.posX, (this.getBoundingBox().minY + this.getBoundingBox().maxY) / (double)2.0F, this.posZ);
       }
 
       this.posX += this.motionX;
@@ -163,9 +170,9 @@ public class FXSparkle extends EntityFX {
       }
 
       if (this.leyLineEffect) {
-         FXSparkle fx = new FXSparkle(this.worldObj, this.prevPosX + (double)((this.worldObj.rand.nextFloat() - this.worldObj.rand.nextFloat()) * 0.1F), this.prevPosY + (double)((this.worldObj.rand.nextFloat() - this.worldObj.rand.nextFloat()) * 0.1F), this.prevPosZ + (double)((this.worldObj.rand.nextFloat() - this.worldObj.rand.nextFloat()) * 0.1F), 1.0F, this.currentColor, 3 + this.worldObj.rand.nextInt(3));
-         fx.noClip = true;
-         FMLClientHandler.instance().getClient().effectRenderer.addEffect(fx);
+         FXSparkle fx = new FXSparkle(this.world, this.prevPosX + (double)((this.world.rand.nextFloat() - this.world.rand.nextFloat()) * 0.1F), this.prevPosY + (double)((this.world.rand.nextFloat() - this.world.rand.nextFloat()) * 0.1F), this.prevPosZ + (double)((this.world.rand.nextFloat() - this.world.rand.nextFloat()) * 0.1F), 1.0F, this.currentColor, 3 + this.world.rand.nextInt(3));
+         fx.setNoClip(true);
+         thaumcraft.client.fx.ParticleEngine.instance.addEffect(this.world, fx);
       }
 
    }
@@ -175,19 +182,19 @@ public class FXSparkle extends EntityFX {
    }
 
    protected boolean pushOutOfBlocks(double par1, double par3, double par5) {
-      int var7 = MathHelper.floor_double(par1);
-      int var8 = MathHelper.floor_double(par3);
-      int var9 = MathHelper.floor_double(par5);
+      int var7 = MathHelper.floor(par1);
+      int var8 = MathHelper.floor(par3);
+      int var9 = MathHelper.floor(par5);
       double var10 = par1 - (double)var7;
       double var12 = par3 - (double)var8;
       double var14 = par5 - (double)var9;
-      if (!this.worldObj.isAirBlock(var7, var8, var9)) {
-         boolean var16 = !this.worldObj.isBlockNormalCubeDefault(var7 - 1, var8, var9, true);
-         boolean var17 = !this.worldObj.isBlockNormalCubeDefault(var7 + 1, var8, var9, true);
-         boolean var18 = !this.worldObj.isBlockNormalCubeDefault(var7, var8 - 1, var9, true);
-         boolean var19 = !this.worldObj.isBlockNormalCubeDefault(var7, var8 + 1, var9, true);
-         boolean var20 = !this.worldObj.isBlockNormalCubeDefault(var7, var8, var9 - 1, true);
-         boolean var21 = !this.worldObj.isBlockNormalCubeDefault(var7, var8, var9 + 1, true);
+      if (!this.world.isAirBlock(new BlockPos(var7, var8, var9))) {
+         boolean var16 = !this.world.getBlockState(new BlockPos(var7-1,var8,var9)).getMaterial().blocksMovement();
+         boolean var17 = !this.world.getBlockState(new BlockPos(var7+1,var8,var9)).getMaterial().blocksMovement();
+         boolean var18 = !this.world.getBlockState(new BlockPos(var7,var8-1,var9)).getMaterial().blocksMovement();
+         boolean var19 = !this.world.getBlockState(new BlockPos(var7,var8+1,var9)).getMaterial().blocksMovement();
+         boolean var20 = !this.world.getBlockState(new BlockPos(var7,var8,var9-1)).getMaterial().blocksMovement();
+         boolean var21 = !this.world.getBlockState(new BlockPos(var7,var8,var9+1)).getMaterial().blocksMovement();
          byte var22 = -1;
          double var23 = 9999.0F;
          if (var16 && var10 < var23) {
@@ -257,4 +264,6 @@ public class FXSparkle extends EntityFX {
          return false;
       }
    }
+
+   public FXSparkle setNoClip(boolean v) { this.canCollide = !v; return this; }
 }

@@ -1,18 +1,20 @@
 package thaumcraft.common.lib.world.biomes;
 
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import java.util.Random;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockFlower;
+import net.minecraft.block.BlockTallGrass;
 import net.minecraft.entity.monster.EntityEnderman;
 import net.minecraft.entity.monster.EntityWitch;
 import net.minecraft.entity.passive.EntityHorse;
 import net.minecraft.entity.passive.EntityWolf;
 import net.minecraft.init.Blocks;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
-import net.minecraft.world.biome.BiomeGenBase;
+import net.minecraft.world.biome.Biome;
 import net.minecraft.world.gen.feature.WorldGenAbstractTree;
 import net.minecraft.world.gen.feature.WorldGenBigMushroom;
 import net.minecraft.world.gen.feature.WorldGenBlockBlob;
@@ -28,42 +30,42 @@ import thaumcraft.common.lib.world.WorldGenGreatwoodTrees;
 import thaumcraft.common.lib.world.WorldGenManaPods;
 import thaumcraft.common.lib.world.WorldGenSilverwoodTrees;
 
-public class BiomeGenMagicalForest extends BiomeGenBase {
+public class BiomeGenMagicalForest extends Biome {
    protected WorldGenBigMagicTree bigTree = new WorldGenBigMagicTree(false);
    private static final WorldGenBlockBlob blobs;
 
-   public BiomeGenMagicalForest(int par1) {
-      super(par1);
-      this.spawnableCreatureList.add(new BiomeGenBase.SpawnListEntry(EntityWolf.class, 2, 1, 3));
-      this.spawnableCreatureList.add(new BiomeGenBase.SpawnListEntry(EntityHorse.class, 2, 1, 3));
-      this.spawnableMonsterList.add(new BiomeGenBase.SpawnListEntry(EntityWitch.class, 3, 1, 1));
-      this.spawnableMonsterList.add(new BiomeGenBase.SpawnListEntry(EntityEnderman.class, 3, 1, 1));
+   public BiomeGenMagicalForest() {
+      super(new BiomeProperties("Magical Forest")
+              .setTemperature(0.7F)
+              .setRainfall(0.6F)
+              .setBaseHeight(0.2F)
+              .setHeightVariation(0.2F)
+              .setWaterColor(30702));
+      this.spawnableCreatureList.add(new Biome.SpawnListEntry(EntityWolf.class, 2, 1, 3));
+      this.spawnableCreatureList.add(new Biome.SpawnListEntry(EntityHorse.class, 2, 1, 3));
+      this.spawnableMonsterList.add(new Biome.SpawnListEntry(EntityWitch.class, 3, 1, 1));
+      this.spawnableMonsterList.add(new Biome.SpawnListEntry(EntityEnderman.class, 3, 1, 1));
       if (Config.spawnPech) {
-         this.spawnableMonsterList.add(new BiomeGenBase.SpawnListEntry(EntityPech.class, 10, 1, 2));
+         this.spawnableMonsterList.add(new Biome.SpawnListEntry(EntityPech.class, 10, 1, 2));
       }
 
       if (Config.spawnWisp) {
-         this.spawnableMonsterList.add(new BiomeGenBase.SpawnListEntry(EntityWisp.class, 10, 1, 2));
+         this.spawnableMonsterList.add(new Biome.SpawnListEntry(EntityWisp.class, 10, 1, 2));
       }
 
-      this.theBiomeDecorator.treesPerChunk = 2;
-      this.theBiomeDecorator.flowersPerChunk = 10;
-      this.theBiomeDecorator.grassPerChunk = 12;
-      this.theBiomeDecorator.waterlilyPerChunk = 6;
-      this.theBiomeDecorator.mushroomsPerChunk = 6;
-      this.setTemperatureRainfall(0.7F, 0.6F);
-      this.setHeight(new BiomeGenBase.Height(0.2F, 0.2F));
-      this.setBiomeName("Magical Forest");
-      this.setColor(Config.blueBiome ? 6728396 : 6747307);
+      this.decorator.treesPerChunk = 2;
+      this.decorator.flowersPerChunk = 10;
+      this.decorator.grassPerChunk = 12;
+      this.decorator.waterlilyPerChunk = 6;
+      this.decorator.mushroomsPerChunk = 6;
       this.flowers.clear();
 
-      for(int x = 0; x < BlockFlower.field_149859_a.length; ++x) {
-         this.addFlower(Blocks.red_flower, x, 10);
+      for (BlockFlower.EnumFlowerType type : BlockFlower.EnumFlowerType.getTypes(BlockFlower.EnumFlowerColor.RED)) {
+         this.addFlower(Blocks.RED_FLOWER.getDefaultState().withProperty(Blocks.RED_FLOWER.getTypeProperty(), type), 10);
       }
-
    }
 
-   public WorldGenAbstractTree func_150567_a(Random par1Random) {
+   public WorldGenAbstractTree getRandomTreeFeature(Random par1Random) {
       return par1Random.nextInt(14) == 0
               ? new WorldGenSilverwoodTrees(false, 8, 5)
               : (par1Random.nextInt(10) == 0
@@ -73,16 +75,18 @@ public class BiomeGenMagicalForest extends BiomeGenBase {
    }
 
    public WorldGenerator getRandomWorldGenForGrass(Random par1Random) {
-      return par1Random.nextInt(4) == 0 ? new WorldGenTallGrass(Blocks.tallgrass, 2) : new WorldGenTallGrass(Blocks.tallgrass, 1);
+      return par1Random.nextInt(4) == 0
+              ? new WorldGenTallGrass(BlockTallGrass.EnumType.FERN)
+              : new WorldGenTallGrass(BlockTallGrass.EnumType.GRASS);
    }
 
    @SideOnly(Side.CLIENT)
-   public int getBiomeGrassColor(int x, int y, int z) {
+   public int getGrassColorAtPos(BlockPos pos) {
       return Config.blueBiome ? 6728396 : 5635969;
    }
 
    @SideOnly(Side.CLIENT)
-   public int getBiomeFoliageColor(int x, int y, int z) {
+   public int getFoliageColorAtPos(BlockPos pos) {
       return Config.blueBiome ? 7851246 : 6750149;
    }
 
@@ -90,36 +94,38 @@ public class BiomeGenMagicalForest extends BiomeGenBase {
       return 30702;
    }
 
-   public void decorate(World world, Random random, int x, int z) {
+   public void decorate(World world, Random random, BlockPos chunkPos) {
+      int x = chunkPos.getX();
+      int z = chunkPos.getZ();
       int k = random.nextInt(3);
 
       for(int l = 0; l < k; ++l) {
          int i1 = x + random.nextInt(16) + 8;
          int j1 = z + random.nextInt(16) + 8;
-         int k1 = world.getHeightValue(i1, j1);
-         blobs.generate(world, random, i1, k1, j1);
+         int k1 = world.getHeight(i1, j1);
+         blobs.generate(world, random, new BlockPos(i1, k1, j1));
       }
 
       for(int var16 = 0; var16 < 4; ++var16) {
          for(int var18 = 0; var18 < 4; ++var18) {
             int i1 = x + var16 * 4 + 1 + 8 + random.nextInt(3);
             int j1 = z + var18 * 4 + 1 + 8 + random.nextInt(3);
-            int k1 = world.getHeightValue(i1, j1);
+            int k1 = world.getHeight(i1, j1);
             if (random.nextInt(40) == 0) {
                WorldGenBigMushroom worldgenbigmushroom = new WorldGenBigMushroom();
-               worldgenbigmushroom.generate(world, random, i1, k1, j1);
+               worldgenbigmushroom.generate(world, random, new BlockPos(i1, k1, j1));
             }
          }
       }
 
-      super.decorate(world, random, x, z);
+      super.decorate(world, random, chunkPos);
       WorldGenManaPods worldgenpods = new WorldGenManaPods();
 
       for(int var17 = 0; var17 < 10; ++var17) {
          int var19 = x + random.nextInt(16) + 8;
-         byte b0 = 64;
+         int b0 = 64;
          int i1 = z + random.nextInt(16) + 8;
-         worldgenpods.generate(world, random, var19, b0, i1);
+         worldgenpods.generate(world, random, new BlockPos(var19, b0, i1));
       }
 
       for(int a = 0; a < 8; ++a) {
@@ -127,20 +133,20 @@ public class BiomeGenMagicalForest extends BiomeGenBase {
          int zz = z + random.nextInt(16);
 
          int yy;
-         for(yy = world.getHeightValue(xx, zz); yy > 50 && world.getBlock(xx, yy, zz) != Blocks.grass; --yy) {
+         for(yy = world.getHeight(xx, zz); yy > 50 && world.getBlockState(new BlockPos(xx, yy, zz)).getBlock() != Blocks.GRASS; --yy) {
          }
 
-         Block l1 = world.getBlock(xx, yy, zz);
-         if (l1 == Blocks.grass && world.getBlock(xx, yy + 1, zz).isReplaceable(world, xx, yy + 1, zz) && this.isBlockAdjacentToWood(world, xx, yy + 1, zz)) {
-            world.setBlock(xx, yy + 1, zz, ConfigBlocks.blockCustomPlant, 5, 2);
+         Block l1 = world.getBlockState(new BlockPos(xx, yy, zz)).getBlock();
+         BlockPos above = new BlockPos(xx, yy + 1, zz);
+         if (l1 == Blocks.GRASS
+                 && world.getBlockState(above).getBlock().isReplaceable(world, above)
+                 && this.isBlockAdjacentToWood(world, xx, yy + 1, zz)) {
+            world.setBlockState(above, (ConfigBlocks.blockCustomPlant).getStateFromMeta(5), 2);
          }
       }
-
    }
 
    private boolean isBlockAdjacentToWood(IBlockAccess world, int x, int y, int z) {
-      int count = 0;
-
       for(int xx = -1; xx <= 1; ++xx) {
          for(int yy = -1; yy <= 1; ++yy) {
             for(int zz = -1; zz <= 1; ++zz) {
@@ -154,11 +160,11 @@ public class BiomeGenMagicalForest extends BiomeGenBase {
       return false;
    }
 
-   public BiomeGenBase createMutation() {
+   public Biome createMutation() {
       return null;
    }
 
    static {
-      blobs = new WorldGenBlockBlob(Blocks.mossy_cobblestone, 0);
+      blobs = new WorldGenBlockBlob(Blocks.MOSSY_COBBLESTONE, 0);
    }
 }

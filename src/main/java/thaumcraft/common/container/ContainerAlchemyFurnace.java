@@ -1,11 +1,11 @@
 package thaumcraft.common.container;
 
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.inventory.Container;
-import net.minecraft.inventory.ICrafting;
+import net.minecraft.inventory.IContainerListener;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 import thaumcraft.api.aspects.AspectList;
@@ -37,40 +37,39 @@ public class ContainerAlchemyFurnace extends Container {
 
    }
 
-   public void addCraftingToCrafters(ICrafting par1ICrafting) {
-      super.addCraftingToCrafters(par1ICrafting);
-      par1ICrafting.sendProgressBarUpdate(this, 0, this.furnace.furnaceCookTime);
-      par1ICrafting.sendProgressBarUpdate(this, 1, this.furnace.furnaceBurnTime);
-      par1ICrafting.sendProgressBarUpdate(this, 2, this.furnace.currentItemBurnTime);
-      par1ICrafting.sendProgressBarUpdate(this, 3, this.furnace.vis);
-      par1ICrafting.sendProgressBarUpdate(this, 4, this.furnace.smeltTime);
+   public void addListener(IContainerListener listener) {
+      super.addListener(listener);
+      listener.sendWindowProperty(this, 0, this.furnace.furnaceCookTime);
+      listener.sendWindowProperty(this, 1, this.furnace.furnaceBurnTime);
+      listener.sendWindowProperty(this, 2, this.furnace.currentItemBurnTime);
+      listener.sendWindowProperty(this, 3, this.furnace.vis);
+      listener.sendWindowProperty(this, 4, this.furnace.smeltTime);
    }
 
    public void detectAndSendChanges() {
       super.detectAndSendChanges();
 
-       for (Object crafter : this.crafters) {
-           ICrafting icrafting = (ICrafting) crafter;
-           if (this.lastCookTime != this.furnace.furnaceCookTime) {
-               icrafting.sendProgressBarUpdate(this, 0, this.furnace.furnaceCookTime);
-           }
+      for (IContainerListener listener : this.listeners) {
+         if (this.lastCookTime != this.furnace.furnaceCookTime) {
+            listener.sendWindowProperty(this, 0, this.furnace.furnaceCookTime);
+         }
 
-           if (this.lastBurnTime != this.furnace.furnaceBurnTime) {
-               icrafting.sendProgressBarUpdate(this, 1, this.furnace.furnaceBurnTime);
-           }
+         if (this.lastBurnTime != this.furnace.furnaceBurnTime) {
+            listener.sendWindowProperty(this, 1, this.furnace.furnaceBurnTime);
+         }
 
-           if (this.lastItemBurnTime != this.furnace.currentItemBurnTime) {
-               icrafting.sendProgressBarUpdate(this, 2, this.furnace.currentItemBurnTime);
-           }
+         if (this.lastItemBurnTime != this.furnace.currentItemBurnTime) {
+            listener.sendWindowProperty(this, 2, this.furnace.currentItemBurnTime);
+         }
 
-           if (this.lastVis != this.furnace.vis) {
-               icrafting.sendProgressBarUpdate(this, 3, this.furnace.vis);
-           }
+         if (this.lastVis != this.furnace.vis) {
+            listener.sendWindowProperty(this, 3, this.furnace.vis);
+         }
 
-           if (this.lastSmelt != this.furnace.smeltTime) {
-               icrafting.sendProgressBarUpdate(this, 4, this.furnace.smeltTime);
-           }
-       }
+         if (this.lastSmelt != this.furnace.smeltTime) {
+            listener.sendWindowProperty(this, 4, this.furnace.smeltTime);
+         }
+      }
 
       this.lastCookTime = this.furnace.furnaceCookTime;
       this.lastBurnTime = this.furnace.furnaceBurnTime;
@@ -104,11 +103,11 @@ public class ContainerAlchemyFurnace extends Container {
    }
 
    public boolean canInteractWith(EntityPlayer par1EntityPlayer) {
-      return this.furnace.isUseableByPlayer(par1EntityPlayer);
+      return this.furnace.isUsableByPlayer(par1EntityPlayer);
    }
 
    public ItemStack transferStackInSlot(EntityPlayer par1EntityPlayer, int par2) {
-      ItemStack itemstack = null;
+      ItemStack itemstack = ItemStack.EMPTY;
       Slot slot = (Slot)this.inventorySlots.get(par2);
       if (slot != null && slot.getHasStack()) {
          ItemStack itemstack1 = slot.getStack();
@@ -118,34 +117,34 @@ public class ContainerAlchemyFurnace extends Container {
             al = ThaumcraftCraftingManager.getBonusTags(itemstack1, al);
             if (TileAlchemyFurnace.isItemFuel(itemstack1)) {
                if (!this.mergeItemStack(itemstack1, 1, 2, false) && !this.mergeItemStack(itemstack1, 0, 1, false)) {
-                  return null;
+                  return ItemStack.EMPTY;
                }
             } else if (al.size() > 0) {
                if (!this.mergeItemStack(itemstack1, 0, 1, false)) {
-                  return null;
+                  return ItemStack.EMPTY;
                }
             } else if (par2 >= 2 && par2 < 29) {
                if (!this.mergeItemStack(itemstack1, 29, 38, false)) {
-                  return null;
+                  return ItemStack.EMPTY;
                }
             } else if (par2 < 38 && !this.mergeItemStack(itemstack1, 2, 29, false)) {
-               return null;
+               return ItemStack.EMPTY;
             }
          } else if (!this.mergeItemStack(itemstack1, 2, 38, false)) {
-            return null;
+            return ItemStack.EMPTY;
          }
 
-         if (itemstack1.stackSize == 0) {
-            slot.putStack(null);
+         if (itemstack1.isEmpty()) {
+            slot.putStack(ItemStack.EMPTY);
          } else {
             slot.onSlotChanged();
          }
 
-         if (itemstack1.stackSize == itemstack.stackSize) {
-            return null;
+         if (itemstack1.getCount() == itemstack.getCount()) {
+            return ItemStack.EMPTY;
          }
 
-         slot.onPickupFromSlot(par1EntityPlayer, itemstack1);
+         slot.onTake(par1EntityPlayer, itemstack1);
       }
 
       return itemstack;

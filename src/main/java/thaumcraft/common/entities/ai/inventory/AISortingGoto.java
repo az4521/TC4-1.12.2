@@ -5,10 +5,10 @@ import net.minecraft.entity.ai.EntityAIBase;
 import net.minecraft.entity.ai.RandomPositionGenerator;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.ChunkCoordinates;
-import net.minecraft.util.MathHelper;
-import net.minecraft.util.Vec3;
-import net.minecraftforge.common.util.ForgeDirection;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.EnumFacing;
 import thaumcraft.common.config.Config;
 import thaumcraft.common.entities.golems.EntityGolemBase;
 import thaumcraft.common.entities.golems.GolemHelper;
@@ -19,7 +19,7 @@ public class AISortingGoto extends EntityAIBase {
    private double movePosX;
    private double movePosY;
    private double movePosZ;
-   private ChunkCoordinates dest = null;
+   private BlockPos dest = null;
    int count = 0;
    int prevX = 0;
    int prevY = 0;
@@ -31,16 +31,16 @@ public class AISortingGoto extends EntityAIBase {
    }
 
    public boolean shouldExecute() {
-      if (this.theGolem.itemCarried != null && this.theGolem.ticksExisted % Config.golemDelay <= 0) {
-         ArrayList<IInventory> results = GolemHelper.getContainersWithRoom(this.theGolem.worldObj, this.theGolem, (byte)-1);
+      if (!this.theGolem.itemCarried.isEmpty() && this.theGolem.ticksExisted % Config.golemDelay <= 0) {
+         ArrayList<IInventory> results = GolemHelper.getContainersWithRoom(this.theGolem.world, this.theGolem, (byte)-1);
          if (results.isEmpty()) {
             return false;
          } else {
-            ForgeDirection facing = ForgeDirection.getOrientation(this.theGolem.homeFacing);
-            ChunkCoordinates home = this.theGolem.getHomePosition();
-            int cX = home.posX - facing.offsetX;
-            int cY = home.posY - facing.offsetY;
-            int cZ = home.posZ - facing.offsetZ;
+            EnumFacing facing = EnumFacing.byIndex(this.theGolem.homeFacing);
+            BlockPos home = this.theGolem.getHomePosition();
+            int cX = home.getX() - facing.getXOffset();
+            int cY = home.getY() - facing.getYOffset();
+            int cZ = home.getZ() - facing.getZOffset();
             int tX = 0;
             int tY = 0;
             int tZ = 0;
@@ -48,14 +48,17 @@ public class AISortingGoto extends EntityAIBase {
             float dmod = this.theGolem.getRange();
 
             for(IInventory te : results) {
-               double distance = this.theGolem.getDistanceSq((double)((TileEntity)te).xCoord + (double)0.5F, (double)((TileEntity)te).yCoord + (double)0.5F, (double)((TileEntity)te).zCoord + (double)0.5F);
-               if (distance < range && distance <= (double)(dmod * dmod) && (((TileEntity)te).xCoord != cX || ((TileEntity)te).yCoord != cY || ((TileEntity)te).zCoord != cZ)) {
+               int teX = ((TileEntity)te).getPos().getX();
+               int teY = ((TileEntity)te).getPos().getY();
+               int teZ = ((TileEntity)te).getPos().getZ();
+               double distance = this.theGolem.getDistanceSq((double)teX + 0.5D, (double)teY + 0.5D, (double)teZ + 0.5D);
+               if (distance < range && distance <= (double)(dmod * dmod) && (teX != cX || teY != cY || teZ != cZ)) {
                   for(int side : GolemHelper.getMarkedSides(this.theGolem, (TileEntity)te, (byte)-1)) {
                      if (InventoryUtils.inventoryContains(te, this.theGolem.itemCarried, side, this.theGolem.checkOreDict(), this.theGolem.ignoreDamage(), this.theGolem.ignoreNBT())) {
-                        tX = ((TileEntity)te).xCoord;
-                        tY = ((TileEntity)te).yCoord;
-                        tZ = ((TileEntity)te).zCoord;
-                        this.dest = new ChunkCoordinates(tX, tY, tZ);
+                        tX = teX;
+                        tY = teY;
+                        tZ = teZ;
+                        this.dest = new BlockPos(tX, tY, tZ);
                         range = distance;
                         break;
                      }
@@ -83,11 +86,11 @@ public class AISortingGoto extends EntityAIBase {
 
    public void updateTask() {
       --this.count;
-      if (this.count == 0 && this.prevX == MathHelper.floor_double(this.theGolem.posX) && this.prevY == MathHelper.floor_double(this.theGolem.posY) && this.prevZ == MathHelper.floor_double(this.theGolem.posZ)) {
-         Vec3 var2 = RandomPositionGenerator.findRandomTarget(this.theGolem, 2, 1);
+      if (this.count == 0 && this.prevX == MathHelper.floor(this.theGolem.posX) && this.prevY == MathHelper.floor(this.theGolem.posY) && this.prevZ == MathHelper.floor(this.theGolem.posZ)) {
+         Vec3d var2 = RandomPositionGenerator.findRandomTarget(this.theGolem, 2, 1);
          if (var2 != null) {
             this.count = 20;
-            this.theGolem.getNavigator().tryMoveToXYZ(var2.xCoord, var2.yCoord, var2.zCoord, this.theGolem.getAIMoveSpeed());
+            this.theGolem.getNavigator().tryMoveToXYZ(var2.x, var2.y, var2.z, this.theGolem.getAIMoveSpeed());
          }
       }
 
@@ -101,9 +104,9 @@ public class AISortingGoto extends EntityAIBase {
 
    public void startExecuting() {
       this.count = 200;
-      this.prevX = MathHelper.floor_double(this.theGolem.posX);
-      this.prevY = MathHelper.floor_double(this.theGolem.posY);
-      this.prevZ = MathHelper.floor_double(this.theGolem.posZ);
+      this.prevX = MathHelper.floor(this.theGolem.posX);
+      this.prevY = MathHelper.floor(this.theGolem.posY);
+      this.prevZ = MathHelper.floor(this.theGolem.posZ);
       this.theGolem.getNavigator().tryMoveToXYZ(this.movePosX, this.movePosY, this.movePosZ, this.theGolem.getAIMoveSpeed());
    }
 }

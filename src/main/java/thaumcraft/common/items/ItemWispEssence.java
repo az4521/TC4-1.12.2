@@ -1,15 +1,15 @@
 package thaumcraft.common.items;
 
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import java.util.List;
-import net.minecraft.client.renderer.texture.IIconRegister;
+import thaumcraft.client.renderers.compat.IIconRegister;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.util.IIcon;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import thaumcraft.api.aspects.Aspect;
 import thaumcraft.api.aspects.AspectList;
 import thaumcraft.api.aspects.IEssentiaContainerItem;
@@ -18,7 +18,7 @@ import thaumcraft.common.Thaumcraft;
 import static thaumcraft.api.aspects.AspectList.addAspectDescriptionToList;
 
 public class ItemWispEssence extends Item implements IEssentiaContainerItem {
-   public IIcon icon;
+   public TextureAtlasSprite icon;
    static Aspect[] displayAspects;
 
    public ItemWispEssence() {
@@ -30,16 +30,17 @@ public class ItemWispEssence extends Item implements IEssentiaContainerItem {
 
    @SideOnly(Side.CLIENT)
    public void registerIcons(IIconRegister ir) {
-      this.icon = ir.registerIcon("thaumcraft:wispessence");
+      this.icon = ir.registerSprite("thaumcraft:wispessence");
    }
 
    @SideOnly(Side.CLIENT)
-   public IIcon getIconFromDamage(int par1) {
+   public TextureAtlasSprite getIconFromDamage(int par1) {
       return this.icon;
    }
 
    @SideOnly(Side.CLIENT)
-   public void getSubItems(Item par1, CreativeTabs par2CreativeTabs, List par3List) {
+   @Override
+   public void getSubItems(CreativeTabs par2CreativeTabs, net.minecraft.util.NonNullList<ItemStack> par3List) {
       for(Aspect tag : Aspect.aspects.values()) {
          ItemStack i = new ItemStack(this, 1, 0);
          this.setAspects(i, (new AspectList()).add(tag, 2));
@@ -48,11 +49,11 @@ public class ItemWispEssence extends Item implements IEssentiaContainerItem {
 
    }
 
-   public void addInformation(ItemStack stack, EntityPlayer player, List list, boolean par4) {
+   public void addInformation(ItemStack stack, @javax.annotation.Nullable net.minecraft.world.World worldIn, List list, net.minecraft.client.util.ITooltipFlag flagIn) {
       AspectList aspects = this.getAspects(stack);
-      addAspectDescriptionToList(aspects,player,list);
+      addAspectDescriptionToList(aspects, net.minecraft.client.Minecraft.getMinecraft().player, list);
 
-      super.addInformation(stack, player, list, par4);
+      super.addInformation(stack, worldIn, list, flagIn);
    }
 
    @SideOnly(Side.CLIENT)

@@ -5,7 +5,7 @@ import tc4tweak.ConfigurationHandler;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.ChunkCoordinates;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraftforge.common.util.Constants;
 import thaumcraft.api.WorldCoordinates;
@@ -58,19 +58,20 @@ public class SavedLinkHandler {
     }
 
     private static Action processSavedLink0(TileVisNode visNode) {
-        List<ChunkCoordinates> link = visNode.getSavedLink();
+        List<BlockPos> link = visNode.getSavedLink();
         if (link == null) return Action.DISABLED;
-        ChunkCoordinates c = link.get(0);
-        World w = visNode.getWorldObj();
-        if (!w.blockExists(c.posX, c.posY, c.posZ)) {
+        BlockPos c = link.get(0);
+        World w = visNode.getWorld();
+        if (!w.isBlockLoaded(c)) {
             return Action.RETURN;
         }
-        TileEntity tile = w.getTileEntity(c.posX, c.posY, c.posZ);
+        TileEntity tile = w.getTileEntity(c);
         if (!canConnect(visNode, tile)) {
             // ThE uses a fake TE for cv p2p that is not retrievable via getTileEntity
             // however it's accessible via VisNetHandler.sources
-            HashMap<WorldCoordinates, WeakReference<TileVisNode>> sourcelist = VisNetHandler.sources.get(w.provider.dimensionId);
-            TileVisNode sourcenode = CommonUtils.deref(sourcelist.get(new WorldCoordinates(c.posX, c.posY, c.posZ, w.provider.dimensionId)));
+            int dim = w.provider.getDimension();
+            HashMap<WorldCoordinates, WeakReference<TileVisNode>> sourcelist = VisNetHandler.sources.get(dim);
+            TileVisNode sourcenode = CommonUtils.deref(sourcelist.get(new WorldCoordinates(c.getX(), c.getY(), c.getZ(), dim)));
             if (sourcenode == null) {
                 visNode.clearSavedLink();
                 return Action.CLEAR_CONTINUE;
@@ -80,17 +81,17 @@ public class SavedLinkHandler {
         TileVisNode next = (TileVisNode) tile;
         if (next.isSource()) {
             SetParentHelper.setParent(next, visNode);
-            w.markBlockForUpdate(visNode.xCoord, visNode.yCoord, visNode.zCoord);
+            w.markBlockRangeForRenderUpdate(visNode.getPos(), visNode.getPos());
             visNode.parentChanged();
             visNode.clearSavedLink();
             return Action.SET_PARENT_RETURN;
         }
-        List<ChunkCoordinates> nextLink = next.getSavedLink();
+        List<BlockPos> nextLink = next.getSavedLink();
         if (nextLink == null) {
             visNode.clearSavedLink();
             if (VisNetHandler.isNodeValid(next.getRootSource())) {
                 SetParentHelper.setParent(next, visNode);
-                w.markBlockForUpdate(visNode.xCoord, visNode.yCoord, visNode.zCoord);
+                w.markBlockRangeForRenderUpdate(visNode.getPos(), visNode.getPos());
                 visNode.parentChanged();
                 return Action.SET_PARENT_RETURN;
             } else {
@@ -111,13 +112,14 @@ public class SavedLinkHandler {
         return node.getAttunement() == -1 || next.getAttunement() == -1 || next.getAttunement() == node.getAttunement();
     }
 
-    public static List<ChunkCoordinates> readFromNBT(TileVisNode thiz, NBTTagCompound tag) {
+    public static List<BlockPos> readFromNBT(TileVisNode thiz, NBTTagCompound tag) {
         if (thiz.isSource() || !tag.hasKey("Link") || !ConfigurationHandler.INSTANCE.isSavedLinkEnabled()) {
             return null;
         }
+        BlockPos pos = thiz.getPos();
         NBTTagList linkRaw = tag.getTagList("Link", Constants.NBT.TAG_COMPOUND);
-        log.trace("Reading link for node {} at {},{},{}. {} nodes.", getNodeType(thiz), thiz.xCoord, thiz.yCoord, thiz.zCoord, linkRaw.tagCount());
-        List<ChunkCoordinates> link = new ArrayList<>();
+        log.trace("Reading link for node {} at {},{},{}. {} nodes.", getNodeType(thiz), pos.getX(), pos.getY(), pos.getZ(), linkRaw.tagCount());
+        List<BlockPos> link = new ArrayList<>();
         int end = Math.min(linkRaw.tagCount(), 2);
         for (int i = 0; i < end; i++) {
             link.add(readOne(linkRaw.getCompoundTagAt(i)));
@@ -140,18 +142,20 @@ public class SavedLinkHandler {
             node = CommonUtils.deref(node.getParent());
         }
         tag.setTag("Link", path);
-        log.trace("Written link for node {} at {},{},{}. {} element.", getNodeType(thiz), thiz.xCoord, thiz.yCoord, thiz.zCoord, path.tagCount());
+        BlockPos pos = thiz.getPos();
+        log.trace("Written link for node {} at {},{},{}. {} element.", getNodeType(thiz), pos.getX(), pos.getY(), pos.getZ(), path.tagCount());
     }
 
     private static NBTTagCompound writeOne(TileVisNode node) {
         NBTTagCompound elem = new NBTTagCompound();
-        elem.setInteger("x", node.xCoord);
-        elem.setInteger("y", node.yCoord);
-        elem.setInteger("z", node.zCoord);
+        BlockPos pos = node.getPos();
+        elem.setInteger("x", pos.getX());
+        elem.setInteger("y", pos.getY());
+        elem.setInteger("z", pos.getZ());
         return elem;
     }
 
-    private static ChunkCoordinates readOne(NBTTagCompound elem) {
-        return new ChunkCoordinates(elem.getInteger("x"), elem.getInteger("y"), elem.getInteger("z"));
+    private static BlockPos readOne(NBTTagCompound elem) {
+        return new BlockPos(elem.getInteger("x"), elem.getInteger("y"), elem.getInteger("z"));
     }
 }

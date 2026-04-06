@@ -1,27 +1,34 @@
 package thaumcraft.client.renderers.tile;
 
+import org.lwjgl.opengl.GL11;
+
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.ActiveRenderInfo;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.tileentity.TileEntitySpecialRenderer;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.Vec3;
-import org.lwjgl.opengl.GL11;
+import net.minecraft.util.math.Vec3d;
+
 import thaumcraft.client.lib.UtilsFX;
 import thaumcraft.common.tiles.TileEldritchPortal;
+import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.client.renderer.BufferBuilder;
+import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 
-public class TileEldritchPortalRenderer extends TileEntitySpecialRenderer {
+public class TileEldritchPortalRenderer extends TileEntitySpecialRenderer<TileEntity> {
    public static final ResourceLocation portaltex = new ResourceLocation("thaumcraft", "textures/misc/eldritch_portal.png");
 
-   public void renderTileEntityAt(TileEntity te, double x, double y, double z, float f) {
-      GL11.glPushMatrix();
-      if (te.getWorldObj() != null) {
+   @Override
+
+
+   public void render(TileEntity te, double x, double y, double z, float f, int destroyStage, float alpha) {
+      GlStateManager.pushMatrix();
+      if (te.getWorld() != null) {
          this.renderPortal((TileEldritchPortal)te, x, y, z, f);
       }
 
-      GL11.glPopMatrix();
+      GlStateManager.popMatrix();
    }
 
    private void renderPortal(TileEldritchPortal te, double x, double y, double z, float f) {
@@ -32,47 +39,51 @@ public class TileEldritchPortalRenderer extends TileEntitySpecialRenderer {
       float scale = (float)e / 5.0F;
       float scaley = (float)c / 30.0F;
       UtilsFX.bindTexture(portaltex);
-      GL11.glPushMatrix();
-      GL11.glDepthMask(false);
-      GL11.glEnable(GL11.GL_BLEND);
-      GL11.glBlendFunc(770, 771);
-      GL11.glColor4f(1.0F, 0.0F, 1.0F, 1.0F);
-      if (Minecraft.getMinecraft().renderViewEntity instanceof EntityPlayer) {
-         Tessellator tessellator = Tessellator.instance;
-         float arX = ActiveRenderInfo.rotationX;
-         float arZ = ActiveRenderInfo.rotationZ;
-         float arYZ = ActiveRenderInfo.rotationYZ;
-         float arXY = ActiveRenderInfo.rotationXY;
-         float arXZ = ActiveRenderInfo.rotationXZ;
-         EntityPlayer player = (EntityPlayer)Minecraft.getMinecraft().renderViewEntity;
-         double var10000 = player.prevPosX + (player.posX - player.prevPosX) * (double)f;
-         var10000 = player.prevPosY + (player.posY - player.prevPosY) * (double)f;
-         var10000 = player.prevPosZ + (player.posZ - player.prevPosZ) * (double)f;
-         tessellator.startDrawingQuads();
-         tessellator.setBrightness(220);
-         tessellator.setColorRGBA_F(1.0F, 1.0F, 1.0F, 1.0F);
+      GlStateManager.pushMatrix();
+      GlStateManager.depthMask(false);
+      GlStateManager.enableBlend();
+      GlStateManager.blendFunc(770, 771);
+      GlStateManager.color(1.0F, 0.0F, 1.0F, 1.0F);
+      if (Minecraft.getMinecraft().getRenderViewEntity() instanceof EntityPlayer) {
+         Tessellator tessellator = Tessellator.getInstance();
+         BufferBuilder buffer = tessellator.getBuffer();
+         float yaw = net.minecraft.client.renderer.tileentity.TileEntityRendererDispatcher.instance.entityYaw;
+         float pitch = net.minecraft.client.renderer.tileentity.TileEntityRendererDispatcher.instance.entityPitch;
+         float arX = net.minecraft.util.math.MathHelper.cos(yaw * (float)(Math.PI / 180.0));
+         float arZ = net.minecraft.util.math.MathHelper.sin(yaw * (float)(Math.PI / 180.0));
+         float arYZ = -arZ * net.minecraft.util.math.MathHelper.sin(pitch * (float)(Math.PI / 180.0));
+         float arXY = net.minecraft.util.math.MathHelper.cos(pitch * (float)(Math.PI / 180.0));
+         float arXZ = arX * net.minecraft.util.math.MathHelper.sin(pitch * (float)(Math.PI / 180.0));
+         EntityPlayer player = (EntityPlayer)Minecraft.getMinecraft().getRenderViewEntity();
+         buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX_COLOR); 
+        
+        
          double px = x + (double)0.5F;
          double py = y + (double)0.5F;
          double pz = z + (double)0.5F;
-         Vec3 v1 = Vec3.createVectorHelper(-arX - arYZ, -arXZ, -arZ - arXY);
-         Vec3 v2 = Vec3.createVectorHelper(-arX + arYZ, arXZ, -arZ + arXY);
-         Vec3 v3 = Vec3.createVectorHelper(arX + arYZ, arXZ, arZ + arXY);
-         Vec3 v4 = Vec3.createVectorHelper(arX - arYZ, -arXZ, arZ - arXY);
+         Vec3d v1 = new Vec3d(-arX - arYZ, -arXZ, -arZ - arXY);
+         Vec3d v2 = new Vec3d(-arX + arYZ, arXZ, -arZ + arXY);
+         Vec3d v3 = new Vec3d(arX + arYZ, arXZ, arZ + arXY);
+         Vec3d v4 = new Vec3d(arX - arYZ, -arXZ, arZ - arXY);
          int frame = (int)time % 16;
          float f2 = (float)frame / 16.0F;
          float f3 = f2 + 0.0625F;
          float f4 = 0.0F;
          float f5 = 1.0F;
-         tessellator.setNormal(0.0F, 0.0F, -1.0F);
-         tessellator.addVertexWithUV(px + v1.xCoord * (double)scale, py + v1.yCoord * (double)scaley, pz + v1.zCoord * (double)scale, f2, f5);
-         tessellator.addVertexWithUV(px + v2.xCoord * (double)scale, py + v2.yCoord * (double)scaley, pz + v2.zCoord * (double)scale, f3, f5);
-         tessellator.addVertexWithUV(px + v3.xCoord * (double)scale, py + v3.yCoord * (double)scaley, pz + v3.zCoord * (double)scale, f3, f4);
-         tessellator.addVertexWithUV(px + v4.xCoord * (double)scale, py + v4.yCoord * (double)scaley, pz + v4.zCoord * (double)scale, f2, f4);
+        
+         buffer.pos(px + v1.x * (double)scale, py + v1.y * (double)scaley, pz + v1.z * (double)scale).tex(f2, f5).color(1.0f, 1.0f, 1.0f, 1.0f)
+        .endVertex();
+         buffer.pos(px + v2.x * (double)scale, py + v2.y * (double)scaley, pz + v2.z * (double)scale).tex(f3, f5).color(1.0f, 1.0f, 1.0f, 1.0f)
+        .endVertex();
+         buffer.pos(px + v3.x * (double)scale, py + v3.y * (double)scaley, pz + v3.z * (double)scale).tex(f3, f4).color(1.0f, 1.0f, 1.0f, 1.0f)
+        .endVertex();
+         buffer.pos(px + v4.x * (double)scale, py + v4.y * (double)scaley, pz + v4.z * (double)scale).tex(f2, f4).color(1.0f, 1.0f, 1.0f, 1.0f)
+        .endVertex();
          tessellator.draw();
       }
 
-      GL11.glDisable(GL11.GL_BLEND);
-      GL11.glDepthMask(true);
-      GL11.glPopMatrix();
+      GlStateManager.disableBlend();
+      GlStateManager.depthMask(true);
+      GlStateManager.popMatrix();
    }
 }

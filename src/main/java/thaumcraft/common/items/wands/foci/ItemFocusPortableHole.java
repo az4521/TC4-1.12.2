@@ -1,15 +1,14 @@
 package thaumcraft.common.items.wands.foci;
 
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraft.block.Block;
-import net.minecraft.client.renderer.texture.IIconRegister;
+import thaumcraft.client.renderers.compat.IIconRegister;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.IIcon;
-import net.minecraft.util.MovingObjectPosition;
-import net.minecraft.util.MovingObjectPosition.MovingObjectType;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.world.World;
 import thaumcraft.api.ThaumcraftApi;
 import thaumcraft.api.aspects.Aspect;
@@ -21,9 +20,10 @@ import thaumcraft.common.config.Config;
 import thaumcraft.common.config.ConfigBlocks;
 import thaumcraft.common.items.wands.ItemWandCasting;
 import thaumcraft.common.tiles.TileHole;
+import net.minecraft.util.math.BlockPos;
 
 public class ItemFocusPortableHole extends ItemFocusBasic {
-   IIcon depthIcon = null;
+   TextureAtlasSprite depthIcon = null;
    private static final AspectList cost;
 
    public ItemFocusPortableHole() {
@@ -36,11 +36,11 @@ public class ItemFocusPortableHole extends ItemFocusBasic {
 
    @SideOnly(Side.CLIENT)
    public void registerIcons(IIconRegister ir) {
-      this.depthIcon = ir.registerIcon("thaumcraft:focus_portablehole_depth");
-      this.icon = ir.registerIcon("thaumcraft:focus_portablehole");
+      this.depthIcon = ir.registerSprite("thaumcraft:focus_portablehole_depth");
+      this.icon = ir.registerSprite("thaumcraft:focus_portablehole");
    }
 
-   public IIcon getFocusDepthLayerIcon(ItemStack itemstack) {
+   public TextureAtlasSprite getFocusDepthLayerIcon(ItemStack itemstack) {
       return this.depthIcon;
    }
 
@@ -53,15 +53,17 @@ public class ItemFocusPortableHole extends ItemFocusBasic {
    }
 
    public static boolean createHole(World world, int ii, int jj, int kk, int side, byte count, int max) {
-      Block bi = world.getBlock(ii, jj, kk);
-      if (world.getTileEntity(ii, jj, kk) == null && !ThaumcraftApi.portableHoleBlackList.contains(bi) && bi != Blocks.bedrock && bi != ConfigBlocks.blockHole && !bi.isAir(world, ii, jj, kk) && !bi.canPlaceBlockAt(world, ii, jj, kk) && bi.getBlockHardness(world, ii, jj, kk) != -1.0F) {
-         TileHole ts = new TileHole(bi, world.getBlockMetadata(ii, jj, kk), (short)max, count, (byte)side, null);
-         world.setBlock(ii, jj, kk, Blocks.air, 0, 0);
-         if (world.setBlock(ii, jj, kk, ConfigBlocks.blockHole, 0, 0)) {
-            world.setTileEntity(ii, jj, kk, ts);
+      Block bi = world.getBlockState(new BlockPos(ii, jj, kk)).getBlock();
+      if (world.getTileEntity(new BlockPos(ii, jj, kk)) == null && !ThaumcraftApi.portableHoleBlackList.contains(bi) && bi != Blocks.BEDROCK && bi != ConfigBlocks.blockHole && !world.isAirBlock(new BlockPos(ii, jj, kk)) && !bi.canPlaceBlockAt(world, new BlockPos(ii, jj, kk)) && bi.getBlockHardness(world.getBlockState(new BlockPos(ii, jj, kk)), world, new BlockPos(ii, jj, kk)) != -1.0F) {
+         TileHole ts = new TileHole(bi,
+        world.getBlockState(new net.minecraft.util.math.BlockPos(ii, jj, kk)).getBlock().getMetaFromState(world.getBlockState(new net.minecraft.util.math.BlockPos(ii, jj, kk))), (short)max, count, (byte)side, null);
+        world.setBlockState(new net.minecraft.util.math.BlockPos(ii, jj, kk), (Blocks.AIR).getStateFromMeta(0), 0);
+         if (
+        world.setBlockState(new net.minecraft.util.math.BlockPos(ii, jj, kk), (ConfigBlocks.blockHole).getStateFromMeta(0), 0)) {
+            world.setTileEntity(new net.minecraft.util.math.BlockPos(ii, jj, kk), ts);
          }
 
-         world.markBlockForUpdate(ii, jj, kk);
+         { BlockPos _hp = new BlockPos(ii, jj, kk); net.minecraft.block.state.IBlockState _bs = world.getBlockState(_hp); world.notifyBlockUpdate(_hp, _bs, _bs, 3); }
          Thaumcraft.proxy.blockSparkle(world, ii, jj, kk, 4194368, 1);
          return true;
       } else {
@@ -69,32 +71,32 @@ public class ItemFocusPortableHole extends ItemFocusBasic {
       }
    }
 
-   public ItemStack onFocusRightClick(ItemStack itemstack, World world, EntityPlayer player, MovingObjectPosition mop) {
+   public ItemStack onFocusRightClick(ItemStack itemstack, World world, EntityPlayer player, RayTraceResult mop) {
       ItemWandCasting wand = (ItemWandCasting)itemstack.getItem();
-      if (mop != null && mop.typeOfHit == MovingObjectType.BLOCK) {
-         if (world.provider.dimensionId == Config.dimensionOuterId) {
+      if (mop != null && mop.typeOfHit == RayTraceResult.Type.BLOCK) {
+         if (world.provider.getDimension() == Config.dimensionOuterId) {
             if (!world.isRemote) {
-               world.playSoundEffect((double)mop.blockX + (double)0.5F, (double)mop.blockY + (double)0.5F, (double)mop.blockZ + (double)0.5F, "thaumcraft:wandfail", 1.0F, 1.0F);
+               { net.minecraft.util.SoundEvent _snd = net.minecraft.util.SoundEvent.REGISTRY.getObject(new net.minecraft.util.ResourceLocation("thaumcraft:wandfail")); if (_snd != null) world.playSound(null, mop.getBlockPos().getX() + 0.5, mop.getBlockPos().getY() + 0.5, mop.getBlockPos().getZ() + 0.5, _snd, net.minecraft.util.SoundCategory.NEUTRAL, 1.0F, 1.0F); }
             }
 
-            player.swingItem();
+            player.swingArm(net.minecraft.util.EnumHand.MAIN_HAND);
             return itemstack;
          }
 
-         int ii = mop.blockX;
-         int jj = mop.blockY;
-         int kk = mop.blockZ;
+         int ii = mop.getBlockPos().getX();
+         int jj = mop.getBlockPos().getY();
+         int kk = mop.getBlockPos().getZ();
          int enlarge = wand.getFocusEnlarge(itemstack);
          int distance = 0;
          int maxdis = 33 + enlarge * 8;
 
          for(distance = 0; distance < maxdis; ++distance) {
-            Block bi = world.getBlock(ii, jj, kk);
-            if (ThaumcraftApi.portableHoleBlackList.contains(bi) || bi == Blocks.bedrock || bi == ConfigBlocks.blockHole || bi.isAir(world, ii, jj, kk) || bi.getBlockHardness(world, ii, jj, kk) == -1.0F) {
+            Block bi = world.getBlockState(new BlockPos(ii, jj, kk)).getBlock();
+            if (ThaumcraftApi.portableHoleBlackList.contains(bi) || bi == Blocks.BEDROCK || bi == ConfigBlocks.blockHole || world.isAirBlock(new BlockPos(ii, jj, kk)) || bi.getBlockHardness(world.getBlockState(new BlockPos(ii, jj, kk)), world, new BlockPos(ii, jj, kk)) == -1.0F) {
                break;
             }
 
-            switch (mop.sideHit) {
+            switch (mop.sideHit.getIndex()) {
                case 0:
                   ++jj;
                   break;
@@ -124,12 +126,12 @@ public class ItemFocusPortableHole extends ItemFocusBasic {
          if (wand.consumeAllVis(itemstack, player, c, true, false)) {
             int di = this.getUpgradeLevel(wand.getFocusItem(itemstack), FocusUpgradeType.extend);
             short dur = (short)(120 + 60 * di);
-            createHole(world, mop.blockX, mop.blockY, mop.blockZ, mop.sideHit, (byte)(distance + 1), dur);
+            createHole(world, mop.getBlockPos().getX(), mop.getBlockPos().getY(), mop.getBlockPos().getZ(), mop.sideHit.getIndex(), (byte)(distance + 1), dur);
          }
 
-         player.swingItem();
+         player.swingArm(net.minecraft.util.EnumHand.MAIN_HAND);
          if (!world.isRemote) {
-            world.playSoundEffect((double)mop.blockX + (double)0.5F, (double)mop.blockY + (double)0.5F, (double)mop.blockZ + (double)0.5F, "mob.endermen.portal", 1.0F, 1.0F);
+            { net.minecraft.util.SoundEvent _snd = net.minecraft.util.SoundEvent.REGISTRY.getObject(new net.minecraft.util.ResourceLocation("mob.endermen.portal")); if (_snd != null) world.playSound(null, mop.getBlockPos().getX() + 0.5, mop.getBlockPos().getY() + 0.5, mop.getBlockPos().getZ() + 0.5, _snd, net.minecraft.util.SoundCategory.NEUTRAL, 1.0F, 1.0F); }
          }
       }
 

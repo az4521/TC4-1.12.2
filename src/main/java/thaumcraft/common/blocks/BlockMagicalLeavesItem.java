@@ -15,8 +15,9 @@ public class BlockMagicalLeavesItem extends ItemBlock {
       return par1 | 4;
    }
 
-   public String getUnlocalizedName(ItemStack par1ItemStack) {
+   @Override
+   public String getTranslationKey(ItemStack par1ItemStack) {
       int var2 = par1ItemStack.getItemDamage();
-      return super.getUnlocalizedName() + "." + BlockMagicalLeaves.leafType[var2 & 1];
+      return super.getTranslationKey(par1ItemStack) + "." + BlockMagicalLeaves.leafType[var2 & 1];
    }
 }

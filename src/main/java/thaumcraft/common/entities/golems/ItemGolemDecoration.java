@@ -1,18 +1,18 @@
 package thaumcraft.common.entities.golems;
 
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import java.util.List;
-import net.minecraft.client.renderer.texture.IIconRegister;
+import thaumcraft.client.renderers.compat.IIconRegister;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.IIcon;
-import net.minecraft.util.StatCollector;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.util.text.translation.I18n;
 import thaumcraft.common.Thaumcraft;
 
 public class ItemGolemDecoration extends Item {
-   public IIcon[] icon = new IIcon[8];
+   public TextureAtlasSprite[] icon = new TextureAtlasSprite[8];
 
    public ItemGolemDecoration() {
       this.setMaxStackSize(64);
@@ -23,23 +23,24 @@ public class ItemGolemDecoration extends Item {
 
    @SideOnly(Side.CLIENT)
    public void registerIcons(IIconRegister ir) {
-      this.icon[0] = ir.registerIcon("thaumcraft:golemdecotophat");
-      this.icon[1] = ir.registerIcon("thaumcraft:golemdecoglasses");
-      this.icon[2] = ir.registerIcon("thaumcraft:golemdecobowtie");
-      this.icon[3] = ir.registerIcon("thaumcraft:golemdecofez");
-      this.icon[4] = ir.registerIcon("thaumcraft:golemdecodart");
-      this.icon[5] = ir.registerIcon("thaumcraft:golemdecovisor");
-      this.icon[6] = ir.registerIcon("thaumcraft:golemdecoarmor");
-      this.icon[7] = ir.registerIcon("thaumcraft:golemdecomace");
+      this.icon[0] = ir.registerSprite("thaumcraft:golemdecotophat");
+      this.icon[1] = ir.registerSprite("thaumcraft:golemdecoglasses");
+      this.icon[2] = ir.registerSprite("thaumcraft:golemdecobowtie");
+      this.icon[3] = ir.registerSprite("thaumcraft:golemdecofez");
+      this.icon[4] = ir.registerSprite("thaumcraft:golemdecodart");
+      this.icon[5] = ir.registerSprite("thaumcraft:golemdecovisor");
+      this.icon[6] = ir.registerSprite("thaumcraft:golemdecoarmor");
+      this.icon[7] = ir.registerSprite("thaumcraft:golemdecomace");
    }
 
    @SideOnly(Side.CLIENT)
-   public IIcon getIconFromDamage(int d) {
+   public TextureAtlasSprite getIconFromDamage(int d) {
       return this.icon[d];
    }
 
    @SideOnly(Side.CLIENT)
-   public void getSubItems(Item par1, CreativeTabs par2CreativeTabs, List par3List) {
+   @Override
+   public void getSubItems(CreativeTabs par2CreativeTabs, net.minecraft.util.NonNullList<ItemStack> par3List) {
       for(int a = 0; a <= 7; ++a) {
          par3List.add(new ItemStack(this, 1, a));
       }
@@ -70,10 +71,10 @@ public class ItemGolemDecoration extends Item {
    }
 
    public String getItemStackDisplayName(ItemStack stack) {
-      return StatCollector.translateToLocal("item.ItemGolemDecoration.name") + ": " + super.getItemStackDisplayName(stack);
+      return I18n.translateToLocal("item.ItemGolemDecoration.name") + ": " + super.getItemStackDisplayName(stack);
    }
 
-   public String getUnlocalizedName(ItemStack par1ItemStack) {
-      return super.getUnlocalizedName() + "." + par1ItemStack.getItemDamage();
+   public String getTranslationKey(ItemStack par1ItemStack) {
+      return super.getTranslationKey() + "." + par1ItemStack.getItemDamage();
    }
 }

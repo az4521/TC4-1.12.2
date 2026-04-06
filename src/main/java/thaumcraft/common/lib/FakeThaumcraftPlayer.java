@@ -2,8 +2,8 @@ package thaumcraft.common.lib;
 
 import com.mojang.authlib.GameProfile;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.util.ChunkCoordinates;
-import net.minecraft.util.IChatComponent;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.text.ITextComponent;
 import net.minecraft.world.World;
 
 public class FakeThaumcraftPlayer extends EntityPlayer {
@@ -18,13 +18,23 @@ public class FakeThaumcraftPlayer extends EntityPlayer {
       return false;
    }
 
-   public ChunkCoordinates getPlayerCoordinates() {
-      return new ChunkCoordinates(0, 0, 0);
+   public BlockPos getPlayerCoordinates() {
+      return new BlockPos(0, 0, 0);
    }
 
    public void openGui(Object mod, int modGuiId, World world, int x, int y, int z) {
    }
 
-   public void addChatMessage(IChatComponent var1) {
+   public void sendMessage(ITextComponent var1) {
+   }
+
+   @Override
+   public boolean isCreative() {
+      return false;
+   }
+
+   @Override
+   public boolean isSpectator() {
+      return false;
    }
 }

@@ -1,11 +1,11 @@
 package thaumcraft.common.blocks;
 
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockFlower;
 import net.minecraft.block.material.Material;
-import net.minecraft.client.renderer.texture.IIconRegister;
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
@@ -13,13 +13,17 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.potion.Potion;
 import net.minecraft.potion.PotionEffect;
-import net.minecraft.util.AxisAlignedBB;
-import net.minecraft.util.IIcon;
-import net.minecraft.world.ColorizerGrass;
+import net.minecraft.util.EnumFacing;
+import net.minecraft.util.NonNullList;
+import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.SoundCategory;
+import net.minecraft.util.SoundEvent;
+import net.minecraft.util.math.AxisAlignedBB;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
-import net.minecraftforge.common.util.ForgeDirection;
 import thaumcraft.common.Thaumcraft;
 import thaumcraft.common.config.Config;
 import thaumcraft.common.config.ConfigBlocks;
@@ -33,162 +37,133 @@ import java.util.List;
 import java.util.Random;
 
 public class BlockTaintFibres extends Block {
-   public IIcon[] iconOver = new IIcon[4];
-   public IIcon[] icon = new IIcon[5];
-   protected int currentPass;
+   public static final net.minecraft.block.properties.PropertyInteger META =
+         net.minecraft.block.properties.PropertyInteger.create("meta", 0, 15);
+
+   @Override
+   protected net.minecraft.block.state.BlockStateContainer createBlockState() {
+      return new net.minecraft.block.state.BlockStateContainer(this, META);
+   }
+
+   @Override
+   public net.minecraft.block.state.IBlockState getStateFromMeta(int meta) {
+      return this.getDefaultState().withProperty(META, meta);
+   }
+
+   @Override
+   public int getMetaFromState(net.minecraft.block.state.IBlockState state) {
+      return state.getValue(META);
+   }
+
 
    public BlockTaintFibres() {
       super(Config.taintMaterial);
       this.setHardness(1.0F);
       this.setResistance(5.0F);
-      this.setStepSound(new CustomSoundType("gore", 0.5F, 0.8F));
+      this.setSoundType(new CustomSoundType("gore", 0.5F, 0.8F));
       this.setTickRandomly(true);
       this.setCreativeTab(Thaumcraft.tabTC);
-      float f = 0.2F;
-      this.setBlockBounds(0.5F - f, 0.0F, 0.5F - f, 0.5F + f, f * 3.0F, 0.5F + f);
-      this.currentPass = 1;
    }
 
    @SideOnly(Side.CLIENT)
-   public void registerBlockIcons(IIconRegister ir) {
-      this.icon[0] = ir.registerIcon("thaumcraft:taint_fibres");
-      this.icon[1] = ir.registerIcon("thaumcraft:taintgrass1");
-      this.icon[2] = ir.registerIcon("thaumcraft:taintgrass2");
-      this.icon[3] = ir.registerIcon("thaumcraft:taint_spore_stalk_1");
-      this.icon[4] = ir.registerIcon("thaumcraft:taint_spore_stalk_2");
-      this.iconOver[0] = ir.registerIcon("thaumcraft:blank");
-
-      for(int a = 1; a < 4; ++a) {
-         this.iconOver[a] = ir.registerIcon("thaumcraft:taint_over_" + a);
+   @Override
+   public void getSubBlocks(CreativeTabs par2CreativeTabs, NonNullList<ItemStack> par3List) {
+      for (int var4 = 0; var4 <= 3; ++var4) {
+         par3List.add(new ItemStack(this, 1, var4));
       }
-
    }
 
-   public void getSubBlocks(Item par1, CreativeTabs par2CreativeTabs, List par3List) {
-      for(int var4 = 0; var4 <= 3; ++var4) {
-         par3List.add(new ItemStack(par1, 1, var4));
-      }
-
-   }
-
-   public int getLightValue(IBlockAccess world, int x, int y, int z) {
-      int md = world.getBlockMetadata(x, y, z);
+   @Override
+   public int getLightValue(IBlockState state, IBlockAccess world, BlockPos pos) {
+      int md = state.getBlock().getMetaFromState(state);
       if (md == 2) {
          return 8;
       } else {
-         return md == 4 ? 10 : super.getLightValue(world, x, y, z);
+         return md == 4 ? 10 : super.getLightValue(state, world, pos);
       }
    }
 
-   @SideOnly(Side.CLIENT)
-   public int getBlockColor() {
-      double d0 = 0.5F;
-      double d1 = 1.0F;
-      return ColorizerGrass.getGrassColor(d0, d1);
-   }
-
-   @SideOnly(Side.CLIENT)
-   public int getRenderColor(int par1) {
-      return this.getBlockColor();
-   }
-
-   @SideOnly(Side.CLIENT)
-   public int colorMultiplier(IBlockAccess par1IBlockAccess, int par2, int par3, int par4) {
-      int l = 0;
-      int i1 = 0;
-      int j1 = 0;
-
-      for(int k1 = -1; k1 <= 1; ++k1) {
-         for(int l1 = -1; l1 <= 1; ++l1) {
-            int i2 = par1IBlockAccess.getBiomeGenForCoords(par2 + l1, par4 + k1).getBiomeGrassColor(par2, par3, par4);
-            l += (i2 & 16711680) >> 16;
-            i1 += (i2 & '\uff00') >> 8;
-            j1 += i2 & 255;
-         }
+   @Override
+   public void neighborChanged(IBlockState state, World world, BlockPos pos, Block blockIn, BlockPos fromPos) {
+      if (isOnlyAdjacentToTaint(world, pos.getX(), pos.getY(), pos.getZ())) {
+         world.setBlockToAir(pos);
       }
 
-      return (l / 9 & 255) << 16 | (i1 / 9 & 255) << 8 | j1 / 9 & 255;
+      super.neighborChanged(state, world, pos, blockIn, fromPos);
    }
 
-   @SideOnly(Side.CLIENT)
-   public IIcon getOverlayBlockTexture(int x, int y, int z, int side) {
-      Random r = new Random(side + y + (long) x * z);
-      return r.nextInt(100) < 95 ? this.iconOver[0] : this.iconOver[r.nextInt(3) + 1];
-   }
-
-   @SideOnly(Side.CLIENT)
-   public IIcon getIcon(int par1, int par2) {
-      return this.icon[par2];
-   }
-
-   public void onNeighborBlockChange(World world, int x, int y, int z, Block par5) {
-      if (isOnlyAdjacentToTaint(world, x, y, z)) {
-         world.setBlock(x, y, z, Blocks.air);
-      }
-
-      super.onNeighborBlockChange(world, x, y, z, par5);
-   }
-
-   public void updateTick(World world, int x, int y, int z, Random random) {
+   @Override
+   public void updateTick(World world, BlockPos pos, IBlockState state, Random random) {
       if (!world.isRemote) {
-         int md = world.getBlockMetadata(x, y, z);
+         int x = pos.getX();
+         int y = pos.getY();
+         int z = pos.getZ();
+         int md = state.getBlock().getMetaFromState(state);
          taintBiomeSpread(world, x, y, z, random, this);
-         if (md == 0 && isOnlyAdjacentToTaint(world, x, y, z) || world.getBiomeGenForCoords(x, z).biomeID != Config.biomeTaintID) {
-            world.setBlock(x, y, z, Blocks.air);
+         if ((md == 0 && isOnlyAdjacentToTaint(world, x, y, z)) || net.minecraft.world.biome.Biome.getIdForBiome(world.getBiome(new BlockPos(x, 0, z))) != Config.biomeTaintID) {
+            world.setBlockToAir(pos);
             return;
          }
 
          int xx = x + random.nextInt(3) - 1;
          int yy = y + random.nextInt(5) - 3;
          int zz = z + random.nextInt(3) - 1;
-         if (world.getBiomeGenForCoords(xx, zz).biomeID == Config.biomeTaintID) {
-            Block bi = world.getBlock(xx, yy, zz);
+         if (net.minecraft.world.biome.Biome.getIdForBiome(world.getBiome(new BlockPos(xx, 0, zz))) == Config.biomeTaintID) {
+            Block bi = world.getBlockState(new BlockPos(xx, yy, zz)).getBlock();
             if (!spreadFibres(world, xx, yy, zz)) {
                int adjacentTaint = getAdjacentTaint(world, xx, yy, zz);
-               Material bm = world.getBlock(xx, yy, zz).getMaterial();
-               if (adjacentTaint >= 2 && (Utils.isWoodLog(world, xx, yy, zz) || bm == Material.gourd || bm == Material.cactus)) {
-                  world.setBlock(xx, yy, zz, ConfigBlocks.blockTaint, 0, 3);
-                  world.addBlockEvent(xx, yy, zz, ConfigBlocks.blockTaint, 1, 0);
+               IBlockState targetState = world.getBlockState(new BlockPos(xx, yy, zz));
+               Material bm = targetState.getMaterial();
+               if (adjacentTaint >= 2 && (Utils.isWoodLog(world, xx, yy, zz) || bm == Material.GOURD || bm == Material.CACTUS)) {
+                  world.setBlockState(new BlockPos(xx, yy, zz), ConfigBlocks.blockTaint.getStateFromMeta(0), 3);
+                  world.addBlockEvent(new BlockPos(xx, yy, zz), ConfigBlocks.blockTaint, 1, 0);
                }
 
-               if (adjacentTaint >= 3 && bi != Blocks.air && (bm == Material.sand || bm == Material.ground || bm == Material.grass || bm == Material.clay)) {
-                  world.setBlock(xx, yy, zz, ConfigBlocks.blockTaint, 1, 3);
-                  world.addBlockEvent(xx, yy, zz, ConfigBlocks.blockTaint, 1, 0);
+               if (adjacentTaint >= 3 && bi != Blocks.AIR && (bm == Material.SAND || bm == Material.GROUND || bm == Material.GRASS || bm == Material.CLAY)) {
+                  world.setBlockState(new BlockPos(xx, yy, zz), ConfigBlocks.blockTaint.getStateFromMeta(1), 3);
+                  world.addBlockEvent(new BlockPos(xx, yy, zz), ConfigBlocks.blockTaint, 1, 0);
                }
 
-               if (md == 3 && Config.spawnTaintSpore && random.nextInt(10) == 0 && world.isAirBlock(x, y + 1, z)) {
-                  world.setBlockMetadataWithNotify(x, y, z, 4, 3);
+               if (md == 3 && Config.spawnTaintSpore && random.nextInt(10) == 0 && world.isAirBlock(pos.up())) {
+                  world.setBlockState(pos, this.getStateFromMeta(4), 3);
                   EntityTaintSpore spore = new EntityTaintSpore(world);
                   spore.setLocationAndAngles((float)x + 0.5F, y + 1, (float)z + 0.5F, 0.0F, 0.0F);
-                  world.spawnEntityInWorld(spore);
+                  world.spawnEntity(spore);
                } else if (md == 4) {
-                  List<Entity> targets = world.getEntitiesWithinAABB(EntityTaintSpore.class, AxisAlignedBB.getBoundingBox(x, y + 1, z, x + 1, y + 2, z + 1));
+                  List<Entity> targets = world.getEntitiesWithinAABB(EntityTaintSpore.class, new AxisAlignedBB(x, y + 1, z, x + 1, y + 2, z + 1));
                   if (targets.isEmpty()) {
-                     world.setBlockMetadataWithNotify(x, y, z, 3, 3);
+                     world.setBlockState(pos, this.getStateFromMeta(3), 3);
                   }
                }
             }
          }
       }
-
    }
 
    public static boolean spreadFibres(World world, int x, int y, int z) {
-      Block bi = world.getBlock(x, y, z);
-      if (BlockUtils.isAdjacentToSolidBlock(world, x, y, z) && !isOnlyAdjacentToTaint(world, x, y, z) && !world.getBlock(x, y, z).getMaterial().isLiquid() && (world.isAirBlock(x, y, z) || bi.isReplaceable(world, x, y, z) || bi instanceof BlockFlower || bi.isLeaves(world, x, y, z))) {
-         if (world.rand.nextInt(10) == 0 && world.isAirBlock(x, y + 1, z) && world.isSideSolid(x, y - 1, z, ForgeDirection.UP)) {
+      BlockPos pos = new BlockPos(x, y, z);
+      IBlockState state = world.getBlockState(pos);
+      Block bi = state.getBlock();
+      if (BlockUtils.isAdjacentToSolidBlock(world, x, y, z)
+            && !isOnlyAdjacentToTaint(world, x, y, z)
+            && !state.getMaterial().isLiquid()
+            && (world.isAirBlock(pos)
+               || bi.isReplaceable(world, pos)
+               || bi instanceof BlockFlower
+               || bi.isLeaves(state, world, pos))) {
+         if (world.rand.nextInt(10) == 0 && world.isAirBlock(pos.up()) && world.isSideSolid(pos.down(), EnumFacing.UP)) {
             if (world.rand.nextInt(10) < 9) {
-               world.setBlock(x, y, z, ConfigBlocks.blockTaintFibres, 1, 3);
+               world.setBlockState(pos, ConfigBlocks.blockTaintFibres.getStateFromMeta(1), 3);
             } else if (world.rand.nextInt(12) < 10) {
-               world.setBlock(x, y, z, ConfigBlocks.blockTaintFibres, 2, 3);
+               world.setBlockState(pos, ConfigBlocks.blockTaintFibres.getStateFromMeta(2), 3);
             } else {
-               world.setBlock(x, y, z, ConfigBlocks.blockTaintFibres, 3, 3);
+               world.setBlockState(pos, ConfigBlocks.blockTaintFibres.getStateFromMeta(3), 3);
             }
          } else {
-            world.setBlock(x, y, z, ConfigBlocks.blockTaintFibres, 0, 3);
+            world.setBlockState(pos, ConfigBlocks.blockTaintFibres.getStateFromMeta(0), 3);
          }
 
-         world.addBlockEvent(x, y, z, ConfigBlocks.blockTaintFibres, 1, 0);
+         world.addBlockEvent(pos, ConfigBlocks.blockTaintFibres, 1, 0);
          return true;
       } else {
          return false;
@@ -199,23 +174,24 @@ public class BlockTaintFibres extends Block {
       if (Config.taintSpreadRate > 0) {
          int xx = rand.nextInt(3) - 1;
          int zz = rand.nextInt(3) - 1;
-         if (world.getBiomeGenForCoords(x + xx, z + zz).biomeID != Config.biomeTaintID && rand.nextInt(Config.taintSpreadRate * 5) == 0 && getAdjacentTaint(world, x, y, z) >= 2) {
+         if (net.minecraft.world.biome.Biome.getIdForBiome(world.getBiome(new BlockPos(x + xx, 0, z + zz))) != Config.biomeTaintID
+               && rand.nextInt(Config.taintSpreadRate * 5) == 0
+               && getAdjacentTaint(world, x, y, z) >= 2) {
             Utils.setBiomeAt(world, x + xx, z + zz, ThaumcraftWorldGenerator.biomeTaint);
-            world.addBlockEvent(x, y, z, block, 1, 0);
+            world.addBlockEvent(new BlockPos(x, y, z), block, 1, 0);
          }
       }
-
    }
 
    public static int getAdjacentTaint(IBlockAccess world, int x, int y, int z) {
       int count = 0;
 
-      for(int a = 0; a < 6; ++a) {
-         ForgeDirection d = ForgeDirection.getOrientation(a);
-         int xx = x + d.offsetX;
-         int yy = y + d.offsetY;
-         int zz = z + d.offsetZ;
-         Block bi = world.getBlock(xx, yy, zz);
+      for (int a = 0; a < 6; ++a) {
+         EnumFacing d = EnumFacing.byIndex(a);
+         int xx = x + d.getXOffset();
+         int yy = y + d.getYOffset();
+         int zz = z + d.getZOffset();
+         Block bi = world.getBlockState(new BlockPos(xx, yy, zz)).getBlock();
          if (bi == ConfigBlocks.blockTaint || bi == ConfigBlocks.blockTaintFibres) {
             ++count;
          }
@@ -225,13 +201,10 @@ public class BlockTaintFibres extends Block {
    }
 
    public static boolean isOnlyAdjacentToTaint(World world, int x, int y, int z) {
-      for(int a = 0; a < 6; ++a) {
-         ForgeDirection d = ForgeDirection.getOrientation(a);
-         int xx = x + d.offsetX;
-         int yy = y + d.offsetY;
-         int zz = z + d.offsetZ;
-         world.getBlock(xx, yy, zz);
-         if (!world.isAirBlock(xx, yy, zz) && world.getBlock(xx, yy, zz).getMaterial() != Config.taintMaterial) {
+      for (int a = 0; a < 6; ++a) {
+         EnumFacing d = EnumFacing.byIndex(a);
+         BlockPos adjPos = new BlockPos(x + d.getXOffset(), y + d.getYOffset(), z + d.getZOffset());
+         if (!world.isAirBlock(adjPos) && world.getBlockState(adjPos).getMaterial() != Config.taintMaterial) {
             return false;
          }
       }
@@ -239,111 +212,88 @@ public class BlockTaintFibres extends Block {
       return true;
    }
 
-   public Item getItemDropped(int md, Random rand, int fortune) {
+   @Override
+   public Item getItemDropped(IBlockState state, Random rand, int fortune) {
       return Item.getItemById(0);
    }
 
-   public void onEntityCollidedWithBlock(World world, int i, int j, int k, Entity entity) {
-      world.getBlockMetadata(i, j, k);
+   @Override
+   public void onEntityCollision(World world, BlockPos pos, IBlockState state, Entity entity) {
       if (!world.isRemote && entity instanceof EntityLivingBase && !((EntityLivingBase)entity).isEntityUndead()) {
          if (entity instanceof EntityPlayer && world.rand.nextInt(1000) == 0) {
-            ((EntityLivingBase)entity).addPotionEffect(new PotionEffect(Config.potionTaintPoisonID, 80, 0, false));
+            ((EntityLivingBase)entity).addPotionEffect(new PotionEffect(Potion.getPotionById(Config.potionTaintPoisonID), 80, 0, false, false));
          } else if (!(entity instanceof EntityPlayer) && world.rand.nextInt(500) == 0) {
-            ((EntityLivingBase)entity).addPotionEffect(new PotionEffect(Config.potionTaintPoisonID, 160, 0, false));
+            ((EntityLivingBase)entity).addPotionEffect(new PotionEffect(Potion.getPotionById(Config.potionTaintPoisonID), 160, 0, false, false));
          }
       }
-
    }
 
-   @SideOnly(Side.CLIENT)
-   public boolean onBlockEventReceived(World world, int x, int y, int z, int id, int cd) {
+   @Override
+   public boolean eventReceived(IBlockState state, World world, BlockPos pos, int id, int cd) {
       if (id == 1) {
          if (world.isRemote) {
-            world.playSound(x, y, z, "thaumcraft:roots", 0.1F, 0.9F + world.rand.nextFloat() * 0.2F, false);
+            world.playSound(null, pos,
+                  new SoundEvent(new ResourceLocation("thaumcraft", "roots")),
+                  SoundCategory.BLOCKS, 0.1F, 0.9F + world.rand.nextFloat() * 0.2F);
          }
 
          return true;
       } else {
-         return super.onBlockEventReceived(world, x, y, z, id, cd);
+         return super.eventReceived(state, world, pos, id, cd);
       }
    }
 
-   public int getRenderType() {
-      return ConfigBlocks.blockTaintFibreRI;
-   }
-
-   public boolean canRenderInPass(int pass) {
-      return pass == 1;
-   }
-
-   public int getRenderBlockPass() {
-      return 1;
-   }
-
-   public boolean renderAsNormalBlock() {
+   @Override
+   public boolean isOpaqueCube(IBlockState state) {
       return false;
    }
 
-   public boolean isOpaqueCube() {
+   @Override
+   public boolean isFullCube(IBlockState state) {
       return false;
    }
 
-   public boolean getBlocksMovement(IBlockAccess par1iBlockAccess, int par2, int par3, int par4) {
-      return true;
+   @Override
+   public AxisAlignedBB getCollisionBoundingBox(IBlockState state, IBlockAccess world, BlockPos pos) {
+      return NULL_AABB;
    }
 
-   public AxisAlignedBB getCollisionBoundingBoxFromPool(World par1World, int par2, int par3, int par4) {
-      return null;
-   }
-
-   public void setBlockBoundsBasedOnState(IBlockAccess world, int x, int y, int z) {
-      int md = world.getBlockMetadata(x, y, z);
+   @Override
+   public AxisAlignedBB getBoundingBox(IBlockState state, IBlockAccess world, BlockPos pos) {
+      int md = state.getBlock().getMetaFromState(state);
       if (md == 0) {
          float f = 0.0625F;
-
          try {
-            for(int a = 0; a < 6; ++a) {
-               ForgeDirection side = ForgeDirection.getOrientation(a);
-               if (world.isSideSolid(x + side.offsetX, y + side.offsetY, z + side.offsetZ, side.getOpposite(), false)) {
+            for (int a = 0; a < 6; ++a) {
+               EnumFacing side = EnumFacing.byIndex(a);
+               BlockPos adjPos = pos.add(side.getXOffset(), side.getYOffset(), side.getZOffset());
+               if (world.isSideSolid(adjPos, side.getOpposite(), false)) {
                   switch (a) {
-                     case 0:
-                        this.setBlockBounds(0.0F, 0.0F, 0.0F, 1.0F, f, 1.0F);
-                        break;
-                     case 1:
-                        this.setBlockBounds(0.0F, 1.0F - f, 0.0F, 1.0F, 1.0F, 1.0F);
-                        break;
-                     case 2:
-                        this.setBlockBounds(0.0F, 0.0F, 0.0F, 1.0F, 1.0F, f);
-                        break;
-                     case 3:
-                        this.setBlockBounds(0.0F, 0.0F, 1.0F - f, 1.0F, 1.0F, 1.0F);
-                        break;
-                     case 4:
-                        this.setBlockBounds(0.0F, 0.0F, 0.0F, f, 1.0F, 1.0F);
-                        break;
-                     case 5:
-                        this.setBlockBounds(1.0F - f, 0.0F, 0.0F, 1.0F, 1.0F, 1.0F);
+                     case 0: return new AxisAlignedBB(0.0, 0.0, 0.0, 1.0, f, 1.0);
+                     case 1: return new AxisAlignedBB(0.0, 1.0 - f, 0.0, 1.0, 1.0, 1.0);
+                     case 2: return new AxisAlignedBB(0.0, 0.0, 0.0, 1.0, 1.0, f);
+                     case 3: return new AxisAlignedBB(0.0, 0.0, 1.0 - f, 1.0, 1.0, 1.0);
+                     case 4: return new AxisAlignedBB(0.0, 0.0, 0.0, f, 1.0, 1.0);
+                     case 5: return new AxisAlignedBB(1.0 - f, 0.0, 0.0, 1.0, 1.0, 1.0);
                   }
-
-                  return;
                }
             }
          } catch (Throwable ignored) {
          }
-
-         this.setBlockBounds(0.0F, 0.0F, 0.0F, 1.0F, f, 1.0F);
+         return new AxisAlignedBB(0.0, 0.0, 0.0, 1.0, f, 1.0);
       } else {
-         this.setBlockBounds(0.2F, 0.0F, 0.2F, 0.8F, 0.8F, 0.8F);
+         return new AxisAlignedBB(0.2, 0.0, 0.2, 0.8, 0.8, 0.8);
       }
-
    }
 
-   public boolean isSideSolid(IBlockAccess world, int x, int y, int z, ForgeDirection side) {
+   @Override
+   public boolean isSideSolid(IBlockState state, IBlockAccess world, BlockPos pos, EnumFacing side) {
       return false;
    }
 
-   public boolean canPlaceBlockAt(World par1World, int par2, int par3, int par4) {
-      boolean biome = par1World.getBiomeGenForCoords(par2, par4).biomeID == Config.biomeTaintID;
-      return biome && super.canPlaceBlockAt(par1World, par2, par3, par4);
+   @Override
+   public boolean canPlaceBlockAt(World par1World, BlockPos pos) {
+      boolean biome = net.minecraft.world.biome.Biome.getIdForBiome(par1World.getBiome(new BlockPos(pos.getX(), 0, pos.getZ()))) == Config.biomeTaintID;
+      return biome && super.canPlaceBlockAt(par1World, pos);
    }
 }

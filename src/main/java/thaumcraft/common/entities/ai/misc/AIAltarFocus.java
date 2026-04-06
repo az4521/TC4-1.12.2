@@ -11,7 +11,7 @@ public class AIAltarFocus extends EntityAIBase {
 
    public AIAltarFocus(EntityCultistCleric par1EntityLiving) {
       this.entity = par1EntityLiving;
-      this.world = par1EntityLiving.worldObj;
+      this.world = par1EntityLiving.world;
       this.setMutexBits(7);
    }
 
@@ -24,7 +24,7 @@ public class AIAltarFocus extends EntityAIBase {
    }
 
    public void updateTask() {
-      if (this.entity.getHomePosition() != null && this.entity.ticksExisted % 40 == 0 && (this.entity.getHomePosition().getDistanceSquared((int)this.entity.posX, (int)this.entity.posY, (int)this.entity.posZ) > 16.0F || this.world.getBlock(this.entity.getHomePosition().posX, this.entity.getHomePosition().posY, this.entity.getHomePosition().posZ) != ConfigBlocks.blockEldritch)) {
+      if (this.entity.getHomePosition() != null && this.entity.ticksExisted % 40 == 0 && (this.entity.getHomePosition().distanceSq(this.entity.posX, this.entity.posY, this.entity.posZ) > 16.0F || this.world.getBlockState(this.entity.getHomePosition()).getBlock() != ConfigBlocks.blockEldritch)) {
          this.entity.setIsRitualist(false);
       }
 

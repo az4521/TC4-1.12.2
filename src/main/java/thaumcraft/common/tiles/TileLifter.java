@@ -5,38 +5,36 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.passive.EntityHorse;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.AxisAlignedBB;
+import net.minecraft.util.math.AxisAlignedBB;
 import thaumcraft.common.Thaumcraft;
 import thaumcraft.common.config.ConfigBlocks;
 
-public class TileLifter extends TileEntity {
+public class TileLifter extends TileEntity implements net.minecraft.util.ITickable {
    private int counter = 0;
    public int rangeAbove = 0;
    public boolean requiresUpdate = true;
    public boolean lastPowerState = false;
 
-   public boolean canUpdate() {
-       return super.canUpdate();
-   }
+   @Override
+   public void update() { updateEntity(); }
 
    public void updateEntity() {
-      super.updateEntity();
-      ++this.counter;
+            ++this.counter;
       if (this.requiresUpdate || this.counter % 100 == 0) {
          this.lastPowerState = this.gettingPower();
          this.requiresUpdate = false;
          int max = 10;
 
-         for(int count = 1; this.worldObj.getBlock(this.xCoord, this.yCoord - count, this.zCoord) == ConfigBlocks.blockLifter && !this.worldObj.isBlockIndirectlyGettingPowered(this.xCoord, this.yCoord - count, this.zCoord); max += 10) {
+         for(int count = 1; this.world.getBlockState(new net.minecraft.util.math.BlockPos(this.getPos().getX(), this.getPos().getY() - count, this.getPos().getZ())).getBlock() == ConfigBlocks.blockLifter && !this.world.isBlockPowered(new net.minecraft.util.math.BlockPos(this.getPos().getX(), this.getPos().getY() - count, this.getPos().getZ())); max += 10) {
             ++count;
          }
 
-         for(this.rangeAbove = 0; this.rangeAbove < max && !this.worldObj.getBlock(this.xCoord, this.yCoord + 1 + this.rangeAbove, this.zCoord).isOpaqueCube(); ++this.rangeAbove) {
+         for(this.rangeAbove = 0; this.rangeAbove < max && !this.world.getBlockState(new net.minecraft.util.math.BlockPos(this.getPos().getX(), this.getPos().getY() + 1 + this.rangeAbove, this.getPos().getZ())).isOpaqueCube(); ++this.rangeAbove) {
          }
       }
 
       if (this.rangeAbove > 0 && !this.gettingPower()) {
-         List<Entity> targets = this.worldObj.getEntitiesWithinAABB(Entity.class, AxisAlignedBB.getBoundingBox(this.xCoord, this.yCoord + 1, this.zCoord, this.xCoord + 1, this.yCoord + 1 + this.rangeAbove, this.zCoord + 1));
+         List<Entity> targets = this.world.getEntitiesWithinAABB(Entity.class, new AxisAlignedBB(this.getPos().getX(), this.getPos().getY() + 1, this.getPos().getZ(), this.getPos().getX() + 1, this.getPos().getY() + 1 + this.rangeAbove, this.getPos().getZ() + 1));
          if (!targets.isEmpty()) {
             for(Entity e : targets) {
                if (e instanceof EntityItem || e.canBePushed() || e instanceof EntityHorse) {
@@ -57,6 +55,6 @@ public class TileLifter extends TileEntity {
    }
 
    public boolean gettingPower() {
-      return this.worldObj.isBlockIndirectlyGettingPowered(this.xCoord, this.yCoord, this.zCoord) || this.worldObj.isBlockIndirectlyGettingPowered(this.xCoord, this.yCoord + 1, this.zCoord);
+      return this.world.isBlockPowered(this.getPos()) || this.world.isBlockPowered(this.getPos().up());
    }
 }

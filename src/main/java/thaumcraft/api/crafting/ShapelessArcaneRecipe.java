@@ -71,7 +71,7 @@ public class ShapelessArcaneRecipe implements IArcaneRecipe
     @Override
     public boolean matches(IInventory var1, World world, EntityPlayer player)
     {
-    	if (!research.isEmpty() && !ThaumcraftApiHelper.isResearchComplete(player.getCommandSenderName(), research)) {
+    	if (!research.isEmpty() && !ThaumcraftApiHelper.isResearchComplete(player.getName(), research)) {
     		return false;
     	}
     	

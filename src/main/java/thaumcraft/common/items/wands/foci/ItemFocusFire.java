@@ -1,11 +1,11 @@
 package thaumcraft.common.items.wands.foci;
 
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
-import net.minecraft.client.renderer.texture.IIconRegister;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
+import thaumcraft.client.renderers.compat.IIconRegister;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.MovingObjectPosition;
+import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.World;
 import thaumcraft.api.aspects.Aspect;
@@ -32,7 +32,7 @@ public class ItemFocusFire extends ItemFocusBasic {
 
    @SideOnly(Side.CLIENT)
    public void registerIcons(IIconRegister ir) {
-      this.icon = ir.registerIcon("thaumcraft:focus_fire");
+      this.icon = ir.registerSprite("thaumcraft:focus_fire");
    }
 
    public String getSortingHelper(ItemStack itemstack) {
@@ -59,22 +59,22 @@ public class ItemFocusFire extends ItemFocusBasic {
       return this.isUpgradedWith(itemstack, fireball) ? ItemFocusBasic.WandFocusAnimation.WAVE : ItemFocusBasic.WandFocusAnimation.CHARGE;
    }
 
-   public ItemStack onFocusRightClick(ItemStack itemstack, World world, EntityPlayer p, MovingObjectPosition movingobjectposition) {
+   public ItemStack onFocusRightClick(ItemStack itemstack, World world, EntityPlayer p, RayTraceResult movingobjectposition) {
       ItemWandCasting wand = (ItemWandCasting)itemstack.getItem();
       if (this.isUpgradedWith(wand.getFocusItem(itemstack), fireball)) {
-         if (wand.consumeAllVis(itemstack, p, this.getVisCost(itemstack), !p.worldObj.isRemote, false)) {
+         if (wand.consumeAllVis(itemstack, p, this.getVisCost(itemstack), !p.world.isRemote, false)) {
             if (!world.isRemote) {
                EntityExplosiveOrb orb = new EntityExplosiveOrb(world, p);
                orb.strength += (float)wand.getFocusPotency(itemstack) * 0.4F;
                orb.onFire = this.isUpgradedWith(wand.getFocusItem(itemstack), FocusUpgradeType.alchemistsfire);
-               world.spawnEntityInWorld(orb);
-               world.playAuxSFXAtEntity(null, 1009, (int)p.posX, (int)p.posY, (int)p.posZ, 0);
+               world.spawnEntity(orb);
+               world.playEvent(null, 1009, new net.minecraft.util.math.BlockPos((int)p.posX, (int)p.posY, (int)p.posZ), 0);
             }
 
-            p.swingItem();
+            p.swingArm(net.minecraft.util.EnumHand.MAIN_HAND);
          }
       } else {
-         p.setItemInUse(itemstack, Integer.MAX_VALUE);
+         p.setActiveHand(net.minecraft.util.EnumHand.MAIN_HAND);
          WandManager.setCooldown(p, -1);
       }
 
@@ -84,20 +84,20 @@ public class ItemFocusFire extends ItemFocusBasic {
    public void onUsingFocusTick(ItemStack itemstack, EntityPlayer p, int count) {
       ItemWandCasting wand = (ItemWandCasting)itemstack.getItem();
       if (!wand.consumeAllVis(itemstack, p, this.getVisCost(itemstack), false, false)) {
-         p.stopUsingItem();
+         p.stopActiveHand();
       } else {
          int range = 17;
          p.getLook((float)range);
-         if (!p.worldObj.isRemote && this.soundDelay < System.currentTimeMillis()) {
-            p.worldObj.playSoundAtEntity(p, "thaumcraft:fireloop", 0.33F, 2.0F);
+         if (!p.world.isRemote && this.soundDelay < System.currentTimeMillis()) {
+            { net.minecraft.util.SoundEvent _snd = net.minecraft.util.SoundEvent.REGISTRY.getObject(new net.minecraft.util.ResourceLocation("thaumcraft:fireloop")); if (_snd != null) p.world.playSound(null, p.posX, p.posY, p.posZ, _snd, net.minecraft.util.SoundCategory.NEUTRAL, 0.33F, 2.0F); };
             this.soundDelay = System.currentTimeMillis() + 500L;
          }
 
-         if (!p.worldObj.isRemote && wand.consumeAllVis(itemstack, p, this.getVisCost(itemstack), true, false)) {
+         if (!p.world.isRemote && wand.consumeAllVis(itemstack, p, this.getVisCost(itemstack), true, false)) {
             float scatter = this.isUpgradedWith(wand.getFocusItem(itemstack), firebeam) ? 0.25F : 15.0F;
 
             for(int a = 0; a < 2 + wand.getFocusPotency(itemstack); ++a) {
-               EntityEmber orb = new EntityEmber(p.worldObj, p, scatter);
+               EntityEmber orb = new EntityEmber(p.world, p, scatter);
                orb.damage = (float)(2 + wand.getFocusPotency(itemstack));
                if (this.isUpgradedWith(wand.getFocusItem(itemstack), firebeam)) {
                   orb.damage += 0.5F;
@@ -109,7 +109,7 @@ public class ItemFocusFire extends ItemFocusBasic {
                orb.posX += orb.motionX;
                orb.posY += orb.motionY;
                orb.posZ += orb.motionZ;
-               p.worldObj.spawnEntityInWorld(orb);
+               p.world.spawnEntity(orb);
             }
          }
 

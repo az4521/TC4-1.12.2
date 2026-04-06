@@ -1,11 +1,11 @@
 package thaumcraft.common.items;
 
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import java.util.List;
 import java.util.Random;
 import net.minecraft.block.Block;
-import net.minecraft.client.renderer.texture.IIconRegister;
+import thaumcraft.client.renderers.compat.IIconRegister;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
@@ -18,11 +18,16 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.potion.Potion;
 import net.minecraft.potion.PotionEffect;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.IIcon;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.util.EnumActionResult;
+import net.minecraft.util.EnumFacing;
+import net.minecraft.util.EnumHand;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
-import net.minecraft.world.biome.BiomeGenBase;
+import net.minecraft.world.biome.Biome;
 import net.minecraftforge.common.BiomeDictionary;
 import net.minecraftforge.common.BiomeDictionary.Type;
+import net.minecraftforge.fml.common.registry.ForgeRegistries;
 import thaumcraft.api.aspects.Aspect;
 import thaumcraft.api.aspects.AspectList;
 import thaumcraft.api.aspects.IEssentiaContainerItem;
@@ -37,7 +42,7 @@ import static thaumcraft.api.aspects.AspectList.addAspectDescriptionToList;
 
 public class ItemManaBean extends ItemFood implements IEssentiaContainerItem {
    public final int itemUseDuration = 10;
-   public IIcon icon;
+   public TextureAtlasSprite icon;
    Random rand = new Random();
    static Aspect[] displayAspects;
 
@@ -56,21 +61,22 @@ public class ItemManaBean extends ItemFood implements IEssentiaContainerItem {
 
    protected void onFoodEaten(ItemStack stack, World world, EntityPlayer player) {
       if (!world.isRemote) {
-         Potion p = Potion.potionTypes[world.rand.nextInt(Potion.potionTypes.length)];
+         Potion[] potionArr = ForgeRegistries.POTIONS.getValuesCollection().toArray(new Potion[0]);
+         Potion p = potionArr.length > 0 ? potionArr[world.rand.nextInt(potionArr.length)] : null;
          if (p != null) {
             if (p.isInstant()) {
-               p.affectEntity(player, player, 2, 3.0F);
+               p.affectEntity(null, null, player, 2, 3.0D);
             } else {
-               player.addPotionEffect(new PotionEffect(p.id, 160 + world.rand.nextInt(80), 0));
+               player.addPotionEffect(new PotionEffect(p, 160 + world.rand.nextInt(80), 0));
             }
          }
 
          if (world.rand.nextFloat() < 0.25F) {
             AspectList al = ((ItemManaBean)stack.getItem()).getAspects(stack);
             if (al != null && al.size() > 0) {
-               Thaumcraft.proxy.playerKnowledge.addAspectPool(player.getCommandSenderName(), al.getAspects()[0], (short)1);
+               Thaumcraft.proxy.playerKnowledge.addAspectPool(player.getName(), al.getAspects()[0], (short)1);
                ResearchManager.scheduleSave(player);
-               PacketHandler.INSTANCE.sendTo(new PacketAspectPool(al.getAspects()[0].getTag(), (short) 1, Thaumcraft.proxy.playerKnowledge.getAspectPoolFor(player.getCommandSenderName(), al.getAspects()[0])), (EntityPlayerMP)player);
+               PacketHandler.INSTANCE.sendTo(new PacketAspectPool(al.getAspects()[0].getTag(), (short) 1, Thaumcraft.proxy.playerKnowledge.getAspectPoolFor(player.getName(), al.getAspects()[0])), (EntityPlayerMP)player);
             }
          }
       }
@@ -79,24 +85,25 @@ public class ItemManaBean extends ItemFood implements IEssentiaContainerItem {
 
    @SideOnly(Side.CLIENT)
    public void registerIcons(IIconRegister ir) {
-      this.icon = ir.registerIcon("thaumcraft:mana_bean");
+      this.icon = ir.registerSprite("thaumcraft:mana_bean");
    }
 
    @SideOnly(Side.CLIENT)
-   public IIcon getIconFromDamage(int par1) {
+   public TextureAtlasSprite getIconFromDamage(int par1) {
       return this.icon;
    }
 
    @SideOnly(Side.CLIENT)
-   public void getSubItems(Item par1, CreativeTabs par2CreativeTabs, List par3List) {
+   @Override
+   public void getSubItems(CreativeTabs par2CreativeTabs, net.minecraft.util.NonNullList<ItemStack> par3List) {
       par3List.add(new ItemStack(this, 1, 0));
    }
 
-   public void addInformation(ItemStack stack, EntityPlayer player, List list, boolean par4) {
+   public void addInformation(ItemStack stack, @javax.annotation.Nullable net.minecraft.world.World worldIn, List list, net.minecraft.client.util.ITooltipFlag flagIn) {
       AspectList aspects = this.getAspects(stack);
-      addAspectDescriptionToList(aspects,player,list);
+      addAspectDescriptionToList(aspects, net.minecraft.client.Minecraft.getMinecraft().player, list);
 
-      super.addInformation(stack, player, list, par4);
+      super.addInformation(stack, worldIn, list, flagIn);
    }
 
    @SideOnly(Side.CLIENT)
@@ -142,40 +149,45 @@ public class ItemManaBean extends ItemFood implements IEssentiaContainerItem {
       aspects.writeToNBT(itemstack.getTagCompound());
    }
 
-   public boolean onItemUse(ItemStack par1ItemStack, EntityPlayer par2EntityPlayer, World par3World, int par4, int par5, int par6, int par7, float par8, float par9, float par10) {
-      if (par2EntityPlayer.canPlayerEdit(par4, par5, par6, par7, par1ItemStack) && par7 == 0) {
-         BiomeGenBase biome = par3World.getBiomeGenForCoords(par4, par6);
+   @Override
+   public EnumActionResult onItemUse(EntityPlayer par2EntityPlayer, World par3World, BlockPos pos, EnumHand hand, EnumFacing facing, float par8, float par9, float par10) {
+      ItemStack par1ItemStack = par2EntityPlayer.getHeldItem(hand);
+      int par4 = pos.getX();
+      int par5 = pos.getY();
+      int par6 = pos.getZ();
+      if (par2EntityPlayer.canPlayerEdit(pos, facing, par1ItemStack) && facing == EnumFacing.DOWN) {
+         Biome biome = par3World.getBiome(pos);
          boolean magicBiome = false;
          if (biome != null) {
-            magicBiome = BiomeDictionary.isBiomeOfType(biome, Type.MAGICAL);
+            magicBiome = BiomeDictionary.hasType(biome, Type.MAGICAL);
          }
 
          if (!magicBiome) {
-            return false;
+            return EnumActionResult.FAIL;
          } else {
-            Block i1 = par3World.getBlock(par4, par5, par6);
-            if (i1 != Blocks.log && i1 != Blocks.log2 && i1 != ConfigBlocks.blockMagicalLog) {
-               return false;
+            Block i1 = par3World.getBlockState(pos).getBlock();
+            if (i1 != Blocks.LOG && i1 != Blocks.LOG2 && i1 != ConfigBlocks.blockMagicalLog) {
+               return EnumActionResult.FAIL;
             } else {
                --par5;
-               if (par3World.isAirBlock(par4, par5, par6)) {
-                  int k1 = ConfigBlocks.blockManaPod.onBlockPlaced(par3World, par4, par5, par6, par7, par8, par9, par10, 0);
-                  par3World.setBlock(par4, par5, par6, ConfigBlocks.blockManaPod, k1, 2);
-                  TileEntity tile = par3World.getTileEntity(par4, par5, par6);
+               BlockPos placePos = new BlockPos(par4, par5, par6);
+               if (par3World.isAirBlock(placePos)) {
+                  par3World.setBlockState(placePos, ConfigBlocks.blockManaPod.getDefaultState(), 2);
+                  TileEntity tile = par3World.getTileEntity(placePos);
                   if (tile instanceof TileManaPod && this.getAspects(par1ItemStack) != null && this.getAspects(par1ItemStack).size() > 0) {
                      ((TileManaPod)tile).aspect = this.getAspects(par1ItemStack).getAspects()[0];
                   }
 
                   if (!par2EntityPlayer.capabilities.isCreativeMode) {
-                     --par1ItemStack.stackSize;
+                     par1ItemStack.shrink(1);
                   }
                }
 
-               return true;
+               return EnumActionResult.SUCCESS;
             }
          }
       } else {
-         return false;
+         return EnumActionResult.FAIL;
       }
    }
 

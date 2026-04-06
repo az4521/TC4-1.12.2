@@ -13,7 +13,7 @@ public class TileWarded extends TileThaumcraft {
    public byte light;
 
    public TileWarded() {
-      this.block = Blocks.air;
+      this.block = Blocks.AIR;
       this.blockMd = 0;
       this.safeToRemove = false;
    }
@@ -35,7 +35,7 @@ public class TileWarded extends TileThaumcraft {
       }
 
       if (this.block == null) {
-         this.block = Blocks.stone;
+         this.block = Blocks.STONE;
       }
 
    }

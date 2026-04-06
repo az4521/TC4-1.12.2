@@ -1,7 +1,7 @@
 package thaumcraft.common.tiles;
 
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import java.awt.Color;
 import java.lang.ref.WeakReference;
 import java.util.HashMap;
@@ -10,16 +10,17 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.AxisAlignedBB;
+import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.world.EnumSkyBlock;
 import net.minecraft.world.World;
-import net.minecraftforge.common.util.ForgeDirection;
+import net.minecraft.util.EnumFacing;
 import tc4tweak.CommonUtils;
 import thaumcraft.api.aspects.Aspect;
 import thaumcraft.api.visnet.TileVisNode;
 import thaumcraft.api.visnet.VisNetHandler;
 import thaumcraft.api.wands.IWandable;
 import thaumcraft.common.Thaumcraft;
+import net.minecraft.util.math.BlockPos;
 
 public class TileVisRelay extends TileVisNode implements IWandable {
    public short orientation = 1;
@@ -38,7 +39,7 @@ public class TileVisRelay extends TileVisNode implements IWandable {
 
    @SideOnly(Side.CLIENT)
    public AxisAlignedBB getRenderBoundingBox() {
-      return AxisAlignedBB.getBoundingBox(this.xCoord, this.yCoord, this.zCoord, this.xCoord + 1, this.yCoord + 1, this.zCoord + 1);
+      return new AxisAlignedBB(this.getPos().getX(), this.getPos().getY(), this.getPos().getZ(), this.getPos().getX() + 1, this.getPos().getY() + 1, this.getPos().getZ() + 1);
    }
 
    public byte getAttunement() {
@@ -54,8 +55,8 @@ public class TileVisRelay extends TileVisNode implements IWandable {
    }
 
    public void parentChanged() {
-      if (this.worldObj != null && this.worldObj.isRemote) {
-         this.worldObj.updateLightByType(EnumSkyBlock.Block, this.xCoord, this.yCoord, this.zCoord);
+      if (this.world != null && this.world.isRemote) {
+         this.world.checkLightFor(EnumSkyBlock.BLOCK, this.getPos());
       }
 
    }
@@ -67,12 +68,11 @@ public class TileVisRelay extends TileVisNode implements IWandable {
 
    public void updateEntity() {
       this.drawEffect();
-      super.updateEntity();
-      if (!this.worldObj.isRemote && this.nodeCounter % 20 == 0) {
-         List<EntityPlayer> var5 = this.worldObj.getEntitiesWithinAABB(EntityPlayer.class, AxisAlignedBB.getBoundingBox(this.xCoord, this.yCoord, this.zCoord, this.xCoord + 1, this.yCoord + 1, this.zCoord + 1).expand(5.0F, 5.0F, 5.0F));
+            if (!this.world.isRemote && this.nodeCounter % 20 == 0) {
+         List<EntityPlayer> var5 = this.world.getEntitiesWithinAABB(EntityPlayer.class, new AxisAlignedBB(this.getPos().getX(), this.getPos().getY(), this.getPos().getZ(), this.getPos().getX() + 1, this.getPos().getY() + 1, this.getPos().getZ() + 1).expand(5.0F, 5.0F, 5.0F));
          if (var5 != null && !var5.isEmpty()) {
             for(EntityPlayer player : var5) {
-               if (!nearbyPlayers.containsKey(player.getEntityId()) || ((WeakReference)nearbyPlayers.get(player.getEntityId())).get() == null || !(((TileVisRelay)((WeakReference)nearbyPlayers.get(player.getEntityId())).get()).getDistanceFrom(player.posX, player.posY, player.posZ) < this.getDistanceFrom(player.posX, player.posY, player.posZ))) {
+               if (!nearbyPlayers.containsKey(player.getEntityId()) || ((WeakReference)nearbyPlayers.get(player.getEntityId())).get() == null || !(distSq((TileVisRelay)((WeakReference)nearbyPlayers.get(player.getEntityId())).get(), player.posX, player.posY, player.posZ) < distSq(this, player.posX, player.posY, player.posZ))) {
                   nearbyPlayers.put(player.getEntityId(), new WeakReference(this));
                }
             }
@@ -81,22 +81,29 @@ public class TileVisRelay extends TileVisNode implements IWandable {
 
    }
 
+   private static double distSq(TileVisRelay te, double x, double y, double z) {
+      double dx = (double)te.getPos().getX() + 0.5 - x;
+      double dy = (double)te.getPos().getY() + 0.5 - y;
+      double dz = (double)te.getPos().getZ() + 0.5 - z;
+      return dx * dx + dy * dy + dz * dz;
+   }
+
    protected void drawEffect() {
-      if (this.worldObj.isRemote) {
+      if (this.world.isRemote) {
          if (this.needToLoadParent) {
             if (this.px == 0 && this.py == 0 && this.pz == 0) {
                this.setParent(null);
             } else {
                if (
                     !CommonUtils.isChunkLoaded(
-                    this.getWorldObj(),
-                    this.xCoord - this.px,
-                    this.yCoord - this.py,
-                    this.zCoord - this.pz)
+                    this.getWorld(),
+                    this.getPos().getX() - this.px,
+                    this.getPos().getY() - this.py,
+                    this.getPos().getZ() - this.pz)
                ){
                   return;
                }
-               TileEntity tile = this.getWorldObj().getTileEntity(this.xCoord - this.px, this.yCoord - this.py, this.zCoord - this.pz);
+               TileEntity tile = this.getWorld().getTileEntity(new BlockPos(this.getPos().getX() - this.px, this.getPos().getY() - this.py, this.getPos().getZ() - this.pz));
                if (tile instanceof TileVisNode) {
                   this.setParent(new WeakReference(tile));
                }
@@ -107,16 +114,16 @@ public class TileVisRelay extends TileVisNode implements IWandable {
          }
 
          if (VisNetHandler.isNodeValid(this.getParent())) {
-            double xx = (double) this.getParent().get().xCoord + (double)0.5F;
-            double yy = (double) this.getParent().get().yCoord + (double)0.5F;
-            double zz = (double) this.getParent().get().zCoord + (double)0.5F;
-            ForgeDirection d1 = ForgeDirection.UNKNOWN;
+            double xx = (double) this.getParent().get().getPos().getX() + 0.5;
+            double yy = (double) this.getParent().get().getPos().getY() + 0.5;
+            double zz = (double) this.getParent().get().getPos().getZ() + 0.5;
+            EnumFacing d1 = EnumFacing.UP;
             if (this.getParent().get() instanceof TileVisRelay) {
-               d1 = ForgeDirection.getOrientation(((TileVisRelay)this.getParent().get()).orientation);
+               d1 = EnumFacing.byIndex(((TileVisRelay)this.getParent().get()).orientation);
             }
 
-            ForgeDirection d2 = ForgeDirection.getOrientation(this.orientation);
-            this.beam1 = Thaumcraft.proxy.beamPower(this.worldObj, xx - (double)d1.offsetX * 0.05, yy - (double)d1.offsetY * 0.05, zz - (double)d1.offsetZ * 0.05, (double)this.xCoord + (double)0.5F - (double)d2.offsetX * 0.05, (double)this.yCoord + (double)0.5F - (double)d2.offsetY * 0.05, (double)this.zCoord + (double)0.5F - (double)d2.offsetZ * 0.05, this.pRed, this.pGreen, this.pBlue, this.pulse > 0, this.beam1);
+            EnumFacing d2 = EnumFacing.byIndex(this.orientation);
+            this.beam1 = Thaumcraft.proxy.beamPower(this.world, xx - (double)d1.getXOffset() * 0.05, yy - (double)d1.getYOffset() * 0.05, zz - (double)d1.getZOffset() * 0.05, (double)this.getPos().getX() + (double)0.5F - (double)d2.getXOffset() * 0.05, (double)this.getPos().getY() + (double)0.5F - (double)d2.getYOffset() * 0.05, (double)this.getPos().getZ() + (double)0.5F - (double)d2.getZOffset() * 0.05, this.pRed, this.pGreen, this.pBlue, this.pulse > 0, this.beam1);
          }
 
          if (this.pRed < 1.0F) {
@@ -172,7 +179,7 @@ public class TileVisRelay extends TileVisNode implements IWandable {
 
       if (c >= 0 && this.pulse == 0) {
          this.pulse = 5;
-         this.worldObj.addBlockEvent(this.xCoord, this.yCoord, this.zCoord, this.getBlockType(), 0, c);
+         this.world.addBlockEvent(this.getPos(), this.getBlockType(), 0, c);
       }
 
    }
@@ -181,7 +188,7 @@ public class TileVisRelay extends TileVisNode implements IWandable {
       if (i != 0) {
          return super.receiveClientEvent(i, j);
       } else {
-         if (this.worldObj.isRemote) {
+         if (this.world.isRemote) {
             Color c = new Color(colors[j]);
             this.pulse = 5;
             this.pRed = (float)c.getRed() / 255.0F;
@@ -215,9 +222,9 @@ public class TileVisRelay extends TileVisNode implements IWandable {
       nbttagcompound.setShort("orientation", this.orientation);
       nbttagcompound.setByte("color", this.color);
       if (VisNetHandler.isNodeValid(this.getParent())) {
-         nbttagcompound.setByte("px", (byte)(this.xCoord - this.getParent().get().xCoord));
-         nbttagcompound.setByte("py", (byte)(this.yCoord - this.getParent().get().yCoord));
-         nbttagcompound.setByte("pz", (byte)(this.zCoord - this.getParent().get().zCoord));
+         nbttagcompound.setByte("px", (byte)(this.getPos().getX() - this.getParent().get().getPos().getX()));
+         nbttagcompound.setByte("py", (byte)(this.getPos().getY() - this.getParent().get().getPos().getY()));
+         nbttagcompound.setByte("pz", (byte)(this.getPos().getZ() - this.getParent().get().getPos().getZ()));
       } else {
          nbttagcompound.setByte("px", (byte)0);
          nbttagcompound.setByte("py", (byte)0);
@@ -227,7 +234,7 @@ public class TileVisRelay extends TileVisNode implements IWandable {
    }
 
    public int onWandRightClick(World world, ItemStack wandstack, EntityPlayer player, int x, int y, int z, int side, int md) {
-      if (!this.worldObj.isRemote) {
+      if (!this.world.isRemote) {
          ++this.color;
          if (this.color > 5) {
             this.color = -1;
@@ -236,8 +243,8 @@ public class TileVisRelay extends TileVisNode implements IWandable {
          this.removeThisNode();
          this.nodeRefresh = true;
          this.markDirty();
-         world.markBlockForUpdate(x, y, z);
-         world.playSoundEffect(x, y, z, "thaumcraft:crystal", 0.2F, 1.0F);
+         { net.minecraft.block.state.IBlockState _bs = world.getBlockState(new BlockPos(x, y, z)); world.notifyBlockUpdate(new BlockPos(x, y, z), _bs, _bs, 3); }
+         { net.minecraft.util.SoundEvent _snd = net.minecraft.util.SoundEvent.REGISTRY.getObject(new net.minecraft.util.ResourceLocation("thaumcraft:crystal")); if (_snd != null) world.playSound(null, new BlockPos(x, y, z), _snd, net.minecraft.util.SoundCategory.BLOCKS, 0.2F, 1.0F); }
       }
 
       return 0;

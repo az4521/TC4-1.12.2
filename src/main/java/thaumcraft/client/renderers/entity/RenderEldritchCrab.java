@@ -1,23 +1,24 @@
 package thaumcraft.client.renderers.entity;
 
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.client.renderer.entity.RenderLiving;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.util.ResourceLocation;
-import org.lwjgl.opengl.GL11;
-import thaumcraft.client.renderers.models.entities.ModelEldritchCrab;
 
+import thaumcraft.client.renderers.models.entities.ModelEldritchCrab;
+import net.minecraft.client.renderer.GlStateManager;
+
+import net.minecraft.client.renderer.entity.RenderManager;
 @SideOnly(Side.CLIENT)
 public class RenderEldritchCrab extends RenderLiving {
    private static final ResourceLocation[] skin = new ResourceLocation[]{new ResourceLocation("thaumcraft", "textures/models/crab.png"), new ResourceLocation("thaumcraft", "textures/models/craboverlay.png")};
 
-   public RenderEldritchCrab() {
-      super(new ModelEldritchCrab(), 1.0F);
-      this.setRenderPassModel(new ModelEldritchCrab());
+   public RenderEldritchCrab(RenderManager renderManager) {
+      super(renderManager, new ModelEldritchCrab(), 1.0F);
    }
 
    protected ResourceLocation getEntityTexture(Entity entity) {
@@ -33,15 +34,15 @@ public class RenderEldritchCrab extends RenderLiving {
          return -1;
       } else {
          this.bindTexture(skin[1]);
-         GL11.glEnable(GL11.GL_BLEND);
-         GL11.glBlendFunc(770, 771);
-          GL11.glDepthMask(!par1EntityLiving.isInvisible());
+         GlStateManager.enableBlend();
+         GlStateManager.blendFunc(770, 771);
+          GlStateManager.depthMask(!par1EntityLiving.isInvisible());
 
          char c0 = 200;
          int j = c0 % 65536;
          int k = c0 / 65536;
          OpenGlHelper.setLightmapTextureCoords(OpenGlHelper.lightmapTexUnit, (float) j, (float) k);
-         GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+         GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
          return 1;
       }
    }

@@ -1,10 +1,10 @@
 package tc4tweak;
 
 import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.network.Packet;
-import net.minecraft.server.MinecraftServer;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
+import net.minecraftforge.fml.common.FMLCommonHandler;
 import thaumcraft.api.aspects.AspectList;
 import thaumcraft.api.crafting.CrucibleRecipe;
 import thaumcraft.api.research.ResearchCategories;
@@ -84,29 +84,30 @@ public class CommonUtils {
     public static boolean isChunkLoaded(World world, int x, int y, int z) {
         if (world.isRemote) {
             // client world lies about chunk existence
-            return !world.getChunkFromBlockCoords(x, z).isEmpty();
+            return world.getChunkProvider().getLoadedChunk(x >> 4, z >> 4) != null;
         }
-        return world.blockExists(x, y, z);
+        return world.isBlockLoaded(new BlockPos(x, y, z));
     }
 
     public static void sendSupplementaryS35(TileEntity te) {
         if (!ConfigurationHandler.INSTANCE.isSendSupplementaryS35()) return;
-        World w = te.getWorldObj();
+        World w = te.getWorld();
         if (w.isRemote) return;
-        Packet packet = te.getDescriptionPacket();
+        net.minecraft.network.Packet<?> packet = te.getUpdatePacket();
         if (packet == null) return;
         // here we send a little further out in case player is moving very fast
-        int viewDistance = MinecraftServer.getServer().getConfigurationManager().getViewDistance();
+        int viewDistance = FMLCommonHandler.instance().getMinecraftServerInstance().getPlayerList().getViewDistance();
         int sendDistanceLo = viewDistance - 2;
         int sendDistanceHi = viewDistance + 4;
         for (Object o : w.playerEntities) {
             if (!(o instanceof EntityPlayerMP)) continue;
             EntityPlayerMP player = (EntityPlayerMP) o;
-            int dx = (((int) player.posX) >> 4) - (te.xCoord >> 4);
-            int dz = (((int) player.posZ) >> 4) - (te.zCoord >> 4);
+            BlockPos tePos = te.getPos();
+            int dx = (((int) player.posX) >> 4) - (tePos.getX() >> 4);
+            int dz = (((int) player.posZ) >> 4) - (tePos.getZ() >> 4);
             int dist = Math.max(Math.abs(dx), Math.abs(dz));
             if (dist >= sendDistanceLo && dist <= sendDistanceHi) {
-                player.playerNetServerHandler.sendPacket(packet);
+                player.connection.sendPacket(packet);
             }
         }
     }

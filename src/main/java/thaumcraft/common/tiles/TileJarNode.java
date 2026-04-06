@@ -15,6 +15,7 @@ import thaumcraft.api.nodes.NodeType;
 import thaumcraft.api.wands.IWandable;
 import thaumcraft.common.Thaumcraft;
 import thaumcraft.common.config.ConfigBlocks;
+import net.minecraft.util.math.BlockPos;
 
 public class TileJarNode extends TileJar implements IAspectContainer, INode, IWandable {
    private AspectList aspects = new AspectList();
@@ -31,10 +32,6 @@ public class TileJarNode extends TileJar implements IAspectContainer, INode, IWa
       this.id = "";
       this.animate = 0L;
       this.drop = true;
-   }
-
-   public boolean canUpdate() {
-       return super.canUpdate();
    }
 
    public void readCustomNBT(NBTTagCompound nbttagcompound) {
@@ -109,7 +106,7 @@ public class TileJarNode extends TileJar implements IAspectContainer, INode, IWa
       }
 
       this.aspects.add(tt, am - out);
-      this.worldObj.markBlockForUpdate(this.xCoord, this.yCoord, this.zCoord);
+      { net.minecraft.block.state.IBlockState _bs = this.world.getBlockState(this.pos); this.world.notifyBlockUpdate(this.pos, _bs, _bs, 3); }
       this.markDirty();
       return out;
    }
@@ -117,7 +114,7 @@ public class TileJarNode extends TileJar implements IAspectContainer, INode, IWa
    public boolean takeFromContainer(Aspect tt, int am) {
       if (this.aspects.getAmount(tt) >= am) {
          this.aspects.remove(tt, am);
-         this.worldObj.markBlockForUpdate(this.xCoord, this.yCoord, this.zCoord);
+         { net.minecraft.block.state.IBlockState _bs = this.world.getBlockState(this.pos); this.world.notifyBlockUpdate(this.pos, _bs, _bs, 3); }
          this.markDirty();
          return true;
       } else {
@@ -188,11 +185,11 @@ public class TileJarNode extends TileJar implements IAspectContainer, INode, IWa
       if (i != 9) {
          return super.receiveClientEvent(i, j);
       } else {
-         if (this.worldObj.isRemote) {
+         if (this.world.isRemote) {
             for(int yy = -1; yy < 3; ++yy) {
                for(int xx = -1; xx < 2; ++xx) {
                   for(int zz = -1; zz < 2; ++zz) {
-                     Thaumcraft.proxy.blockSparkle(this.worldObj, this.xCoord + xx, this.yCoord + yy, this.zCoord + zz, -9999, 5);
+                     Thaumcraft.proxy.blockSparkle(this.world, this.getPos().getX() + xx, this.getPos().getY() + yy, this.getPos().getZ() + zz, -9999, 5);
                   }
                }
             }
@@ -207,21 +204,21 @@ public class TileJarNode extends TileJar implements IAspectContainer, INode, IWa
    public int onWandRightClick(World world, ItemStack wandstack, EntityPlayer player, int x, int y, int z, int side, int md) {
       if (!world.isRemote) {
          this.drop = false;
-         world.setBlock(x, y, z, ConfigBlocks.blockAiry, 0, 3);
-         TileNode tn = (TileNode)world.getTileEntity(x, y, z);
+        world.setBlockState(new net.minecraft.util.math.BlockPos(x, y, z), (ConfigBlocks.blockAiry).getStateFromMeta(0), 3);
+         TileNode tn = (TileNode)world.getTileEntity(new BlockPos(x, y, z));
          if (tn != null) {
             tn.setAspects(this.getAspects());
             tn.setNodeModifier(this.getNodeModifier());
             tn.setNodeType(this.getNodeType());
             tn.id = this.getId();
-            world.markBlockForUpdate(x, y, z);
+            { net.minecraft.block.state.IBlockState _bs = world.getBlockState(new BlockPos(x, y, z)); world.notifyBlockUpdate(new BlockPos(x, y, z), _bs, _bs, 3); }
             tn.markDirty();
          }
       }
 
-      world.playAuxSFX(2001, x, y, z, Block.getIdFromBlock(ConfigBlocks.blockJar) + '\uf000');
-      player.worldObj.playSound((double)x + (double)0.5F, (double)y + (double)0.5F, (double)z + (double)0.5F, "random.glass", 1.0F, 0.9F + player.worldObj.rand.nextFloat() * 0.2F, false);
-      player.swingItem();
+      world.playEvent(2001, new BlockPos(x, y, z), Block.getIdFromBlock(ConfigBlocks.blockJar) + 0xF000);
+      { net.minecraft.util.SoundEvent _snd = net.minecraft.util.SoundEvent.REGISTRY.getObject(new net.minecraft.util.ResourceLocation("minecraft:random.glass")); if (_snd != null) player.world.playSound(null, (double)x + (double)0.5F, (double)y + (double)0.5F, (double)z + (double)0.5F, _snd, net.minecraft.util.SoundCategory.NEUTRAL, 1.0F, 0.9F + player.world.rand.nextFloat() * 0.2F); };
+      player.swingArm(net.minecraft.util.EnumHand.MAIN_HAND);
       return 0;
    }
 

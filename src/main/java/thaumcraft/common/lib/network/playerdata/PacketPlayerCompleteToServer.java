@@ -1,14 +1,14 @@
 package thaumcraft.common.lib.network.playerdata;
 
-import cpw.mods.fml.common.network.ByteBufUtils;
-import cpw.mods.fml.common.network.simpleimpl.IMessage;
-import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
-import cpw.mods.fml.common.network.simpleimpl.MessageContext;
+import net.minecraftforge.fml.common.network.ByteBufUtils;
+import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
+import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
+import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.util.ChatComponentTranslation;
-import net.minecraft.util.StatCollector;
+import net.minecraft.util.text.TextComponentTranslation;
+import net.minecraft.util.text.translation.I18n;
 import net.minecraft.world.World;
 import net.minecraftforge.common.DimensionManager;
 import tc4tweak.PacketCheck;
@@ -53,7 +53,7 @@ public class PacketPlayerCompleteToServer implements IMessage, IMessageHandler<P
    }
    public static boolean sanityPlayerComplete(PacketPlayerCompleteToServer packet, MessageContext ctx) {
       if (packet.type() != 0) return true;
-      EntityPlayerMP playerEntity = ctx.getServerHandler().playerEntity;
+      EntityPlayerMP playerEntity = ctx.getServerHandler().player;
       ResearchItem research = packet.research();
       if (research == null) return false;
       boolean secondary = isSecondaryResearch(research);
@@ -74,8 +74,8 @@ public class PacketPlayerCompleteToServer implements IMessage, IMessageHandler<P
       World world = DimensionManager.getWorld(message.dim);
       if (world != null
               && (
-                      ctx.getServerHandler().playerEntity == null
-                      || ctx.getServerHandler().playerEntity.getCommandSenderName().equals(message.username)
+                      ctx.getServerHandler().player == null
+                      || ctx.getServerHandler().player.getName().equals(message.username)
       )
       ) {
          EntityPlayer player = world.getPlayerEntityByName(message.username);
@@ -104,9 +104,9 @@ public class PacketPlayerCompleteToServer implements IMessage, IMessageHandler<P
                   }
                }
 
-               world.playSoundAtEntity(player, "thaumcraft:learn", 0.75F, 1.0F);
+               { net.minecraft.util.SoundEvent _snd = net.minecraft.util.SoundEvent.REGISTRY.getObject(new net.minecraft.util.ResourceLocation("thaumcraft:learn")); if (_snd != null) world.playSound(null, player.posX, player.posY, player.posZ, _snd, net.minecraft.util.SoundCategory.NEUTRAL, 0.75F, 1.0F); };
             } else {
-               player.addChatMessage(new ChatComponentTranslation(StatCollector.translateToLocal("tc.researcherror")));
+               player.sendMessage(new TextComponentTranslation(I18n.translateToLocal("tc.researcherror")));
             }
          }
 

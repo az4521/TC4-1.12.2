@@ -3,10 +3,11 @@ package thaumcraft.client.renderers.item;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.ModelChest;
 import net.minecraft.item.ItemStack;
-import net.minecraftforge.client.IItemRenderer;
-import net.minecraftforge.client.IItemRenderer.ItemRenderType;
-import org.lwjgl.opengl.GL11;
+import thaumcraft.client.renderers.compat.IItemRenderer;
+import thaumcraft.client.renderers.compat.IItemRenderer.ItemRenderType;
+
 import thaumcraft.client.lib.UtilsFX;
+import net.minecraft.client.renderer.GlStateManager;
 
 public class ItemTrunkSpawnerRenderer implements IItemRenderer {
    private ModelChest chest = new ModelChest();
@@ -21,21 +22,21 @@ public class ItemTrunkSpawnerRenderer implements IItemRenderer {
 
    public void renderItem(IItemRenderer.ItemRenderType type, ItemStack item, Object... data) {
       Minecraft mc = Minecraft.getMinecraft();
-      GL11.glPushMatrix();
+      GlStateManager.pushMatrix();
       UtilsFX.bindTexture("textures/models/trunk.png");
-      GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
-      GL11.glScalef(1.0F, -1.0F, -1.0F);
+      GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
+      GlStateManager.scale(1.0F, -1.0F, -1.0F);
       short var11 = 0;
       if (type == ItemRenderType.EQUIPPED || type == ItemRenderType.EQUIPPED_FIRST_PERSON) {
-         GL11.glTranslatef(-0.25F, -0.5F, -0.25F);
+         GlStateManager.translate(-0.25F, -0.5F, -0.25F);
          if (type == ItemRenderType.EQUIPPED && type != ItemRenderType.EQUIPPED_FIRST_PERSON) {
-            GL11.glTranslatef(1.0F, 0.0F, 0.0F);
+            GlStateManager.translate(1.0F, 0.0F, 0.0F);
          }
       }
 
-      GL11.glRotatef(var11, 0.0F, 1.0F, 0.0F);
-      GL11.glTranslatef(-0.5F, -0.5F, -0.5F);
+      GlStateManager.rotate(var11, 0.0F, 1.0F, 0.0F);
+      GlStateManager.translate(-0.5F, -0.5F, -0.5F);
       this.chest.renderAll();
-      GL11.glPopMatrix();
+      GlStateManager.popMatrix();
    }
 }

@@ -3,8 +3,10 @@ package thaumcraft.common.lib.world.dim;
 import java.util.Random;
 import net.minecraft.init.Blocks;
 import net.minecraft.tileentity.TileEntityMobSpawner;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.World;
-import net.minecraftforge.common.util.ForgeDirection;
+import net.minecraft.util.EnumFacing;
 import thaumcraft.common.config.ConfigBlocks;
 import thaumcraft.common.lib.utils.BlockUtils;
 import thaumcraft.common.lib.utils.Utils;
@@ -40,19 +42,19 @@ public class GenPassage extends GenCommon {
       if (cell.north) {
          for(int w = 2 + mod; w < 9 - mod; ++w) {
             for(int h = 2 + mod; h < 9 - mod; ++h) {
-               placeBlock(world, x + 3 + w, y + 10 - h, z + 5, PAT_CONNECT[h][w], ForgeDirection.NORTH, cell);
+               placeBlock(world, x + 3 + w, y + 10 - h, z + 5, PAT_CONNECT[h][w], EnumFacing.NORTH, cell);
             }
          }
 
          if (mod == 0) {
             if (cell.west) {
-               placeBlock(world, x + 6, y + 3, z + 6, 3, ForgeDirection.EAST, cell);
-               placeBlock(world, x + 6, y + 7, z + 6, 5, ForgeDirection.EAST, cell);
+               placeBlock(world, x + 6, y + 3, z + 6, 3, EnumFacing.EAST, cell);
+               placeBlock(world, x + 6, y + 7, z + 6, 5, EnumFacing.EAST, cell);
             }
 
             if (cell.east) {
-               placeBlock(world, x + 10, y + 3, z + 6, 3, ForgeDirection.EAST, cell);
-               placeBlock(world, x + 10, y + 7, z + 6, 5, ForgeDirection.EAST, cell);
+               placeBlock(world, x + 10, y + 3, z + 6, 3, EnumFacing.EAST, cell);
+               placeBlock(world, x + 10, y + 7, z + 6, 5, EnumFacing.EAST, cell);
             }
          }
       } else {
@@ -74,27 +76,27 @@ public class GenPassage extends GenCommon {
          }
 
          for(int w = 2; w < 7; ++w) {
-            placeBlock(world, x + 4 + w, y + 3, z + 6, 3, ForgeDirection.EAST, cell);
-            placeBlock(world, x + 4 + w, y + 7, z + 6, 5, ForgeDirection.EAST, cell);
+            placeBlock(world, x + 4 + w, y + 3, z + 6, 3, EnumFacing.EAST, cell);
+            placeBlock(world, x + 4 + w, y + 7, z + 6, 5, EnumFacing.EAST, cell);
          }
       }
 
       if (cell.south) {
          for(int w = 2 + mod; w < 9 - mod; ++w) {
             for(int h = 2 + mod; h < 9 - mod; ++h) {
-               placeBlock(world, x + 3 + w, y + 10 - h, z + 11, PAT_CONNECT[h][w], ForgeDirection.SOUTH, cell);
+               placeBlock(world, x + 3 + w, y + 10 - h, z + 11, PAT_CONNECT[h][w], EnumFacing.SOUTH, cell);
             }
          }
 
          if (mod == 0) {
             if (cell.west) {
-               placeBlock(world, x + 6, y + 3, z + 10, 4, ForgeDirection.EAST, cell);
-               placeBlock(world, x + 6, y + 7, z + 10, 6, ForgeDirection.EAST, cell);
+               placeBlock(world, x + 6, y + 3, z + 10, 4, EnumFacing.EAST, cell);
+               placeBlock(world, x + 6, y + 7, z + 10, 6, EnumFacing.EAST, cell);
             }
 
             if (cell.east) {
-               placeBlock(world, x + 10, y + 3, z + 10, 4, ForgeDirection.EAST, cell);
-               placeBlock(world, x + 10, y + 7, z + 10, 6, ForgeDirection.EAST, cell);
+               placeBlock(world, x + 10, y + 3, z + 10, 4, EnumFacing.EAST, cell);
+               placeBlock(world, x + 10, y + 7, z + 10, 6, EnumFacing.EAST, cell);
             }
          }
       } else {
@@ -116,27 +118,27 @@ public class GenPassage extends GenCommon {
          }
 
          for(int w = 2; w < 7; ++w) {
-            placeBlock(world, x + 4 + w, y + 3, z + 10, 4, ForgeDirection.EAST, cell);
-            placeBlock(world, x + 4 + w, y + 7, z + 10, 6, ForgeDirection.EAST, cell);
+            placeBlock(world, x + 4 + w, y + 3, z + 10, 4, EnumFacing.EAST, cell);
+            placeBlock(world, x + 4 + w, y + 7, z + 10, 6, EnumFacing.EAST, cell);
          }
       }
 
       if (cell.east) {
          for(int w = 2 + mod; w < 9 - mod; ++w) {
             for(int h = 2 + mod; h < 9 - mod; ++h) {
-               placeBlock(world, x + 11, y + 10 - h, z + 3 + w, PAT_CONNECT[h][w], ForgeDirection.EAST, cell);
+               placeBlock(world, x + 11, y + 10 - h, z + 3 + w, PAT_CONNECT[h][w], EnumFacing.EAST, cell);
             }
          }
 
          if (mod == 0) {
             if (cell.north) {
-               placeBlock(world, x + 10, y + 3, z + 6, 4, ForgeDirection.NORTH, cell);
-               placeBlock(world, x + 10, y + 7, z + 6, 6, ForgeDirection.NORTH, cell);
+               placeBlock(world, x + 10, y + 3, z + 6, 4, EnumFacing.NORTH, cell);
+               placeBlock(world, x + 10, y + 7, z + 6, 6, EnumFacing.NORTH, cell);
             }
 
             if (cell.south) {
-               placeBlock(world, x + 10, y + 3, z + 10, 4, ForgeDirection.NORTH, cell);
-               placeBlock(world, x + 10, y + 7, z + 10, 6, ForgeDirection.NORTH, cell);
+               placeBlock(world, x + 10, y + 3, z + 10, 4, EnumFacing.NORTH, cell);
+               placeBlock(world, x + 10, y + 7, z + 10, 6, EnumFacing.NORTH, cell);
             }
          }
       } else {
@@ -158,27 +160,27 @@ public class GenPassage extends GenCommon {
          }
 
          for(int w = 2; w < 7; ++w) {
-            placeBlock(world, x + 10, y + 3, z + 4 + w, 4, ForgeDirection.NORTH, cell);
-            placeBlock(world, x + 10, y + 7, z + 4 + w, 6, ForgeDirection.NORTH, cell);
+            placeBlock(world, x + 10, y + 3, z + 4 + w, 4, EnumFacing.NORTH, cell);
+            placeBlock(world, x + 10, y + 7, z + 4 + w, 6, EnumFacing.NORTH, cell);
          }
       }
 
       if (cell.west) {
          for(int w = 2 + mod; w < 9 - mod; ++w) {
             for(int h = 2 + mod; h < 9 - mod; ++h) {
-               placeBlock(world, x + 5, y + 10 - h, z + 3 + w, PAT_CONNECT[h][w], ForgeDirection.WEST, cell);
+               placeBlock(world, x + 5, y + 10 - h, z + 3 + w, PAT_CONNECT[h][w], EnumFacing.WEST, cell);
             }
          }
 
          if (mod == 0) {
             if (cell.north) {
-               placeBlock(world, x + 6, y + 3, z + 6, 3, ForgeDirection.NORTH, cell);
-               placeBlock(world, x + 6, y + 7, z + 6, 5, ForgeDirection.NORTH, cell);
+               placeBlock(world, x + 6, y + 3, z + 6, 3, EnumFacing.NORTH, cell);
+               placeBlock(world, x + 6, y + 7, z + 6, 5, EnumFacing.NORTH, cell);
             }
 
             if (cell.south) {
-               placeBlock(world, x + 6, y + 3, z + 10, 3, ForgeDirection.NORTH, cell);
-               placeBlock(world, x + 6, y + 7, z + 10, 5, ForgeDirection.NORTH, cell);
+               placeBlock(world, x + 6, y + 3, z + 10, 3, EnumFacing.NORTH, cell);
+               placeBlock(world, x + 6, y + 7, z + 10, 5, EnumFacing.NORTH, cell);
             }
          }
       } else {
@@ -200,35 +202,35 @@ public class GenPassage extends GenCommon {
          }
 
          for(int w = 2; w < 7; ++w) {
-            placeBlock(world, x + 6, y + 3, z + 4 + w, 3, ForgeDirection.NORTH, cell);
-            placeBlock(world, x + 6, y + 7, z + 4 + w, 5, ForgeDirection.NORTH, cell);
+            placeBlock(world, x + 6, y + 3, z + 4 + w, 3, EnumFacing.NORTH, cell);
+            placeBlock(world, x + 6, y + 7, z + 4 + w, 5, EnumFacing.NORTH, cell);
          }
       }
 
       if (mod == 1) {
-         placeBlock(world, x + 5, y + 3, z + 5, 3, ForgeDirection.EAST, cell);
-         placeBlock(world, x + 5, y + 7, z + 5, 5, ForgeDirection.EAST, cell);
-         placeBlock(world, x + 5, y + 3, z + 6, 3, ForgeDirection.NORTH, cell);
-         placeBlock(world, x + 5, y + 7, z + 6, 5, ForgeDirection.NORTH, cell);
-         placeBlock(world, x + 11, y + 3, z + 5, 3, ForgeDirection.EAST, cell);
-         placeBlock(world, x + 11, y + 7, z + 5, 5, ForgeDirection.EAST, cell);
-         placeBlock(world, x + 11, y + 3, z + 6, 4, ForgeDirection.NORTH, cell);
-         placeBlock(world, x + 11, y + 7, z + 6, 6, ForgeDirection.NORTH, cell);
-         placeBlock(world, x + 5, y + 3, z + 11, 3, ForgeDirection.NORTH, cell);
-         placeBlock(world, x + 5, y + 7, z + 11, 5, ForgeDirection.NORTH, cell);
-         placeBlock(world, x + 6, y + 3, z + 11, 4, ForgeDirection.EAST, cell);
-         placeBlock(world, x + 6, y + 7, z + 11, 6, ForgeDirection.EAST, cell);
-         placeBlock(world, x + 11, y + 3, z + 11, 4, ForgeDirection.NORTH, cell);
-         placeBlock(world, x + 11, y + 7, z + 11, 6, ForgeDirection.NORTH, cell);
-         placeBlock(world, x + 10, y + 3, z + 11, 4, ForgeDirection.EAST, cell);
-         placeBlock(world, x + 10, y + 7, z + 11, 6, ForgeDirection.EAST, cell);
+         placeBlock(world, x + 5, y + 3, z + 5, 3, EnumFacing.EAST, cell);
+         placeBlock(world, x + 5, y + 7, z + 5, 5, EnumFacing.EAST, cell);
+         placeBlock(world, x + 5, y + 3, z + 6, 3, EnumFacing.NORTH, cell);
+         placeBlock(world, x + 5, y + 7, z + 6, 5, EnumFacing.NORTH, cell);
+         placeBlock(world, x + 11, y + 3, z + 5, 3, EnumFacing.EAST, cell);
+         placeBlock(world, x + 11, y + 7, z + 5, 5, EnumFacing.EAST, cell);
+         placeBlock(world, x + 11, y + 3, z + 6, 4, EnumFacing.NORTH, cell);
+         placeBlock(world, x + 11, y + 7, z + 6, 6, EnumFacing.NORTH, cell);
+         placeBlock(world, x + 5, y + 3, z + 11, 3, EnumFacing.NORTH, cell);
+         placeBlock(world, x + 5, y + 7, z + 11, 5, EnumFacing.NORTH, cell);
+         placeBlock(world, x + 6, y + 3, z + 11, 4, EnumFacing.EAST, cell);
+         placeBlock(world, x + 6, y + 7, z + 11, 6, EnumFacing.EAST, cell);
+         placeBlock(world, x + 11, y + 3, z + 11, 4, EnumFacing.NORTH, cell);
+         placeBlock(world, x + 11, y + 7, z + 11, 6, EnumFacing.NORTH, cell);
+         placeBlock(world, x + 10, y + 3, z + 11, 4, EnumFacing.EAST, cell);
+         placeBlock(world, x + 10, y + 7, z + 11, 6, EnumFacing.EAST, cell);
       }
 
       if (cell.feature == 12) {
          for(int w = -4; w <= 4; ++w) {
             for(int h = -4; h < 5; ++h) {
                for(int j = -4; j <= 4; ++j) {
-                  if ((world.isAirBlock(x + 8 + w, y + 4 + h, z + 8 + j) || world.getBlock(x + 8 + w, y + 4 + h, z + 8 + j) == ConfigBlocks.blockCosmeticSolid || world.getBlock(x + 8 + w, y + 4 + h, z + 8 + j) == ConfigBlocks.blockStairsEldritch) && random.nextBoolean()) {
+                  if ((world.isAirBlock(new net.minecraft.util.math.BlockPos(x + 8 + w, y + 4 + h, z + 8 + j)) || world.getBlockState(new net.minecraft.util.math.BlockPos(x + 8 + w, y + 4 + h, z + 8 + j)).getBlock() == ConfigBlocks.blockCosmeticSolid || world.getBlockState(new net.minecraft.util.math.BlockPos(x + 8 + w, y + 4 + h, z + 8 + j)).getBlock() == ConfigBlocks.blockStairsEldritch) && random.nextBoolean()) {
                      placeBlock(world, x + 8 + w, y + 4 + h, z + 8 + j, 21, cell);
                   }
                }
@@ -240,9 +242,9 @@ public class GenPassage extends GenCommon {
          for(int w = -4; w <= 4; ++w) {
             for(int h = -3; h <= 3; ++h) {
                for(int j = -4; j <= 4; ++j) {
-                  if (world.isAirBlock(x + 8 + w, y + 4 + h, z + 8 + j) && BlockUtils.isAdjacentToSolidBlock(world, x + 8 + w, y + 4 + h, z + 8 + j)) {
+                  if (world.isAirBlock(new net.minecraft.util.math.BlockPos(x + 8 + w, y + 4 + h, z + 8 + j)) && BlockUtils.isAdjacentToSolidBlock(world, x + 8 + w, y + 4 + h, z + 8 + j)) {
                      if (random.nextInt(3) != 0) {
-                        world.setBlock(x + 8 + w, y + 4 + h, z + 8 + j, ConfigBlocks.blockTaintFibres, random.nextInt(4) == 0 ? 1 : 0, 3);
+        world.setBlockState(new net.minecraft.util.math.BlockPos(x + 8 + w, y + 4 + h, z + 8 + j), (ConfigBlocks.blockTaintFibres).getStateFromMeta(random.nextInt(4) == 0 ? 1 : 0), 3);
                      }
 
                      Utils.setBiomeAt(world, x + 8 + w, z + 8 + j, ThaumcraftWorldGenerator.biomeTaint);
@@ -256,14 +258,13 @@ public class GenPassage extends GenCommon {
          for(int w = -3; w <= 3; ++w) {
             for(int h = -3; h <= 3; ++h) {
                for(int j = -3; j <= 3; ++j) {
-                  if (world.isAirBlock(x + 8 + w, y + 4 + h, z + 8 + j) && random.nextFloat() < 0.35F) {
-                     world.setBlock(x + 8 + w, y + 4 + h, z + 8 + j, Blocks.web);
+                  if (world.isAirBlock(new net.minecraft.util.math.BlockPos(x + 8 + w, y + 4 + h, z + 8 + j)) && random.nextFloat() < 0.35F) {
+        world.setBlockState(new net.minecraft.util.math.BlockPos(x + 8 + w, y + 4 + h, z + 8 + j), (Blocks.WEB).getDefaultState(), 3);
                   }
-
-                  world.setBlock(x + 8, y + 4, z + 8, Blocks.mob_spawner);
-                  TileEntityMobSpawner var12 = (TileEntityMobSpawner)world.getTileEntity(x + 8, y + 4, z + 8);
+        world.setBlockState(new net.minecraft.util.math.BlockPos(x + 8, y + 4, z + 8), (Blocks.MOB_SPAWNER).getDefaultState(), 3);
+                  TileEntityMobSpawner var12 = (TileEntityMobSpawner)world.getTileEntity(new BlockPos(x + 8, y + 4, z + 8));
                   if (var12 != null) {
-                     var12.func_145881_a().setEntityName("Thaumcraft.MindSpider");
+                     var12.getSpawnerBaseLogic().setEntityId(new ResourceLocation("thaumcraft", "MindSpider"));
                   }
                }
             }

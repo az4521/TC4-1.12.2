@@ -26,13 +26,14 @@ public class NodeCoordinatesPickers {
                 selectedY = 32 + random.nextInt(64);
             }
 
-            if (world.isAirBlock(x, selectedY + 1, z)) {
+            if (world.isAirBlock(new net.minecraft.util.math.BlockPos(x, selectedY + 1, z))) {
                 ++selectedY;
             }
 
             int p = random.nextInt(4);
-            Block b = world.getBlock(x, selectedY + p, z);
-            if (world.isAirBlock(x, selectedY + p, z) || b.isReplaceable(world, x, selectedY + p, z)) {
+            net.minecraft.util.math.BlockPos _bPos = new net.minecraft.util.math.BlockPos(x, selectedY + p, z);
+            Block b = world.getBlockState(_bPos).getBlock();
+            if (world.isAirBlock(_bPos) || b.isReplaceable(world, _bPos)) {
                 selectedY += p;
             }
             if (selectedY > world.getActualHeight()) {

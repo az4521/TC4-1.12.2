@@ -1,18 +1,21 @@
 package thaumcraft.common.tiles;
 
-import cpw.mods.fml.common.registry.GameRegistry;
 import java.util.ArrayList;
 import net.minecraft.block.Block;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.IInventory;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraftforge.common.util.ForgeDirection;
+import net.minecraft.util.EnumFacing;
+import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.TextComponentString;
 import thaumcraft.api.TileThaumcraft;
 import thaumcraft.api.WorldCoordinates;
 import thaumcraft.common.container.ContainerMagicBox;
+import net.minecraft.util.math.BlockPos;
 
 public class TileMagicBox extends TileThaumcraft implements IInventory {
    ArrayList boxContents = new ArrayList<>();
@@ -25,6 +28,15 @@ public class TileMagicBox extends TileThaumcraft implements IInventory {
       return 27 * (this.getInventory().linkedBoxes + 1);
    }
 
+   public boolean isEmpty() {
+      for (Object obj : this.getContents()) {
+         if (obj != null && !((ItemStack) obj).isEmpty()) {
+            return false;
+         }
+      }
+      return true;
+   }
+
    private ArrayList getContents() {
       return this.master != null ? this.getInventory().boxContents : this.boxContents;
    }
@@ -32,26 +44,26 @@ public class TileMagicBox extends TileThaumcraft implements IInventory {
    private TileMagicBox getInventory() {
       TileEntity tile = null;
       if (this.master != null) {
-         tile = this.worldObj.getTileEntity(this.master.x, this.master.y, this.master.z);
+         tile = this.world.getTileEntity(new BlockPos(this.master.x, this.master.y, this.master.z));
       }
 
       return tile instanceof TileMagicBox ? (TileMagicBox)tile : this;
    }
 
    public ItemStack getStackInSlot(int par1) {
-      return par1 >= this.getContents().size() ? null : (ItemStack)this.getContents().get(par1);
+      return par1 >= this.getContents().size() ? ItemStack.EMPTY : (ItemStack)this.getContents().get(par1);
    }
 
    public ItemStack decrStackSize(int par1, int par2) {
       if (par1 < this.getContents().size() && this.getContents().get(par1) != null) {
-         if (((ItemStack)this.getContents().get(par1)).stackSize <= par2) {
+         if (((ItemStack)this.getContents().get(par1)).getCount() <= par2) {
             ItemStack var3 = (ItemStack)this.getContents().get(par1);
             this.getContents().remove(par1);
             this.getInventory().markDirty();
             return var3;
          } else {
             ItemStack var3 = ((ItemStack)this.getContents().get(par1)).splitStack(par2);
-            if (((ItemStack)this.getContents().get(par1)).stackSize == 0) {
+            if (((ItemStack)this.getContents().get(par1)).getCount() == 0) {
                this.getContents().remove(par1);
             }
 
@@ -59,31 +71,37 @@ public class TileMagicBox extends TileThaumcraft implements IInventory {
             return var3;
          }
       } else {
-         return null;
+         return ItemStack.EMPTY;
       }
    }
 
-   public ItemStack getStackInSlotOnClosing(int par1) {
+   public ItemStack removeStackFromSlot(int par1) {
       if (par1 < this.getContents().size() && this.getContents().get(par1) != null) {
          ItemStack var2 = (ItemStack)this.getContents().get(par1);
          this.getContents().remove(par1);
          return var2;
       } else {
-         return null;
+         return ItemStack.EMPTY;
       }
    }
 
+   /** @deprecated kept for internal use during container close */
+   public ItemStack getStackInSlotOnClosing(int par1) {
+      return removeStackFromSlot(par1);
+   }
+
    public void setInventorySlotContents(int par1, ItemStack par2ItemStack) {
-      if (par1 >= this.getContents().size() && par2ItemStack != null && par2ItemStack.stackSize > 0) {
+      if (par2ItemStack == null) par2ItemStack = ItemStack.EMPTY;
+      if (par1 >= this.getContents().size() && !par2ItemStack.isEmpty()) {
          this.getContents().add(par2ItemStack);
-      } else if (par2ItemStack != null && par2ItemStack.stackSize > 0) {
+      } else if (!par2ItemStack.isEmpty()) {
          this.getContents().set(par1, par2ItemStack);
       } else if (par1 < this.getContents().size()) {
          this.getContents().remove(par1);
       }
 
-      if (par2ItemStack != null && par2ItemStack.stackSize > this.getInventoryStackLimit()) {
-         par2ItemStack.stackSize = this.getInventoryStackLimit();
+      if (!par2ItemStack.isEmpty() && par2ItemStack.getCount() > this.getInventoryStackLimit()) {
+         par2ItemStack.setCount(this.getInventoryStackLimit());
       }
 
       this.getInventory().markDirty();
@@ -94,8 +112,16 @@ public class TileMagicBox extends TileThaumcraft implements IInventory {
       this.sort();
    }
 
-   public String getInventoryName() {
+   public String getName() {
       return "Magic Box";
+   }
+
+   public boolean hasCustomName() {
+      return false;
+   }
+
+   public ITextComponent getDisplayName() {
+      return new TextComponentString(this.getName());
    }
 
    public void readFromNBT(NBTTagCompound par1NBTTagCompound) {
@@ -105,7 +131,7 @@ public class TileMagicBox extends TileThaumcraft implements IInventory {
 
       for(int var3 = 0; var3 < var2.tagCount(); ++var3) {
          NBTTagCompound var4 = var2.getCompoundTagAt(var3);
-         this.boxContents.add(ItemStack.loadItemStackFromNBT(var4));
+         this.boxContents.add(new ItemStack(var4));
       }
 
       this.sort();
@@ -121,7 +147,7 @@ public class TileMagicBox extends TileThaumcraft implements IInventory {
 
    }
 
-   public void writeToNBT(NBTTagCompound par1NBTTagCompound) {
+   public NBTTagCompound writeToNBT(NBTTagCompound par1NBTTagCompound) {
       super.writeToNBT(par1NBTTagCompound);
       NBTTagList var2 = new NBTTagList();
 
@@ -134,6 +160,7 @@ public class TileMagicBox extends TileThaumcraft implements IInventory {
        }
 
       par1NBTTagCompound.setTag("Items", var2);
+      return par1NBTTagCompound;
    }
 
    public void writeCustomNBT(NBTTagCompound par1NBTTagCompound) {
@@ -148,47 +175,55 @@ public class TileMagicBox extends TileThaumcraft implements IInventory {
       return 64;
    }
 
-   public boolean isUseableByPlayer(EntityPlayer par1EntityPlayer) {
-      return this.worldObj.getTileEntity(this.xCoord, this.yCoord, this.zCoord) == this && par1EntityPlayer.getDistanceSq((double) this.xCoord + (double) 0.5F, (double) this.yCoord + (double) 0.5F, (double) this.zCoord + (double) 0.5F) <= (double) 64.0F;
+   public boolean isUsableByPlayer(EntityPlayer par1EntityPlayer) {
+      return this.world.getTileEntity(this.getPos()) == this && par1EntityPlayer.getDistanceSq((double) this.getPos().getX() + (double) 0.5F, (double) this.getPos().getY() + (double) 0.5F, (double) this.getPos().getZ() + (double) 0.5F) <= (double) 64.0F;
    }
 
    public void updateEntity() {
-      super.updateEntity();
       if (this.getInventory() == this && this.linkedBoxes < 0) {
          this.refreshLinks();
       }
-
    }
 
    public boolean receiveClientEvent(int par1, int par2) {
       if (par1 == 1) {
          return true;
       } else {
-         return par1 == 2 || this.tileEntityInvalid;
+         return par1 == 2 || this.isInvalid();
       }
    }
 
-   public void openInventory() {
+   public void openInventory(EntityPlayer player) {
    }
 
-   public void closeInventory() {
+   public void closeInventory(EntityPlayer player) {
    }
 
    public void invalidate() {
-      this.updateContainingBlockInfo();
       super.invalidate();
-   }
-
-   public boolean hasCustomInventoryName() {
-      return false;
    }
 
    public boolean isItemValidForSlot(int i, ItemStack itemstack) {
       return true;
    }
 
+   public int getField(int id) {
+      return 0;
+   }
+
+   public void setField(int id, int value) {
+   }
+
+   public int getFieldCount() {
+      return 0;
+   }
+
+   public void clear() {
+      this.getContents().clear();
+   }
+
    public void sort() {
-      if (this.getWorldObj() != null && this.sorting >= 0) {
+      if (this.getWorld() != null && this.sorting >= 0) {
          boolean done = false;
 
          while(!done) {
@@ -196,15 +231,15 @@ public class TileMagicBox extends TileThaumcraft implements IInventory {
 
             for(int i = 0; i < this.getContents().size() - 1; ++i) {
                done = this.swopSlots(i, i + 1);
-               if (((ItemStack)this.getContents().get(i)).stackSize < ((ItemStack)this.getContents().get(i)).getMaxStackSize() && ((ItemStack)this.getContents().get(i)).isItemEqual((ItemStack)this.getContents().get(i + 1)) && ItemStack.areItemStackTagsEqual((ItemStack)this.getContents().get(i), (ItemStack)this.getContents().get(i + 1))) {
+               if (((ItemStack)this.getContents().get(i)).getCount() < ((ItemStack)this.getContents().get(i)).getMaxStackSize() && ((ItemStack)this.getContents().get(i)).isItemEqual((ItemStack)this.getContents().get(i + 1)) && ItemStack.areItemStackTagsEqual((ItemStack)this.getContents().get(i), (ItemStack)this.getContents().get(i + 1))) {
                   ItemStack is1 = ((ItemStack)this.getContents().get(i)).copy();
                   ItemStack is2 = ((ItemStack)this.getContents().get(i + 1)).copy();
-                  int c = Math.min(is1.getMaxStackSize() - is1.stackSize, is2.stackSize);
-                  is1.stackSize += c;
-                  is2.stackSize -= c;
+                  int c = Math.min(is1.getMaxStackSize() - is1.getCount(), is2.getCount());
+                  is1.grow(c);
+                  is2.shrink(c);
                   this.getContents().set(i, is1);
                   done = false;
-                  if (is2.stackSize <= 0) {
+                  if (is2.getCount() <= 0) {
                      this.getContents().remove(i + 1);
                      break;
                   }
@@ -222,26 +257,28 @@ public class TileMagicBox extends TileThaumcraft implements IInventory {
          if (this.sorting == 2 && ((ItemStack)this.getContents().get(i)).getDisplayName() != null && ((ItemStack)this.getContents().get(j)).getDisplayName() != null) {
             String s1 = "";
             String s2 = "";
-            if (GameRegistry.findUniqueIdentifierFor(((ItemStack)this.getContents().get(i)).getItem()) != null) {
-               s1 = s1 + GameRegistry.findUniqueIdentifierFor(((ItemStack)this.getContents().get(i)).getItem()).modId;
-            } else if (GameRegistry.findUniqueIdentifierFor(Block.getBlockFromItem(((ItemStack)this.getContents().get(i)).getItem())) != null) {
-               s1 = s1 + GameRegistry.findUniqueIdentifierFor(Block.getBlockFromItem(((ItemStack)this.getContents().get(i)).getItem())).modId;
+            Item itemI = ((ItemStack)this.getContents().get(i)).getItem();
+            Item itemJ = ((ItemStack)this.getContents().get(j)).getItem();
+            if (itemI.getRegistryName() != null) {
+               s1 = s1 + itemI.getRegistryName().getNamespace();
+            } else if (Block.getBlockFromItem(itemI).getRegistryName() != null) {
+               s1 = s1 + Block.getBlockFromItem(itemI).getRegistryName().getNamespace();
             }
 
-            if (GameRegistry.findUniqueIdentifierFor(((ItemStack)this.getContents().get(j)).getItem()) != null) {
-               s1 = s1 + GameRegistry.findUniqueIdentifierFor(((ItemStack)this.getContents().get(j)).getItem()).modId;
-            } else if (GameRegistry.findUniqueIdentifierFor(Block.getBlockFromItem(((ItemStack)this.getContents().get(j)).getItem())) != null) {
-               s1 = s1 + GameRegistry.findUniqueIdentifierFor(Block.getBlockFromItem(((ItemStack)this.getContents().get(j)).getItem())).modId;
+            if (itemJ.getRegistryName() != null) {
+               s2 = s2 + itemJ.getRegistryName().getNamespace();
+            } else if (Block.getBlockFromItem(itemJ).getRegistryName() != null) {
+               s2 = s2 + Block.getBlockFromItem(itemJ).getRegistryName().getNamespace();
             }
 
             s1 = s1 + ((ItemStack)this.getContents().get(i)).getDisplayName();
             s2 = s2 + ((ItemStack)this.getContents().get(j)).getDisplayName();
             if (((ItemStack)this.getContents().get(i)).hasTagCompound()) {
-               s1 = s1 + ((ItemStack)this.getContents().get(i)).stackTagCompound.hashCode();
+               s1 = s1 + ((ItemStack)this.getContents().get(i)).getTagCompound().hashCode();
             }
 
             if (((ItemStack)this.getContents().get(j)).hasTagCompound()) {
-               s2 = s2 + ((ItemStack)this.getContents().get(j)).stackTagCompound.hashCode();
+               s2 = s2 + ((ItemStack)this.getContents().get(j)).getTagCompound().hashCode();
             }
 
             int r = s1.compareToIgnoreCase(s2);
@@ -259,11 +296,11 @@ public class TileMagicBox extends TileThaumcraft implements IInventory {
          s1 = s1 + ((ItemStack)this.getContents().get(i)).getDisplayName();
          s2 = s2 + ((ItemStack)this.getContents().get(j)).getDisplayName();
          if (((ItemStack)this.getContents().get(i)).hasTagCompound()) {
-            s1 = s1 + ((ItemStack)this.getContents().get(i)).stackTagCompound.hashCode();
+            s1 = s1 + ((ItemStack)this.getContents().get(i)).getTagCompound().hashCode();
          }
 
          if (((ItemStack)this.getContents().get(j)).hasTagCompound()) {
-            s2 = s2 + ((ItemStack)this.getContents().get(j)).stackTagCompound.hashCode();
+            s2 = s2 + ((ItemStack)this.getContents().get(j)).getTagCompound().hashCode();
          }
 
          int r = s1.compareToIgnoreCase(s2);
@@ -283,7 +320,7 @@ public class TileMagicBox extends TileThaumcraft implements IInventory {
       if (this.getInventory() == this) {
          this.linkedBoxes = 0;
          ArrayList<WorldCoordinates> list = new ArrayList<>();
-         this.findBoxes(this.xCoord, this.yCoord, this.zCoord, list);
+         this.findBoxes(this.getPos().getX(), this.getPos().getY(), this.getPos().getZ(), list);
          this.linkedBoxes = (short)list.size();
       }
    }
@@ -291,13 +328,13 @@ public class TileMagicBox extends TileThaumcraft implements IInventory {
    private void findBoxes(int x, int y, int z, ArrayList list) {
       if (list.size() < 1024) {
          for(int a = 0; a < 6; ++a) {
-            ForgeDirection dir = ForgeDirection.getOrientation(a);
-            TileEntity tile = this.worldObj.getTileEntity(x + dir.offsetX, y + dir.offsetY, z + dir.offsetZ);
+            EnumFacing dir = EnumFacing.byIndex(a);
+            TileEntity tile = this.world.getTileEntity(new BlockPos(x + dir.getXOffset(), y + dir.getYOffset(), z + dir.getZOffset()));
             if (tile instanceof TileMagicBox) {
                WorldCoordinates wc = new WorldCoordinates(tile);
                if (!list.contains(wc)) {
                   list.add(wc);
-                  this.findBoxes(x + dir.offsetX, y + dir.offsetY, z + dir.offsetZ, list);
+                  this.findBoxes(x + dir.getXOffset(), y + dir.getYOffset(), z + dir.getZOffset(), list);
                }
             }
          }

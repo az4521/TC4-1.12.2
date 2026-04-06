@@ -1,19 +1,17 @@
 package thaumcraft.common.entities;
 
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.inventory.Container;
-import net.minecraft.inventory.ICrafting;
+import net.minecraft.inventory.IContainerListener;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.WeightedRandomChestContent;
 import net.minecraft.world.World;
-import net.minecraftforge.common.ChestGenHooks;
 import thaumcraft.common.container.SlotOutput;
 import thaumcraft.common.entities.monster.EntityPech;
 
@@ -22,7 +20,6 @@ public class ContainerPech extends Container {
    private InventoryPech inventory;
    private EntityPlayer player;
    private final World theWorld;
-   ChestGenHooks chest = ChestGenHooks.getInfo("dungeonChest");
 
    public ContainerPech(InventoryPlayer par1InventoryPlayer, World par3World, EntityPech par2IMerchant) {
       this.pech = par2IMerchant;
@@ -47,15 +44,14 @@ public class ContainerPech extends Container {
       for(int var7 = 0; var7 < 9; ++var7) {
          this.addSlotToContainer(new Slot(par1InventoryPlayer, var7, 8 + var7 * 18, 142));
       }
-
    }
 
    public InventoryPech getMerchantInventory() {
       return this.inventory;
    }
 
-   public void addCraftingToCrafters(ICrafting par1ICrafting) {
-      super.addCraftingToCrafters(par1ICrafting);
+   public void addListener(IContainerListener listener) {
+      super.addListener(listener);
    }
 
    public void detectAndSendChanges() {
@@ -73,21 +69,28 @@ public class ContainerPech extends Container {
 
    private boolean hasStuffInPack() {
       for(ItemStack stack : this.pech.loot) {
-         if (stack != null && stack.stackSize > 0) {
+         if (!stack.isEmpty()) {
             return true;
          }
       }
-
       return false;
    }
 
    private void generateContents() {
-      if (!this.theWorld.isRemote && this.inventory.getStackInSlot(0) != null && this.inventory.getStackInSlot(1) == null && this.inventory.getStackInSlot(2) == null && this.inventory.getStackInSlot(3) == null && this.inventory.getStackInSlot(4) == null && this.pech.isValued(this.inventory.getStackInSlot(0))) {
-         int value = this.pech.getValue(this.inventory.getStackInSlot(0));
+      ItemStack slotZero = this.inventory.getStackInSlot(0);
+      if (!this.theWorld.isRemote
+            && !slotZero.isEmpty()
+            && this.inventory.getStackInSlot(1).isEmpty()
+            && this.inventory.getStackInSlot(2).isEmpty()
+            && this.inventory.getStackInSlot(3).isEmpty()
+            && this.inventory.getStackInSlot(4).isEmpty()
+            && this.pech.isValued(slotZero)) {
+
+         int value = this.pech.getValue(slotZero);
          if (this.theWorld.rand.nextInt(100) <= value / 2) {
             this.pech.setTamed(false);
             this.pech.updateAINextTick = true;
-            this.pech.playSound("thaumcraft:pech_trade", 0.4F, 1.0F);
+            this.pech.playSound(new net.minecraft.util.SoundEvent(new net.minecraft.util.ResourceLocation("thaumcraft", "pech_trade")), 0.4F, 1.0F);
          }
 
          if (this.theWorld.rand.nextInt(5) == 0) {
@@ -96,8 +99,7 @@ public class ContainerPech extends Container {
             value -= this.theWorld.rand.nextInt(3);
          }
 
-         EntityPech var10000 = this.pech;
-         ArrayList<List> pos = (ArrayList)EntityPech.tradeInventory.get(this.pech.getPechType());
+         ArrayList<List> pos = (ArrayList<List>)EntityPech.tradeInventory.get(this.pech.getPechType());
 
          while(value > 0) {
             int am = Math.min(5, Math.max((value + 1) / 2, this.theWorld.rand.nextInt(value) + 1));
@@ -106,37 +108,22 @@ public class ContainerPech extends Container {
                ArrayList<Integer> loot = new ArrayList<>();
 
                for(int a = 0; a < this.pech.loot.length; ++a) {
-                  if (this.pech.loot[a] != null && this.pech.loot[a].stackSize > 0) {
+                  if (!this.pech.loot[a].isEmpty()) {
                      loot.add(a);
                   }
                }
 
                int r = loot.get(this.theWorld.rand.nextInt(loot.size()));
                ItemStack is = this.pech.loot[r].copy();
-               is.stackSize = 1;
+               is.setCount(1);
                this.mergeItemStack(is, 1, 5, false);
-               --this.pech.loot[r].stackSize;
-               if (this.pech.loot[r].stackSize <= 0) {
-                  this.pech.loot[r] = null;
-               }
-            } else if (am >= 4 && this.theWorld.rand.nextBoolean()) {
-               WeightedRandomChestContent[] contents = this.chest.getItems(this.theWorld.rand);
-               WeightedRandomChestContent wc = null;
-               int cc = 0;
-
-               do {
-                  wc = contents[this.theWorld.rand.nextInt(contents.length)];
-                  ++cc;
-               } while(cc < 50 && (wc.theItemId == null || wc.itemWeight > 5 || wc.theMaximumChanceToGenerateItem > 1));
-
-               if (wc != null && wc.theItemId != null) {
-                  ItemStack is = wc.theItemId.copy();
-                  is.onCrafting(this.theWorld, this.player, 0);
-                  this.mergeItemStack(is, 1, 5, false);
-               } else {
-                  value += am;
+               this.pech.loot[r].shrink(1);
+               if (this.pech.loot[r].isEmpty()) {
+                  this.pech.loot[r] = ItemStack.EMPTY;
                }
             } else {
+               // Loot chest content (WeightedRandomChestContent / ChestGenHooks) removed in 1.12.2.
+               // am >= 4 branch skipped — use trade inventory only.
                List it = null;
 
                do {
@@ -151,7 +138,6 @@ public class ContainerPech extends Container {
 
          this.inventory.decrStackSize(0, 1);
       }
-
    }
 
    @SideOnly(Side.CLIENT)
@@ -163,34 +149,34 @@ public class ContainerPech extends Container {
    }
 
    public ItemStack transferStackInSlot(EntityPlayer par1EntityPlayer, int par2) {
-      ItemStack itemstack = null;
+      ItemStack itemstack = ItemStack.EMPTY;
       Slot slot = (Slot)this.inventorySlots.get(par2);
       if (slot != null && slot.getHasStack()) {
          ItemStack itemstack1 = slot.getStack();
          itemstack = itemstack1.copy();
          if (par2 == 0) {
             if (!this.mergeItemStack(itemstack1, 5, 41, true)) {
-               return null;
+               return ItemStack.EMPTY;
             }
          } else if (par2 >= 1 && par2 < 5) {
             if (!this.mergeItemStack(itemstack1, 5, 41, true)) {
-               return null;
+               return ItemStack.EMPTY;
             }
          } else if (par2 != 0 && par2 >= 5 && par2 < 41 && !this.mergeItemStack(itemstack1, 0, 1, true)) {
-            return null;
+            return ItemStack.EMPTY;
          }
 
-         if (itemstack1.stackSize == 0) {
-            slot.putStack(null);
+         if (itemstack1.isEmpty()) {
+            slot.putStack(ItemStack.EMPTY);
          } else {
             slot.onSlotChanged();
          }
 
-         if (itemstack1.stackSize == itemstack.stackSize) {
-            return null;
+         if (itemstack1.getCount() == itemstack.getCount()) {
+            return ItemStack.EMPTY;
          }
 
-         slot.onPickupFromSlot(par1EntityPlayer, itemstack1);
+         slot.onTake(par1EntityPlayer, itemstack1);
       }
 
       return itemstack;
@@ -202,44 +188,43 @@ public class ContainerPech extends Container {
       if (!this.theWorld.isRemote) {
          for(int a = 0; a < 5; ++a) {
             ItemStack itemstack = this.inventory.getStackInSlotOnClosing(a);
-            if (itemstack != null) {
-               EntityItem ei = par1EntityPlayer.dropPlayerItemWithRandomChoice(itemstack, false);
+            if (itemstack != null && !itemstack.isEmpty()) {
+               EntityItem ei = par1EntityPlayer.dropItem(itemstack, false);
                if (ei != null) {
-                  ei.func_145799_b("PechDrop");
+                  ei.setThrower("PechDrop");
                }
             }
          }
       }
-
    }
 
-   protected boolean mergeItemStack(ItemStack p_75135_1_, int p_75135_2_, int p_75135_3_, boolean p_75135_4_) {
+   protected boolean mergeItemStack(ItemStack stack, int startIndex, int endIndex, boolean reverseDirection) {
       boolean flag1 = false;
-      int k = p_75135_2_;
-      if (p_75135_4_) {
-         k = p_75135_3_ - 1;
+      int k = startIndex;
+      if (reverseDirection) {
+         k = endIndex - 1;
       }
 
-      if (p_75135_1_.isStackable()) {
-         while(p_75135_1_.stackSize > 0 && (!p_75135_4_ && k < p_75135_3_ || p_75135_4_ && k >= p_75135_2_)) {
+      if (stack.isStackable()) {
+         while(stack.getCount() > 0 && (!reverseDirection && k < endIndex || reverseDirection && k >= startIndex)) {
             Slot slot = (Slot)this.inventorySlots.get(k);
             ItemStack itemstack1 = slot.getStack();
-            if (itemstack1 != null && itemstack1.getItem() == p_75135_1_.getItem() && (!p_75135_1_.getHasSubtypes() || p_75135_1_.getItemDamage() == itemstack1.getItemDamage()) && ItemStack.areItemStackTagsEqual(p_75135_1_, itemstack1)) {
-               int l = itemstack1.stackSize + p_75135_1_.stackSize;
-               if (l <= p_75135_1_.getMaxStackSize()) {
-                  p_75135_1_.stackSize = 0;
-                  itemstack1.stackSize = l;
+            if (!itemstack1.isEmpty() && itemstack1.getItem() == stack.getItem() && (!stack.getHasSubtypes() || stack.getItemDamage() == itemstack1.getItemDamage()) && ItemStack.areItemStackTagsEqual(stack, itemstack1)) {
+               int l = itemstack1.getCount() + stack.getCount();
+               if (l <= stack.getMaxStackSize()) {
+                  stack.setCount(0);
+                  itemstack1.setCount(l);
                   slot.onSlotChanged();
                   flag1 = true;
-               } else if (itemstack1.stackSize < p_75135_1_.getMaxStackSize()) {
-                  p_75135_1_.stackSize -= p_75135_1_.getMaxStackSize() - itemstack1.stackSize;
-                  itemstack1.stackSize = p_75135_1_.getMaxStackSize();
+               } else if (itemstack1.getCount() < stack.getMaxStackSize()) {
+                  stack.shrink(stack.getMaxStackSize() - itemstack1.getCount());
+                  itemstack1.setCount(stack.getMaxStackSize());
                   slot.onSlotChanged();
                   flag1 = true;
                }
             }
 
-            if (p_75135_4_) {
+            if (reverseDirection) {
                --k;
             } else {
                ++k;
@@ -247,25 +232,25 @@ public class ContainerPech extends Container {
          }
       }
 
-      if (p_75135_1_.stackSize > 0) {
-         if (p_75135_4_) {
-            k = p_75135_3_ - 1;
+      if (stack.getCount() > 0) {
+         if (reverseDirection) {
+            k = endIndex - 1;
          } else {
-            k = p_75135_2_;
+            k = startIndex;
          }
 
-         while(!p_75135_4_ && k < p_75135_3_ || p_75135_4_ && k >= p_75135_2_) {
+         while(!reverseDirection && k < endIndex || reverseDirection && k >= startIndex) {
             Slot slot = (Slot)this.inventorySlots.get(k);
             ItemStack itemstack1 = slot.getStack();
-            if (itemstack1 == null) {
-               slot.putStack(p_75135_1_.copy());
+            if (itemstack1.isEmpty()) {
+               slot.putStack(stack.copy());
                slot.onSlotChanged();
-               p_75135_1_.stackSize = 0;
+               stack.setCount(0);
                flag1 = true;
                break;
             }
 
-            if (p_75135_4_) {
+            if (reverseDirection) {
                --k;
             } else {
                ++k;

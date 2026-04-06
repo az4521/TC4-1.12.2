@@ -1,7 +1,7 @@
 package thaumcraft.common.entities.monster;
 
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.SharedMonsterAttributes;
 import net.minecraft.entity.monster.EntitySpider;
@@ -20,18 +20,15 @@ public class EntityTaintSpider extends EntitySpider implements ITaintedMob {
 
    protected void applyEntityAttributes() {
       super.applyEntityAttributes();
-      this.getEntityAttribute(SharedMonsterAttributes.maxHealth).setBaseValue(5.0F);
-      this.getEntityAttribute(SharedMonsterAttributes.attackDamage).setBaseValue(2.0F);
+      this.getEntityAttribute(SharedMonsterAttributes.MAX_HEALTH).setBaseValue(5.0F);
+      this.getEntityAttribute(SharedMonsterAttributes.ATTACK_DAMAGE).setBaseValue(2.0F);
    }
 
    protected float getSoundPitch() {
       return 0.7F;
    }
 
-   protected Entity findPlayerToAttack() {
-      double d0 = 12.0F;
-      return this.worldObj.getClosestVulnerablePlayerToEntity(this, d0);
-   }
+   // findPlayerToAttack removed — EntitySpider uses AI tasks in 1.12.2
 
    @SideOnly(Side.CLIENT)
    public float spiderScaleAmount() {
@@ -47,8 +44,8 @@ public class EntityTaintSpider extends EntitySpider implements ITaintedMob {
    }
 
    protected void dropFewItems(boolean flag, int i) {
-      if (this.worldObj.rand.nextInt(6) == 0) {
-         if (this.worldObj.rand.nextBoolean()) {
+      if (this.world.rand.nextInt(6) == 0) {
+         if (this.world.rand.nextBoolean()) {
             this.entityDropItem(new ItemStack(ConfigItems.itemResource, 1, 11), this.height / 2.0F);
          } else {
             this.entityDropItem(new ItemStack(ConfigItems.itemResource, 1, 12), this.height / 2.0F);

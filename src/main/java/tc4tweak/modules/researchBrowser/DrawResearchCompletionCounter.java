@@ -1,6 +1,6 @@
 package tc4tweak.modules.researchBrowser;
 
-import cpw.mods.fml.common.eventhandler.SubscribeEvent;
+import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import tc4tweak.ClientUtils;
 import tc4tweak.ConfigurationHandler;
 import net.minecraft.client.Minecraft;
@@ -28,7 +28,7 @@ public class DrawResearchCompletionCounter {
     }
 
     private static boolean canUnlockResearch(ResearchItem res) {
-        String playerName = Minecraft.getMinecraft().thePlayer.getCommandSenderName();
+        String playerName = Minecraft.getMinecraft().player.getName();
         if (res.parents != null) {
             for (String pt : res.parents) {
                 ResearchItem parent = ResearchCategories.getResearch(pt);
@@ -59,7 +59,7 @@ public class DrawResearchCompletionCounter {
         // but I'm not entirely sure how that field is actually used in practice, so let's be conservative for now
         Map<String, ResearchItem> all = category.research.entrySet().stream().filter(e -> !(e.getValue().isAutoUnlock() && e.getValue().isVirtual())).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
         int total = all.size();
-        ArrayList<String> completedKeys = completedResearch.get(Minecraft.getMinecraft().thePlayer.getCommandSenderName());
+        ArrayList<String> completedKeys = completedResearch.get(Minecraft.getMinecraft().player.getName());
         long completed = completedKeys.stream().filter(all::containsKey).count();
         long revealed = all.entrySet().stream().filter(e -> completedKeys.contains(e.getKey()) || completedKeys.contains("@" + e.getKey()) || !(e.getValue().isLost() || e.getValue().isHidden() && !completedKeys.contains("@" + e.getValue().key) || e.getValue().isConcealed() && !canUnlockResearch(e.getValue()))).count();
         String tooltip;
@@ -89,8 +89,8 @@ public class DrawResearchCompletionCounter {
 
         @SubscribeEvent
         public void onPostGuiDraw(GuiScreenEvent.DrawScreenEvent.Post e) {
-            if (!(e.gui instanceof GuiResearchBrowser)) return;
-            drawCompletionCounter((GuiResearchBrowser) e.gui, DrawResearchBrowserBorders.guiX, DrawResearchBrowserBorders.guiY, e.mouseX, e.mouseY);
+            if (!(e.getGui() instanceof GuiResearchBrowser)) return;
+            drawCompletionCounter((GuiResearchBrowser) e.getGui(), DrawResearchBrowserBorders.guiX, DrawResearchBrowserBorders.guiY, e.getMouseX(), e.getMouseY());
         }
     }
 }

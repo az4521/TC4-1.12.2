@@ -1,7 +1,8 @@
 package thaumcraft.common.tiles;
 
-import net.minecraftforge.common.util.ForgeDirection;
+import net.minecraft.util.EnumFacing;
 import thaumcraft.api.aspects.Aspect;
+import net.minecraft.util.math.BlockPos;
 
 public class TileJarFillableVoid extends TileJarFillable {
    int count = 0;
@@ -19,7 +20,7 @@ public class TileJarFillableVoid extends TileJarFillable {
            }
 
            if (up) {
-               this.worldObj.markBlockForUpdate(this.xCoord, this.yCoord, this.zCoord);
+               { net.minecraft.block.state.IBlockState _bs = this.world.getBlockState(this.pos); this.world.notifyBlockUpdate(this.pos, _bs, _bs, 3); }
                this.markDirty();
            }
 
@@ -31,12 +32,12 @@ public class TileJarFillableVoid extends TileJarFillable {
       return this.aspectFilter != null ? 48 : 32;
    }
 
-   public int getSuctionAmount(ForgeDirection loc) {
+   public int getSuctionAmount(EnumFacing loc) {
       return this.aspectFilter != null && this.amount < this.maxAmount ? 48 : 32;
    }
 
    public void updateEntity() {
-      if (!this.worldObj.isRemote && ++this.count % 5 == 0) {
+      if (!this.world.isRemote && ++this.count % 5 == 0) {
          this.fillJar();
       }
 

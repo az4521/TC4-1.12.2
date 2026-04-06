@@ -2,25 +2,25 @@ package thaumcraft.common.tiles;
 
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.math.BlockPos;
 
-public class TileArcaneLampLight extends TileEntity {
+public class TileArcaneLampLight extends TileEntity implements net.minecraft.util.ITickable {
    int x = Integer.MAX_VALUE;
    int y = Integer.MAX_VALUE;
    int z = Integer.MAX_VALUE;
    int count = 0;
 
-   public boolean canUpdate() {
-       return super.canUpdate();
-   }
+   @Override
+   public void update() { updateEntity(); }
 
    public void updateEntity() {
-      if (!this.worldObj.isRemote) {
+      if (!this.world.isRemote) {
          if (this.count == 0) {
-            this.count = this.worldObj.rand.nextInt(100);
+            this.count = this.world.rand.nextInt(100);
          }
 
-         if (++this.count % 100 == 0 && !(this.worldObj.getTileEntity(this.x, this.y, this.z) instanceof TileArcaneLamp)) {
-            this.worldObj.setBlockToAir(this.xCoord, this.yCoord, this.zCoord);
+         if (++this.count % 100 == 0 && !(this.world.getTileEntity(new BlockPos(this.x, this.y, this.z)) instanceof TileArcaneLamp)) {
+            this.world.setBlockToAir(new BlockPos(this.getPos().getX(), this.getPos().getY(), this.getPos().getZ()));
          }
       }
 
@@ -33,10 +33,11 @@ public class TileArcaneLampLight extends TileEntity {
       this.z = nbttagcompound.getInteger("sourceZ");
    }
 
-   public void writeToNBT(NBTTagCompound nbttagcompound) {
+   public NBTTagCompound writeToNBT(NBTTagCompound nbttagcompound) {
       super.writeToNBT(nbttagcompound);
       nbttagcompound.setInteger("sourceX", this.x);
       nbttagcompound.setInteger("sourceY", this.y);
       nbttagcompound.setInteger("sourceZ", this.z);
+      return nbttagcompound;
    }
 }

@@ -1,23 +1,27 @@
 package thaumcraft.common.blocks;
 
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockContainer;
 import net.minecraft.block.material.Material;
-import net.minecraft.client.renderer.texture.IIconRegister;
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.AxisAlignedBB;
-import net.minecraft.util.IIcon;
-import net.minecraft.util.MathHelper;
+import net.minecraft.util.EnumFacing;
+import net.minecraft.util.EnumHand;
+import net.minecraft.util.NonNullList;
+import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.SoundCategory;
+import net.minecraft.util.SoundEvent;
+import net.minecraft.util.math.AxisAlignedBB;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
-import net.minecraftforge.common.util.ForgeDirection;
 import thaumcraft.api.wands.IWandable;
 import thaumcraft.common.Thaumcraft;
 import thaumcraft.common.config.ConfigBlocks;
@@ -31,39 +35,48 @@ import thaumcraft.common.tiles.TileTable;
 import java.util.List;
 
 public class BlockTable extends BlockContainer implements IWandable {
-   public IIcon icon;
-   public IIcon iconQuill;
+
+   public static final net.minecraft.block.properties.PropertyInteger META =
+         net.minecraft.block.properties.PropertyInteger.create("meta", 0, 15);
 
    public BlockTable() {
-      super(Material.wood);
+      super(Material.WOOD);
+      this.setDefaultState(this.blockState.getBaseState().withProperty(META, 0));
       this.setHardness(2.5F);
-      this.setStepSound(soundTypeWood);
       this.setCreativeTab(Thaumcraft.tabTC);
    }
 
+   @Override
+   protected net.minecraft.block.state.BlockStateContainer createBlockState() {
+      return new net.minecraft.block.state.BlockStateContainer(this, META);
+   }
+
+   @Override
+   public IBlockState getStateFromMeta(int meta) {
+      return this.getDefaultState().withProperty(META, meta);
+   }
+
+   @Override
+   public int getMetaFromState(IBlockState state) {
+      return state.getValue(META);
+   }
+
+   @Override
+   public boolean isSideSolid(IBlockState state, IBlockAccess world, BlockPos pos, EnumFacing side) {
+      return side == EnumFacing.UP || super.isSideSolid(state, world, pos, side);
+   }
+
+   @Override
    @SideOnly(Side.CLIENT)
-   public void registerBlockIcons(IIconRegister ir) {
-      this.icon = ir.registerIcon("thaumcraft:woodplain");
-      this.iconQuill = ir.registerIcon("thaumcraft:tablequill");
+   public void getSubBlocks(CreativeTabs par2CreativeTabs, NonNullList<ItemStack> par3List) {
+      par3List.add(new ItemStack(this, 1, 0));
+      par3List.add(new ItemStack(this, 1, 14));
+      par3List.add(new ItemStack(this, 1, 15));
    }
 
-   @SideOnly(Side.CLIENT)
-   public IIcon getIcon(int side, int meta) {
-      return this.icon;
-   }
-
-   public boolean isSideSolid(IBlockAccess world, int x, int y, int z, ForgeDirection side) {
-      return side == ForgeDirection.UP || super.isSideSolid(world, x, y, z, side);
-   }
-
-   @SideOnly(Side.CLIENT)
-   public void getSubBlocks(Item par1, CreativeTabs par2CreativeTabs, List par3List) {
-      par3List.add(new ItemStack(par1, 1, 0));
-      par3List.add(new ItemStack(par1, 1, 14));
-      par3List.add(new ItemStack(par1, 1, 15));
-   }
-
-   public TileEntity createTileEntity(World world, int metadata) {
+   @Override
+   public TileEntity createTileEntity(World world, IBlockState state) {
+      int metadata = state.getBlock().getMetaFromState(state);
       if ((metadata <= 1 || metadata >= 6) && metadata < 14) {
          return new TileTable();
       } else if (metadata == 14) {
@@ -73,39 +86,35 @@ public class BlockTable extends BlockContainer implements IWandable {
       }
    }
 
-   public void onBlockPlacedBy(World par1World, int par2, int par3, int par4, EntityLivingBase par5EntityLiving, ItemStack is) {
-      int md = par1World.getBlockMetadata(par2, par3, par4);
+   @Override
+   public void onBlockPlacedBy(World par1World, BlockPos pos, IBlockState state, EntityLivingBase par5EntityLiving, ItemStack is) {
+      int md = state.getBlock().getMetaFromState(state);
       if (md < 14) {
-         int var7 = MathHelper.floor_double((double)(par5EntityLiving.rotationYaw * 4.0F / 360.0F) + (double)0.5F) & 3;
+         int var7 = MathHelper.floor((double)(par5EntityLiving.rotationYaw * 4.0F / 360.0F) + (double)0.5F) & 3;
          int out = var7 == 0 ? 0 : (var7 == 1 ? 1 : (var7 == 2 ? 0 : (var7 == 3 ? 1 : 0)));
-         par1World.setBlock(par2, par3, par4, this, out, 3);
+         par1World.setBlockState(pos, this.getStateFromMeta(out), 3);
       }
-
    }
 
-   public boolean isOpaqueCube() {
+   @Override
+   public boolean isOpaqueCube(IBlockState state) {
       return false;
    }
 
-   public boolean renderAsNormalBlock() {
+   @Override
+   public boolean isFullCube(IBlockState state) {
       return false;
    }
 
-   public int getRenderType() {
-      return ConfigBlocks.blockTableRI;
+   @Override
+   public void breakBlock(World par1World, BlockPos pos, IBlockState state) {
+      InventoryUtils.dropItems(par1World, pos.getX(), pos.getY(), pos.getZ());
+      super.breakBlock(par1World, pos, state);
    }
 
-   public void breakBlock(World par1World, int par2, int par3, int par4, Block par5, int par6) {
-      InventoryUtils.dropItems(par1World, par2, par3, par4);
-      super.breakBlock(par1World, par2, par3, par4, par5, par6);
-   }
-
-   public int getDamageValue(World par1World, int par2, int par3, int par4) {
-      int md = par1World.getBlockMetadata(par2, par3, par4);
-      return md >= 2 && md <= 9 ? 2 : super.getDamageValue(par1World, par2, par3, par4);
-   }
-
-   public int damageDropped(int par1) {
+   @Override
+   public int damageDropped(IBlockState state) {
+      int par1 = state.getBlock().getMetaFromState(state);
       if (par1 == 14) {
          return 14;
       } else {
@@ -113,46 +122,52 @@ public class BlockTable extends BlockContainer implements IWandable {
       }
    }
 
-   public void onNeighborBlockChange(World world, int x, int y, int z, Block par5) {
-      TileEntity tile = world.getTileEntity(x, y, z);
-      int md = world.getBlockMetadata(x, y, z);
+   @Override
+   public void neighborChanged(IBlockState state, World world, BlockPos pos, Block blockIn, BlockPos fromPos) {
+      TileEntity tile = world.getTileEntity(pos);
+      int md = state.getBlock().getMetaFromState(state);
       if (tile instanceof TileResearchTable) {
-         int mm = world.getBlockMetadata(x + ForgeDirection.getOrientation(md).offsetX, y + ForgeDirection.getOrientation(md).offsetY, z + ForgeDirection.getOrientation(md).offsetZ);
+         BlockPos neighborPos = pos.add(EnumFacing.byIndex(md).getXOffset(), EnumFacing.byIndex(md).getYOffset(), EnumFacing.byIndex(md).getZOffset());
+         IBlockState neighborState = world.getBlockState(neighborPos);
+         int mm = neighborState.getBlock().getMetaFromState(neighborState);
          if (mm < 6) {
-            InventoryUtils.dropItems(world, x, y, z);
-            world.setTileEntity(x, y, z, new TileTable());
-            world.setBlock(x, y, z, this, 0, 3);
+            InventoryUtils.dropItems(world, pos.getX(), pos.getY(), pos.getZ());
+            world.setTileEntity(pos, new TileTable());
+            world.setBlockState(pos, this.getStateFromMeta(0), 3);
          }
       } else if (md >= 6 && md < 14) {
-         TileEntity tile2 = world.getTileEntity(x + ForgeDirection.getOrientation(md - 4).offsetX, y + ForgeDirection.getOrientation(md - 4).offsetY, z + ForgeDirection.getOrientation(md - 4).offsetZ);
+         BlockPos neighborPos = pos.add(EnumFacing.byIndex(md - 4).getXOffset(), EnumFacing.byIndex(md - 4).getYOffset(), EnumFacing.byIndex(md - 4).getZOffset());
+         TileEntity tile2 = world.getTileEntity(neighborPos);
          if (!(tile2 instanceof TileResearchTable)) {
-            world.setBlock(x, y, z, this, 0, 3);
+            world.setBlockState(pos, this.getStateFromMeta(0), 3);
          }
       }
 
-      super.onNeighborBlockChange(world, x, y, z, par5);
+      super.neighborChanged(state, world, pos, blockIn, fromPos);
    }
 
-   public boolean onBlockActivated(World world, int x, int y, int z, EntityPlayer player, int idk, float what, float these, float are) {
-      TileEntity tileEntity = world.getTileEntity(x, y, z);
-      int md = world.getBlockMetadata(x, y, z);
+   @Override
+   public boolean onBlockActivated(World world, BlockPos pos, IBlockState state, EntityPlayer player, EnumHand hand, EnumFacing facing, float hitX, float hitY, float hitZ) {
+      TileEntity tileEntity = world.getTileEntity(pos);
+      int md = state.getBlock().getMetaFromState(state);
       if (md > 1 && tileEntity != null && !player.isSneaking()) {
          if (world.isRemote) {
             return true;
          } else if (tileEntity instanceof TileArcaneWorkbench) {
-            player.openGui(Thaumcraft.instance, 13, world, x, y, z);
+            player.openGui(Thaumcraft.instance, 13, world, pos.getX(), pos.getY(), pos.getZ());
             return true;
          } else if (tileEntity instanceof TileDeconstructionTable) {
-            player.openGui(Thaumcraft.instance, 8, world, x, y, z);
+            player.openGui(Thaumcraft.instance, 8, world, pos.getX(), pos.getY(), pos.getZ());
             return true;
          } else {
             if (tileEntity instanceof TileResearchTable) {
-               player.openGui(Thaumcraft.instance, 10, world, x, y, z);
+               player.openGui(Thaumcraft.instance, 10, world, pos.getX(), pos.getY(), pos.getZ());
             } else {
-               for(int a = 2; a < 6; ++a) {
-                  TileEntity tile = world.getTileEntity(x + ForgeDirection.getOrientation(a).offsetX, y + ForgeDirection.getOrientation(a).offsetY, z + ForgeDirection.getOrientation(a).offsetZ);
-                  if (tile instanceof TileResearchTable) {
-                     player.openGui(Thaumcraft.instance, 10, world, x + ForgeDirection.getOrientation(a).offsetX, y + ForgeDirection.getOrientation(a).offsetY, z + ForgeDirection.getOrientation(a).offsetZ);
+               for (int a = 2; a < 6; ++a) {
+                  BlockPos adjPos = pos.add(EnumFacing.byIndex(a).getXOffset(), EnumFacing.byIndex(a).getYOffset(), EnumFacing.byIndex(a).getZOffset());
+                  TileEntity adjTile = world.getTileEntity(adjPos);
+                  if (adjTile instanceof TileResearchTable) {
+                     player.openGui(Thaumcraft.instance, 10, world, adjPos.getX(), adjPos.getY(), adjPos.getZ());
                      break;
                   }
                }
@@ -165,44 +180,51 @@ public class BlockTable extends BlockContainer implements IWandable {
       }
    }
 
+   @Override
    public TileEntity createNewTileEntity(World var1, int md) {
       return null;
    }
 
-   public AxisAlignedBB getSelectedBoundingBoxFromPool(World world, int x, int y, int z) {
-      int md = world.getBlockMetadata(x, y, z);
+   @Override
+   public AxisAlignedBB getSelectedBoundingBox(IBlockState state, World world, BlockPos pos) {
+      int md = state.getBlock().getMetaFromState(state);
       switch (md) {
          case 2:
          case 6:
-            return AxisAlignedBB.getBoundingBox((double)x + this.minX, (double)y + this.minY, (double)z + this.minZ - (double)1.0F, (double)x + this.maxX, (double)y + this.maxY, (double)z + this.maxZ);
+            return new AxisAlignedBB(pos.getX(), pos.getY(), pos.getZ() - 1.0, pos.getX() + 1.0, pos.getY() + 1.0, pos.getZ() + 1.0);
          case 3:
          case 7:
-            return AxisAlignedBB.getBoundingBox((double)x + this.minX, (double)y + this.minY, (double)z + this.minZ, (double)x + this.maxX, (double)y + this.maxY, (double)z + this.maxZ + (double)1.0F);
+            return new AxisAlignedBB(pos.getX(), pos.getY(), pos.getZ(), pos.getX() + 1.0, pos.getY() + 1.0, pos.getZ() + 2.0);
          case 4:
          case 8:
-            return AxisAlignedBB.getBoundingBox((double)x + this.minX - (double)1.0F, (double)y + this.minY, (double)z + this.minZ, (double)x + this.maxX, (double)y + this.maxY, (double)z + this.maxZ);
+            return new AxisAlignedBB(pos.getX() - 1.0, pos.getY(), pos.getZ(), pos.getX() + 1.0, pos.getY() + 1.0, pos.getZ() + 1.0);
          case 5:
          case 9:
-            return AxisAlignedBB.getBoundingBox((double)x + this.minX, (double)y + this.minY, (double)z + this.minZ, (double)x + this.maxX + (double)1.0F, (double)y + this.maxY, (double)z + this.maxZ);
+            return new AxisAlignedBB(pos.getX(), pos.getY(), pos.getZ(), pos.getX() + 2.0, pos.getY() + 1.0, pos.getZ() + 1.0);
          default:
-            return super.getSelectedBoundingBoxFromPool(world, x, y, z);
+            return super.getSelectedBoundingBox(state, world, pos);
       }
    }
 
    public int onWandRightClick(World world, ItemStack wandstack, EntityPlayer player, int x, int y, int z, int side, int md) {
       if (md <= 1) {
          ItemWandCasting wand = (ItemWandCasting)wandstack.getItem();
-         world.setBlock(x, y, z, ConfigBlocks.blockTable, 15, 3);
-         world.setTileEntity(x, y, z, new TileArcaneWorkbench());
-         TileArcaneWorkbench tawb = (TileArcaneWorkbench)world.getTileEntity(x, y, z);
+         BlockPos pos = new BlockPos(x, y, z);
+         world.setBlockState(pos, ConfigBlocks.blockTable.getStateFromMeta(15), 3);
+         world.setTileEntity(pos, new TileArcaneWorkbench());
+         TileArcaneWorkbench tawb = (TileArcaneWorkbench)world.getTileEntity(pos);
          if (tawb != null && !wand.isStaff(wandstack)) {
             tawb.setInventorySlotContents(10, wandstack.copy());
-            player.inventory.setInventorySlotContents(player.inventory.currentItem, null);
+            player.inventory.setInventorySlotContents(player.inventory.currentItem, ItemStack.EMPTY);
          }
 
-         tawb.markDirty();
-         world.markBlockForUpdate(x, y, z);
-         world.playSoundEffect((double)x + (double)0.5F, (double)y + 0.1, (double)z + (double)0.5F, "random.click", 0.15F, 0.5F);
+         if (tawb != null) {
+            tawb.markDirty();
+         }
+         { net.minecraft.block.state.IBlockState _bs = world.getBlockState(pos); world.notifyBlockUpdate(pos, _bs, _bs, 3); }
+         world.playSound(null, pos,
+               new SoundEvent(new ResourceLocation("minecraft", "ui.button.click")),
+               SoundCategory.BLOCKS, 0.15F, 0.5F);
          return 0;
       } else {
          return -1;
@@ -217,5 +239,10 @@ public class BlockTable extends BlockContainer implements IWandable {
    }
 
    public void onWandStoppedUsing(ItemStack wandstack, World world, EntityPlayer player, int count) {
+   }
+
+   @Override
+   public net.minecraft.util.EnumBlockRenderType getRenderType(net.minecraft.block.state.IBlockState state) {
+      return net.minecraft.util.EnumBlockRenderType.INVISIBLE;
    }
 }

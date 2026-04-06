@@ -13,11 +13,13 @@ public class BlockCustomOreItem extends ItemBlock {
       this.setHasSubtypes(true);
    }
 
+   @Override
    public int getMetadata(int par1) {
       return par1;
    }
 
-   public String getUnlocalizedName(ItemStack par1ItemStack) {
-      return super.getUnlocalizedName() + "." + par1ItemStack.getItemDamage();
+   @Override
+   public String getTranslationKey(ItemStack par1ItemStack) {
+      return super.getTranslationKey() + "." + par1ItemStack.getItemDamage();
    }
 }

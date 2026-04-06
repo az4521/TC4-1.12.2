@@ -2,14 +2,15 @@ package thaumcraft.common.tiles;
 
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.NetworkManager;
-import net.minecraft.network.play.server.S35PacketUpdateTileEntity;
+import net.minecraft.network.play.server.SPacketUpdateTileEntity;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraftforge.common.util.ForgeDirection;
+import net.minecraft.util.EnumFacing;
 import thaumcraft.api.ThaumcraftApiHelper;
 import thaumcraft.api.aspects.Aspect;
 import thaumcraft.api.aspects.AspectList;
 import thaumcraft.api.aspects.IAspectSource;
 import thaumcraft.api.aspects.IEssentiaTransport;
+import net.minecraft.util.math.BlockPos;
 
 public class TileJarFillable extends TileJar implements IAspectSource, IEssentiaTransport {
    public Aspect aspect = null;
@@ -20,10 +21,6 @@ public class TileJarFillable extends TileJar implements IAspectSource, IEssentia
    public boolean forgeLiquid = false;
    public int lid = 0;
    int count = 0;
-
-   public boolean canUpdate() {
-       return super.canUpdate();
-   }
 
    public void readCustomNBT(NBTTagCompound nbttagcompound) {
       this.aspect = Aspect.getAspect(nbttagcompound.getString("Aspect"));
@@ -66,7 +63,10 @@ public class TileJarFillable extends TileJar implements IAspectSource, IEssentia
                am -= added;
            }
 
-           this.worldObj.markBlockForUpdate(this.xCoord, this.yCoord, this.zCoord);
+           if (this.world != null) {
+              net.minecraft.block.state.IBlockState state = this.world.getBlockState(this.pos);
+              this.world.notifyBlockUpdate(this.pos, state, state, 3);
+           }
            this.markDirty();
        }
        return am;
@@ -80,7 +80,7 @@ public class TileJarFillable extends TileJar implements IAspectSource, IEssentia
             this.amount = 0;
          }
 
-         this.worldObj.markBlockForUpdate(this.xCoord, this.yCoord, this.zCoord);
+         { net.minecraft.block.state.IBlockState _bs = this.world.getBlockState(this.pos); this.world.notifyBlockUpdate(this.pos, _bs, _bs, 3); }
          this.markDirty();
          return true;
       } else {
@@ -114,16 +114,16 @@ public class TileJarFillable extends TileJar implements IAspectSource, IEssentia
       return this.aspectFilter == null || tag.equals(this.aspectFilter);
    }
 
-   public boolean isConnectable(ForgeDirection face) {
-      return face == ForgeDirection.UP;
+   public boolean isConnectable(EnumFacing face) {
+      return face == EnumFacing.UP;
    }
 
-   public boolean canInputFrom(ForgeDirection face) {
-      return face == ForgeDirection.UP;
+   public boolean canInputFrom(EnumFacing face) {
+      return face == EnumFacing.UP;
    }
 
-   public boolean canOutputTo(ForgeDirection face) {
-      return face == ForgeDirection.UP;
+   public boolean canOutputTo(EnumFacing face) {
+      return face == EnumFacing.UP;
    }
 
    public void setSuction(Aspect aspect, int amount) {
@@ -137,11 +137,11 @@ public class TileJarFillable extends TileJar implements IAspectSource, IEssentia
       return this.aspectFilter != null ? 64 : 32;
    }
 
-   public Aspect getSuctionType(ForgeDirection loc) {
+   public Aspect getSuctionType(EnumFacing loc) {
       return this.aspectFilter != null ? this.aspectFilter : this.aspect;
    }
 
-   public int getSuctionAmount(ForgeDirection loc) {
+   public int getSuctionAmount(EnumFacing loc) {
       if (this.amount < this.maxAmount) {
          return this.aspectFilter != null ? 64 : 32;
       } else {
@@ -149,35 +149,34 @@ public class TileJarFillable extends TileJar implements IAspectSource, IEssentia
       }
    }
 
-   public Aspect getEssentiaType(ForgeDirection loc) {
+   public Aspect getEssentiaType(EnumFacing loc) {
       return this.aspect;
    }
 
-   public int getEssentiaAmount(ForgeDirection loc) {
+   public int getEssentiaAmount(EnumFacing loc) {
       return this.amount;
    }
 
-   public int takeEssentia(Aspect aspect, int amount, ForgeDirection face) {
+   public int takeEssentia(Aspect aspect, int amount, EnumFacing face) {
       return this.canOutputTo(face) && this.takeFromContainer(aspect, amount) ? amount : 0;
    }
 
-   public int addEssentia(Aspect aspect, int amount, ForgeDirection face) {
+   public int addEssentia(Aspect aspect, int amount, EnumFacing face) {
       return this.canInputFrom(face) ? amount - this.addToContainer(aspect, amount) : 0;
    }
 
    public void updateEntity() {
-      super.updateEntity();
-      if (!this.worldObj.isRemote && ++this.count % 5 == 0 && this.amount < this.maxAmount) {
+            if (!this.world.isRemote && ++this.count % 5 == 0 && this.amount < this.maxAmount) {
          this.fillJar();
       }
 
    }
 
    void fillJar() {
-      TileEntity te = ThaumcraftApiHelper.getConnectableTile(this.worldObj, this.xCoord, this.yCoord, this.zCoord, ForgeDirection.UP);
+      TileEntity te = ThaumcraftApiHelper.getConnectableTile(this.world, this.getPos().getX(), this.getPos().getY(), this.getPos().getZ(), EnumFacing.UP);
       if (te != null) {
          IEssentiaTransport ic = (IEssentiaTransport)te;
-         if (!ic.canOutputTo(ForgeDirection.DOWN)) {
+         if (!ic.canOutputTo(EnumFacing.DOWN)) {
             return;
          }
 
@@ -186,12 +185,12 @@ public class TileJarFillable extends TileJar implements IAspectSource, IEssentia
             ta = this.aspectFilter;
          } else if (this.aspect != null && this.amount > 0) {
             ta = this.aspect;
-         } else if (ic.getEssentiaAmount(ForgeDirection.DOWN) > 0 && ic.getSuctionAmount(ForgeDirection.DOWN) < this.getSuctionAmount(ForgeDirection.UP) && this.getSuctionAmount(ForgeDirection.UP) >= ic.getMinimumSuction()) {
-            ta = ic.getEssentiaType(ForgeDirection.DOWN);
+         } else if (ic.getEssentiaAmount(EnumFacing.DOWN) > 0 && ic.getSuctionAmount(EnumFacing.DOWN) < this.getSuctionAmount(EnumFacing.UP) && this.getSuctionAmount(EnumFacing.UP) >= ic.getMinimumSuction()) {
+            ta = ic.getEssentiaType(EnumFacing.DOWN);
          }
 
-         if (ta != null && ic.getSuctionAmount(ForgeDirection.DOWN) < this.getSuctionAmount(ForgeDirection.UP)) {
-            this.addToContainer(ta, ic.takeEssentia(ta, 1, ForgeDirection.DOWN));
+         if (ta != null && ic.getSuctionAmount(EnumFacing.DOWN) < this.getSuctionAmount(EnumFacing.UP)) {
+            this.addToContainer(ta, ic.takeEssentia(ta, 1, EnumFacing.DOWN));
          }
       }
 
@@ -199,8 +198,8 @@ public class TileJarFillable extends TileJar implements IAspectSource, IEssentia
 
 
    @Override
-   public void onDataPacket(NetworkManager net, S35PacketUpdateTileEntity pkt) {
+   public void onDataPacket(NetworkManager net, SPacketUpdateTileEntity pkt) {
       super.onDataPacket(net, pkt);
-      this.worldObj.func_147479_m(this.xCoord, this.yCoord, this.zCoord);
+      this.world.markBlockRangeForRenderUpdate(this.getPos(), this.getPos());
    }
 }

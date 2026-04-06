@@ -1,6 +1,7 @@
 package thaumcraft.api.expands.warp.consts;
 
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.potion.Potion;
 import thaumcraft.api.expands.warp.PickWarpEventContext;
 import thaumcraft.api.expands.warp.WarpConditionChecker;
 import thaumcraft.common.config.Config;
@@ -9,17 +10,17 @@ public class WarpConditions {
     public static final WarpConditionChecker WARP_AND_COUNTER = new WarpConditionChecker(0) {
         @Override
         public boolean check(PickWarpEventContext context, EntityPlayer player) {
-            if (player.worldObj == null) {
+            if (player.world == null) {
                 return false;
             }
-            return context.warpCounter > 0 && context.warp > 0 && (double)player.worldObj.rand.nextInt(100)
+            return context.warpCounter > 0 && context.warp > 0 && (double)player.world.rand.nextInt(100)
                     <= Math.sqrt(context.warpCounter);
         }
     };
     public static final WarpConditionChecker NO_WARP_WARD = new WarpConditionChecker(1) {
         @Override
         public boolean check(PickWarpEventContext context, EntityPlayer player) {
-            return !player.isPotionActive(Config.potionWarpWardID);
+            return !player.isPotionActive(Potion.getPotionById(Config.potionWarpWardID));
         }
     };
 }

@@ -1,8 +1,8 @@
 package thaumcraft.client.gui;
 
-import cpw.mods.fml.client.FMLClientHandler;
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
+import net.minecraftforge.fml.client.FMLClientHandler;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 
 import java.util.*;
 
@@ -12,12 +12,12 @@ import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.renderer.RenderHelper;
 import net.minecraft.client.renderer.Tessellator;
-import net.minecraft.client.renderer.entity.RenderItem;
+import net.minecraft.client.renderer.RenderItem;
 import net.minecraft.init.Items;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.ChatComponentTranslation;
-import net.minecraft.util.MathHelper;
-import net.minecraft.util.StatCollector;
+import net.minecraft.util.text.TextComponentTranslation;
+import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.text.translation.I18n;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.GL11;
 import tc4tweak.ClientUtils;
@@ -41,6 +41,9 @@ import thaumcraft.common.lib.utils.InventoryUtils;
 
 import static tc4tweak.modules.researchBrowser.DrawResearchBrowserBorders.BORDER_HEIGHT;
 import static tc4tweak.modules.researchBrowser.DrawResearchBrowserBorders.BORDER_WIDTH;
+import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.client.renderer.BufferBuilder;
+import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 
 @SideOnly(Side.CLIENT)
 public class GuiResearchBrowser extends GuiScreen {
@@ -80,7 +83,7 @@ public class GuiResearchBrowser extends GuiScreen {
         this.field_74115_n = this.guiMapY = this.field_74123_r = lastY * 24 - var3 / 2.;
         this.updateResearch();
         this.galFontRenderer = FMLClientHandler.instance().getClient().standardGalacticFontRenderer;
-        this.player = Minecraft.getMinecraft().thePlayer.getCommandSenderName();
+        this.player = Minecraft.getMinecraft().player.getName();
     }
 
     public GuiResearchBrowser(double x, double y) {
@@ -88,7 +91,7 @@ public class GuiResearchBrowser extends GuiScreen {
         this.field_74115_n = this.guiMapY = this.field_74123_r = y;
         this.updateResearch();
         this.galFontRenderer = FMLClientHandler.instance().getClient().standardGalacticFontRenderer;
-        this.player = Minecraft.getMinecraft().thePlayer.getCommandSenderName();
+        this.player = Minecraft.getMinecraft().player.getName();
     }
 
     public void updateResearch() {
@@ -111,7 +114,7 @@ public class GuiResearchBrowser extends GuiScreen {
 
         this.research.addAll(ResearchCategories.getResearchList(selectedCategory).research.values());
 
-        if (ResearchManager.consumeInkFromPlayer(this.mc.thePlayer, false) && InventoryUtils.isPlayerCarrying(this.mc.thePlayer, new ItemStack(Items.paper)) >= 0) {
+        if (ResearchManager.consumeInkFromPlayer(this.mc.player, false) && InventoryUtils.isPlayerCarrying(this.mc.player, new ItemStack(Items.PAPER)) >= 0) {
             this.hasScribestuff = true;
         }
 
@@ -133,11 +136,11 @@ public class GuiResearchBrowser extends GuiScreen {
         super.initGui();
     }
 
-    protected void actionPerformed(GuiButton par1GuiButton) {
+    protected void actionPerformed(GuiButton par1GuiButton) throws java.io.IOException {
         super.actionPerformed(par1GuiButton);
     }
 
-    protected void keyTyped(char par1, int par2) {
+    protected void keyTyped(char par1, int par2) throws java.io.IOException {
         if (par2 == this.mc.gameSettings.keyBindInventory.getKeyCode()) {
             highlightedItem.clear();
             this.mc.displayGuiScreen(null);
@@ -199,9 +202,9 @@ public class GuiResearchBrowser extends GuiScreen {
         if (this.popuptime > System.currentTimeMillis()) {
             int xq = var4 + 128;
             int yq = var5 + 128;
-            int var41 = this.fontRendererObj.splitStringWidth(this.popupmessage, 150) / 2;
+            int var41 = this.fontRenderer.getWordWrappedHeight(this.popupmessage, 150) / 2;
             this.drawGradientRect(xq - 78, yq - var41 - 3, xq + 78, yq + var41 + 3, -1073741824, -1073741824);
-            this.fontRendererObj.drawSplitString(this.popupmessage, xq - 75, yq - var41, 150, -7302913);
+            this.fontRenderer.drawSplitString(this.popupmessage, xq - 75, yq - var41, 150, -7302913);
         }
 
         Collection<String> cats = getTabsOnCurrentPage(this.player).keySet();//ResearchCategories.researchCategories.keySet();
@@ -221,7 +224,7 @@ public class GuiResearchBrowser extends GuiScreen {
                         : 0));
                 int mposy = my - (var5 + count * 24);
                 if (mposx >= 0 && mposx < 24 && mposy >= 0 && mposy < 24) {
-                    this.fontRendererObj.drawStringWithShadow(ResearchCategories.getCategoryName(obj), mx, my - 8, 16777215);
+                    this.fontRenderer.drawStringWithShadow(ResearchCategories.getCategoryName(obj), mx, my - 8, 16777215);
                 }
 
                 ++count;
@@ -247,8 +250,8 @@ public class GuiResearchBrowser extends GuiScreen {
 
     protected void genResearchBackground(int par1, int par2, float par3) {
         long t = System.nanoTime() / 50000000L;
-        int var4 = MathHelper.floor_double(this.field_74117_m + (this.guiMapX - this.field_74117_m) * (double) par3);
-        int var5 = MathHelper.floor_double(this.field_74115_n + (this.guiMapY - this.field_74115_n) * (double) par3);
+        int var4 = MathHelper.floor(this.field_74117_m + (this.guiMapX - this.field_74117_m) * (double) par3);
+        int var5 = MathHelper.floor(this.field_74115_n + (this.guiMapY - this.field_74115_n) * (double) par3);
         if (var4 < guiMapTop) {
             var4 = guiMapTop;
         }
@@ -271,18 +274,18 @@ public class GuiResearchBrowser extends GuiScreen {
         int var11 = var9 + 17;
         this.zLevel = 0.0F;
         GL11.glDepthFunc(518);
-        GL11.glPushMatrix();
-        GL11.glTranslatef(0.0F, 0.0F, -200.0F);
-        GL11.glEnable(3553);
+        GlStateManager.pushMatrix();
+        GlStateManager.translate(0.0F, 0.0F, -200.0F);
+        GlStateManager.enableTexture2D();
         RenderHelper.enableGUIStandardItemLighting();
-        GL11.glDisable(2896);
-        GL11.glEnable(32826);
-        GL11.glEnable(2903);
-        GL11.glPushMatrix();
-        GL11.glScalef(2.0F, 2.0F, 1.0F);
+        GlStateManager.disableLighting();
+        GlStateManager.enableRescaleNormal();
+        GlStateManager.enableColorMaterial();
+        GlStateManager.pushMatrix();
+        GlStateManager.scale(2.0F, 2.0F, 1.0F);
         int vx = (int) ((float) (var4 - guiMapTop) / (float) Math.abs(guiMapTop - guiMapBottom) * 288.0F);
         int vy = (int) ((float) (var5 - guiMapLeft) / (float) Math.abs(guiMapLeft - guiMapRight) * 316.0F);
-        GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+        GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
         Minecraft.getMinecraft().renderEngine.bindTexture(ResearchCategories.getResearchList(selectedCategory).background);
 //      this.drawTexturedModalRect
         drawResearchBrowserBackground
@@ -290,9 +293,9 @@ public class GuiResearchBrowser extends GuiScreen {
                         this, var10 / 2, var11 / 2, vx / 2,
                         vy / 2, 112, 98);
 
-        GL11.glScalef(0.5F, 0.5F, 1.0F);
-        GL11.glPopMatrix();
-        GL11.glEnable(2929);
+        GlStateManager.scale(0.5F, 0.5F, 1.0F);
+        GlStateManager.popMatrix();
+        GlStateManager.enableDepth();
         GL11.glDepthFunc(515);
         if (completedResearch.get(this.player) != null) {
             for (ResearchItem o : this.research) {
@@ -351,9 +354,9 @@ public class GuiResearchBrowser extends GuiScreen {
         }
 
         this.currentHighlight = null;
-        RenderItem itemRenderer = new RenderItem();
-        GL11.glEnable(32826);
-        GL11.glEnable(2903);
+        RenderItem itemRenderer = Minecraft.getMinecraft().getRenderItem();
+        GlStateManager.enableRescaleNormal();
+        GlStateManager.enableColorMaterial();
         if (completedResearch.get(this.player) != null) {
             for (ResearchItem o : this.research) {
                 ResearchItem var35 = o;
@@ -371,7 +374,7 @@ public class GuiResearchBrowser extends GuiScreen {
                         }
 
                         float var38 = 1.0F;
-                        GL11.glColor4f(var38, var38, var38, 1.0F);
+                        GlStateManager.color(var38, var38, var38, 1.0F);
                     } else {
                         if (!completedResearch.get(this.player).contains("@" + var35.key) && (var35.isLost() || var35.isHidden() && !completedResearch.get(this.player).contains("@" + var35.key) || var35.isConcealed() && !this.canUnlockResearch(var35))) {
                             continue;
@@ -383,17 +386,17 @@ public class GuiResearchBrowser extends GuiScreen {
 
                         if (this.canUnlockResearch(var35)) {
                             float var38 = (float) Math.sin((double) (Minecraft.getSystemTime() % 600L) / (double) 600.0F * Math.PI * (double) 2.0F) * 0.25F + 0.75F;
-                            GL11.glColor4f(var38, var38, var38, 1.0F);
+                            GlStateManager.color(var38, var38, var38, 1.0F);
                         } else {
                             float var38 = 0.3F;
-                            GL11.glColor4f(var38, var38, var38, 1.0F);
+                            GlStateManager.color(var38, var38, var38, 1.0F);
                         }
                     }
 
                     UtilsFX.bindTexture("textures/gui/gui_research.png");
-                    GL11.glEnable(2884);
-                    GL11.glEnable(GL11.GL_BLEND);
-                    GL11.glBlendFunc(770, 771);
+                    GlStateManager.enableCull();
+                    GlStateManager.enableBlend();
+                    GlStateManager.blendFunc(770, 771);
                     if (var35.isRound()) {
                         this.drawTexturedModalRect(var42 - 2, var41 - 2, 54, 230, 26, 26);
                     } else if (var35.isHidden()) {
@@ -414,54 +417,54 @@ public class GuiResearchBrowser extends GuiScreen {
 
                     if (!this.canUnlockResearch(var35)) {
                         float var40 = 0.1F;
-                        GL11.glColor4f(var40, var40, var40, 1.0F);
-                        itemRenderer.renderWithColor = false;
+                        GlStateManager.color(var40, var40, var40, 1.0F);
                     }
 
-                    GL11.glDisable(GL11.GL_BLEND);
+                    GlStateManager.disableBlend();
                     if (highlightedItem.contains(var35.key)) {
-                        GL11.glPushMatrix();
-                        GL11.glEnable(GL11.GL_BLEND);
-                        GL11.glBlendFunc(770, 771);
-                        GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+                        GlStateManager.pushMatrix();
+                        GlStateManager.enableBlend();
+                        GlStateManager.blendFunc(770, 771);
+                        GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
                         this.mc.renderEngine.bindTexture(ParticleEngine.particleTexture);
                         int px = (int) (t % 16L) * 16;
-                        GL11.glTranslatef((float) (var42 - 5), (float) (var41 - 5), 0.0F);
+                        GlStateManager.translate((float) (var42 - 5), (float) (var41 - 5), 0.0F);
                         UtilsFX.drawTexturedQuad(0, 0, px, 80, 16, 16, 0.0F);
-                        GL11.glDisable(GL11.GL_BLEND);
-                        GL11.glPopMatrix();
+                        GlStateManager.disableBlend();
+                        GlStateManager.popMatrix();
                     }
 
                     if (var35.icon_item != null) {
-                        GL11.glPushMatrix();
-                        GL11.glEnable(GL11.GL_BLEND);
-                        GL11.glBlendFunc(770, 771);
+                        GlStateManager.pushMatrix();
+                        GlStateManager.enableBlend();
+                        GlStateManager.blendFunc(770, 771);
                         RenderHelper.enableGUIStandardItemLighting();
-                        GL11.glDisable(2896);
-                        GL11.glEnable(32826);
-                        GL11.glEnable(2903);
-                        GL11.glEnable(2896);
-                        itemRenderer.renderItemAndEffectIntoGUI(this.fontRendererObj, this.mc.renderEngine, InventoryUtils.cycleItemStack(var35.icon_item), var42 + 3, var41 + 3);
-                        GL11.glDisable(2896);
-                        GL11.glDepthMask(true);
-                        GL11.glEnable(2929);
-                        GL11.glDisable(GL11.GL_BLEND);
-                        GL11.glPopMatrix();
+                        GlStateManager.disableLighting();
+                        GlStateManager.enableRescaleNormal();
+                        GlStateManager.enableColorMaterial();
+                        GlStateManager.enableLighting();
+                        try {
+                            itemRenderer.renderItemAndEffectIntoGUI(InventoryUtils.cycleItemStack(var35.icon_item), var42 + 3, var41 + 3);
+                        } catch (Exception ignored) {}
+                        GlStateManager.disableLighting();
+                        GlStateManager.depthMask(true);
+                        GlStateManager.enableDepth();
+                        GlStateManager.disableBlend();
+                        GlStateManager.popMatrix();
                     } else if (var35.icon_resource != null) {
-                        GL11.glPushMatrix();
-                        GL11.glEnable(GL11.GL_BLEND);
-                        GL11.glBlendFunc(770, 771);
+                        GlStateManager.pushMatrix();
+                        GlStateManager.enableBlend();
+                        GlStateManager.blendFunc(770, 771);
                         this.mc.renderEngine.bindTexture(var35.icon_resource);
-                        if (!itemRenderer.renderWithColor) {
-                            GL11.glColor4f(0.2F, 0.2F, 0.2F, 1.0F);
+                        if (!this.canUnlockResearch(var35)) {
+                            GlStateManager.color(0.2F, 0.2F, 0.2F, 1.0F);
                         }
 
                         UtilsFX.drawTexturedQuadFull(var42 + 3, var41 + 3, this.zLevel);
-                        GL11.glPopMatrix();
+                        GlStateManager.popMatrix();
                     }
 
                     if (!this.canUnlockResearch(var35)) {
-                        itemRenderer.renderWithColor = true;
                     }
 
                     if (par1 >= var10 && par2 >= var11
@@ -471,15 +474,15 @@ public class GuiResearchBrowser extends GuiScreen {
                         this.currentHighlight = var35;
                     }
 
-                    GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+                    GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
                 }
             }
         }
 
-        GL11.glDisable(2929);
-        GL11.glEnable(GL11.GL_BLEND);
-        GL11.glBlendFunc(770, 771);
-        GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+        GlStateManager.disableDepth();
+        GlStateManager.enableBlend();
+        GlStateManager.blendFunc(770, 771);
+        GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
         Collection<String> cats = getTabsOnCurrentPage(this.player).keySet();
 //        Collection<String> cats = ResearchCategories.researchCategories.keySet();
         int count = 0;
@@ -488,7 +491,7 @@ public class GuiResearchBrowser extends GuiScreen {
         for (String obj : cats) {
             ResearchCategoryList rcl = ResearchCategories.getResearchList(obj);
             if (!obj.equals("ELDRITCH") || ResearchManager.isResearchComplete(this.player, "ELDRITCHMINOR")) {
-                GL11.glPushMatrix();
+                GlStateManager.pushMatrix();
                 if (count == getTabPerSide()//9
                 ) {
                     count = 0;
@@ -504,7 +507,7 @@ public class GuiResearchBrowser extends GuiScreen {
                 }
 
                 UtilsFX.bindTexture("textures/gui/gui_research.png");
-                GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+                GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
                 if (swop) {
                     this.drawTexturedModalRectReversed(var8 + s0 - 8, var9 + count * 24, 176 + s1, 232, 24, 24);
                 } else {
@@ -512,24 +515,24 @@ public class GuiResearchBrowser extends GuiScreen {
                 }
 
                 if (highlightedItem.contains(obj)) {
-                    GL11.glPushMatrix();
+                    GlStateManager.pushMatrix();
                     this.mc.renderEngine.bindTexture(ParticleEngine.particleTexture);
-                    GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+                    GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
                     int px = (int) (16L * (t % 16L));
 //                    UtilsFX.drawTexturedQuad
                     drawResearchCategoryHintParticles
                             (var8 - 27 + s2 + s0, var9 - 4 + count * 24, px, 80, 16, 16, -90.0F,this);
-                    GL11.glPopMatrix();
+                    GlStateManager.popMatrix();
                 }
 
-                GL11.glPushMatrix();
+                GlStateManager.pushMatrix();
                 this.mc.renderEngine.bindTexture(rcl.icon);
-                GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+                GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
                 UtilsFX.drawTexturedQuadFull(var8 - 19 + s2 + s0, var9 + 4 + count * 24, -80.0F);
-                GL11.glPopMatrix();
+                GlStateManager.popMatrix();
                 if (!selectedCategory.equals(obj)) {
                     UtilsFX.bindTexture("textures/gui/gui_research.png");
-                    GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+                    GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
                     if (swop) {
                         this.drawTexturedModalRectReversed(var8 + s0 - 8, var9 + count * 24, 224, 232, 24, 24);
                     } else {
@@ -537,55 +540,55 @@ public class GuiResearchBrowser extends GuiScreen {
                     }
                 }
 
-                GL11.glPopMatrix();
+                GlStateManager.popMatrix();
                 ++count;
             }
         }
 
         UtilsFX.bindTexture("textures/gui/gui_research.png");
-        GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+        GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
 //        this.drawTexturedModalRect
         drawResearchBrowserBorders
                 (this,var8, var9, 0, 0, getResearchBrowserWidth(), getResearchBrowserHeight());
-        GL11.glPopMatrix();
+        GlStateManager.popMatrix();
         this.zLevel = 0.0F;
         GL11.glDepthFunc(515);
-        GL11.glDisable(2929);
-        GL11.glEnable(3553);
+        GlStateManager.disableDepth();
+        GlStateManager.enableTexture2D();
         super.drawScreen(par1, par2, par3);
         if (completedResearch.get(this.player) != null && this.currentHighlight != null) {
             String var34 = this.currentHighlight.getName();
             int var26 = par1 + 6;
             int var27 = par2 - 4;
             int var99 = 0;
-            FontRenderer fr = this.fontRendererObj;
+            FontRenderer fr = this.fontRenderer;
             if (!completedResearch.get(this.player).contains(this.currentHighlight.key) && !this.canUnlockResearch(this.currentHighlight)) {
                 fr = this.galFontRenderer;
             }
 
             if (!this.canUnlockResearch(this.currentHighlight)) {
-                GL11.glPushMatrix();
-                int var42 = (int) Math.max((float) fr.getStringWidth(var34), (float) fr.getStringWidth(StatCollector.translateToLocal("tc.researchmissing")) / 1.5F);
-                String var39 = StatCollector.translateToLocal("tc.researchmissing");
-                int var30 = fr.splitStringWidth(var39, var42 * 2);
+                GlStateManager.pushMatrix();
+                int var42 = (int) Math.max((float) fr.getStringWidth(var34), (float) fr.getStringWidth(I18n.translateToLocal("tc.researchmissing")) / 1.5F);
+                String var39 = I18n.translateToLocal("tc.researchmissing");
+                int var30 = fr.getWordWrappedHeight(var39, var42 * 2);
                 this.drawGradientRect(var26 - 3, var27 - 3, var26 + var42 + 3, var27 + var30 + 10, -1073741824, -1073741824);
-                GL11.glTranslatef((float) var26, (float) (var27 + 12), 0.0F);
-                GL11.glScalef(0.5F, 0.5F, 0.5F);
-                this.fontRendererObj.drawSplitString(var39, 0, 0, var42 * 2, -9416624);
-                GL11.glPopMatrix();
+                GlStateManager.translate((float) var26, (float) (var27 + 12), 0.0F);
+                GlStateManager.scale(0.5F, 0.5F, 0.5F);
+                this.fontRenderer.drawSplitString(var39, 0, 0, var42 * 2, -9416624);
+                GlStateManager.popMatrix();
             } else {
                 boolean secondary = !completedResearch.get(this.player).contains(this.currentHighlight.key) && this.currentHighlight.tags != null && this.currentHighlight.tags.size() > 0 && (Config.researchDifficulty == -1 || Config.researchDifficulty == 0 && this.currentHighlight.isSecondary());
                 boolean primary = !secondary && !completedResearch.get(this.player).contains(this.currentHighlight.key);
                 int var42 = (int) Math.max((float) fr.getStringWidth(var34), (float) fr.getStringWidth(this.currentHighlight.getText()) / 1.9F);
-                int var41 = fr.splitStringWidth(var34, var42) + 5;
+                int var41 = fr.getWordWrappedHeight(var34, var42) + 5;
                 if (primary) {
                     var99 += 9;
-                    var42 = (int) Math.max((float) var42, (float) fr.getStringWidth(StatCollector.translateToLocal("tc.research.shortprim")) / 1.9F);
+                    var42 = (int) Math.max((float) var42, (float) fr.getStringWidth(I18n.translateToLocal("tc.research.shortprim")) / 1.9F);
                 }
 
                 if (secondary) {
                     var99 += 29;
-                    var42 = (int) Math.max((float) var42, (float) fr.getStringWidth(StatCollector.translateToLocal("tc.research.short")) / 1.9F);
+                    var42 = (int) Math.max((float) var42, (float) fr.getStringWidth(I18n.translateToLocal("tc.research.short")) / 1.9F);
                 }
 
                 int warp = ThaumcraftApi.getWarp(this.currentHighlight.key);
@@ -593,8 +596,8 @@ public class GuiResearchBrowser extends GuiScreen {
                     warp = 5;
                 }
 
-                String ws = StatCollector.translateToLocal("tc.forbidden");
-                String wr = StatCollector.translateToLocal("tc.forbidden.level." + warp);
+                String ws = I18n.translateToLocal("tc.forbidden");
+                String wr = I18n.translateToLocal("tc.forbidden.level." + warp);
                 String wte = ws.replaceAll("%n", wr);
                 if (ThaumcraftApi.getWarp(this.currentHighlight.key) > 0) {
                     var99 += 9;
@@ -602,34 +605,34 @@ public class GuiResearchBrowser extends GuiScreen {
                 }
 
                 this.drawGradientRect(var26 - 3, var27 - 3, var26 + var42 + 3, var27 + var41 + 6 + var99, -1073741824, -1073741824);
-                GL11.glPushMatrix();
-                GL11.glTranslatef((float) var26, (float) (var27 + var41 - 1), 0.0F);
-                GL11.glScalef(0.5F, 0.5F, 0.5F);
-                this.fontRendererObj.drawStringWithShadow(this.currentHighlight.getText(), 0, 0, -7302913);
-                GL11.glPopMatrix();
+                GlStateManager.pushMatrix();
+                GlStateManager.translate((float) var26, (float) (var27 + var41 - 1), 0.0F);
+                GlStateManager.scale(0.5F, 0.5F, 0.5F);
+                this.fontRenderer.drawStringWithShadow(this.currentHighlight.getText(), 0, 0, -7302913);
+                GlStateManager.popMatrix();
                 if (warp > 0) {
-                    GL11.glPushMatrix();
-                    GL11.glTranslatef((float) var26, (float) (var27 + var41 + 8), 0.0F);
-                    GL11.glScalef(0.5F, 0.5F, 0.5F);
-                    this.fontRendererObj.drawStringWithShadow(wte, 0, 0, 16777215);
-                    GL11.glPopMatrix();
+                    GlStateManager.pushMatrix();
+                    GlStateManager.translate((float) var26, (float) (var27 + var41 + 8), 0.0F);
+                    GlStateManager.scale(0.5F, 0.5F, 0.5F);
+                    this.fontRenderer.drawStringWithShadow(wte, 0, 0, 16777215);
+                    GlStateManager.popMatrix();
                     var41 += 9;
                 }
 
-                GL11.glPushMatrix();
+                GlStateManager.pushMatrix();
                 if (primary) {
-                    GL11.glPushMatrix();
-                    GL11.glTranslatef((float) var26, (float) (var27 + var41 + 8), 0.0F);
-                    GL11.glScalef(0.5F, 0.5F, 0.5F);
-                    if (ResearchManager.getResearchSlot(this.mc.thePlayer, this.currentHighlight.key) >= 0) {
-                        this.fontRendererObj.drawStringWithShadow(StatCollector.translateToLocal("tc.research.hasnote"), 0, 0, 16753920);
+                    GlStateManager.pushMatrix();
+                    GlStateManager.translate((float) var26, (float) (var27 + var41 + 8), 0.0F);
+                    GlStateManager.scale(0.5F, 0.5F, 0.5F);
+                    if (ResearchManager.getResearchSlot(this.mc.player, this.currentHighlight.key) >= 0) {
+                        this.fontRenderer.drawStringWithShadow(I18n.translateToLocal("tc.research.hasnote"), 0, 0, 16753920);
                     } else if (this.hasScribestuff) {
-                        this.fontRendererObj.drawStringWithShadow(StatCollector.translateToLocal("tc.research.getprim"), 0, 0, 8900331);
+                        this.fontRenderer.drawStringWithShadow(I18n.translateToLocal("tc.research.getprim"), 0, 0, 8900331);
                     } else {
-                        this.fontRendererObj.drawStringWithShadow(StatCollector.translateToLocal("tc.research.shortprim"), 0, 0, 14423100);
+                        this.fontRenderer.drawStringWithShadow(I18n.translateToLocal("tc.research.shortprim"), 0, 0, 14423100);
                     }
 
-                    GL11.glPopMatrix();
+                    GlStateManager.popMatrix();
                 } else if (secondary) {
                     boolean enough = true;
                     int cc = 0;
@@ -642,48 +645,48 @@ public class GuiResearchBrowser extends GuiScreen {
                                 enough = false;
                             }
 
-                            GL11.glPushMatrix();
+                            GlStateManager.pushMatrix();
                             GL11.glPushAttrib(1048575);
                             UtilsFX.drawTag(var26 + cc * 16, var27 + var41 + 8, a, (float) this.currentHighlight.tags.getAmount(a), 0, 0.0F, 771, alpha, false);
                             GL11.glPopAttrib();
-                            GL11.glPopMatrix();
+                            GlStateManager.popMatrix();
                         } else {
                             enough = false;
-                            GL11.glPushMatrix();
+                            GlStateManager.pushMatrix();
                             UtilsFX.bindTexture("textures/aspects/_unknown.png");
-                            GL11.glColor4f(0.5F, 0.5F, 0.5F, 0.5F);
-                            GL11.glTranslated(var26 + cc * 16, var27 + var41 + 8, 0.0F);
+                            GlStateManager.color(0.5F, 0.5F, 0.5F, 0.5F);
+                            GlStateManager.translate(var26 + cc * 16, var27 + var41 + 8, 0.0F);
                             UtilsFX.drawTexturedQuadFull(0, 0, 0.0F);
-                            GL11.glPopMatrix();
+                            GlStateManager.popMatrix();
                         }
 
                         ++cc;
                     }
 
-                    GL11.glPushMatrix();
-                    GL11.glTranslatef((float) var26, (float) (var27 + var41 + 27), 0.0F);
-                    GL11.glScalef(0.5F, 0.5F, 0.5F);
+                    GlStateManager.pushMatrix();
+                    GlStateManager.translate((float) var26, (float) (var27 + var41 + 27), 0.0F);
+                    GlStateManager.scale(0.5F, 0.5F, 0.5F);
                     if (enough) {
-                        this.fontRendererObj.drawStringWithShadow(StatCollector.translateToLocal("tc.research.purchase"), 0, 0, 8900331);
+                        this.fontRenderer.drawStringWithShadow(I18n.translateToLocal("tc.research.purchase"), 0, 0, 8900331);
                     } else {
-                        this.fontRendererObj.drawStringWithShadow(StatCollector.translateToLocal("tc.research.short"), 0, 0, 14423100);
+                        this.fontRenderer.drawStringWithShadow(I18n.translateToLocal("tc.research.short"), 0, 0, 14423100);
                     }
 
-                    GL11.glPopMatrix();
+                    GlStateManager.popMatrix();
                 }
 
-                GL11.glPopMatrix();
+                GlStateManager.popMatrix();
             }
 
             fr.drawStringWithShadow(var34, var26, var27, this.canUnlockResearch(this.currentHighlight) ? (this.currentHighlight.isSpecial() ? -128 : -1) : (this.currentHighlight.isSpecial() ? -8355776 : -8355712));
         }
 
-        GL11.glEnable(2929);
-        GL11.glEnable(2896);
+        GlStateManager.enableDepth();
+        GlStateManager.enableLighting();
         RenderHelper.disableStandardItemLighting();
     }
 
-    protected void mouseClicked(int par1, int par2, int par3) {
+    protected void mouseClicked(int par1, int par2, int par3) throws java.io.IOException {
         this.popuptime = System.currentTimeMillis() - 1L;
         if (this.currentHighlight != null && !completedResearch.get(this.player).contains(this.currentHighlight.key) && this.canUnlockResearch(this.currentHighlight)) {
             this.updateResearch();
@@ -699,12 +702,12 @@ public class GuiResearchBrowser extends GuiScreen {
                 }
 
                 if (enough) {
-                    PacketHandler.INSTANCE.sendToServer(new PacketPlayerCompleteToServer(this.currentHighlight.key, this.mc.thePlayer.getCommandSenderName(), this.mc.thePlayer.worldObj.provider.dimensionId, (byte) 0));
+                    PacketHandler.INSTANCE.sendToServer(new PacketPlayerCompleteToServer(this.currentHighlight.key, this.mc.player.getName(), this.mc.player.world.provider.getDimension(), (byte) 0));
                 }
-            } else if (this.hasScribestuff && ResearchManager.getResearchSlot(this.mc.thePlayer, this.currentHighlight.key) == -1) {
-                PacketHandler.INSTANCE.sendToServer(new PacketPlayerCompleteToServer(this.currentHighlight.key, this.mc.thePlayer.getCommandSenderName(), this.mc.thePlayer.worldObj.provider.dimensionId, (byte) 1));
+            } else if (this.hasScribestuff && ResearchManager.getResearchSlot(this.mc.player, this.currentHighlight.key) == -1) {
+                PacketHandler.INSTANCE.sendToServer(new PacketPlayerCompleteToServer(this.currentHighlight.key, this.mc.player.getName(), this.mc.player.world.provider.getDimension(), (byte) 1));
                 this.popuptime = System.currentTimeMillis() + 3000L;
-                this.popupmessage = (new ChatComponentTranslation(StatCollector.translateToLocal("tc.research.popup"), this.currentHighlight.getName())).getUnformattedText();
+                this.popupmessage = (new TextComponentTranslation(I18n.translateToLocal("tc.research.popup"), this.currentHighlight.getName())).getUnformattedText();
             }
         } else if (this.currentHighlight != null && completedResearch.get(this.player).contains(this.currentHighlight.key)) {
             this.mc.displayGuiScreen(new GuiResearchRecipe(this.currentHighlight, 0, this.guiMapX, this.guiMapY));
@@ -746,17 +749,20 @@ public class GuiResearchBrowser extends GuiScreen {
     public void drawTexturedModalRectReversed(int par1, int par2, int par3, int par4, int par5, int par6) {
         float f = 0.00390625F;
         float f1 = 0.00390625F;
-        Tessellator tessellator = Tessellator.instance;
-        tessellator.startDrawingQuads();
-        tessellator.addVertexWithUV(par1, par2 + par6, this.zLevel, (float) (par3) * f, (float) (par4 + par6) * f1);
-        tessellator.addVertexWithUV(par1 + par5, par2 + par6, this.zLevel, (float) (par3 - par5) * f, (float) (par4 + par6) * f1);
-        tessellator.addVertexWithUV(par1 + par5, par2, this.zLevel, (float) (par3 - par5) * f, (float) (par4) * f1);
-        tessellator.addVertexWithUV(par1, par2, this.zLevel, (float) (par3) * f, (float) (par4) * f1);
+        Tessellator tessellator = Tessellator.getInstance();
+        BufferBuilder buffer = tessellator.getBuffer();
+        buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX);
+        buffer.pos(par1,       par2 + par6, this.zLevel).tex((float)(par3)       * f, (float)(par4 + par6) * f1).endVertex();
+        buffer.pos(par1 + par5, par2 + par6, this.zLevel).tex((float)(par3 - par5) * f, (float)(par4 + par6) * f1).endVertex();
+        buffer.pos(par1 + par5, par2,       this.zLevel).tex((float)(par3 - par5) * f, (float)(par4)        * f1).endVertex();
+        buffer.pos(par1,       par2,       this.zLevel).tex((float)(par3)       * f, (float)(par4)        * f1).endVertex();
         tessellator.draw();
     }
 
     private void playButtonClick() {
-        this.mc.renderViewEntity.worldObj.playSound(this.mc.renderViewEntity.posX, this.mc.renderViewEntity.posY, this.mc.renderViewEntity.posZ, "thaumcraft:cameraclack", 0.4F, 1.0F, false);
+        this.mc.player.playSound(
+            net.minecraft.util.SoundEvent.REGISTRY.getObject(new net.minecraft.util.ResourceLocation("thaumcraft:cameraclack")),
+            0.4F, 1.0F);
     }
 
     private boolean canUnlockResearch(ResearchItem res) {
@@ -786,16 +792,17 @@ public class GuiResearchBrowser extends GuiScreen {
     }
 
     private void drawLine(int x, int y, int x2, int y2, float r, float g, float b, float te, boolean wiggle) {
-        float count = (float) FMLClientHandler.instance().getClient().thePlayer.ticksExisted + te;
-        Tessellator var12 = Tessellator.instance;
-        GL11.glPushMatrix();
-        GL11.glAlphaFunc(516, 0.003921569F);
-        GL11.glDisable(3553);
-        GL11.glEnable(GL11.GL_BLEND);
-        GL11.glBlendFunc(770, 771);
+        float count = (float) FMLClientHandler.instance().getClient().player.ticksExisted + te;
+        Tessellator var12 = Tessellator.getInstance();
+        BufferBuilder var12Buf = var12.getBuffer();
+        GlStateManager.pushMatrix();
+        GlStateManager.alphaFunc(516, 0.003921569F);
+        GlStateManager.disableTexture2D();
+        GlStateManager.enableBlend();
+        GlStateManager.blendFunc(770, 771);
         double d3 = x - x2;
         double d4 = y - y2;
-        float dist = MathHelper.sqrt_double(d3 * d3 + d4 * d4);
+        float dist = MathHelper.sqrt(d3 * d3 + d4 * d4);
         int inc = (int) (dist / 2.0F);
         float dx = (float) (d3 / (double) inc);
         float dy = (float) (d4 / (double) inc);
@@ -808,7 +815,7 @@ public class GuiResearchBrowser extends GuiScreen {
         GL11.glLineWidth(3.0F);
         GL11.glEnable(2848);
         GL11.glHint(3154, 4354);
-        var12.startDrawing(3);
+        var12Buf.begin(GL11.GL_LINE_STRIP, DefaultVertexFormats.POSITION_COLOR);
 
         for (int a = 0; a <= inc; ++a) {
             float r2 = r;
@@ -827,8 +834,7 @@ public class GuiResearchBrowser extends GuiScreen {
                 op *= phase;
             }
 
-            var12.setColorRGBA_F(r2, g2, b2, op);
-            var12.addVertex((float) x - dx * (float) a + mx, (float) y - dy * (float) a + my, 0.0F);
+            var12Buf.pos((float) x - dx * (float) a + mx, (float) y - dy * (float) a + my, 0.0F).color(r2, g2, b2, op).endVertex();
             if (Math.abs(d3) > Math.abs(d4)) {
                 dx *= 1.0F - 1.0F / ((float) inc * 3.0F / 2.0F);
             } else {
@@ -837,28 +843,28 @@ public class GuiResearchBrowser extends GuiScreen {
         }
 
         var12.draw();
-        GL11.glBlendFunc(770, 771);
+        GlStateManager.blendFunc(770, 771);
         GL11.glDisable(2848);
-        GL11.glDisable(GL11.GL_BLEND);
-        GL11.glDisable(32826);
-        GL11.glEnable(3553);
-        GL11.glAlphaFunc(516, 0.1F);
-        GL11.glPopMatrix();
+        GlStateManager.disableBlend();
+        GlStateManager.disableRescaleNormal();
+        GlStateManager.enableTexture2D();
+        GlStateManager.alphaFunc(516, 0.1F);
+        GlStateManager.popMatrix();
     }
 
     private void drawForbidden(double x, double y) {
-        int count = FMLClientHandler.instance().getClient().thePlayer.ticksExisted;
-        GL11.glPushMatrix();
-        GL11.glEnable(GL11.GL_BLEND);
-        GL11.glBlendFunc(770, 771);
+        int count = FMLClientHandler.instance().getClient().player.ticksExisted;
+        GlStateManager.pushMatrix();
+        GlStateManager.enableBlend();
+        GlStateManager.blendFunc(770, 771);
         UtilsFX.bindTexture(TileNodeRenderer.nodetex);
         int frames = 32;
         int part = count % frames;
-        GL11.glTranslated(x, y, 0.0F);
+        GlStateManager.translate(x, y, 0.0F);
         UtilsFX.renderAnimatedQuadStrip(80.0F, 0.66F, frames, 5, frames - 1 - part, 0.0F, 4456533);
-        GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
-        GL11.glDisable(GL11.GL_BLEND);
-        GL11.glPopMatrix();
+        GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
+        GlStateManager.disableBlend();
+        GlStateManager.popMatrix();
     }
 
 

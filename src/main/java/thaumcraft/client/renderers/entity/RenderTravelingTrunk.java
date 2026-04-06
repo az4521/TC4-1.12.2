@@ -6,17 +6,19 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.util.ResourceLocation;
-import org.lwjgl.opengl.GL11;
+
 import thaumcraft.client.renderers.models.entities.ModelTrunk;
 import thaumcraft.common.entities.golems.EntityTravelingTrunk;
+import net.minecraft.client.renderer.GlStateManager;
 
-public class RenderTravelingTrunk extends RenderLiving {
+import net.minecraft.client.renderer.entity.RenderManager;
+public class RenderTravelingTrunk extends RenderLiving<EntityTravelingTrunk> {
    private ModelTrunk trunkModel;
    private static final ResourceLocation rl = new ResourceLocation("thaumcraft", "textures/models/trunk.png");
    private static final ResourceLocation rl_a = new ResourceLocation("thaumcraft", "textures/models/trunkangry.png");
 
-   public RenderTravelingTrunk(ModelBase modelbase, float f) {
-      super(modelbase, f);
+   public RenderTravelingTrunk(RenderManager renderManager, ModelBase modelbase, float f) {
+      super(renderManager, modelbase, f);
       this.trunkModel = (ModelTrunk)modelbase;
    }
 
@@ -33,23 +35,22 @@ public class RenderTravelingTrunk extends RenderLiving {
          f3 = (float)((double)f3 / (double)1.5F);
       }
 
-      GL11.glScalef(f2 * f3, 0.5F / f2 * f3, f2 * f3);
-      GL11.glTranslatef(-0.5F, 0.5F, -0.5F);
+      GlStateManager.scale(f2 * f3, 0.5F / f2 * f3, f2 * f3);
+      GlStateManager.translate(-0.5F, 0.5F, -0.5F);
       f1 = 1.0F - entity.lidrot;
       f1 = 1.0F - f1 * f1 * f1;
       this.trunkModel.chestLid.rotateAngleX = -(f1 * 3.141593F / 2.0F);
    }
 
-   protected void preRenderCallback(EntityLivingBase par1EntityLivingBase, float f) {
-      this.adjustTrunk((EntityTravelingTrunk)par1EntityLivingBase, f);
+   protected void preRenderCallback(EntityTravelingTrunk entity, float f) {
+      this.adjustTrunk(entity, f);
    }
 
-   public void doRender(EntityLiving entityliving, double d, double d1, double d2, float f, float f1) {
-      super.doRender(entityliving, d, d1, d2, f, f1);
-      GL11.glTranslatef(0.0F, 0.0F, 0.0F);
+   public void doRender(EntityTravelingTrunk entity, double d, double d1, double d2, float f, float f1) {
+      super.doRender(entity, d, d1, d2, f, f1);
    }
 
-   protected ResourceLocation getEntityTexture(Entity entity) {
-      return ((EntityTravelingTrunk)entity).getAnger() > 0 ? rl_a : rl;
+   protected ResourceLocation getEntityTexture(EntityTravelingTrunk entity) {
+      return entity.getAnger() > 0 ? rl_a : rl;
    }
 }

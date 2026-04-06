@@ -1,17 +1,17 @@
 package thaumcraft.common.items;
 
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import java.util.List;
 import java.util.Random;
-import net.minecraft.client.renderer.texture.IIconRegister;
+import thaumcraft.client.renderers.compat.IIconRegister;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.util.IIcon;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.world.World;
 import thaumcraft.api.aspects.Aspect;
 import thaumcraft.api.aspects.AspectList;
@@ -21,7 +21,7 @@ import thaumcraft.common.Thaumcraft;
 import static thaumcraft.api.aspects.AspectList.addAspectDescriptionToList;
 
 public class ItemCrystalEssence extends Item implements IEssentiaContainerItem {
-   public IIcon icon;
+   public TextureAtlasSprite icon;
    static Aspect[] displayAspects;
    Random rand = new Random();
 
@@ -34,24 +34,25 @@ public class ItemCrystalEssence extends Item implements IEssentiaContainerItem {
 
    @SideOnly(Side.CLIENT)
    public void registerIcons(IIconRegister ir) {
-      this.icon = ir.registerIcon("thaumcraft:crystalessence");
+      this.icon = ir.registerSprite("thaumcraft:crystalessence");
    }
 
    @SideOnly(Side.CLIENT)
-   public IIcon getIconFromDamage(int par1) {
+   public TextureAtlasSprite getIconFromDamage(int par1) {
       return this.icon;
    }
 
    @SideOnly(Side.CLIENT)
-   public void getSubItems(Item par1, CreativeTabs par2CreativeTabs, List par3List) {
+   @Override
+   public void getSubItems(CreativeTabs par2CreativeTabs, net.minecraft.util.NonNullList<ItemStack> par3List) {
       par3List.add(new ItemStack(this, 1, 0));
    }
 
-   public void addInformation(ItemStack stack, EntityPlayer player, List list, boolean par4) {
+   public void addInformation(ItemStack stack, @javax.annotation.Nullable net.minecraft.world.World worldIn, List list, net.minecraft.client.util.ITooltipFlag flagIn) {
       AspectList aspects = this.getAspects(stack);
-      addAspectDescriptionToList(aspects,player,list);
+      addAspectDescriptionToList(aspects, net.minecraft.client.Minecraft.getMinecraft().player, list);
 
-      super.addInformation(stack, player, list, par4);
+      super.addInformation(stack, worldIn, list, flagIn);
    }
 
    @SideOnly(Side.CLIENT)

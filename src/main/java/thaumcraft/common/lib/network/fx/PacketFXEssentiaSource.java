@@ -1,10 +1,10 @@
 package thaumcraft.common.lib.network.fx;
 
-import cpw.mods.fml.common.network.simpleimpl.IMessage;
-import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
-import cpw.mods.fml.common.network.simpleimpl.MessageContext;
+import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
+import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
+import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
 import io.netty.buffer.ByteBuf;
-import net.minecraft.util.ChunkCoordinates;
+import net.minecraft.util.math.BlockPos;
 import thaumcraft.common.lib.events.EssentiaHandler;
 
 public class PacketFXEssentiaSource implements IMessage, IMessageHandler<PacketFXEssentiaSource,IMessage> {
@@ -60,7 +60,7 @@ public class PacketFXEssentiaSource implements IMessage, IMessageHandler<PacketF
          EssentiaHandler.sourceFX.remove(key);
          EssentiaHandler.sourceFX.put(key, sf);
       } else {
-         EssentiaHandler.sourceFX.put(key, new EssentiaHandler.EssentiaSourceFX(new ChunkCoordinates(message.x, message.y, message.z), new ChunkCoordinates(tx, ty, tz), 15, message.color));
+         EssentiaHandler.sourceFX.put(key, new EssentiaHandler.EssentiaSourceFX(new BlockPos(message.x, message.y, message.z), new BlockPos(tx, ty, tz), 15, message.color));
       }
 
       return null;

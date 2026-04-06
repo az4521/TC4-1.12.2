@@ -1,8 +1,8 @@
 package thaumcraft.client.gui;
 
-import cpw.mods.fml.common.ObfuscationReflectionHelper;
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
+import net.minecraftforge.fml.common.ObfuscationReflectionHelper;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -17,15 +17,15 @@ import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.renderer.RenderHelper;
 import net.minecraft.client.renderer.Tessellator;
-import net.minecraft.client.renderer.entity.RenderItem;
+import net.minecraft.client.renderer.RenderItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.FurnaceRecipes;
 import net.minecraft.item.crafting.IRecipe;
 import net.minecraft.item.crafting.ShapedRecipes;
 import net.minecraft.item.crafting.ShapelessRecipes;
 import net.minecraft.nbt.NBTBase;
-import net.minecraft.util.MathHelper;
-import net.minecraft.util.StatCollector;
+import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.text.translation.I18n;
 import net.minecraftforge.oredict.ShapedOreRecipe;
 import net.minecraftforge.oredict.ShapelessOreRecipe;
 import org.lwjgl.opengl.GL11;
@@ -50,10 +50,29 @@ import thaumcraft.common.lib.crafting.ThaumcraftCraftingManager;
 import thaumcraft.common.lib.utils.InventoryUtils;
 
 import static tc4tweak.ClientUtils.cacheUsed;
+import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.client.renderer.BufferBuilder;
+import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 
 @SideOnly(Side.CLIENT)
 public class GuiResearchRecipe extends GuiScreen {
-    protected static RenderItem itemRenderer = new RenderItem();
+    protected static RenderItem getItemRenderer() { return net.minecraft.client.Minecraft.getMinecraft().getRenderItem(); }
+
+    protected static void safeRenderItem(ItemStack stack, int x, int y) {
+        if (stack == null || stack.isEmpty()) return;
+        try {
+            net.minecraft.client.renderer.RenderHelper.enableGUIStandardItemLighting();
+            getItemRenderer().renderItemAndEffectIntoGUI(stack, x, y);
+            net.minecraft.client.renderer.RenderHelper.disableStandardItemLighting();
+        } catch (Exception ignored) {}
+    }
+
+    protected static void safeRenderItemOverlay(net.minecraft.client.gui.FontRenderer font, ItemStack stack, int x, int y, String text) {
+        if (stack == null || stack.isEmpty()) return;
+        try {
+            getItemRenderer().renderItemOverlayIntoGUI(font, stack.copy().splitStack(1), x, y, text);
+        } catch (Exception ignored) {}
+    }
     public static LinkedList<Object[]> history = new LinkedList<>();
     protected int paneWidth = 256;
     protected int paneHeight = 181;
@@ -95,15 +114,15 @@ public class GuiResearchRecipe extends GuiScreen {
         ArrayList<ResearchPage> p2 = new ArrayList<>();
 
         for (ResearchPage pp : p1) {
-            if (pp == null || pp.type != ResearchPage.PageType.TEXT_CONCEALED || ThaumcraftApiHelper.isResearchComplete(this.mc.thePlayer.getCommandSenderName(), pp.research)) {
+            if (pp == null || pp.type != ResearchPage.PageType.TEXT_CONCEALED || ThaumcraftApiHelper.isResearchComplete(this.mc.player.getName(), pp.research)) {
                 p2.add(pp);
             }
         }
 
         this.pages = p2.toArray(new ResearchPage[0]);
         if (research.key.equals("ASPECTS")) {
-            AspectList aspectsKnownSorted = Thaumcraft.proxy.getPlayerKnowledge().getAspectsDiscovered(Minecraft.getMinecraft().thePlayer.getCommandSenderName());
-            List<String> list = Thaumcraft.proxy.getScannedObjects().get(Minecraft.getMinecraft().thePlayer.getCommandSenderName());
+            AspectList aspectsKnownSorted = Thaumcraft.proxy.getPlayerKnowledge().getAspectsDiscovered(Minecraft.getMinecraft().player.getName());
+            List<String> list = Thaumcraft.proxy.getScannedObjects().get(Minecraft.getMinecraft().player.getName());
             if (list != null && !list.isEmpty()) {
                 for (String s : list) {
                     try {
@@ -120,7 +139,7 @@ public class GuiResearchRecipe extends GuiScreen {
                                     }
 
                                     ItemStack is2 = is.copy();
-                                    is2.stackSize = tags.getAmount(a);
+                                    is2.setCount(tags.getAmount(a));
                                     items.add(is2);
                                     this.aspectItems.put(a, items);
                                 }
@@ -171,11 +190,11 @@ public class GuiResearchRecipe extends GuiScreen {
         super.initGui();
     }
 
-    protected void actionPerformed(GuiButton par1GuiButton) {
+    protected void actionPerformed(GuiButton par1GuiButton) throws java.io.IOException {
         super.actionPerformed(par1GuiButton);
     }
 
-    protected void keyTyped(char par1, int par2) {
+    protected void keyTyped(char par1, int par2) throws java.io.IOException {
         if (par2 != this.mc.gameSettings.keyBindInventory.getKeyCode() && par2 != 1) {
             super.keyTyped(par1, par2);
         } else {
@@ -198,7 +217,7 @@ public class GuiResearchRecipe extends GuiScreen {
             int mx = par1 - (sw + 118);
             int my = par2 - (sh + 189);
             if (mx >= 0 && my >= 0 && mx < 20 && my < 12) {
-                this.fontRendererObj.drawStringWithShadow(StatCollector.translateToLocal("recipe.return"), par1, par2, 16777215);
+                this.fontRenderer.drawStringWithShadow(I18n.translateToLocal("recipe.return"), par1, par2, 16777215);
             }
         }
 
@@ -209,14 +228,14 @@ public class GuiResearchRecipe extends GuiScreen {
         int sh = (this.height - this.paneHeight) / 2;
         float var10 = ((float) this.width - (float) this.paneWidth * 1.3F) / 2.0F;
         float var11 = ((float) this.height - (float) this.paneHeight * 1.3F) / 2.0F;
-        GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+        GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
         UtilsFX.bindTexture(this.tex1);
-        GL11.glPushMatrix();
-        GL11.glTranslatef(var10, var11, 0.0F);
-        GL11.glEnable(GL11.GL_BLEND);
-        GL11.glScalef(1.3F, 1.3F, 1.0F);
+        GlStateManager.pushMatrix();
+        GlStateManager.translate(var10, var11, 0.0F);
+        GlStateManager.enableBlend();
+        GlStateManager.scale(1.3F, 1.3F, 1.0F);
         this.drawTexturedModalRect(0, 0, 0, 0, this.paneWidth, this.paneHeight);
-        GL11.glPopMatrix();
+        GlStateManager.popMatrix();
         this.reference.clear();
         this.tooltip = null;
         int current = 0;
@@ -233,7 +252,7 @@ public class GuiResearchRecipe extends GuiScreen {
         }
 
         if (this.tooltip != null) {
-            UtilsFX.drawCustomTooltip(this, itemRenderer, this.fontRendererObj, (List) this.tooltip[0], (Integer) this.tooltip[1], (Integer) this.tooltip[2], (Integer) this.tooltip[3]);
+            UtilsFX.drawCustomTooltip(this, getItemRenderer(), this.fontRenderer, (List) this.tooltip[0], (Integer) this.tooltip[1], (Integer) this.tooltip[2], (Integer) this.tooltip[3]);
         }
 
         UtilsFX.bindTexture(this.tex1);
@@ -241,25 +260,25 @@ public class GuiResearchRecipe extends GuiScreen {
         var10000 = par2 - (sh + 189);
         var10000 = par1 - (sw - 17);
         var10000 = par2 - (sh + 189);
-        float bob = MathHelper.sin((float) this.mc.thePlayer.ticksExisted / 3.0F) * 0.2F + 0.1F;
+        float bob = MathHelper.sin((float) this.mc.player.ticksExisted / 3.0F) * 0.2F + 0.1F;
         if (!history.isEmpty()) {
-            GL11.glEnable(GL11.GL_BLEND);
+            GlStateManager.enableBlend();
             this.drawTexturedModalRectScaled(sw + 118, sh + 189, 38, 202, 20, 12, bob);
         }
 
         if (this.page > 0) {
-            GL11.glEnable(GL11.GL_BLEND);
+            GlStateManager.enableBlend();
             this.drawTexturedModalRectScaled(sw - 16, sh + 190, 0, 184, 12, 8, bob);
         }
 
         if (this.page < this.maxPages - 2) {
-            GL11.glEnable(GL11.GL_BLEND);
+            GlStateManager.enableBlend();
             this.drawTexturedModalRectScaled(sw + 262, sh + 190, 12, 184, 12, 8, bob);
         }
 
     }
 
-    public void drawCustomTooltip(GuiScreen gui, RenderItem itemRenderer, FontRenderer fr, List var4, int par2, int par3, int subTipColor) {
+    public void drawCustomTooltip(GuiScreen gui, RenderItem renderItem, FontRenderer fr, List var4, int par2, int par3, int subTipColor) {
         this.tooltip = new Object[]{var4, par2, par3, subTipColor};
     }
 
@@ -273,22 +292,22 @@ public class GuiResearchRecipe extends GuiScreen {
         if (this.page == 0 && side == 0) {
             this.drawTexturedModalRect(x + 4, y - 13, 24, 184, 96, 4);
             this.drawTexturedModalRect(x + 4, y + 4, 24, 184, 96, 4);
-            int offset = this.fontRendererObj.getStringWidth(this.research.getName());
+            int offset = this.fontRenderer.getStringWidth(this.research.getName());
             if (offset <= 130) {
-                this.fontRendererObj.drawString(this.research.getName(), x + 52 - offset / 2, y - 6, 3158064);
+                this.fontRenderer.drawString(this.research.getName(), x + 52 - offset / 2, y - 6, 3158064);
             } else {
                 float vv = 130.0F / (float) offset;
-                GL11.glPushMatrix();
-                GL11.glTranslatef((float) (x + 52) - (float) (offset / 2) * vv, (float) y - 6.0F * vv, 0.0F);
-                GL11.glScalef(vv, vv, vv);
-                this.fontRendererObj.drawString(this.research.getName(), 0, 0, 3158064);
-                GL11.glPopMatrix();
+                GlStateManager.pushMatrix();
+                GlStateManager.translate((float) (x + 52) - (float) (offset / 2) * vv, (float) y - 6.0F * vv, 0.0F);
+                GlStateManager.scale(vv, vv, vv);
+                this.fontRenderer.drawString(this.research.getName(), 0, 0, 3158064);
+                GlStateManager.popMatrix();
             }
 
             y += 25;
         }
 
-        GL11.glAlphaFunc(516, 0.003921569F);
+        GlStateManager.alphaFunc(516, 0.003921569F);
         if (pageParm.type != ResearchPage.PageType.TEXT && pageParm.type != ResearchPage.PageType.TEXT_CONCEALED) {
             if (pageParm.type == ResearchPage.PageType.ASPECTS) {
                 this.drawAspectPage(side, x - 8, y - 8, mx, my, pageParm.aspects);
@@ -311,7 +330,7 @@ public class GuiResearchRecipe extends GuiScreen {
             this.drawTextPage(side, x, y - 10, pageParm.getTranslatedText());
         }
 
-        GL11.glAlphaFunc(516, 0.1F);
+        GlStateManager.alphaFunc(516, 0.1F);
         GL11.glPopAttrib();
     }
 
@@ -325,11 +344,11 @@ public class GuiResearchRecipe extends GuiScreen {
             int xoff = 64 - (dx * 16 + dz * 16) / 2;
             int yoff = -dy * 25;
             List<ItemStack> items = (List) r.get(4);
-            GL11.glPushMatrix();
+            GlStateManager.pushMatrix();
             int start = side * 152;
-            String text = StatCollector.translateToLocal("recipe.type.construct");
-            int offset = this.fontRendererObj.getStringWidth(text);
-            this.fontRendererObj.drawString(text, x + start + 56 - offset / 2, y, 5263440);
+            String text = I18n.translateToLocal("recipe.type.construct");
+            int offset = this.fontRenderer.getStringWidth(text);
+            this.fontRenderer.drawString(text, x + start + 56 - offset / 2, y, 5263440);
             int mposx = mx;
             int mposy = my;
             if (aspects != null && aspects.size() > 0) {
@@ -346,7 +365,7 @@ public class GuiResearchRecipe extends GuiScreen {
                     int tx = x + start + 14 + 18 * count + (5 - aspects.size()) * 8;
                     int ty = y + 182;
                     if (mposx >= tx && mposy >= ty && mposx < tx + 16 && mposy < ty + 16) {
-                        this.drawCustomTooltip(this, itemRenderer, this.fontRendererObj, Arrays.asList(tag.getName(), tag.getLocalizedDescription()), mx, my - 8, 11);
+                        this.drawCustomTooltip(this, getItemRenderer(), this.fontRenderer, Arrays.asList(tag.getName(), tag.getLocalizedDescription()), mx, my - 8, 11);
                     }
 
                     ++count;
@@ -354,36 +373,36 @@ public class GuiResearchRecipe extends GuiScreen {
             }
 
             UtilsFX.bindTexture(this.tex2);
-            GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+            GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
             RenderHelper.enableGUIStandardItemLighting();
-            GL11.glDisable(2896);
+            GlStateManager.disableLighting();
             if (aspects != null && aspects.size() > 0) {
-                GL11.glPushMatrix();
-                GL11.glColor4f(1.0F, 1.0F, 1.0F, 0.4F);
-                GL11.glEnable(GL11.GL_BLEND);
-                GL11.glTranslatef((float) (x + start), (float) (y + 174), 0.0F);
-                GL11.glScalef(2.0F, 2.0F, 1.0F);
+                GlStateManager.pushMatrix();
+                GlStateManager.color(1.0F, 1.0F, 1.0F, 0.4F);
+                GlStateManager.enableBlend();
+                GlStateManager.translate((float) (x + start), (float) (y + 174), 0.0F);
+                GlStateManager.scale(2.0F, 2.0F, 1.0F);
                 this.drawTexturedModalRect(0, 0, 68, 76, 12, 12);
-                GL11.glPopMatrix();
+                GlStateManager.popMatrix();
             }
 
-            GL11.glPushMatrix();
+            GlStateManager.pushMatrix();
             float sz = 0.0F;
             if (dy > 3) {
                 sz = (float) (dy - 3) * 0.2F;
-                GL11.glTranslatef((float) (x + start) + (float) xoff * (1.0F + sz), (float) (y + 108) + (float) yoff * (1.0F - sz), 0.0F);
-                GL11.glScalef(1.0F - sz, 1.0F - sz, 1.0F - sz);
+                GlStateManager.translate((float) (x + start) + (float) xoff * (1.0F + sz), (float) (y + 108) + (float) yoff * (1.0F - sz), 0.0F);
+                GlStateManager.scale(1.0F - sz, 1.0F - sz, 1.0F - sz);
             } else {
-                GL11.glTranslatef((float) (x + start + xoff), (float) (y + 108 + yoff), 0.0F);
+                GlStateManager.translate((float) (x + start + xoff), (float) (y + 108 + yoff), 0.0F);
             }
 
-            GL11.glPushMatrix();
-            GL11.glColor4f(1.0F, 1.0F, 1.0F, 0.5F);
-            GL11.glEnable(GL11.GL_BLEND);
-            GL11.glTranslatef((float) (-8 - xoff), (float) (-119 + Math.max(3 - dx, 3 - dz) * 8 + dx * 4 + dz * 4 + dy * 50), 0.0F);
-            GL11.glScalef(2.0F, 2.0F, 1.0F);
+            GlStateManager.pushMatrix();
+            GlStateManager.color(1.0F, 1.0F, 1.0F, 0.5F);
+            GlStateManager.enableBlend();
+            GlStateManager.translate((float) (-8 - xoff), (float) (-119 + Math.max(3 - dx, 3 - dz) * 8 + dx * 4 + dz * 4 + dy * 50), 0.0F);
+            GlStateManager.scale(2.0F, 2.0F, 1.0F);
             this.drawTexturedModalRect(0, 0, 0, 72, 64, 44);
-            GL11.glPopMatrix();
+            GlStateManager.popMatrix();
             int count = 0;
 
             for (int j = 0; j < dy; ++j) {
@@ -391,25 +410,25 @@ public class GuiResearchRecipe extends GuiScreen {
                     for (int i = dx - 1; i >= 0; --i) {
                         int px = i * 16 + k * 16;
                         int py = -i * 8 + k * 8 + j * 50;
-                        GL11.glPushMatrix();
-                        GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+                        GlStateManager.pushMatrix();
+                        GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
                         RenderHelper.enableGUIStandardItemLighting();
-                        GL11.glEnable(2884);
-                        GL11.glTranslatef(0.0F, 0.0F, (float) (60 - j * 10));
+                        GlStateManager.enableCull();
+                        GlStateManager.translate(0.0F, 0.0F, (float) (60 - j * 10));
                         if (items.get(count) != null) {
-                            itemRenderer.renderItemAndEffectIntoGUI(this.mc.fontRenderer, this.mc.renderEngine, InventoryUtils.cycleItemStack(items.get(count)), px, py);
-                            itemRenderer.renderItemOverlayIntoGUI(this.mc.fontRenderer, this.mc.renderEngine, InventoryUtils.cycleItemStack(items.get(count)).copy().splitStack(1), px, py);
+                            safeRenderItem(InventoryUtils.cycleItemStack(items.get(count)), px, py);
+                            safeRenderItemOverlay(this.mc.fontRenderer, InventoryUtils.cycleItemStack(items.get(count)), px, py, null);
                         }
 
                         RenderHelper.disableStandardItemLighting();
-                        GL11.glPopMatrix();
+                        GlStateManager.popMatrix();
                         ++count;
                     }
                 }
             }
 
-            GL11.glEnable(2896);
-            GL11.glPopMatrix();
+            GlStateManager.enableLighting();
+            GlStateManager.popMatrix();
             count = 0;
 
             for (int j = 0; j < dy; ++j) {
@@ -418,16 +437,16 @@ public class GuiResearchRecipe extends GuiScreen {
                         int px = (int) ((float) (x + start) + (float) xoff * (1.0F + sz) + (float) (i * 16) * (1.0F - sz) + (float) (k * 16) * (1.0F - sz));
                         int py = (int) ((float) (y + 108) + (float) yoff * (1.0F - sz) - (float) (i * 8) * (1.0F - sz) + (float) (k * 8) * (1.0F - sz) + (float) (j * 50) * (1.0F - sz));
                         if (items.get(count) != null && mposx >= px && mposy >= py && (float) mposx < (float) px + 16.0F * (1.0F - sz) && (float) mposy < (float) py + 16.0F * (1.0F - sz)) {
-                            List addtext = InventoryUtils.cycleItemStack(items.get(count)).getTooltip(this.mc.thePlayer, this.mc.gameSettings.advancedItemTooltips);
+                            List addtext = InventoryUtils.cycleItemStack(items.get(count)).getTooltip(this.mc.player, this.mc.gameSettings.advancedItemTooltips ? net.minecraft.client.util.ITooltipFlag.TooltipFlags.ADVANCED : net.minecraft.client.util.ITooltipFlag.TooltipFlags.NORMAL);
                             Object[] ref = this.findRecipeReference(InventoryUtils.cycleItemStack(items.get(count)));
                             if (ref != null && !ref[0].equals(this.research.key)) {
-                                addtext.add("§8§o" + StatCollector.translateToLocal("recipe.clickthrough"));
+                                addtext.add("§8§o" + I18n.translateToLocal("recipe.clickthrough"));
                                 this.reference.add(
                                         Arrays.asList(mx, my, (String) ref[0], (Integer) ref[1])
                                 );
                             }
 
-                            this.drawCustomTooltip(this, itemRenderer, this.fontRendererObj, addtext, mx, my, 11);
+                            this.drawCustomTooltip(this, getItemRenderer(), this.fontRenderer, addtext, mx, my, 11);
                         }
 
                         ++count;
@@ -435,14 +454,14 @@ public class GuiResearchRecipe extends GuiScreen {
                 }
             }
 
-            GL11.glPopMatrix();
+            GlStateManager.popMatrix();
         }
 
     }
 
     private void drawAspectPage(int side, int x, int y, int mx, int my, AspectList aspects) {
         if (aspects != null && aspects.size() > 0) {
-            GL11.glPushMatrix();
+            GlStateManager.pushMatrix();
             int start = side * 152;
             int mposx = mx;
             int mposy = my;
@@ -450,43 +469,43 @@ public class GuiResearchRecipe extends GuiScreen {
 
             for (Aspect aspect : aspects.getAspectsSorted()) {
                 if (aspect.getImage() != null) {
-                    GL11.glPushMatrix();
+                    GlStateManager.pushMatrix();
                     int tx = x + start;
                     int ty = y + count * 50;
                     if (mposx >= tx && mposy >= ty && mposx < tx + 40 && mposy < ty + 40) {
                         UtilsFX.bindTexture("textures/aspects/_back.png");
-                        GL11.glPushMatrix();
-                        GL11.glEnable(GL11.GL_BLEND);
-                        GL11.glBlendFunc(770, 771);
-                        GL11.glTranslated(x + start - 5, y + count * 50 - 5, 0.0F);
-                        GL11.glScaled(2.5F, 2.5F, 0.0F);
+                        GlStateManager.pushMatrix();
+                        GlStateManager.enableBlend();
+                        GlStateManager.blendFunc(770, 771);
+                        GlStateManager.translate(x + start - 5, y + count * 50 - 5, 0.0F);
+                        GlStateManager.scale(2.5F, 2.5F, 0.0F);
                         UtilsFX.drawTexturedQuadFull(0, 0, this.zLevel);
-                        GL11.glDisable(GL11.GL_BLEND);
-                        GL11.glPopMatrix();
+                        GlStateManager.disableBlend();
+                        GlStateManager.popMatrix();
                     }
 
-                    GL11.glScalef(2.0F, 2.0F, 2.0F);
+                    GlStateManager.scale(2.0F, 2.0F, 2.0F);
                     UtilsFX.drawTag((x + start) / 2, (y + count * 50) / 2, aspect, (float) aspects.getAmount(aspect), 0, this.zLevel);
-                    GL11.glPopMatrix();
+                    GlStateManager.popMatrix();
                     String text = aspect.getName();
                     int offset = this.fr.getStringWidth(text) / 2;
                     this.fr.drawString(text, x + start + 16 - offset, y + 33 + count * 50, 5263440);
                     if (aspect.getComponents() != null) {
-                        GL11.glPushMatrix();
-                        GL11.glScalef(1.5F, 1.5F, 1.5F);
+                        GlStateManager.pushMatrix();
+                        GlStateManager.scale(1.5F, 1.5F, 1.5F);
                         UtilsFX.drawTag((int) ((float) (x + start + 54) / 1.5F), (int) ((float) (y + 4 + count * 50) / 1.5F), aspect.getComponents()[0], 0.0F, 0, this.zLevel);
                         UtilsFX.drawTag((int) ((float) (x + start + 96) / 1.5F), (int) ((float) (y + 4 + count * 50) / 1.5F), aspect.getComponents()[1], 0.0F, 0, this.zLevel);
-                        GL11.glPopMatrix();
+                        GlStateManager.popMatrix();
                         text = aspect.getComponents()[0].getName();
                         offset = this.fr.getStringWidth(text) / 2;
                         this.fr.drawString("§o" + text, x + start + 16 - offset + 50, y + 30 + count * 50, 5263440);
                         text = aspect.getComponents()[1].getName();
                         offset = this.fr.getStringWidth(text) / 2;
                         this.fr.drawString("§o" + text, x + start + 16 - offset + 92, y + 30 + count * 50, 5263440);
-                        this.fontRendererObj.drawString("=", x + start + 7 + 32, y + 12 + count * 50, 10066329);
-                        this.fontRendererObj.drawString("+", x + start + 4 + 79, y + 12 + count * 50, 10066329);
+                        this.fontRenderer.drawString("=", x + start + 7 + 32, y + 12 + count * 50, 10066329);
+                        this.fontRenderer.drawString("+", x + start + 4 + 79, y + 12 + count * 50, 10066329);
                     } else {
-                        this.fr.drawString(StatCollector.translateToLocal("tc.aspect.primal"), x + start + 48, y + 12 + count * 50, 4473924);
+                        this.fr.drawString(I18n.translateToLocal("tc.aspect.primal"), x + start + 48, y + 12 + count * 50, 4473924);
                     }
                 }
 
@@ -505,14 +524,14 @@ public class GuiResearchRecipe extends GuiScreen {
                         int ycount = 0;
 
                         for (ItemStack item : items) {
-                            GL11.glPushMatrix();
-                            GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+                            GlStateManager.pushMatrix();
+                            GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
                             RenderHelper.enableGUIStandardItemLighting();
-                            GL11.glEnable(2884);
-                            itemRenderer.renderItemAndEffectIntoGUI(this.mc.fontRenderer, this.mc.renderEngine, InventoryUtils.cycleItemStack(item), mposx + 8 + xcount * 17, 17 * ycount + (mposy - (4 + items.size() / 8 * 8)));
-                            itemRenderer.renderItemOverlayIntoGUI(this.mc.fontRenderer, this.mc.renderEngine, InventoryUtils.cycleItemStack(item), mposx + 8 + xcount * 17, 17 * ycount + (mposy - (4 + items.size() / 8 * 8)));
+                            GlStateManager.enableCull();
+                            safeRenderItem(InventoryUtils.cycleItemStack(item), mposx + 8 + xcount * 17, 17 * ycount + (mposy - (4 + items.size() / 8 * 8)));
+                            safeRenderItemOverlay(this.mc.fontRenderer, InventoryUtils.cycleItemStack(item), mposx + 8 + xcount * 17, 17 * ycount + (mposy - (4 + items.size() / 8 * 8)), null);
                             RenderHelper.disableStandardItemLighting();
-                            GL11.glPopMatrix();
+                            GlStateManager.popMatrix();
                             ++xcount;
                             if (xcount >= 8) {
                                 xcount = 0;
@@ -520,14 +539,14 @@ public class GuiResearchRecipe extends GuiScreen {
                             }
                         }
 
-                        GL11.glEnable(2896);
+                        GlStateManager.enableLighting();
                     }
                 }
 
                 ++count;
             }
 
-            GL11.glPopMatrix();
+            GlStateManager.popMatrix();
         }
 
     }
@@ -553,24 +572,24 @@ public class GuiResearchRecipe extends GuiScreen {
         }
 
         if (recipe != null) {
-            GL11.glPushMatrix();
+            GlStateManager.pushMatrix();
             int start = side * 152;
             UtilsFX.bindTexture(this.tex2);
-            GL11.glPushMatrix();
-            GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
-            GL11.glEnable(GL11.GL_BLEND);
-            GL11.glTranslatef((float) (x + start), (float) y, 0.0F);
-            GL11.glScalef(2.0F, 2.0F, 1.0F);
+            GlStateManager.pushMatrix();
+            GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
+            GlStateManager.enableBlend();
+            GlStateManager.translate((float) (x + start), (float) y, 0.0F);
+            GlStateManager.scale(2.0F, 2.0F, 1.0F);
             this.drawTexturedModalRect(2, 27, 112, 15, 52, 52);
             this.drawTexturedModalRect(20, 7, 20, 3, 16, 16);
-            GL11.glPopMatrix();
-            GL11.glPushMatrix();
-            GL11.glColor4f(1.0F, 1.0F, 1.0F, 0.4F);
-            GL11.glEnable(GL11.GL_BLEND);
-            GL11.glTranslatef((float) (x + start), (float) (y + 164), 0.0F);
-            GL11.glScalef(2.0F, 2.0F, 1.0F);
+            GlStateManager.popMatrix();
+            GlStateManager.pushMatrix();
+            GlStateManager.color(1.0F, 1.0F, 1.0F, 0.4F);
+            GlStateManager.enableBlend();
+            GlStateManager.translate((float) (x + start), (float) (y + 164), 0.0F);
+            GlStateManager.scale(2.0F, 2.0F, 1.0F);
             this.drawTexturedModalRect(0, 0, 68, 76, 12, 12);
-            GL11.glPopMatrix();
+            GlStateManager.popMatrix();
             int mposx = mx;
             int mposy = my;
             AspectList tags = recipe.getAspects();
@@ -588,30 +607,30 @@ public class GuiResearchRecipe extends GuiScreen {
                     int tx = x + start + 14 + 18 * count + (5 - tags.size()) * 8;
                     int ty = y + 172;
                     if (mposx >= tx && mposy >= ty && mposx < tx + 16 && mposy < ty + 16) {
-                        this.drawCustomTooltip(this, itemRenderer, this.fontRendererObj, Arrays.asList(tag.getName(), tag.getLocalizedDescription()), mx, my - 8, 11);
+                        this.drawCustomTooltip(this, getItemRenderer(), this.fontRenderer, Arrays.asList(tag.getName(), tag.getLocalizedDescription()), mx, my - 8, 11);
                     }
 
                     ++count;
                 }
             }
 
-            GL11.glPushMatrix();
-            GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
-            GL11.glTranslated(0.0F, 0.0F, 100.0F);
+            GlStateManager.pushMatrix();
+            GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
+            GlStateManager.translate(0.0F, 0.0F, 100.0F);
             RenderHelper.enableGUIStandardItemLighting();
-            GL11.glEnable(2884);
-            itemRenderer.renderItemAndEffectIntoGUI(this.mc.fontRenderer, this.mc.renderEngine, InventoryUtils.cycleItemStack(recipe.getRecipeOutput()), x + 48 + start, y + 22);
-            itemRenderer.renderItemOverlayIntoGUI(this.mc.fontRenderer, this.mc.renderEngine, InventoryUtils.cycleItemStack(recipe.getRecipeOutput()), x + 48 + start, y + 22);
+            GlStateManager.enableCull();
+            safeRenderItem(InventoryUtils.cycleItemStack(recipe.getRecipeOutput()), x + 48 + start, y + 22);
+            safeRenderItemOverlay(this.mc.fontRenderer, InventoryUtils.cycleItemStack(recipe.getRecipeOutput()), x + 48 + start, y + 22, null);
             RenderHelper.disableStandardItemLighting();
-            GL11.glEnable(2896);
-            GL11.glPopMatrix();
+            GlStateManager.enableLighting();
+            GlStateManager.popMatrix();
             if (mposx >= x + 48 + start && mposy >= y + 27 && mposx < x + 48 + start + 16 && mposy < y + 27 + 16) {
-                this.drawCustomTooltip(this, itemRenderer, this.fontRendererObj, InventoryUtils.cycleItemStack(recipe.getRecipeOutput()).getTooltip(this.mc.thePlayer, this.mc.gameSettings.advancedItemTooltips), mx, my, 11);
+                this.drawCustomTooltip(this, getItemRenderer(), this.fontRenderer, InventoryUtils.cycleItemStack(recipe.getRecipeOutput()).getTooltip(this.mc.player, this.mc.gameSettings.advancedItemTooltips ? net.minecraft.client.util.ITooltipFlag.TooltipFlags.ADVANCED : net.minecraft.client.util.ITooltipFlag.TooltipFlags.NORMAL), mx, my, 11);
             }
 
-            String text = StatCollector.translateToLocal("recipe.type.arcane");
-            int offset = this.fontRendererObj.getStringWidth(text);
-            this.fontRendererObj.drawString(text, x + start + 56 - offset / 2, y, 5263440);
+            String text = I18n.translateToLocal("recipe.type.arcane");
+            int offset = this.fontRenderer.getStringWidth(text);
+            this.fontRenderer.drawString(text, x + start + 56 - offset / 2, y, 5263440);
             if (recipe != null && recipe instanceof ShapedArcaneRecipe) {
                 int rw = ((ShapedArcaneRecipe) recipe).width;
                 int rh = ((ShapedArcaneRecipe) recipe).height;
@@ -620,16 +639,16 @@ public class GuiResearchRecipe extends GuiScreen {
                 for (int i = 0; i < rw && i < 3; ++i) {
                     for (int j = 0; j < rh && j < 3; ++j) {
                         if (items[i + j * rw] != null) {
-                            GL11.glPushMatrix();
-                            GL11.glTranslated(0.0F, 0.0F, 100.0F);
-                            GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+                            GlStateManager.pushMatrix();
+                            GlStateManager.translate(0.0F, 0.0F, 100.0F);
+                            GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
                             RenderHelper.enableGUIStandardItemLighting();
-                            GL11.glEnable(2884);
-                            itemRenderer.renderItemAndEffectIntoGUI(this.mc.fontRenderer, this.mc.renderEngine, InventoryUtils.cycleItemStack(items[i + j * rw]), x + start + 16 + i * 32, y + 66 + j * 32);
-                            itemRenderer.renderItemOverlayIntoGUI(this.mc.fontRenderer, this.mc.renderEngine, InventoryUtils.cycleItemStack(items[i + j * rw]).copy().splitStack(1), x + start + 16 + i * 32, y + 66 + j * 32);
+                            GlStateManager.enableCull();
+                            safeRenderItem(InventoryUtils.cycleItemStack(items[i + j * rw]), x + start + 16 + i * 32, y + 66 + j * 32);
+                            safeRenderItemOverlay(this.mc.fontRenderer, InventoryUtils.cycleItemStack(items[i + j * rw]), x + start + 16 + i * 32, y + 66 + j * 32, null);
                             RenderHelper.disableStandardItemLighting();
-                            GL11.glEnable(2896);
-                            GL11.glPopMatrix();
+                            GlStateManager.enableLighting();
+                            GlStateManager.popMatrix();
                         }
                     }
                 }
@@ -637,14 +656,14 @@ public class GuiResearchRecipe extends GuiScreen {
                 for (int i = 0; i < rw && i < 3; ++i) {
                     for (int j = 0; j < rh && j < 3; ++j) {
                         if (items[i + j * rw] != null && mposx >= x + 16 + start + i * 32 && mposy >= y + 66 + j * 32 && mposx < x + 16 + start + i * 32 + 16 && mposy < y + 66 + j * 32 + 16) {
-                            List addtext = InventoryUtils.cycleItemStack(items[i + j * rw]).getTooltip(this.mc.thePlayer, this.mc.gameSettings.advancedItemTooltips);
+                            List addtext = InventoryUtils.cycleItemStack(items[i + j * rw]).getTooltip(this.mc.player, this.mc.gameSettings.advancedItemTooltips ? net.minecraft.client.util.ITooltipFlag.TooltipFlags.ADVANCED : net.minecraft.client.util.ITooltipFlag.TooltipFlags.NORMAL);
                             Object[] ref = this.findRecipeReference(InventoryUtils.cycleItemStack(items[i + j * rw]));
                             if (ref != null && !ref[0].equals(this.research.key)) {
-                                addtext.add("§8§o" + StatCollector.translateToLocal("recipe.clickthrough"));
+                                addtext.add("§8§o" + I18n.translateToLocal("recipe.clickthrough"));
                                 this.reference.add(Arrays.asList(mx, my, (String) ref[0], (Integer) ref[1]));
                             }
 
-                            this.drawCustomTooltip(this, itemRenderer, this.fontRendererObj, addtext, mx, my, 11);
+                            this.drawCustomTooltip(this, getItemRenderer(), this.fontRenderer, addtext, mx, my, 11);
                         }
                     }
                 }
@@ -655,34 +674,34 @@ public class GuiResearchRecipe extends GuiScreen {
 
                 for (int i = 0; i < items.size() && i < 9; ++i) {
                     if (items.get(i) != null) {
-                        GL11.glPushMatrix();
-                        GL11.glTranslated(0.0F, 0.0F, 100.0F);
-                        GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+                        GlStateManager.pushMatrix();
+                        GlStateManager.translate(0.0F, 0.0F, 100.0F);
+                        GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
                         RenderHelper.enableGUIStandardItemLighting();
-                        GL11.glEnable(2884);
-                        itemRenderer.renderItemAndEffectIntoGUI(this.mc.fontRenderer, this.mc.renderEngine, InventoryUtils.cycleItemStack(items.get(i)), x + start + 16 + i % 3 * 32, y + 66 + i / 3 * 32);
-                        itemRenderer.renderItemOverlayIntoGUI(this.mc.fontRenderer, this.mc.renderEngine, InventoryUtils.cycleItemStack(items.get(i)), x + start + 16 + i % 3 * 32, y + 66 + i / 3 * 32);
+                        GlStateManager.enableCull();
+                        safeRenderItem(InventoryUtils.cycleItemStack(items.get(i)), x + start + 16 + i % 3 * 32, y + 66 + i / 3 * 32);
+                        safeRenderItemOverlay(this.mc.fontRenderer, InventoryUtils.cycleItemStack(items.get(i)), x + start + 16 + i % 3 * 32, y + 66 + i / 3 * 32, null);
                         RenderHelper.disableStandardItemLighting();
-                        GL11.glEnable(2896);
-                        GL11.glPopMatrix();
+                        GlStateManager.enableLighting();
+                        GlStateManager.popMatrix();
                     }
                 }
 
                 for (int i = 0; i < items.size() && i < 9; ++i) {
                     if (items.get(i) != null && mposx >= x + 16 + start + i % 3 * 32 && mposy >= y + 66 + i / 3 * 32 && mposx < x + 16 + start + i % 3 * 32 + 16 && mposy < y + 66 + i / 3 * 32 + 16) {
-                        List addtext = InventoryUtils.cycleItemStack(items.get(i)).getTooltip(this.mc.thePlayer, this.mc.gameSettings.advancedItemTooltips);
+                        List addtext = InventoryUtils.cycleItemStack(items.get(i)).getTooltip(this.mc.player, this.mc.gameSettings.advancedItemTooltips ? net.minecraft.client.util.ITooltipFlag.TooltipFlags.ADVANCED : net.minecraft.client.util.ITooltipFlag.TooltipFlags.NORMAL);
                         Object[] ref = this.findRecipeReference(InventoryUtils.cycleItemStack(items.get(i)));
                         if (ref != null && !ref[0].equals(this.research.key)) {
-                            addtext.add("§8§o" + StatCollector.translateToLocal("recipe.clickthrough"));
+                            addtext.add("§8§o" + I18n.translateToLocal("recipe.clickthrough"));
                             this.reference.add(Arrays.asList(mx, my, (String) ref[0], (Integer) ref[1]));
                         }
 
-                        this.drawCustomTooltip(this, itemRenderer, this.fontRendererObj, addtext, mx, my, 11);
+                        this.drawCustomTooltip(this, getItemRenderer(), this.fontRenderer, addtext, mx, my, 11);
                     }
                 }
             }
 
-            GL11.glPopMatrix();
+            GlStateManager.popMatrix();
         }
     }
 
@@ -711,125 +730,130 @@ public class GuiResearchRecipe extends GuiScreen {
         }
 
         if (recipe != null) {
-            GL11.glPushMatrix();
+            GlStateManager.pushMatrix();
             int start = side * 152;
             UtilsFX.bindTexture(this.tex2);
-            GL11.glPushMatrix();
-            GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
-            GL11.glEnable(GL11.GL_BLEND);
-            GL11.glTranslatef((float) (x + start), (float) y, 0.0F);
-            GL11.glScalef(2.0F, 2.0F, 1.0F);
+            GlStateManager.pushMatrix();
+            GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
+            GlStateManager.enableBlend();
+            GlStateManager.translate((float) (x + start), (float) y, 0.0F);
+            GlStateManager.scale(2.0F, 2.0F, 1.0F);
             this.drawTexturedModalRect(2, 32, 60, 15, 52, 52);
             this.drawTexturedModalRect(20, 12, 20, 3, 16, 16);
-            GL11.glPopMatrix();
+            GlStateManager.popMatrix();
             int mposx = mx;
             int mposy = my;
-            GL11.glPushMatrix();
-            GL11.glTranslated(0.0F, 0.0F, 100.0F);
-            GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+            GlStateManager.pushMatrix();
+            GlStateManager.translate(0.0F, 0.0F, 100.0F);
+            GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
             RenderHelper.enableGUIStandardItemLighting();
-            GL11.glEnable(2884);
-            itemRenderer.renderItemAndEffectIntoGUI(this.mc.fontRenderer, this.mc.renderEngine, InventoryUtils.cycleItemStack(recipe.getRecipeOutput()), x + 48 + start, y + 32);
-            itemRenderer.renderItemOverlayIntoGUI(this.mc.fontRenderer, this.mc.renderEngine, InventoryUtils.cycleItemStack(recipe.getRecipeOutput()), x + 48 + start, y + 32);
+            GlStateManager.enableCull();
+            safeRenderItem(InventoryUtils.cycleItemStack(recipe.getRecipeOutput()), x + 48 + start, y + 32);
+            safeRenderItemOverlay(this.mc.fontRenderer, InventoryUtils.cycleItemStack(recipe.getRecipeOutput()), x + 48 + start, y + 32, null);
             RenderHelper.disableStandardItemLighting();
-            GL11.glEnable(2896);
-            GL11.glPopMatrix();
+            GlStateManager.enableLighting();
+            GlStateManager.popMatrix();
             if (mx >= x + 48 + start && my >= y + 32 && mx < x + 48 + start + 16 && my < y + 32 + 16) {
-                this.drawCustomTooltip(this, itemRenderer, this.fontRendererObj, InventoryUtils.cycleItemStack(recipe.getRecipeOutput()).getTooltip(this.mc.thePlayer, this.mc.gameSettings.advancedItemTooltips), mx, my, 11);
+                this.drawCustomTooltip(this, getItemRenderer(), this.fontRenderer, InventoryUtils.cycleItemStack(recipe.getRecipeOutput()).getTooltip(this.mc.player, this.mc.gameSettings.advancedItemTooltips ? net.minecraft.client.util.ITooltipFlag.TooltipFlags.ADVANCED : net.minecraft.client.util.ITooltipFlag.TooltipFlags.NORMAL), mx, my, 11);
             }
 
             if (recipe != null && (recipe instanceof ShapedRecipes || recipe instanceof ShapedOreRecipe)) {
-                String text = StatCollector.translateToLocal("recipe.type.workbench");
-                int offset = this.fontRendererObj.getStringWidth(text);
-                this.fontRendererObj.drawString(text, x + start + 56 - offset / 2, y, 5263440);
+                String text = I18n.translateToLocal("recipe.type.workbench");
+                int offset = this.fontRenderer.getStringWidth(text);
+                this.fontRenderer.drawString(text, x + start + 56 - offset / 2, y, 5263440);
                 int rw = 0;
                 int rh = 0;
-                Object[] items = null;
+                @SuppressWarnings("unchecked") java.util.List items = null;
                 if (recipe instanceof ShapedRecipes) {
                     rw = ((ShapedRecipes) recipe).recipeWidth;
                     rh = ((ShapedRecipes) recipe).recipeHeight;
-                    items = ((ShapedRecipes) recipe).recipeItems;
+                    items = (java.util.List)((ShapedRecipes) recipe).recipeItems;
                 } else {
                     rw = ObfuscationReflectionHelper.getPrivateValue(ShapedOreRecipe.class, (ShapedOreRecipe) recipe, new String[]{"width"});
                     rh = ObfuscationReflectionHelper.getPrivateValue(ShapedOreRecipe.class, (ShapedOreRecipe) recipe, new String[]{"height"});
-                    items = ((ShapedOreRecipe) recipe).getInput();
+                    items = (java.util.List)((ShapedOreRecipe) recipe).getIngredients();
                 }
 
                 for (int i = 0; i < rw && i < 3; ++i) {
                     for (int j = 0; j < rh && j < 3; ++j) {
-                        if (items[i + j * rw] != null) {
-                            GL11.glPushMatrix();
-                            GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+                        if (items.get(i + j * rw) != null) {
+                            GlStateManager.pushMatrix();
+                            GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
                             RenderHelper.enableGUIStandardItemLighting();
-                            GL11.glEnable(2884);
-                            GL11.glTranslated(0.0F, 0.0F, 100.0F);
-                            itemRenderer.renderItemAndEffectIntoGUI(this.mc.fontRenderer, this.mc.renderEngine, InventoryUtils.cycleItemStack(items[i + j * rw]), x + start + 16 + i * 32, y + 76 + j * 32);
-                            itemRenderer.renderItemOverlayIntoGUI(this.mc.fontRenderer, this.mc.renderEngine, InventoryUtils.cycleItemStack(items[i + j * rw]).copy().splitStack(1), x + start + 16 + i * 32, y + 76 + j * 32);
+                            GlStateManager.enableCull();
+                            GlStateManager.translate(0.0F, 0.0F, 100.0F);
+                            safeRenderItem(InventoryUtils.cycleItemStack(items.get(i + j * rw)), x + start + 16 + i * 32, y + 76 + j * 32);
+                            safeRenderItemOverlay(this.mc.fontRenderer, InventoryUtils.cycleItemStack(items.get(i + j * rw)), x + start + 16 + i * 32, y + 76 + j * 32, null);
                             RenderHelper.disableStandardItemLighting();
-                            GL11.glEnable(2896);
-                            GL11.glPopMatrix();
+                            GlStateManager.enableLighting();
+                            GlStateManager.popMatrix();
                         }
                     }
                 }
 
                 for (int i = 0; i < rw && i < 3; ++i) {
                     for (int j = 0; j < rh && j < 3; ++j) {
-                        if (items[i + j * rw] != null && mposx >= x + 16 + start + i * 32 && mposy >= y + 76 + j * 32 && mposx < x + 16 + start + i * 32 + 16 && mposy < y + 76 + j * 32 + 16) {
-                            List addtext = InventoryUtils.cycleItemStack(items[i + j * rw]).getTooltip(this.mc.thePlayer, this.mc.gameSettings.advancedItemTooltips);
-                            Object[] ref = this.findRecipeReference(InventoryUtils.cycleItemStack(items[i + j * rw]));
+                        if (items.get(i + j * rw) != null && mposx >= x + 16 + start + i * 32 && mposy >= y + 76 + j * 32 && mposx < x + 16 + start + i * 32 + 16 && mposy < y + 76 + j * 32 + 16) {
+                            List addtext = InventoryUtils.cycleItemStack(items.get(i + j * rw)).getTooltip(this.mc.player, this.mc.gameSettings.advancedItemTooltips ? net.minecraft.client.util.ITooltipFlag.TooltipFlags.ADVANCED : net.minecraft.client.util.ITooltipFlag.TooltipFlags.NORMAL);
+                            Object[] ref = this.findRecipeReference(InventoryUtils.cycleItemStack(items.get(i + j * rw)));
                             if (ref != null && !ref[0].equals(this.research.key)) {
-                                addtext.add("§8§o" + StatCollector.translateToLocal("recipe.clickthrough"));
+                                addtext.add("§8§o" + I18n.translateToLocal("recipe.clickthrough"));
                                 this.reference.add(Arrays.asList(mx, my, (String) ref[0], (Integer) ref[1]));
                             }
 
-                            this.drawCustomTooltip(this, itemRenderer, this.fontRendererObj, addtext, mx, my, 11);
+                            this.drawCustomTooltip(this, getItemRenderer(), this.fontRenderer, addtext, mx, my, 11);
                         }
                     }
                 }
             }
 
             if (recipe != null && (recipe instanceof ShapelessRecipes || recipe instanceof ShapelessOreRecipe)) {
-                String text = StatCollector.translateToLocal("recipe.type.workbenchshapeless");
-                int offset = this.fontRendererObj.getStringWidth(text);
-                this.fontRendererObj.drawString(text, x + start + 56 - offset / 2, y, 5263440);
+                String text = I18n.translateToLocal("recipe.type.workbenchshapeless");
+                int offset = this.fontRenderer.getStringWidth(text);
+                this.fontRenderer.drawString(text, x + start + 56 - offset / 2, y, 5263440);
                 List<Object> items = null;
                 Object var27;
                 if (recipe instanceof ShapelessRecipes) {
                     var27 = ((ShapelessRecipes) recipe).recipeItems;
                 } else {
-                    var27 = ((ShapelessOreRecipe) recipe).getInput();
+                    var27 = ((ShapelessOreRecipe) recipe).getIngredients();
                 }
 
                 for (int i = 0; i < ((List) var27).size() && i < 9; ++i) {
                     if (((List) var27).get(i) != null) {
-                        GL11.glPushMatrix();
-                        GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
-                        RenderHelper.enableGUIStandardItemLighting();
-                        GL11.glEnable(2884);
-                        GL11.glTranslated(0.0F, 0.0F, 100.0F);
-                        itemRenderer.renderItemAndEffectIntoGUI(this.mc.fontRenderer, this.mc.renderEngine, InventoryUtils.cycleItemStack(((List) var27).get(i)), x + start + 16 + i % 3 * 32, y + 76 + i / 3 * 32);
-                        itemRenderer.renderItemOverlayIntoGUI(this.mc.fontRenderer, this.mc.renderEngine, InventoryUtils.cycleItemStack(((List) var27).get(i)).copy().splitStack(1), x + start + 16 + i % 3 * 32, y + 76 + i / 3 * 32);
-                        RenderHelper.disableStandardItemLighting();
-                        GL11.glEnable(2896);
-                        GL11.glPopMatrix();
+                        ItemStack cycled = InventoryUtils.cycleItemStack(((List) var27).get(i));
+                        if (cycled != null && !cycled.isEmpty()) {
+                            GlStateManager.pushMatrix();
+                            GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
+                            RenderHelper.enableGUIStandardItemLighting();
+                            GlStateManager.enableCull();
+                            GlStateManager.translate(0.0F, 0.0F, 100.0F);
+                            try {
+                                safeRenderItem(cycled, x + start + 16 + i % 3 * 32, y + 76 + i / 3 * 32);
+                                safeRenderItemOverlay(this.mc.fontRenderer, cycled, x + start + 16 + i % 3 * 32, y + 76 + i / 3 * 32, null);
+                            } catch (Exception ignored) {}
+                            RenderHelper.disableStandardItemLighting();
+                            GlStateManager.enableLighting();
+                            GlStateManager.popMatrix();
+                        }
                     }
                 }
 
                 for (int i = 0; i < ((List) var27).size() && i < 9; ++i) {
                     if (((List) var27).get(i) != null && mposx >= x + 16 + start + i % 3 * 32 && mposy >= y + 76 + i / 3 * 32 && mposx < x + 16 + start + i % 3 * 32 + 16 && mposy < y + 76 + i / 3 * 32 + 16) {
-                        List addtext = InventoryUtils.cycleItemStack(((List) var27).get(i)).getTooltip(this.mc.thePlayer, this.mc.gameSettings.advancedItemTooltips);
+                        List addtext = InventoryUtils.cycleItemStack(((List) var27).get(i)).getTooltip(this.mc.player, this.mc.gameSettings.advancedItemTooltips ? net.minecraft.client.util.ITooltipFlag.TooltipFlags.ADVANCED : net.minecraft.client.util.ITooltipFlag.TooltipFlags.NORMAL);
                         Object[] ref = this.findRecipeReference(InventoryUtils.cycleItemStack(((List) var27).get(i)));
                         if (ref != null && !ref[0].equals(this.research.key)) {
-                            addtext.add("§8§o" + StatCollector.translateToLocal("recipe.clickthrough"));
+                            addtext.add("§8§o" + I18n.translateToLocal("recipe.clickthrough"));
                             this.reference.add(Arrays.asList(mx, my, (String) ref[0], (Integer) ref[1]));
                         }
 
-                        this.drawCustomTooltip(this, itemRenderer, this.fontRendererObj, addtext, mx, my, 11);
+                        this.drawCustomTooltip(this, getItemRenderer(), this.fontRenderer, addtext, mx, my, 11);
                     }
                 }
             }
 
-            GL11.glPopMatrix();
+            GlStateManager.popMatrix();
         }
     }
 
@@ -852,23 +876,23 @@ public class GuiResearchRecipe extends GuiScreen {
         }
 
         if (rc != null) {
-            GL11.glPushMatrix();
+            GlStateManager.pushMatrix();
             int start = side * 152;
-            String text = StatCollector.translateToLocal("recipe.type.crucible");
-            int offset = this.fontRendererObj.getStringWidth(text);
-            this.fontRendererObj.drawString(text, x + start + 56 - offset / 2, y, 5263440);
+            String text = I18n.translateToLocal("recipe.type.crucible");
+            int offset = this.fontRenderer.getStringWidth(text);
+            this.fontRenderer.drawString(text, x + start + 56 - offset / 2, y, 5263440);
             UtilsFX.bindTexture(this.tex2);
-            GL11.glPushMatrix();
-            GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
-            GL11.glEnable(GL11.GL_BLEND);
-            GL11.glTranslatef((float) (x + start), (float) (y + 28), 0.0F);
-            GL11.glScalef(2.0F, 2.0F, 1.0F);
+            GlStateManager.pushMatrix();
+            GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
+            GlStateManager.enableBlend();
+            GlStateManager.translate((float) (x + start), (float) (y + 28), 0.0F);
+            GlStateManager.scale(2.0F, 2.0F, 1.0F);
             this.drawTexturedModalRect(0, 0, 0, 3, 56, 17);
-            GL11.glTranslatef(0.0F, 32.0F, 0.0F);
+            GlStateManager.translate(0.0F, 32.0F, 0.0F);
             this.drawTexturedModalRect(0, 0, 0, 20, 56, 48);
-            GL11.glTranslatef(21.0F, -8.0F, 0.0F);
+            GlStateManager.translate(21.0F, -8.0F, 0.0F);
             this.drawTexturedModalRect(0, 0, 100, 84, 11, 13);
-            GL11.glPopMatrix();
+            GlStateManager.popMatrix();
             int mposx = mx;
             int mposy = my;
             int total = 0;
@@ -889,41 +913,41 @@ public class GuiResearchRecipe extends GuiScreen {
                 ++total;
             }
 
-            GL11.glPushMatrix();
-            GL11.glTranslated(0.0F, 0.0F, 100.0F);
-            GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+            GlStateManager.pushMatrix();
+            GlStateManager.translate(0.0F, 0.0F, 100.0F);
+            GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
             RenderHelper.enableGUIStandardItemLighting();
-            GL11.glEnable(2884);
-            itemRenderer.renderItemAndEffectIntoGUI(this.mc.fontRenderer, this.mc.renderEngine, rc.getRecipeOutput(), x + 48 + start, y + 36);
-            itemRenderer.renderItemOverlayIntoGUI(this.mc.fontRenderer, this.mc.renderEngine, rc.getRecipeOutput(), x + 48 + start, y + 36);
+            GlStateManager.enableCull();
+            safeRenderItem(rc.getRecipeOutput(), x + 48 + start, y + 36);
+            safeRenderItemOverlay(this.mc.fontRenderer, rc.getRecipeOutput(), x + 48 + start, y + 36, null);
             RenderHelper.disableStandardItemLighting();
-            GL11.glEnable(2896);
-            GL11.glPopMatrix();
-            GL11.glPushMatrix();
-            GL11.glTranslated(0.0F, 0.0F, 100.0F);
-            GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+            GlStateManager.enableLighting();
+            GlStateManager.popMatrix();
+            GlStateManager.pushMatrix();
+            GlStateManager.translate(0.0F, 0.0F, 100.0F);
+            GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
             RenderHelper.enableGUIStandardItemLighting();
-            GL11.glEnable(2884);
-            itemRenderer.renderItemAndEffectIntoGUI(this.mc.fontRenderer, this.mc.renderEngine, InventoryUtils.cycleItemStack(rc.catalyst), x + 26 + start, y + 72);
-            itemRenderer.renderItemOverlayIntoGUI(this.mc.fontRenderer, this.mc.renderEngine, InventoryUtils.cycleItemStack(rc.catalyst).copy().splitStack(1), x + 26 + start, y + 72);
+            GlStateManager.enableCull();
+            safeRenderItem(InventoryUtils.cycleItemStack(rc.catalyst), x + 26 + start, y + 72);
+            safeRenderItemOverlay(this.mc.fontRenderer, InventoryUtils.cycleItemStack(rc.catalyst), x + 26 + start, y + 72, null);
             RenderHelper.disableStandardItemLighting();
-            GL11.glEnable(2896);
-            GL11.glPopMatrix();
+            GlStateManager.enableLighting();
+            GlStateManager.popMatrix();
             if (mx >= x + 48 + start && my >= y + 36 && mx < x + 48 + start + 16 && my < y + 36 + 16) {
-                this.drawCustomTooltip(this, itemRenderer, this.fontRendererObj, rc.getRecipeOutput().getTooltip(this.mc.thePlayer, this.mc.gameSettings.advancedItemTooltips), mx, my, 11);
+                this.drawCustomTooltip(this, getItemRenderer(), this.fontRenderer, rc.getRecipeOutput().getTooltip(this.mc.player, this.mc.gameSettings.advancedItemTooltips ? net.minecraft.client.util.ITooltipFlag.TooltipFlags.ADVANCED : net.minecraft.client.util.ITooltipFlag.TooltipFlags.NORMAL), mx, my, 11);
             }
 
             if (mx >= x + 26 + start && my >= y + 72 && mx < x + 26 + start + 16 && my < y + 72 + 16) {
                 List addtext = InventoryUtils.cycleItemStack(rc.catalyst)
-                        .getTooltip(this.mc.thePlayer, this.mc.gameSettings.advancedItemTooltips)
+                        .getTooltip(this.mc.player, this.mc.gameSettings.advancedItemTooltips ? net.minecraft.client.util.ITooltipFlag.TooltipFlags.ADVANCED : net.minecraft.client.util.ITooltipFlag.TooltipFlags.NORMAL)
                         ;
                 Object[] ref = this.findRecipeReference(InventoryUtils.cycleItemStack(rc.catalyst));
                 if (ref != null && !ref[0].equals(this.research.key)) {
-                    addtext.add("§8§o" + StatCollector.translateToLocal("recipe.clickthrough"));
+                    addtext.add("§8§o" + I18n.translateToLocal("recipe.clickthrough"));
                     this.reference.add(Arrays.asList(mx, my, (String) ref[0], (Integer) ref[1]));
                 }
 
-                this.drawCustomTooltip(this, itemRenderer, this.fontRendererObj, addtext, mx, my, 11);
+                this.drawCustomTooltip(this, getItemRenderer(), this.fontRenderer, addtext, mx, my, 11);
             }
 
             total = 0;
@@ -937,13 +961,13 @@ public class GuiResearchRecipe extends GuiScreen {
                 int vx = sx + total % 3 * 20 + shift * m;
                 int vy = sy + total / 3 * 20;
                 if (mposx >= vx && mposy >= vy && mposx < vx + 16 && mposy < vy + 16) {
-                    this.drawCustomTooltip(this, itemRenderer, this.fontRendererObj, Arrays.asList(tag.getName(), tag.getLocalizedDescription()), mx, my, 11);
+                    this.drawCustomTooltip(this, getItemRenderer(), this.fontRenderer, Arrays.asList(tag.getName(), tag.getLocalizedDescription()), mx, my, 11);
                 }
 
                 ++total;
             }
 
-            GL11.glPopMatrix();
+            GlStateManager.popMatrix();
         }
 
     }
@@ -952,59 +976,59 @@ public class GuiResearchRecipe extends GuiScreen {
         ItemStack in = (ItemStack) pageParm.recipe;
         ItemStack out = null;
         if (in != null) {
-            out = FurnaceRecipes.smelting().getSmeltingResult(in);
+            out = FurnaceRecipes.instance().getSmeltingResult(in);
         }
 
         if (in != null && out != null) {
-            GL11.glPushMatrix();
+            GlStateManager.pushMatrix();
             int start = side * 152;
-            String text = StatCollector.translateToLocal("recipe.type.smelting");
-            int offset = this.fontRendererObj.getStringWidth(text);
-            this.fontRendererObj.drawString(text, x + start + 56 - offset / 2, y, 5263440);
+            String text = I18n.translateToLocal("recipe.type.smelting");
+            int offset = this.fontRenderer.getStringWidth(text);
+            this.fontRenderer.drawString(text, x + start + 56 - offset / 2, y, 5263440);
             UtilsFX.bindTexture(this.tex2);
-            GL11.glPushMatrix();
-            GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
-            GL11.glEnable(GL11.GL_BLEND);
-            GL11.glTranslatef((float) (x + start), (float) (y + 28), 0.0F);
-            GL11.glScalef(2.0F, 2.0F, 1.0F);
+            GlStateManager.pushMatrix();
+            GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
+            GlStateManager.enableBlend();
+            GlStateManager.translate((float) (x + start), (float) (y + 28), 0.0F);
+            GlStateManager.scale(2.0F, 2.0F, 1.0F);
             this.drawTexturedModalRect(0, 0, 0, 192, 56, 64);
-            GL11.glPopMatrix();
-            GL11.glPushMatrix();
-            GL11.glTranslated(0.0F, 0.0F, 100.0F);
-            GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+            GlStateManager.popMatrix();
+            GlStateManager.pushMatrix();
+            GlStateManager.translate(0.0F, 0.0F, 100.0F);
+            GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
             RenderHelper.enableGUIStandardItemLighting();
-            GL11.glEnable(2884);
-            itemRenderer.renderItemAndEffectIntoGUI(this.mc.fontRenderer, this.mc.renderEngine, in, x + 48 + start, y + 64);
-            itemRenderer.renderItemOverlayIntoGUI(this.mc.fontRenderer, this.mc.renderEngine, in, x + 48 + start, y + 64);
+            GlStateManager.enableCull();
+            safeRenderItem(in, x + 48 + start, y + 64);
+            safeRenderItemOverlay(this.mc.fontRenderer, in, x + 48 + start, y + 64, null);
             RenderHelper.disableStandardItemLighting();
-            GL11.glEnable(2896);
-            GL11.glPopMatrix();
-            GL11.glPushMatrix();
-            GL11.glTranslated(0.0F, 0.0F, 100.0F);
-            GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+            GlStateManager.enableLighting();
+            GlStateManager.popMatrix();
+            GlStateManager.pushMatrix();
+            GlStateManager.translate(0.0F, 0.0F, 100.0F);
+            GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
             RenderHelper.enableGUIStandardItemLighting();
-            GL11.glEnable(2884);
-            itemRenderer.renderItemAndEffectIntoGUI(this.mc.fontRenderer, this.mc.renderEngine, out, x + 48 + start, y + 144);
-            itemRenderer.renderItemOverlayIntoGUI(this.mc.fontRenderer, this.mc.renderEngine, out, x + 48 + start, y + 144);
+            GlStateManager.enableCull();
+            safeRenderItem(out, x + 48 + start, y + 144);
+            safeRenderItemOverlay(this.mc.fontRenderer, out, x + 48 + start, y + 144, null);
             RenderHelper.disableStandardItemLighting();
-            GL11.glEnable(2896);
-            GL11.glPopMatrix();
+            GlStateManager.enableLighting();
+            GlStateManager.popMatrix();
             if (mx >= x + 48 + start && my >= y + 64 && mx < x + 48 + start + 16 && my < y + 64 + 16) {
-                List addtext = in.getTooltip(this.mc.thePlayer, this.mc.gameSettings.advancedItemTooltips);
+                List addtext = in.getTooltip(this.mc.player, this.mc.gameSettings.advancedItemTooltips ? net.minecraft.client.util.ITooltipFlag.TooltipFlags.ADVANCED : net.minecraft.client.util.ITooltipFlag.TooltipFlags.NORMAL);
                 Object[] ref = this.findRecipeReference(in);
                 if (ref != null && !ref[0].equals(this.research.key)) {
-                    addtext.add("§8§o" + StatCollector.translateToLocal("recipe.clickthrough"));
+                    addtext.add("§8§o" + I18n.translateToLocal("recipe.clickthrough"));
                     this.reference.add(Arrays.asList(mx, my, (String) ref[0], (Integer) ref[1]));
                 }
 
-                this.drawCustomTooltip(this, itemRenderer, this.fontRendererObj, addtext, mx, my, 11);
+                this.drawCustomTooltip(this, getItemRenderer(), this.fontRenderer, addtext, mx, my, 11);
             }
 
             if (mx >= x + 48 + start && my >= y + 144 && mx < x + 48 + start + 16 && my < y + 144 + 16) {
-                this.drawCustomTooltip(this, itemRenderer, this.fontRendererObj, out.getTooltip(this.mc.thePlayer, this.mc.gameSettings.advancedItemTooltips), mx, my, 11);
+                this.drawCustomTooltip(this, getItemRenderer(), this.fontRenderer, out.getTooltip(this.mc.player, this.mc.gameSettings.advancedItemTooltips ? net.minecraft.client.util.ITooltipFlag.TooltipFlags.ADVANCED : net.minecraft.client.util.ITooltipFlag.TooltipFlags.NORMAL), mx, my, 11);
             }
 
-            GL11.glPopMatrix();
+            GlStateManager.popMatrix();
         }
 
     }
@@ -1024,25 +1048,25 @@ public class GuiResearchRecipe extends GuiScreen {
 
         InfusionRecipe ri = (InfusionRecipe) tr;
         if (ri != null) {
-            GL11.glPushMatrix();
+            GlStateManager.pushMatrix();
             int start = side * 152;
-            String text = StatCollector.translateToLocal("recipe.type.infusion");
-            int offset = this.fontRendererObj.getStringWidth(text);
-            this.fontRendererObj.drawString(text, x + start + 56 - offset / 2, y, 5263440);
+            String text = I18n.translateToLocal("recipe.type.infusion");
+            int offset = this.fontRenderer.getStringWidth(text);
+            this.fontRenderer.drawString(text, x + start + 56 - offset / 2, y, 5263440);
             int inst = Math.min(5, ri.getInstability() / 2);
-            text = StatCollector.translateToLocal("tc.inst") + " " + StatCollector.translateToLocal("tc.inst." + inst);
-            offset = this.fontRendererObj.getStringWidth(text);
-            this.fontRendererObj.drawString(text, x + start + 56 - offset / 2, y + 194, 5263440);
+            text = I18n.translateToLocal("tc.inst") + " " + I18n.translateToLocal("tc.inst." + inst);
+            offset = this.fontRenderer.getStringWidth(text);
+            this.fontRenderer.drawString(text, x + start + 56 - offset / 2, y + 194, 5263440);
             UtilsFX.bindTexture(this.tex2);
-            GL11.glPushMatrix();
-            GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
-            GL11.glEnable(GL11.GL_BLEND);
-            GL11.glTranslatef((float) (x + start), (float) (y + 20), 0.0F);
-            GL11.glScalef(2.0F, 2.0F, 1.0F);
+            GlStateManager.pushMatrix();
+            GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
+            GlStateManager.enableBlend();
+            GlStateManager.translate((float) (x + start), (float) (y + 20), 0.0F);
+            GlStateManager.scale(2.0F, 2.0F, 1.0F);
             this.drawTexturedModalRect(0, 0, 0, 3, 56, 17);
-            GL11.glTranslatef(0.0F, 19.0F, 0.0F);
+            GlStateManager.translate(0.0F, 19.0F, 0.0F);
             this.drawTexturedModalRect(0, 0, 200, 77, 60, 44);
-            GL11.glPopMatrix();
+            GlStateManager.popMatrix();
             int mposx = mx;
             int mposy = my;
             int total = 0;
@@ -1073,32 +1097,32 @@ public class GuiResearchRecipe extends GuiScreen {
                 idisp.setTagInfo((String) obj[0], tag);
             }
 
-            GL11.glPushMatrix();
-            GL11.glTranslated(0.0F, 0.0F, 100.0F);
-            GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+            GlStateManager.pushMatrix();
+            GlStateManager.translate(0.0F, 0.0F, 100.0F);
+            GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
             RenderHelper.enableGUIStandardItemLighting();
-            GL11.glEnable(2884);
-            itemRenderer.renderItemAndEffectIntoGUI(this.mc.fontRenderer, this.mc.renderEngine, idisp, x + 48 + start, y + 28);
-            itemRenderer.renderItemOverlayIntoGUI(this.mc.fontRenderer, this.mc.renderEngine, idisp, x + 48 + start, y + 28);
+            GlStateManager.enableCull();
+            safeRenderItem(idisp, x + 48 + start, y + 28);
+            safeRenderItemOverlay(this.mc.fontRenderer, idisp, x + 48 + start, y + 28, null);
             RenderHelper.disableStandardItemLighting();
-            GL11.glEnable(2896);
-            GL11.glPopMatrix();
-            GL11.glPushMatrix();
-            GL11.glTranslated(0.0F, 0.0F, 100.0F);
-            GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+            GlStateManager.enableLighting();
+            GlStateManager.popMatrix();
+            GlStateManager.pushMatrix();
+            GlStateManager.translate(0.0F, 0.0F, 100.0F);
+            GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
             RenderHelper.enableGUIStandardItemLighting();
-            GL11.glEnable(2884);
-            itemRenderer.renderItemAndEffectIntoGUI(this.mc.fontRenderer, this.mc.renderEngine, InventoryUtils.cycleItemStack(ri.getRecipeInput()), x + 48 + start, y + 94);
-            itemRenderer.renderItemOverlayIntoGUI(this.mc.fontRenderer, this.mc.renderEngine, InventoryUtils.cycleItemStack(ri.getRecipeInput()).copy().splitStack(1), x + 48 + start, y + 94);
+            GlStateManager.enableCull();
+            safeRenderItem(InventoryUtils.cycleItemStack(ri.getRecipeInput()), x + 48 + start, y + 94);
+            safeRenderItemOverlay(this.mc.fontRenderer, InventoryUtils.cycleItemStack(ri.getRecipeInput()), x + 48 + start, y + 94, null);
             RenderHelper.disableStandardItemLighting();
-            GL11.glEnable(2896);
-            GL11.glPopMatrix();
-            GL11.glPushMatrix();
-            GL11.glTranslated(0.0F, 0.0F, 100.0F);
-            GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+            GlStateManager.enableLighting();
+            GlStateManager.popMatrix();
+            GlStateManager.pushMatrix();
+            GlStateManager.translate(0.0F, 0.0F, 100.0F);
+            GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
             RenderHelper.enableGUIStandardItemLighting();
-            GL11.glDisable(2896);
-            GL11.glEnable(2884);
+            GlStateManager.disableLighting();
+            GlStateManager.enableCull();
             int le = ri.getComponents().length;
             ArrayList<Coord2D> coords = new ArrayList<>();
             float pieSlice = (float) (360 / le);
@@ -1119,27 +1143,27 @@ public class GuiResearchRecipe extends GuiScreen {
                 RenderHelper.enableGUIStandardItemLighting();
                 int vx = sx + coords.get(total).x;
                 int vy = sy + coords.get(total).y;
-                itemRenderer.renderItemAndEffectIntoGUI(this.mc.fontRenderer, this.mc.renderEngine, InventoryUtils.cycleItemStack(ingredient), vx, vy);
-                itemRenderer.renderItemOverlayIntoGUI(this.mc.fontRenderer, this.mc.renderEngine, InventoryUtils.cycleItemStack(ingredient).copy().splitStack(1), vx, vy);
+                safeRenderItem(InventoryUtils.cycleItemStack(ingredient), vx, vy);
+                safeRenderItemOverlay(this.mc.fontRenderer, InventoryUtils.cycleItemStack(ingredient), vx, vy, null);
                 RenderHelper.disableStandardItemLighting();
                 ++total;
             }
 
-            GL11.glEnable(2896);
-            GL11.glPopMatrix();
+            GlStateManager.enableLighting();
+            GlStateManager.popMatrix();
             if (mx >= x + 48 + start && my >= y + 28 && mx < x + 48 + start + 16 && my < y + 28 + 16) {
-                this.drawCustomTooltip(this, itemRenderer, this.fontRendererObj, idisp.getTooltip(this.mc.thePlayer, this.mc.gameSettings.advancedItemTooltips), mx, my, 11);
+                this.drawCustomTooltip(this, getItemRenderer(), this.fontRenderer, idisp.getTooltip(this.mc.player, this.mc.gameSettings.advancedItemTooltips ? net.minecraft.client.util.ITooltipFlag.TooltipFlags.ADVANCED : net.minecraft.client.util.ITooltipFlag.TooltipFlags.NORMAL), mx, my, 11);
             }
 
             if (mx >= x + 48 + start && my >= y + 94 && mx < x + 48 + start + 16 && my < y + 94 + 16) {
-                List addtext = InventoryUtils.cycleItemStack(ri.getRecipeInput()).getTooltip(this.mc.thePlayer, this.mc.gameSettings.advancedItemTooltips);
+                List addtext = InventoryUtils.cycleItemStack(ri.getRecipeInput()).getTooltip(this.mc.player, this.mc.gameSettings.advancedItemTooltips ? net.minecraft.client.util.ITooltipFlag.TooltipFlags.ADVANCED : net.minecraft.client.util.ITooltipFlag.TooltipFlags.NORMAL);
                 Object[] ref = this.findRecipeReference(InventoryUtils.cycleItemStack(ri.getRecipeInput()));
                 if (ref != null && !ref[0].equals(this.research.key)) {
-                    addtext.add("§8§o" + StatCollector.translateToLocal("recipe.clickthrough"));
+                    addtext.add("§8§o" + I18n.translateToLocal("recipe.clickthrough"));
                     this.reference.add(Arrays.asList(mx, my, (String) ref[0], (Integer) ref[1]));
                 }
 
-                this.drawCustomTooltip(this, itemRenderer, this.fontRendererObj, addtext, mx, my, 11);
+                this.drawCustomTooltip(this, getItemRenderer(), this.fontRenderer, addtext, mx, my, 11);
             }
 
             total = 0;
@@ -1150,14 +1174,14 @@ public class GuiResearchRecipe extends GuiScreen {
                 int vx = sx + coords.get(total).x;
                 int vy = sy + coords.get(total).y;
                 if (mposx >= vx && mposy >= vy && mposx < vx + 16 && mposy < vy + 16) {
-                    List addtext = InventoryUtils.cycleItemStack(ingredient).getTooltip(this.mc.thePlayer, this.mc.gameSettings.advancedItemTooltips);
+                    List addtext = InventoryUtils.cycleItemStack(ingredient).getTooltip(this.mc.player, this.mc.gameSettings.advancedItemTooltips ? net.minecraft.client.util.ITooltipFlag.TooltipFlags.ADVANCED : net.minecraft.client.util.ITooltipFlag.TooltipFlags.NORMAL);
                     Object[] ref = this.findRecipeReference(InventoryUtils.cycleItemStack(ingredient));
                     if (ref != null && !ref[0].equals(this.research.key)) {
-                        addtext.add("§8§o" + StatCollector.translateToLocal("recipe.clickthrough"));
+                        addtext.add("§8§o" + I18n.translateToLocal("recipe.clickthrough"));
                         this.reference.add(Arrays.asList(mx, my, (String) ref[0], (Integer) ref[1]));
                     }
 
-                    this.drawCustomTooltip(this, itemRenderer, this.fontRendererObj, addtext, mx, my, 11);
+                    this.drawCustomTooltip(this, getItemRenderer(), this.fontRenderer, addtext, mx, my, 11);
                 }
 
                 ++total;
@@ -1178,13 +1202,13 @@ public class GuiResearchRecipe extends GuiScreen {
                 int vx = sx + total % 5 * 20 + shift * m;
                 int vy = sy + total / 5 * 20;
                 if (mposx >= vx && mposy >= vy && mposx < vx + 16 && mposy < vy + 16) {
-                    this.drawCustomTooltip(this, itemRenderer, this.fontRendererObj, Arrays.asList(tag.getName(), tag.getLocalizedDescription()), mx, my, 11);
+                    this.drawCustomTooltip(this, getItemRenderer(), this.fontRenderer, Arrays.asList(tag.getName(), tag.getLocalizedDescription()), mx, my, 11);
                 }
 
                 ++total;
             }
 
-            GL11.glPopMatrix();
+            GlStateManager.popMatrix();
         }
 
     }
@@ -1193,32 +1217,32 @@ public class GuiResearchRecipe extends GuiScreen {
         Object tr = pageParm.recipe;
         InfusionEnchantmentRecipe ri = (InfusionEnchantmentRecipe) tr;
         if (ri != null) {
-            GL11.glPushMatrix();
+            GlStateManager.pushMatrix();
             int start = side * 152;
             int level = (int) (1L + System.currentTimeMillis() / 1000L % (long) ri.enchantment.getMaxLevel());
-            String text = StatCollector.translateToLocal("recipe.type.infusionenchantment");
-            int offset = this.fontRendererObj.getStringWidth(text);
-            this.fontRendererObj.drawString(text, x + start + 56 - offset / 2, y, 5263440);
+            String text = I18n.translateToLocal("recipe.type.infusionenchantment");
+            int offset = this.fontRenderer.getStringWidth(text);
+            this.fontRenderer.drawString(text, x + start + 56 - offset / 2, y, 5263440);
             int inst = Math.min(5, ri.instability / 2);
-            text = StatCollector.translateToLocal("tc.inst") + " " + StatCollector.translateToLocal("tc.inst." + inst);
-            offset = this.fontRendererObj.getStringWidth(text);
-            this.fontRendererObj.drawString(text, x + start + 56 - offset / 2, y + 194, 5263440);
+            text = I18n.translateToLocal("tc.inst") + " " + I18n.translateToLocal("tc.inst." + inst);
+            offset = this.fontRenderer.getStringWidth(text);
+            this.fontRenderer.drawString(text, x + start + 56 - offset / 2, y + 194, 5263440);
             text = ri.enchantment.getTranslatedName(level);
-            offset = this.fontRendererObj.getStringWidth(text);
-            this.fontRendererObj.drawString(text, x + start + 56 - offset / 2, y + 24, 7360656);
+            offset = this.fontRenderer.getStringWidth(text);
+            this.fontRenderer.drawString(text, x + start + 56 - offset / 2, y + 24, 7360656);
             int xp = ri.recipeXP * level;
             text = xp + " levels";
-            offset = this.fontRendererObj.getStringWidth(text);
-            this.fontRendererObj.drawString(text, x + start + 56 - offset / 2, y + 40, 5277776);
+            offset = this.fontRenderer.getStringWidth(text);
+            this.fontRenderer.drawString(text, x + start + 56 - offset / 2, y + 40, 5277776);
             UtilsFX.bindTexture(this.tex2);
-            GL11.glPushMatrix();
-            GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
-            GL11.glEnable(GL11.GL_BLEND);
-            GL11.glTranslatef((float) (x + start), (float) (y + 20), 0.0F);
-            GL11.glScalef(2.0F, 2.0F, 1.0F);
-            GL11.glTranslatef(0.0F, 19.0F, 0.0F);
+            GlStateManager.pushMatrix();
+            GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
+            GlStateManager.enableBlend();
+            GlStateManager.translate((float) (x + start), (float) (y + 20), 0.0F);
+            GlStateManager.scale(2.0F, 2.0F, 1.0F);
+            GlStateManager.translate(0.0F, 19.0F, 0.0F);
             this.drawTexturedModalRect(0, 0, 200, 77, 60, 44);
-            GL11.glPopMatrix();
+            GlStateManager.popMatrix();
             int mposx = mx;
             int mposy = my;
             int total = 0;
@@ -1239,12 +1263,12 @@ public class GuiResearchRecipe extends GuiScreen {
                 ++total;
             }
 
-            GL11.glPushMatrix();
-            GL11.glTranslated(0.0F, 0.0F, 100.0F);
-            GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+            GlStateManager.pushMatrix();
+            GlStateManager.translate(0.0F, 0.0F, 100.0F);
+            GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
             RenderHelper.enableGUIStandardItemLighting();
-            GL11.glDisable(2896);
-            GL11.glEnable(2884);
+            GlStateManager.disableLighting();
+            GlStateManager.enableCull();
             int le = ri.components.length;
             ArrayList<Coord2D> coords = new ArrayList<>();
             float pieSlice = (float) (360 / le);
@@ -1265,14 +1289,14 @@ public class GuiResearchRecipe extends GuiScreen {
                 RenderHelper.enableGUIStandardItemLighting();
                 int vx = sx + coords.get(total).x;
                 int vy = sy + coords.get(total).y;
-                itemRenderer.renderItemAndEffectIntoGUI(this.mc.fontRenderer, this.mc.renderEngine, InventoryUtils.cycleItemStack(ingredient), vx, vy);
-                itemRenderer.renderItemOverlayIntoGUI(this.mc.fontRenderer, this.mc.renderEngine, InventoryUtils.cycleItemStack(ingredient).copy().splitStack(1), vx, vy);
+                safeRenderItem(InventoryUtils.cycleItemStack(ingredient), vx, vy);
+                safeRenderItemOverlay(this.mc.fontRenderer, InventoryUtils.cycleItemStack(ingredient), vx, vy, null);
                 ++total;
                 RenderHelper.disableStandardItemLighting();
             }
 
-            GL11.glEnable(2896);
-            GL11.glPopMatrix();
+            GlStateManager.enableLighting();
+            GlStateManager.popMatrix();
             total = 0;
             sx = x + 56 + start;
             sy = y + 102;
@@ -1281,14 +1305,14 @@ public class GuiResearchRecipe extends GuiScreen {
                 int vx = sx + coords.get(total).x;
                 int vy = sy + coords.get(total).y;
                 if (mposx >= vx && mposy >= vy && mposx < vx + 16 && mposy < vy + 16) {
-                    List addtext = InventoryUtils.cycleItemStack(ingredient).getTooltip(this.mc.thePlayer, this.mc.gameSettings.advancedItemTooltips);
+                    List addtext = InventoryUtils.cycleItemStack(ingredient).getTooltip(this.mc.player, this.mc.gameSettings.advancedItemTooltips ? net.minecraft.client.util.ITooltipFlag.TooltipFlags.ADVANCED : net.minecraft.client.util.ITooltipFlag.TooltipFlags.NORMAL);
                     Object[] ref = this.findRecipeReference(InventoryUtils.cycleItemStack(ingredient));
                     if (ref != null && !ref[0].equals(this.research.key)) {
-                        addtext.add("§8§o" + StatCollector.translateToLocal("recipe.clickthrough"));
+                        addtext.add("§8§o" + I18n.translateToLocal("recipe.clickthrough"));
                         this.reference.add(Arrays.asList(mx, my, (String) ref[0], (Integer) ref[1]));
                     }
 
-                    this.drawCustomTooltip(this, itemRenderer, this.fontRendererObj, addtext, mx, my, 11);
+                    this.drawCustomTooltip(this, getItemRenderer(), this.fontRenderer, addtext, mx, my, 11);
                 }
 
                 ++total;
@@ -1309,26 +1333,26 @@ public class GuiResearchRecipe extends GuiScreen {
                 int vx = sx + total % 5 * 20 + shift * m;
                 int vy = sy + total / 5 * 20;
                 if (mposx >= vx && mposy >= vy && mposx < vx + 16 && mposy < vy + 16) {
-                    this.drawCustomTooltip(this, itemRenderer, this.fontRendererObj, Arrays.asList(tag.getName(), tag.getLocalizedDescription()), mx, my, 11);
+                    this.drawCustomTooltip(this, getItemRenderer(), this.fontRenderer, Arrays.asList(tag.getName(), tag.getLocalizedDescription()), mx, my, 11);
                 }
 
                 ++total;
             }
 
-            GL11.glPopMatrix();
+            GlStateManager.popMatrix();
         }
 
     }
 
     private void drawTextPage(int side, int x, int y, String text) {
-        GL11.glPushMatrix();
+        GlStateManager.pushMatrix();
         RenderHelper.enableGUIStandardItemLighting();
-        GL11.glEnable(GL11.GL_BLEND);
+        GlStateManager.enableBlend();
         this.fr.drawSplitString(text, x - 15 + side * 152, y, 139, 0, this);
-        GL11.glPopMatrix();
+        GlStateManager.popMatrix();
     }
 
-    protected void mouseClicked(int par1, int par2, int par3) {
+    protected void mouseClicked(int par1, int par2, int par3) throws java.io.IOException {
         int var4 = (this.width - this.paneWidth) / 2;
         int var5 = (this.height - this.paneHeight) / 2;
         int mx = par1 - (var4 + 261);
@@ -1337,7 +1361,7 @@ public class GuiResearchRecipe extends GuiScreen {
             this.page += 2;
             this.lastCycle = 0L;
             this.cycle = -1;
-            Minecraft.getMinecraft().theWorld.playSound(Minecraft.getMinecraft().thePlayer.posX, Minecraft.getMinecraft().thePlayer.posY, Minecraft.getMinecraft().thePlayer.posZ, "thaumcraft:page", 0.66F, 1.0F, false);
+            { net.minecraft.util.SoundEvent _pg = net.minecraft.util.SoundEvent.REGISTRY.getObject(new net.minecraft.util.ResourceLocation("thaumcraft:page")); if (_pg != null) Minecraft.getMinecraft().player.playSound(_pg, 0.66F, 1.0F); };
         }
 
         mx = par1 - (var4 - 17);
@@ -1346,14 +1370,14 @@ public class GuiResearchRecipe extends GuiScreen {
             this.page -= 2;
             this.lastCycle = 0L;
             this.cycle = -1;
-            Minecraft.getMinecraft().theWorld.playSound(Minecraft.getMinecraft().thePlayer.posX, Minecraft.getMinecraft().thePlayer.posY, Minecraft.getMinecraft().thePlayer.posZ, "thaumcraft:page", 0.66F, 1.0F, false);
+            { net.minecraft.util.SoundEvent _pg = net.minecraft.util.SoundEvent.REGISTRY.getObject(new net.minecraft.util.ResourceLocation("thaumcraft:page")); if (_pg != null) Minecraft.getMinecraft().player.playSound(_pg, 0.66F, 1.0F); };
         }
 
         if (!history.isEmpty()) {
             mx = par1 - (var4 + 118);
             my = par2 - (var5 + 189);
             if (mx >= 0 && my >= 0 && mx < 20 && my < 12) {
-                Minecraft.getMinecraft().theWorld.playSound(Minecraft.getMinecraft().thePlayer.posX, Minecraft.getMinecraft().thePlayer.posY, Minecraft.getMinecraft().thePlayer.posZ, "thaumcraft:page", 0.66F, 1.0F, false);
+                { net.minecraft.util.SoundEvent _pg = net.minecraft.util.SoundEvent.REGISTRY.getObject(new net.minecraft.util.ResourceLocation("thaumcraft:page")); if (_pg != null) Minecraft.getMinecraft().player.playSound(_pg, 0.66F, 1.0F); };
                 Object[] o = history.pop();
                 this.mc.displayGuiScreen(new GuiResearchRecipe(ResearchCategories.getResearch((String) o[0]), (Integer) o[1], this.guiMapX, this.guiMapY));
             }
@@ -1362,7 +1386,7 @@ public class GuiResearchRecipe extends GuiScreen {
         if (!this.reference.isEmpty()) {
             for (List coords : this.reference) {
                 if (par1 >= (Integer) coords.get(0) && par2 >= (Integer) coords.get(1) && par1 < (Integer) coords.get(0) + 16 && par2 < (Integer) coords.get(1) + 16) {
-                    Minecraft.getMinecraft().theWorld.playSound(Minecraft.getMinecraft().thePlayer.posX, Minecraft.getMinecraft().thePlayer.posY, Minecraft.getMinecraft().thePlayer.posZ, "thaumcraft:page", 0.66F, 1.0F, false);
+                    { net.minecraft.util.SoundEvent _pg = net.minecraft.util.SoundEvent.REGISTRY.getObject(new net.minecraft.util.ResourceLocation("thaumcraft:page")); if (_pg != null) Minecraft.getMinecraft().player.playSound(_pg, 0.66F, 1.0F); };
                     history.push(new Object[]{this.research.key, this.page});
                     this.mc.displayGuiScreen(new GuiResearchRecipe(ResearchCategories.getResearch((String) coords.get(2)), (Integer) coords.get(3), this.guiMapX, this.guiMapY));
                 }
@@ -1377,23 +1401,24 @@ public class GuiResearchRecipe extends GuiScreen {
     }
 
     public Object[] findRecipeReference(ItemStack item) {
-        return ThaumcraftApi.getCraftingRecipeKey(this.mc.thePlayer, item);
+        return ThaumcraftApi.getCraftingRecipeKey(this.mc.player, item);
     }
 
     public void drawTexturedModalRectScaled(int par1, int par2, int par3, int par4, int par5, int par6, float scale) {
-        GL11.glPushMatrix();
+        GlStateManager.pushMatrix();
         float var7 = 0.00390625F;
         float var8 = 0.00390625F;
-        Tessellator var9 = Tessellator.instance;
-        GL11.glTranslatef((float) par1 + (float) par5 / 2.0F, (float) par2 + (float) par6 / 2.0F, 0.0F);
-        GL11.glScalef(1.0F + scale, 1.0F + scale, 1.0F);
-        var9.startDrawingQuads();
-        var9.addVertexWithUV((float) (-par5) / 2.0F, (float) par6 / 2.0F, this.zLevel, (float) (par3) * var7, (float) (par4 + par6) * var8);
-        var9.addVertexWithUV((float) par5 / 2.0F, (float) par6 / 2.0F, this.zLevel, (float) (par3 + par5) * var7, (float) (par4 + par6) * var8);
-        var9.addVertexWithUV((float) par5 / 2.0F, (float) (-par6) / 2.0F, this.zLevel, (float) (par3 + par5) * var7, (float) (par4) * var8);
-        var9.addVertexWithUV((float) (-par5) / 2.0F, (float) (-par6) / 2.0F, this.zLevel, (float) (par3) * var7, (float) (par4) * var8);
+        Tessellator var9 = Tessellator.getInstance();
+        BufferBuilder var9Buf = var9.getBuffer();
+        GlStateManager.translate((float) par1 + (float) par5 / 2.0F, (float) par2 + (float) par6 / 2.0F, 0.0F);
+        GlStateManager.scale(1.0F + scale, 1.0F + scale, 1.0F);
+        var9Buf.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX_COLOR);
+        var9Buf.pos((float)(-par5) / 2.0F, (float)par6 / 2.0F, this.zLevel).tex((float)(par3) * var7, (float)(par4 + par6) * var8).color(1f,1f,1f,1f).endVertex();
+        var9Buf.pos((float)par5 / 2.0F, (float)par6 / 2.0F, this.zLevel).tex((float)(par3 + par5) * var7, (float)(par4 + par6) * var8).color(1f,1f,1f,1f).endVertex();
+        var9Buf.pos((float)par5 / 2.0F, (float)(-par6) / 2.0F, this.zLevel).tex((float)(par3 + par5) * var7, (float)(par4) * var8).color(1f,1f,1f,1f).endVertex();
+        var9Buf.pos((float)(-par5) / 2.0F, (float)(-par6) / 2.0F, this.zLevel).tex((float)(par3) * var7, (float)(par4) * var8).color(1f,1f,1f,1f).endVertex();
         var9.draw();
-        GL11.glPopMatrix();
+        GlStateManager.popMatrix();
     }
 
     static class Coord2D {
@@ -1407,7 +1432,7 @@ public class GuiResearchRecipe extends GuiScreen {
     }
 
     @Override
-    public void handleMouseInput() {
+    public void handleMouseInput() throws java.io.IOException {
         super.handleMouseInput();
         ClientProxy.handleMouseInput(this);
     }

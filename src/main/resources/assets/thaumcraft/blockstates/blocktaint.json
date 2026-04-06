@@ -1,0 +1,52 @@
+{
+  "variants": {
+    "meta=0": {
+      "model": "thaumcraft:blocktaint_taintcrust"
+    },
+    "meta=1": {
+      "model": "thaumcraft:blocktaint_taintsoil"
+    },
+    "meta=2": {
+      "model": "thaumcraft:blocktaint_taintflesh"
+    },
+    "meta=3": {
+      "model": "thaumcraft:blocktaint_taintcrust"
+    },
+    "meta=4": {
+      "model": "thaumcraft:blocktaint_taintcrust"
+    },
+    "meta=5": {
+      "model": "thaumcraft:blocktaint_taintcrust"
+    },
+    "meta=6": {
+      "model": "thaumcraft:blocktaint_taintcrust"
+    },
+    "meta=7": {
+      "model": "thaumcraft:blocktaint_taintcrust"
+    },
+    "meta=8": {
+      "model": "thaumcraft:blocktaint_taintcrust"
+    },
+    "meta=9": {
+      "model": "thaumcraft:blocktaint_taintcrust"
+    },
+    "meta=10": {
+      "model": "thaumcraft:blocktaint_taintcrust"
+    },
+    "meta=11": {
+      "model": "thaumcraft:blocktaint_taintcrust"
+    },
+    "meta=12": {
+      "model": "thaumcraft:blocktaint_taintcrust"
+    },
+    "meta=13": {
+      "model": "thaumcraft:blocktaint_taintcrust"
+    },
+    "meta=14": {
+      "model": "thaumcraft:blocktaint_taintcrust"
+    },
+    "meta=15": {
+      "model": "thaumcraft:blocktaint_taintcrust"
+    }
+  }
+}

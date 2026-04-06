@@ -1,14 +1,18 @@
 package thaumcraft.client.fx.particles;
 
-import cpw.mods.fml.client.FMLClientHandler;
-import net.minecraft.client.particle.EntityFX;
+import net.minecraftforge.fml.client.FMLClientHandler;
+import net.minecraft.client.particle.Particle;
+import net.minecraft.entity.Entity;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.util.MathHelper;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
-import org.lwjgl.opengl.GL11;
 
-public class FXVisSparkle extends EntityFX {
+import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.client.renderer.BufferBuilder;
+import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
+
+public class FXVisSparkle extends Particle {
    private double targetX;
    private double targetY;
    private double targetZ;
@@ -31,8 +35,8 @@ public class FXVisSparkle extends EntityFX {
       this.particleGreen = 0.6F + this.rand.nextFloat() * 0.3F;
       this.particleBlue = 0.2F;
       this.particleGravity = 0.2F;
-      this.noClip = true;
-      EntityLivingBase renderentity = FMLClientHandler.instance().getClient().renderViewEntity;
+      this.canCollide = false;
+      EntityLivingBase renderentity = (EntityLivingBase)FMLClientHandler.instance().getClient().getRenderViewEntity();
       int visibleDistance = 64;
       if (!FMLClientHandler.instance().getClient().gameSettings.fancyGraphics) {
          visibleDistance = 32;
@@ -44,9 +48,9 @@ public class FXVisSparkle extends EntityFX {
 
    }
 
-   public void renderParticle(Tessellator tessellator, float f, float f1, float f2, float f3, float f4, float f5) {
+   public void renderParticle(BufferBuilder buffer, Entity entityIn, float f, float f1, float f2, float f3, float f4, float f5) {
       float bob = MathHelper.sin((float)this.particleAge / 3.0F) * 0.3F + 6.0F;
-      GL11.glColor4f(1.0F, 1.0F, 1.0F, 0.75F);
+      GlStateManager.color(1.0F, 1.0F, 1.0F, 0.75F);
       int part = this.particleAge % 16;
       float var8 = (float)part / 16.0F;
       float var9 = var8 + 0.0624375F;
@@ -57,12 +61,14 @@ public class FXVisSparkle extends EntityFX {
       float var14 = (float)(this.prevPosY + (this.posY - this.prevPosY) * (double)f - interpPosY);
       float var15 = (float)(this.prevPosZ + (this.posZ - this.prevPosZ) * (double)f - interpPosZ);
       float var16 = 1.0F;
-      tessellator.setBrightness(240);
-      tessellator.setColorRGBA_F(this.particleRed * var16, this.particleGreen * var16, this.particleBlue * var16, 0.5F);
-      tessellator.addVertexWithUV(var13 - f1 * var12 - f4 * var12, var14 - f2 * var12, var15 - f3 * var12 - f5 * var12, var9, var11);
-      tessellator.addVertexWithUV(var13 - f1 * var12 + f4 * var12, var14 + f2 * var12, var15 - f3 * var12 + f5 * var12, var9, var10);
-      tessellator.addVertexWithUV(var13 + f1 * var12 + f4 * var12, var14 + f2 * var12, var15 + f3 * var12 + f5 * var12, var8, var10);
-      tessellator.addVertexWithUV(var13 + f1 * var12 - f4 * var12, var14 - f2 * var12, var15 + f3 * var12 - f5 * var12, var8, var11);
+      buffer.pos(var13 - f1 * var12 - f4 * var12, var14 - f2 * var12, var15 - f3 * var12 - f5 * var12).tex(var9, var11).color(this.particleRed, this.particleGreen, this.particleBlue, 0.5F)
+        .endVertex();
+      buffer.pos(var13 - f1 * var12 + f4 * var12, var14 + f2 * var12, var15 - f3 * var12 + f5 * var12).tex(var9, var10).color(this.particleRed, this.particleGreen, this.particleBlue, 0.5F)
+        .endVertex();
+      buffer.pos(var13 + f1 * var12 + f4 * var12, var14 + f2 * var12, var15 + f3 * var12 + f5 * var12).tex(var8, var10).color(this.particleRed, this.particleGreen, this.particleBlue, 0.5F)
+        .endVertex();
+      buffer.pos(var13 + f1 * var12 - f4 * var12, var14 - f2 * var12, var15 + f3 * var12 - f5 * var12).tex(var8, var11).color(this.particleRed, this.particleGreen, this.particleBlue, 0.5F)
+        .endVertex();
    }
 
    public void onUpdate() {
@@ -70,9 +76,9 @@ public class FXVisSparkle extends EntityFX {
       this.prevPosY = this.posY;
       this.prevPosZ = this.posZ;
       if (this.particleAge++ >= this.particleMaxAge) {
-         this.setDead();
+         this.setExpired();
       } else {
-         this.moveEntity(this.motionX, this.motionY, this.motionZ);
+         this.move(this.motionX, this.motionY, this.motionZ);
          this.motionX *= 0.985;
          this.motionY *= 0.985;
          this.motionZ *= 0.985;
@@ -80,7 +86,7 @@ public class FXVisSparkle extends EntityFX {
          double dy = this.targetY - this.posY;
          double dz = this.targetZ - this.posZ;
          double d13 = 0.1F;
-         double d11 = MathHelper.sqrt_double(dx * dx + dy * dy + dz * dz);
+         double d11 = MathHelper.sqrt(dx * dx + dy * dy + dz * dz);
          if (d11 < (double)2.0F) {
             this.particleScale *= 0.95F;
          }
@@ -99,9 +105,9 @@ public class FXVisSparkle extends EntityFX {
          this.motionX += dx * d13;
          this.motionY += dy * d13;
          this.motionZ += dz * d13;
-         this.motionX = MathHelper.clamp_float((float)this.motionX, -0.1F, 0.1F);
-         this.motionY = MathHelper.clamp_float((float)this.motionY, -0.1F, 0.1F);
-         this.motionZ = MathHelper.clamp_float((float)this.motionZ, -0.1F, 0.1F);
+         this.motionX = MathHelper.clamp((float)this.motionX, -0.1F, 0.1F);
+         this.motionY = MathHelper.clamp((float)this.motionY, -0.1F, 0.1F);
+         this.motionZ = MathHelper.clamp((float)this.motionZ, -0.1F, 0.1F);
       }
    }
 

@@ -1,13 +1,13 @@
 package thaumcraft.client.renderers.models.entities;
 
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.ModelBase;
 import net.minecraft.client.model.ModelRenderer;
 import net.minecraft.entity.Entity;
-import net.minecraft.util.MathHelper;
-import net.minecraft.util.Vec3;
+import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.Vec3d;
 import thaumcraft.common.entities.monster.EntityWatcher;
 
 @SideOnly(Side.CLIENT)
@@ -56,16 +56,16 @@ public class ModelWatcher extends ModelBase {
       return 54;
    }
 
-   public void render(Entity p_78088_1_, float p_78088_2_, float p_78088_3_, float p_78088_4_, float p_78088_5_, float p_78088_6_, float p_78088_7_) {
-      this.setRotationAngles(p_78088_2_, p_78088_3_, p_78088_4_, p_78088_5_, p_78088_6_, p_78088_7_, p_78088_1_);
-      this.guardianBody.render(p_78088_7_);
+   public void render(Entity entityIn, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale) {
+      this.setRotationAngles(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entityIn);
+      this.guardianBody.render(scale);
    }
 
-   public void setRotationAngles(float p_78087_1_, float p_78087_2_, float p_78087_3_, float p_78087_4_, float p_78087_5_, float p_78087_6_, Entity p_78087_7_) {
-      EntityWatcher entityguardian = (EntityWatcher)p_78087_7_;
-      float f6 = p_78087_3_ - (float)entityguardian.ticksExisted;
-      this.guardianBody.rotateAngleY = p_78087_4_ / (180F / (float)Math.PI);
-      this.guardianBody.rotateAngleX = p_78087_5_ / (180F / (float)Math.PI);
+   public void setRotationAngles(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scaleFactor, Entity entityIn) {
+      EntityWatcher entityguardian = (EntityWatcher)entityIn;
+      float f6 = ageInTicks - (float)entityguardian.ticksExisted;
+      this.guardianBody.rotateAngleY = netHeadYaw / (180F / (float)Math.PI);
+      this.guardianBody.rotateAngleX = headPitch / (180F / (float)Math.PI);
       float[] afloat = new float[]{1.75F, 0.25F, 0.0F, 0.0F, 0.5F, 0.5F, 0.5F, 0.5F, 1.25F, 0.75F, 0.0F, 0.0F};
       float[] afloat1 = new float[]{0.0F, 0.0F, 0.0F, 0.0F, 0.25F, 1.75F, 1.25F, 0.75F, 0.0F, 0.0F, 0.0F, 0.0F};
       float[] afloat2 = new float[]{0.0F, 0.0F, 0.25F, 1.75F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.75F, 1.25F};
@@ -78,33 +78,33 @@ public class ModelWatcher extends ModelBase {
          this.guardianSpines[i].rotateAngleX = (float)Math.PI * afloat[i];
          this.guardianSpines[i].rotateAngleY = (float)Math.PI * afloat1[i];
          this.guardianSpines[i].rotateAngleZ = (float)Math.PI * afloat2[i];
-         this.guardianSpines[i].rotationPointX = afloat3[i] * (1.0F + MathHelper.cos(p_78087_3_ * 1.5F + (float)i) * 0.01F - f7);
-         this.guardianSpines[i].rotationPointY = 16.0F + afloat4[i] * (1.0F + MathHelper.cos(p_78087_3_ * 1.5F + (float)i) * 0.01F - f7);
-         this.guardianSpines[i].rotationPointZ = afloat5[i] * (1.0F + MathHelper.cos(p_78087_3_ * 1.5F + (float)i) * 0.01F - f7);
+         this.guardianSpines[i].rotationPointX = afloat3[i] * (1.0F + MathHelper.cos(ageInTicks * 1.5F + (float)i) * 0.01F - f7);
+         this.guardianSpines[i].rotationPointY = 16.0F + afloat4[i] * (1.0F + MathHelper.cos(ageInTicks * 1.5F + (float)i) * 0.01F - f7);
+         this.guardianSpines[i].rotationPointZ = afloat5[i] * (1.0F + MathHelper.cos(ageInTicks * 1.5F + (float)i) * 0.01F - f7);
       }
 
       this.guardianEye.rotationPointZ = -8.25F;
-      Entity object = Minecraft.getMinecraft().renderViewEntity;
+      Entity object = Minecraft.getMinecraft().getRenderViewEntity();
       if (entityguardian.func_175474_cn()) {
          object = entityguardian.getTargetedEntity();
       }
 
       if (object != null) {
-         Vec3 vec3 = this.getPositionEyes(object, 0.0F);
-         Vec3 vec31 = this.getPositionEyes(p_78087_7_, 0.0F);
-         double d0 = vec3.yCoord - vec31.yCoord;
+         Vec3d vec3 = this.getPositionEyes(object, 0.0F);
+         Vec3d vec31 = this.getPositionEyes(entityIn, 0.0F);
+         double d0 = vec3.y - vec31.y;
          if (d0 > (double)0.0F) {
             this.guardianEye.rotationPointY = 0.0F;
          } else {
             this.guardianEye.rotationPointY = 1.0F;
          }
 
-         Vec3 vec32 = entityguardian.getLook(0.0F);
-         vec32 = Vec3.createVectorHelper(vec32.xCoord, 0.0F, vec32.zCoord);
-         Vec3 vec33 = Vec3.createVectorHelper(vec31.xCoord - vec3.xCoord, 0.0F, vec31.zCoord - vec3.zCoord).normalize();
-         vec33.rotateAroundY(((float)Math.PI / 2F));
+         Vec3d vec32 = entityguardian.getLook(0.0F);
+         vec32 = new Vec3d(vec32.x, 0.0F, vec32.z);
+         Vec3d vec33 = new Vec3d(vec31.x - vec3.x, 0.0F, vec31.z - vec3.z).normalize();
+         vec33 = vec33.rotateYaw((float)(Math.PI / 2F));
          double d1 = vec32.dotProduct(vec33);
-         this.guardianEye.rotationPointX = MathHelper.sqrt_float((float)Math.abs(d1)) * 2.0F * (float)Math.signum(d1);
+         this.guardianEye.rotationPointX = MathHelper.sqrt((float)Math.abs(d1)) * 2.0F * (float)Math.signum(d1);
       }
 
       this.guardianEye.showModel = true;
@@ -120,14 +120,14 @@ public class ModelWatcher extends ModelBase {
       this.guardianTail[2].rotationPointZ = 6.0F;
    }
 
-   private Vec3 getPositionEyes(Entity e, float p_174824_1_) {
+   private Vec3d getPositionEyes(Entity e, float p_174824_1_) {
       if (p_174824_1_ == 1.0F) {
-         return Vec3.createVectorHelper(e.posX, e.posY + (double)e.getEyeHeight(), e.posZ);
+         return new Vec3d(e.posX, e.posY + (double)e.getEyeHeight(), e.posZ);
       } else {
          double d0 = e.prevPosX + (e.posX - e.prevPosX) * (double)p_174824_1_;
          double d1 = e.prevPosY + (e.posY - e.prevPosY) * (double)p_174824_1_ + (double)e.getEyeHeight();
          double d2 = e.prevPosZ + (e.posZ - e.prevPosZ) * (double)p_174824_1_;
-         return Vec3.createVectorHelper(d0, d1, d2);
+         return new Vec3d(d0, d1, d2);
       }
    }
 }

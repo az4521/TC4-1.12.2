@@ -1,221 +1,208 @@
 package thaumcraft.common.blocks;
 
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockContainer;
 import net.minecraft.block.material.Material;
-import net.minecraft.client.renderer.texture.IIconRegister;
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.creativetab.CreativeTabs;
-import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.IIcon;
+import net.minecraft.util.EnumFacing;
+import net.minecraft.util.NonNullList;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
-import net.minecraftforge.common.util.ForgeDirection;
 import thaumcraft.api.crafting.IInfusionStabiliser;
 import thaumcraft.client.fx.ParticleEngine;
 import thaumcraft.client.fx.particles.FXSpark;
 import thaumcraft.common.Thaumcraft;
-import thaumcraft.common.config.ConfigBlocks;
 import thaumcraft.common.config.ConfigItems;
 import thaumcraft.common.tiles.TileCrystal;
 import thaumcraft.common.tiles.TileEldritchCrystal;
 
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Random;
 
 public class BlockCrystal extends BlockContainer implements IInfusionStabiliser {
+   public static final net.minecraft.block.properties.PropertyInteger META =
+         net.minecraft.block.properties.PropertyInteger.create("meta", 0, 15);
+
+   @Override
+   protected net.minecraft.block.state.BlockStateContainer createBlockState() {
+      return new net.minecraft.block.state.BlockStateContainer(this, META);
+   }
+
+   @Override
+   public net.minecraft.block.state.IBlockState getStateFromMeta(int meta) {
+      return this.getDefaultState().withProperty(META, meta);
+   }
+
+   @Override
+   public int getMetaFromState(net.minecraft.block.state.IBlockState state) {
+      return state.getValue(META);
+   }
+
    private Random random = new Random();
-   public IIcon icon;
 
    public BlockCrystal() {
-      super(Material.glass);
+      super(Material.GLASS);
       this.setHardness(0.7F);
       this.setResistance(1.0F);
       this.setLightLevel(0.5F);
-      this.setStepSound(new CustomStepSound("crystal", 1.0F, 1.0F));
+      // setStepSound removed in 1.12.2 — sound is now data-driven
       this.setCreativeTab(Thaumcraft.tabTC);
    }
 
+   @Override
    @SideOnly(Side.CLIENT)
-   public void getSubBlocks(Item par1, CreativeTabs par2CreativeTabs, List par3List) {
-      for(int var4 = 0; var4 <= 6; ++var4) {
-         par3List.add(new ItemStack(par1, 1, var4));
+   public void getSubBlocks(CreativeTabs tab, NonNullList<ItemStack> list) {
+      for (int var4 = 0; var4 <= 6; ++var4) {
+         list.add(new ItemStack(this, 1, var4));
       }
-
    }
 
+   // registerBlockIcons removed — textures are handled by JSON models in 1.12.2
+   // getIcon removed — textures are handled by JSON models in 1.12.2
+
+   @Override
+   public net.minecraft.util.EnumBlockRenderType getRenderType(net.minecraft.block.state.IBlockState state) {
+      return net.minecraft.util.EnumBlockRenderType.INVISIBLE;
+   }
+   // renderAsNormalBlock() removed in 1.12.2
+
+   @Override
+   public boolean isOpaqueCube(IBlockState state) {
+      return false;
+   }
+
+   @Override
+   public boolean isFullCube(IBlockState state) {
+      return false;
+   }
+
+   @Override
    @SideOnly(Side.CLIENT)
-   public void registerBlockIcons(IIconRegister ir) {
-      this.icon = ir.registerIcon("thaumcraft:crystal");
-   }
-
-   public IIcon getIcon(int par1, int par2) {
-      return this.icon;
-   }
-
-   @SideOnly(Side.CLIENT)
-   public void randomDisplayTick(World world, int i, int j, int k, Random random) {
-      int md = world.getBlockMetadata(i, j, k);
+   public void randomDisplayTick(IBlockState state, World world, BlockPos pos, Random random) {
+      int md = this.getMetaFromState(state);
+      int i = pos.getX(), j = pos.getY(), k = pos.getZ();
       if (md <= 6 && random.nextInt(17) == 0) {
-         FXSpark ef = new FXSpark(world, (double)i + 0.3 + (double)(world.rand.nextFloat() * 0.4F), (double)j + 0.3 + (double)(world.rand.nextFloat() * 0.4F), (double)k + 0.3 + (double)(world.rand.nextFloat() * 0.4F), 0.2F + random.nextFloat() * 0.1F);
+         FXSpark ef = new FXSpark(world,
+               (double)i + 0.3 + (double)(world.rand.nextFloat() * 0.4F),
+               (double)j + 0.3 + (double)(world.rand.nextFloat() * 0.4F),
+               (double)k + 0.3 + (double)(world.rand.nextFloat() * 0.4F),
+               0.2F + random.nextFloat() * 0.1F);
          Color c = new Color(md == 6 ? BlockCustomOreItem.colors[random.nextInt(6) + 1] : BlockCustomOreItem.colors[md + 1]);
          ef.setRBGColorF((float)c.getRed() / 255.0F, (float)c.getGreen() / 255.0F, (float)c.getBlue() / 255.0F);
          ef.setAlphaF(0.8F);
          ParticleEngine.instance.addEffect(world, ef);
       }
-
    }
 
-   public int colorMultiplier(IBlockAccess par1iBlockAccess, int par2, int par3, int par4) {
-      int md = par1iBlockAccess.getBlockMetadata(par2, par3, par4);
-      if (md < 6) {
-         return BlockCustomOreItem.colors[md + 1];
-      } else {
-         return md == 6 ? BlockCustomOreItem.colors[(new Random()).nextInt(6) + 1] : super.colorMultiplier(par1iBlockAccess, par2, par3, par4);
-      }
+   // colorMultiplier removed in 1.12.2 — tinting is handled by IBlockColor
+
+   @Override
+   public boolean hasTileEntity(IBlockState state) {
+      int metadata = this.getMetaFromState(state);
+      return metadata <= 7;
    }
 
-   public boolean isOpaqueCube() {
-      return false;
-   }
-
-   public boolean renderAsNormalBlock() {
-      return false;
-   }
-
-   public int getRenderType() {
-      return ConfigBlocks.blockCrystalRI;
-   }
-
-   public TileEntity createTileEntity(World world, int metadata) {
+   @Override
+   public TileEntity createTileEntity(World world, IBlockState state) {
+      int metadata = this.getMetaFromState(state);
       if (metadata <= 6) {
          return new TileCrystal();
       } else {
-         return metadata == 7 ? new TileEldritchCrystal() : super.createTileEntity(world, metadata);
+         return metadata == 7 ? new TileEldritchCrystal() : null;
       }
    }
 
+   @Override
    public TileEntity createNewTileEntity(World var1, int md) {
       return null;
    }
 
-   public int damageDropped(int par1) {
-      return par1;
+   @Override
+   public int damageDropped(IBlockState state) {
+      return this.getMetaFromState(state);
    }
 
-   public ArrayList getDrops(World world, int x, int y, int z, int md, int fortune) {
+   @Override
+   public java.util.List<ItemStack> getDrops(IBlockAccess world, BlockPos pos, IBlockState state, int fortune) {
       ArrayList<ItemStack> ret = new ArrayList<>();
+      int md = this.getMetaFromState(state);
       if (md < 6) {
-         for(int t = 0; t < 6; ++t) {
+         for (int t = 0; t < 6; ++t) {
             ret.add(new ItemStack(ConfigItems.itemShard, 1, md));
          }
-
          return ret;
-      } else if (md != 6) {
-         if (md == 7) {
-            ret.add(new ItemStack(ConfigItems.itemShard, 1, 6));
-            return ret;
-         } else {
-            return super.getDrops(world, x, y, z, md, fortune);
-         }
-      } else {
-         for(int t = 0; t < 6; ++t) {
+      } else if (md == 6) {
+         for (int t = 0; t < 6; ++t) {
             ret.add(new ItemStack(ConfigItems.itemShard, 1, t));
          }
-
          return ret;
-      }
-   }
-
-   public void onNeighborBlockChange(World world, int i, int j, int k, Block l) {
-      super.onNeighborBlockChange(world, i, j, k, l);
-      int md = world.getBlockMetadata(i, j, k);
-      if (md <= 6 && this.checkIfAttachedToBlock(world, i, j, k)) {
-         TileCrystal tes = (TileCrystal)world.getTileEntity(i, j, k);
-         int i1 = tes.orientation;
-         boolean flag = !world.isSideSolid(i - 1, j, k, ForgeDirection.getOrientation(5)) && i1 == 5;
-
-          if (!world.isSideSolid(i + 1, j, k, ForgeDirection.getOrientation(4)) && i1 == 4) {
-            flag = true;
-         }
-
-         if (!world.isSideSolid(i, j, k - 1, ForgeDirection.getOrientation(3)) && i1 == 3) {
-            flag = true;
-         }
-
-         if (!world.isSideSolid(i, j, k + 1, ForgeDirection.getOrientation(2)) && i1 == 2) {
-            flag = true;
-         }
-
-         if (!world.isSideSolid(i, j - 1, k, ForgeDirection.getOrientation(1)) && i1 == 1) {
-            flag = true;
-         }
-
-         if (!world.isSideSolid(i, j + 1, k, ForgeDirection.getOrientation(0)) && i1 == 0) {
-            flag = true;
-         }
-
-         if (flag) {
-            this.dropBlockAsItem(world, i, j, k, world.getBlockMetadata(i, j, k), 0);
-            world.setBlockToAir(i, j, k);
-         }
-
       } else if (md == 7) {
-         TileCrystal tes = (TileCrystal)world.getTileEntity(i, j, k);
-         ForgeDirection fd = ForgeDirection.getOrientation(tes.orientation).getOpposite();
-         if (world.isAirBlock(i + fd.offsetX, j + fd.offsetY, k + fd.offsetZ)) {
-            this.dropBlockAsItem(world, i, j, k, world.getBlockMetadata(i, j, k), 0);
-            world.setBlockToAir(i, j, k);
-         }
-
+         ret.add(new ItemStack(ConfigItems.itemShard, 1, 6));
+         return ret;
+      } else {
+         return super.getDrops(world, pos, state, fortune);
       }
    }
 
-   private boolean checkIfAttachedToBlock(World world, int i, int j, int k) {
-      if (!this.canPlaceBlockAt(world, i, j, k)) {
-         this.dropBlockAsItem(world, i, j, k, world.getBlockMetadata(i, j, k), 0);
-         world.setBlockToAir(i, j, k);
+   @Override
+   public void neighborChanged(IBlockState state, World world, BlockPos pos, Block block, BlockPos fromPos) {
+      super.neighborChanged(state, world, pos, block, fromPos);
+      int md = this.getMetaFromState(state);
+      if (md <= 6 && this.checkIfAttachedToBlock(world, pos, state)) {
+         TileCrystal tes = (TileCrystal) world.getTileEntity(pos);
+         if (tes == null) return;
+         int i1 = tes.orientation;
+         boolean flag = !world.isSideSolid(pos.west(),  EnumFacing.byIndex(5)) && i1 == 5;
+         if (!world.isSideSolid(pos.east(),  EnumFacing.byIndex(4)) && i1 == 4) flag = true;
+         if (!world.isSideSolid(pos.north(), EnumFacing.byIndex(3)) && i1 == 3) flag = true;
+         if (!world.isSideSolid(pos.south(), EnumFacing.byIndex(2)) && i1 == 2) flag = true;
+         if (!world.isSideSolid(pos.down(),  EnumFacing.byIndex(1)) && i1 == 1) flag = true;
+         if (!world.isSideSolid(pos.up(),    EnumFacing.byIndex(0)) && i1 == 0) flag = true;
+         if (flag) {
+            Block.spawnAsEntity(world, pos, new ItemStack(this, 1, md));
+            world.setBlockToAir(pos);
+         }
+      } else if (md == 7) {
+         TileCrystal tes = (TileCrystal) world.getTileEntity(pos);
+         if (tes == null) return;
+         EnumFacing fd = EnumFacing.byIndex(tes.orientation).getOpposite();
+         BlockPos behind = pos.add(fd.getXOffset(), fd.getYOffset(), fd.getZOffset());
+         if (world.isAirBlock(behind)) {
+            Block.spawnAsEntity(world, pos, new ItemStack(this, 1, md));
+            world.setBlockToAir(pos);
+         }
+      }
+   }
+
+   private boolean checkIfAttachedToBlock(World world, BlockPos pos, IBlockState state) {
+      if (!this.canPlaceBlockAt(world, pos)) {
+         int md = this.getMetaFromState(state);
+         Block.spawnAsEntity(world, pos, new ItemStack(this, 1, md));
+         world.setBlockToAir(pos);
          return false;
       } else {
          return true;
       }
    }
 
-   public boolean canPlaceBlockOnSide(World world, int i, int j, int k, int l) {
-      if (l == 0 && world.isSideSolid(i, j + 1, k, ForgeDirection.getOrientation(0))) {
-         return true;
-      } else if (l == 1 && world.isSideSolid(i, j - 1, k, ForgeDirection.getOrientation(1))) {
-         return true;
-      } else if (l == 2 && world.isSideSolid(i, j, k + 1, ForgeDirection.getOrientation(2))) {
-         return true;
-      } else if (l == 3 && world.isSideSolid(i, j, k - 1, ForgeDirection.getOrientation(3))) {
-         return true;
-      } else if (l == 4 && world.isSideSolid(i + 1, j, k, ForgeDirection.getOrientation(4))) {
-         return true;
-      } else {
-         return l == 5 && world.isSideSolid(i - 1, j, k, ForgeDirection.getOrientation(5));
-      }
+   @Override
+   public boolean canPlaceBlockAt(World world, BlockPos pos) {
+      return world.isSideSolid(pos.west(),  EnumFacing.byIndex(5))
+          || world.isSideSolid(pos.east(),  EnumFacing.byIndex(4))
+          || world.isSideSolid(pos.north(), EnumFacing.byIndex(3))
+          || world.isSideSolid(pos.south(), EnumFacing.byIndex(2))
+          || world.isSideSolid(pos.down(),  EnumFacing.byIndex(1))
+          || world.isSideSolid(pos.up(),    EnumFacing.byIndex(0));
    }
 
-   public boolean canPlaceBlockAt(World world, int i, int j, int k) {
-      if (world.isSideSolid(i - 1, j, k, ForgeDirection.getOrientation(5))) {
-         return true;
-      } else if (world.isSideSolid(i + 1, j, k, ForgeDirection.getOrientation(4))) {
-         return true;
-      } else if (world.isSideSolid(i, j, k - 1, ForgeDirection.getOrientation(3))) {
-         return true;
-      } else if (world.isSideSolid(i, j, k + 1, ForgeDirection.getOrientation(2))) {
-         return true;
-      } else {
-         return world.isSideSolid(i, j - 1, k, ForgeDirection.getOrientation(1)) || world.isSideSolid(i, j + 1, k, ForgeDirection.getOrientation(0));
-      }
-   }
-
+   @Override
    public boolean canStabaliseInfusion(World world, int x, int y, int z) {
       return true;
    }

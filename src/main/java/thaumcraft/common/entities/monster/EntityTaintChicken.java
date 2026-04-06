@@ -41,16 +41,16 @@ public class EntityTaintChicken extends EntityMob implements ITaintedMob {
       this.tasks.addTask(4, new EntityAIWatchClosest(this, EntityPlayer.class, 6.0F));
       this.tasks.addTask(5, new EntityAILookIdle(this));
       this.targetTasks.addTask(0, new EntityAIHurtByTarget(this, false));
-      this.targetTasks.addTask(2, new EntityAINearestAttackableTarget(this, EntityPlayer.class, 0, true));
-      this.targetTasks.addTask(2, new EntityAINearestAttackableTarget(this, EntityVillager.class, 0, false));
-      this.targetTasks.addTask(3, new EntityAINearestAttackableTarget(this, EntityAnimal.class, 0, false));
+      this.targetTasks.addTask(2, new EntityAINearestAttackableTarget(this, EntityPlayer.class, true));
+      this.targetTasks.addTask(2, new EntityAINearestAttackableTarget(this, EntityVillager.class, false));
+      this.targetTasks.addTask(3, new EntityAINearestAttackableTarget(this, EntityAnimal.class, false));
    }
 
    protected void applyEntityAttributes() {
       super.applyEntityAttributes();
-      this.getEntityAttribute(SharedMonsterAttributes.maxHealth).setBaseValue(8.0F);
-      this.getEntityAttribute(SharedMonsterAttributes.attackDamage).setBaseValue(3.0F);
-      this.getEntityAttribute(SharedMonsterAttributes.movementSpeed).setBaseValue(0.4);
+      this.getEntityAttribute(SharedMonsterAttributes.MAX_HEALTH).setBaseValue(8.0F);
+      this.getEntityAttribute(SharedMonsterAttributes.ATTACK_DAMAGE).setBaseValue(3.0F);
+      this.getEntityAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).setBaseValue(0.4);
    }
 
    protected boolean canDespawn() {
@@ -88,7 +88,7 @@ public class EntityTaintChicken extends EntityMob implements ITaintedMob {
       }
 
       this.field_752_b += this.field_755_h * 2.0F;
-      if (this.worldObj.isRemote && this.ticksExisted < 5) {
+      if (this.world.isRemote && this.ticksExisted < 5) {
          for(int a = 0; a < Thaumcraft.proxy.particleCount(10); ++a) {
             Thaumcraft.proxy.splooshFX(this);
          }
@@ -115,8 +115,9 @@ public class EntityTaintChicken extends EntityMob implements ITaintedMob {
       return "mob.chicken.hurt";
    }
 
-   protected String getDeathSound() {
-      return "mob.chicken.hurt";
+   @Override
+   protected net.minecraft.util.SoundEvent getDeathSound() {
+      return net.minecraft.init.SoundEvents.ENTITY_CHICKEN_HURT;
    }
 
    protected float getSoundPitch() {
@@ -128,7 +129,7 @@ public class EntityTaintChicken extends EntityMob implements ITaintedMob {
    }
 
    protected void dropFewItems(boolean flag, int i) {
-      if (this.worldObj.rand.nextInt(4) == 0) {
+      if (this.world.rand.nextInt(4) == 0) {
          this.entityDropItem(new ItemStack(ConfigItems.itemResource, 1, 11), this.height / 2.0F);
       } else {
          this.entityDropItem(new ItemStack(ConfigItems.itemResource, 1, 12), this.height / 2.0F);

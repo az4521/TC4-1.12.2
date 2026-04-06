@@ -1,19 +1,19 @@
 package thaumcraft.common.items.equipment;
 
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
-import net.minecraft.client.renderer.texture.IIconRegister;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
+import thaumcraft.client.renderers.compat.IIconRegister;
 import net.minecraft.item.EnumRarity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemHoe;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.IIcon;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import thaumcraft.api.IRepairable;
 import thaumcraft.common.Thaumcraft;
 import thaumcraft.common.config.ConfigItems;
 
 public class ItemThaumiumHoe extends ItemHoe implements IRepairable {
-   public IIcon icon;
+   public TextureAtlasSprite icon;
 
    public ItemThaumiumHoe(Item.ToolMaterial enumtoolmaterial) {
       super(enumtoolmaterial);
@@ -22,11 +22,11 @@ public class ItemThaumiumHoe extends ItemHoe implements IRepairable {
 
    @SideOnly(Side.CLIENT)
    public void registerIcons(IIconRegister ir) {
-      this.icon = ir.registerIcon("thaumcraft:thaumiumhoe");
+      this.icon = ir.registerSprite("thaumcraft:thaumiumhoe");
    }
 
    @SideOnly(Side.CLIENT)
-   public IIcon getIconFromDamage(int par1) {
+   public TextureAtlasSprite getIconFromDamage(int par1) {
       return this.icon;
    }
 
@@ -35,7 +35,7 @@ public class ItemThaumiumHoe extends ItemHoe implements IRepairable {
    }
 
    public EnumRarity getRarity(ItemStack itemstack) {
-      return EnumRarity.uncommon;
+      return EnumRarity.UNCOMMON;
    }
 
    public boolean getIsRepairable(ItemStack par1ItemStack, ItemStack par2ItemStack) {

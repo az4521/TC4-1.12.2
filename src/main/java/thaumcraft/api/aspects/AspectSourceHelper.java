@@ -3,8 +3,8 @@ package thaumcraft.api.aspects;
 import java.lang.reflect.Method;
 
 import net.minecraft.tileentity.TileEntity;
-import net.minecraftforge.common.util.ForgeDirection;
-import cpw.mods.fml.common.FMLLog;
+import net.minecraft.util.EnumFacing;
+import net.minecraftforge.fml.common.FMLLog;
 
 public class AspectSourceHelper {
 
@@ -21,11 +21,11 @@ public class AspectSourceHelper {
 	 * @param range how many blocks you wish to search for essentia sources. 
 	 * @return boolean returns true if essentia was found and removed from a source.
 	 */
-	public static boolean drainEssentia(TileEntity tile, Aspect aspect, ForgeDirection direction, int range) {
+	public static boolean drainEssentia(TileEntity tile, Aspect aspect, EnumFacing direction, int range) {
 	    try {
 	        if(drainEssentia == null) {
 	            Class fake = Class.forName("thaumcraft.common.lib.events.EssentiaHandler");
-	            drainEssentia = fake.getMethod("drainEssentia", TileEntity.class, Aspect.class, ForgeDirection.class, int.class);
+	            drainEssentia = fake.getMethod("drainEssentia", TileEntity.class, Aspect.class, EnumFacing.class, int.class);
 	        }
 	        return (Boolean) drainEssentia.invoke(null, tile, aspect, direction, range);
 	    } catch(Exception ex) { 
@@ -43,11 +43,11 @@ public class AspectSourceHelper {
 	 * @param range how many blocks you wish to search for essentia sources. 
 	 * @return boolean returns true if essentia was found and removed from a source.
 	 */
-	public static boolean findEssentia(TileEntity tile, Aspect aspect, ForgeDirection direction, int range) {
+	public static boolean findEssentia(TileEntity tile, Aspect aspect, EnumFacing direction, int range) {
 	    try {
 	        if(findEssentia == null) {
 	            Class fake = Class.forName("thaumcraft.common.lib.events.EssentiaHandler");
-	            findEssentia = fake.getMethod("findEssentia", TileEntity.class, Aspect.class, ForgeDirection.class, int.class);
+	            findEssentia = fake.getMethod("findEssentia", TileEntity.class, Aspect.class, EnumFacing.class, int.class);
 	        }
 	        return (Boolean) findEssentia.invoke(null, tile, aspect, direction, range);
 	    } catch(Exception ex) { 

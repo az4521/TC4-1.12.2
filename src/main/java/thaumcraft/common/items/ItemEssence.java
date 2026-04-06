@@ -1,10 +1,10 @@
 package thaumcraft.common.items;
 
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import java.util.List;
 import net.minecraft.block.Block;
-import net.minecraft.client.renderer.texture.IIconRegister;
+import thaumcraft.client.renderers.compat.IIconRegister;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayer;
@@ -12,7 +12,7 @@ import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.util.IIcon;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.world.World;
 import tc4tweak.ConfigurationHandler;
 import thaumcraft.api.aspects.Aspect;
@@ -24,10 +24,11 @@ import thaumcraft.common.tiles.TileAlembic;
 import thaumcraft.common.tiles.TileJarFillable;
 
 import static thaumcraft.api.aspects.AspectList.addAspectDescriptionToList;
+import net.minecraft.util.math.BlockPos;
 
 public class ItemEssence extends Item implements IEssentiaContainerItem {
-   public IIcon icon;
-   public IIcon iconOverlay;
+   public TextureAtlasSprite icon;
+   public TextureAtlasSprite iconOverlay;
 
    public ItemEssence() {
       this.setMaxStackSize(64);
@@ -38,11 +39,11 @@ public class ItemEssence extends Item implements IEssentiaContainerItem {
 
    @SideOnly(Side.CLIENT)
    public void registerIcons(IIconRegister ir) {
-      this.icon = ir.registerIcon("thaumcraft:phial");
-      this.iconOverlay = ir.registerIcon("thaumcraft:essence");
+      this.icon = ir.registerSprite("thaumcraft:phial");
+      this.iconOverlay = ir.registerSprite("thaumcraft:essence");
    }
 
-   public IIcon getIconFromDamage(int par1) {
+   public TextureAtlasSprite getIconFromDamage(int par1) {
       return this.icon;
    }
 
@@ -52,7 +53,7 @@ public class ItemEssence extends Item implements IEssentiaContainerItem {
    }
 
    @SideOnly(Side.CLIENT)
-   public IIcon getIconFromDamageForRenderPass(int par1, int par2) {
+   public TextureAtlasSprite getIconFromDamageForRenderPass(int par1, int par2) {
       return par1 != 0 && par2 != 0 ? this.iconOverlay : this.icon;
    }
 
@@ -71,7 +72,8 @@ public class ItemEssence extends Item implements IEssentiaContainerItem {
    }
 
    @SideOnly(Side.CLIENT)
-   public void getSubItems(Item par1, CreativeTabs par2CreativeTabs, List stacks) {
+   @Override
+   public void getSubItems(CreativeTabs par2CreativeTabs, net.minecraft.util.NonNullList<ItemStack> stacks) {
       stacks.add(new ItemStack(this, 1, 0));
 
       for(Aspect tag : Aspect.aspects.values()) {
@@ -82,15 +84,16 @@ public class ItemEssence extends Item implements IEssentiaContainerItem {
 
    }
 
-   public String getUnlocalizedName(ItemStack par1ItemStack) {
-      return super.getUnlocalizedName() + "." + par1ItemStack.getItemDamage();
+   @Override
+   public String getTranslationKey(ItemStack par1ItemStack) {
+      return getTranslationKey() + "." + par1ItemStack.getItemDamage();
    }
 
-   public void addInformation(ItemStack stack, EntityPlayer player, List list, boolean par4) {
+   public void addInformation(ItemStack stack, @javax.annotation.Nullable net.minecraft.world.World worldIn, List list, net.minecraft.client.util.ITooltipFlag flagIn) {
       AspectList aspects = this.getAspects(stack);
-      addAspectDescriptionToList(aspects,player,list);
+      addAspectDescriptionToList(aspects, net.minecraft.client.Minecraft.getMinecraft().player, list);
 
-      super.addInformation(stack, player, list, par4);
+      super.addInformation(stack, worldIn, list, flagIn);
    }
 
    public static boolean addItemStackToInventory_tweaked(InventoryPlayer inv, ItemStack itemStack) {
@@ -102,71 +105,73 @@ public class ItemEssence extends Item implements IEssentiaContainerItem {
          // empty or same stack
          if (stack == null || !stack.isItemEqual(itemStack) || !ItemStack.areItemStackTagsEqual(itemStack, stack) ||
                  // space left
-                 stack.stackSize <= 0 || stack.stackSize >= stack.getMaxStackSize()) {
+                 stack.isEmpty() || stack.getCount() >= stack.getMaxStackSize()) {
             continue;
          }
-         int toAdd = Math.min(stack.getMaxStackSize() - stack.stackSize, itemStack.stackSize);
-         itemStack.stackSize -= toAdd;
-         stack.stackSize += toAdd;
-         if (itemStack.stackSize <= 0) {
+         int toAdd = Math.min(stack.getMaxStackSize() - stack.getCount(), itemStack.getCount());
+         itemStack.shrink(toAdd);
+         stack.grow(toAdd);
+         if (itemStack.isEmpty()) {
             return true;
          }
       }
       // then try to add to current active slot if it's now empty
-      ItemStack currentStack = inv.mainInventory[inv.currentItem];
-      if (currentStack == null || currentStack.getItem() == null || currentStack.stackSize <= 0) {
-         inv.mainInventory[inv.currentItem] = itemStack;
+      ItemStack currentStack = inv.mainInventory.get(inv.currentItem);
+      if (currentStack == null || currentStack.getItem() == null || currentStack.isEmpty()) {
+         inv.mainInventory.set(inv.currentItem, itemStack);
          return true;
       }
       // fallback to vanilla logic if both failed
       return inv.addItemStackToInventory(itemStack);
    }
-   public boolean onItemUseFirst(ItemStack itemstack, EntityPlayer player, World world, int x, int y, int z, int side, float f1, float f2, float f3) {
-      Block bi = world.getBlock(x, y, z);
-      int md = world.getBlockMetadata(x, y, z);
+   public net.minecraft.util.EnumActionResult onItemUseFirst(EntityPlayer player, World world, BlockPos blockPos, net.minecraft.util.EnumFacing facing, float f1, float f2, float f3, net.minecraft.util.EnumHand hand) {
+      ItemStack itemstack = player.getHeldItem(hand);
+      int x = blockPos.getX(), y = blockPos.getY(), z = blockPos.getZ();
+      Block bi = world.getBlockState(blockPos).getBlock();
+      int md = world.getBlockState(blockPos).getBlock().getMetaFromState(world.getBlockState(blockPos));
       if (itemstack.getItemDamage() == 0 && bi == ConfigBlocks.blockMetalDevice && md == 1) {
-         TileAlembic tile = (TileAlembic)world.getTileEntity(x, y, z);
+         TileAlembic tile = (TileAlembic)world.getTileEntity(blockPos);
          if (tile.amount >= 8) {
             if (world.isRemote) {
-               player.swingItem();
-               return false;
+               player.swingArm(net.minecraft.util.EnumHand.MAIN_HAND);
+               return net.minecraft.util.EnumActionResult.PASS;
             }
 
             ItemStack phial = new ItemStack(this, 1, 1);
             this.setAspects(phial, (new AspectList()).add(tile.aspect, 8));
             if (tile.takeFromContainer(tile.aspect, 8)) {
-               --itemstack.stackSize;
+               itemstack.shrink(1);
                if (!addItemStackToInventory_tweaked(player.inventory,phial)) {
-                  world.spawnEntityInWorld(new EntityItem(world, (float)x + 0.5F, (float)y + 0.5F, (float)z + 0.5F, phial));
+                  world.spawnEntity(new EntityItem(world, (float)x + 0.5F, (float)y + 0.5F, (float)z + 0.5F, phial));
                }
 
-               world.playSoundAtEntity(player, "game.neutral.swim", 0.25F, 1.0F);
+               { net.minecraft.util.SoundEvent _snd = net.minecraft.util.SoundEvent.REGISTRY.getObject(new net.minecraft.util.ResourceLocation("minecraft:game.neutral.swim")); if (_snd != null) world.playSound(null, player.posX, player.posY, player.posZ, _snd, net.minecraft.util.SoundCategory.NEUTRAL, 0.25F, 1.0F); };
                player.inventoryContainer.detectAndSendChanges();
-               return true;
+               return net.minecraft.util.EnumActionResult.SUCCESS;
             }
          }
       }
 
       if (itemstack.getItemDamage() == 0 && bi == ConfigBlocks.blockJar && (md == 0 || md == 3)) {
-         TileJarFillable tile = (TileJarFillable)world.getTileEntity(x, y, z);
+         TileJarFillable tile = (TileJarFillable)world.getTileEntity(blockPos);
          if (tile.amount >= 8) {
             if (world.isRemote) {
-               player.swingItem();
-               return false;
+               player.swingArm(net.minecraft.util.EnumHand.MAIN_HAND);
+               return net.minecraft.util.EnumActionResult.PASS;
             }
 
             Aspect asp = Aspect.getAspect(tile.aspect.getTag());
             if (tile.takeFromContainer(asp, 8)) {
-               --itemstack.stackSize;
+               itemstack.shrink(1);
                ItemStack phial = new ItemStack(this, 1, 1);
                this.setAspects(phial, (new AspectList()).add(asp, 8));
                if (!addItemStackToInventory_tweaked(player.inventory,phial)) {
-                  world.spawnEntityInWorld(new EntityItem(world, (float)x + 0.5F, (float)y + 0.5F, (float)z + 0.5F, phial));
+                  world.spawnEntity(new EntityItem(world, (float)x + 0.5F, (float)y + 0.5F, (float)z + 0.5F, phial));
                }
 
-               world.playSoundAtEntity(player, "game.neutral.swim", 0.25F, 1.0F);
+               { net.minecraft.util.SoundEvent _snd = net.minecraft.util.SoundEvent.REGISTRY.getObject(new net.minecraft.util.ResourceLocation("minecraft:game.neutral.swim")); if (_snd != null) world.playSound(null, player.posX, player.posY, player.posZ, _snd, net.minecraft.util.SoundCategory.NEUTRAL, 0.25F, 1.0F); };
                player.inventoryContainer.detectAndSendChanges();
-               return true;
+               return net.minecraft.util.EnumActionResult.SUCCESS;
             }
          }
       }
@@ -175,30 +180,30 @@ public class ItemEssence extends Item implements IEssentiaContainerItem {
       if (al != null && al.size() == 1) {
          Aspect aspect = al.getAspects()[0];
          if (itemstack.getItemDamage() != 0 && bi == ConfigBlocks.blockJar && (md == 0 || md == 3)) {
-            TileJarFillable tile = (TileJarFillable)world.getTileEntity(x, y, z);
+            TileJarFillable tile = (TileJarFillable)world.getTileEntity(blockPos);
             if (tile.amount <= tile.maxAmount - 8 && tile.doesContainerAccept(aspect)) {
                if (world.isRemote) {
-                  player.swingItem();
-                  return false;
+                  player.swingArm(net.minecraft.util.EnumHand.MAIN_HAND);
+                  return net.minecraft.util.EnumActionResult.PASS;
                }
 
                if (tile.addToContainer(aspect, 8) == 0) {
-                  world.markBlockForUpdate(x, y, z);
+                  { net.minecraft.block.state.IBlockState _bs = world.getBlockState(blockPos); world.notifyBlockUpdate(blockPos, _bs, _bs, 3); }
                   tile.markDirty();
-                  --itemstack.stackSize;
+                  itemstack.shrink(1);
                   if (!addItemStackToInventory_tweaked(player.inventory,new ItemStack(this, 1, 0))) {
-                     world.spawnEntityInWorld(new EntityItem(world, (float)x + 0.5F, (float)y + 0.5F, (float)z + 0.5F, new ItemStack(this, 1, 0)));
+                     world.spawnEntity(new EntityItem(world, (float)x + 0.5F, (float)y + 0.5F, (float)z + 0.5F, new ItemStack(this, 1, 0)));
                   }
 
-                  world.playSoundAtEntity(player, "game.neutral.swim", 0.25F, 1.0F);
+                  { net.minecraft.util.SoundEvent _snd = net.minecraft.util.SoundEvent.REGISTRY.getObject(new net.minecraft.util.ResourceLocation("minecraft:game.neutral.swim")); if (_snd != null) world.playSound(null, player.posX, player.posY, player.posZ, _snd, net.minecraft.util.SoundCategory.NEUTRAL, 0.25F, 1.0F); };
                   player.inventoryContainer.detectAndSendChanges();
-                  return true;
+                  return net.minecraft.util.EnumActionResult.SUCCESS;
                }
             }
          }
       }
 
-      return false;
+      return net.minecraft.util.EnumActionResult.PASS;
    }
 
    public AspectList getAspects(ItemStack itemstack) {

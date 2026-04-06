@@ -14,11 +14,20 @@ import net.minecraft.entity.ai.EntityAIWatchClosest;
 import net.minecraft.entity.monster.EntityMob;
 import net.minecraft.entity.passive.EntityOcelot;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.init.SoundEvents;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.network.datasync.DataParameter;
+import net.minecraft.network.datasync.DataSerializers;
+import net.minecraft.network.datasync.EntityDataManager;
+import net.minecraft.potion.Potion;
 import net.minecraft.potion.PotionEffect;
-import net.minecraft.util.AxisAlignedBB;
+import net.minecraft.util.DamageSource;
+import net.minecraft.util.SoundCategory;
+import net.minecraft.util.SoundEvent;
+import net.minecraft.util.math.AxisAlignedBB;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import thaumcraft.api.entities.ITaintedMob;
 import thaumcraft.common.Thaumcraft;
@@ -31,6 +40,9 @@ import thaumcraft.common.lib.utils.Utils;
 import thaumcraft.common.lib.world.ThaumcraftWorldGenerator;
 
 public class EntityTaintCreeper extends EntityMob implements ITaintedMob {
+   private static final DataParameter<Integer> CREEPER_STATE = EntityDataManager.createKey(EntityTaintCreeper.class, DataSerializers.VARINT);
+   private static final DataParameter<Boolean> POWERED = EntityDataManager.createKey(EntityTaintCreeper.class, DataSerializers.BOOLEAN);
+
    private int lastActiveTime;
    private int timeSinceIgnited;
    private int fuseTime = 30;
@@ -45,16 +57,21 @@ public class EntityTaintCreeper extends EntityMob implements ITaintedMob {
       this.tasks.addTask(5, new EntityAIWander(this, 1.0F));
       this.tasks.addTask(6, new EntityAIWatchClosest(this, EntityPlayer.class, 8.0F));
       this.tasks.addTask(6, new EntityAILookIdle(this));
-      this.targetTasks.addTask(1, new EntityAINearestAttackableTarget(this, EntityPlayer.class, 0, true));
+      this.targetTasks.addTask(1, new EntityAINearestAttackableTarget(this, EntityPlayer.class, true));
       this.targetTasks.addTask(2, new EntityAIHurtByTarget(this, false));
    }
 
    protected void applyEntityAttributes() {
       super.applyEntityAttributes();
-      this.getEntityAttribute(SharedMonsterAttributes.movementSpeed).setBaseValue(0.25F);
-      this.getEntityAttribute(SharedMonsterAttributes.maxHealth).setBaseValue(30.0F);
-      this.getEntityAttribute(SharedMonsterAttributes.attackDamage).setBaseValue(2.0F);
-      this.getEntityAttribute(SharedMonsterAttributes.movementSpeed).setBaseValue(0.25F);
+      this.getEntityAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).setBaseValue(0.25F);
+      this.getEntityAttribute(SharedMonsterAttributes.MAX_HEALTH).setBaseValue(30.0F);
+      this.getEntityAttribute(SharedMonsterAttributes.ATTACK_DAMAGE).setBaseValue(2.0F);
+   }
+
+   protected void entityInit() {
+      super.entityInit();
+      this.dataManager.register(CREEPER_STATE, -1);
+      this.dataManager.register(POWERED, false);
    }
 
    public boolean isAIEnabled() {
@@ -69,42 +86,33 @@ public class EntityTaintCreeper extends EntityMob implements ITaintedMob {
       return this.getAttackTarget() == null ? 3 : 3 + (int)(this.getHealth() - 1.0F);
    }
 
-   protected void fall(float par1) {
-      super.fall(par1);
-      this.timeSinceIgnited = (int)((float)this.timeSinceIgnited + par1 * 1.5F);
+   @Override
+   public void fall(float distance, float damageMultiplier) {
+      super.fall(distance, damageMultiplier);
+      this.timeSinceIgnited = (int)((float)this.timeSinceIgnited + distance * 1.5F);
       if (this.timeSinceIgnited > this.fuseTime - 5) {
          this.timeSinceIgnited = this.fuseTime - 5;
       }
-
    }
 
    public void writeEntityToNBT(NBTTagCompound par1NBTTagCompound) {
       super.writeEntityToNBT(par1NBTTagCompound);
-      if (this.dataWatcher.getWatchableObjectByte(17) == 1) {
+      if (this.dataManager.get(POWERED)) {
          par1NBTTagCompound.setBoolean("powered", true);
       }
-
       par1NBTTagCompound.setShort("Fuse", (short)this.fuseTime);
       par1NBTTagCompound.setByte("ExplosionRadius", (byte)this.explosionRadius);
    }
 
    public void readEntityFromNBT(NBTTagCompound par1NBTTagCompound) {
       super.readEntityFromNBT(par1NBTTagCompound);
-      this.dataWatcher.updateObject(17, (byte)(par1NBTTagCompound.getBoolean("powered") ? 1 : 0));
+      this.dataManager.set(POWERED, par1NBTTagCompound.getBoolean("powered"));
       if (par1NBTTagCompound.hasKey("Fuse")) {
          this.fuseTime = par1NBTTagCompound.getShort("Fuse");
       }
-
       if (par1NBTTagCompound.hasKey("ExplosionRadius")) {
          this.explosionRadius = par1NBTTagCompound.getByte("ExplosionRadius");
       }
-
-   }
-
-   protected void entityInit() {
-      super.entityInit();
-      this.dataWatcher.addObject(16, -1);
-      this.dataWatcher.addObject(17, (byte)0);
    }
 
    protected Item getDropItem() {
@@ -112,12 +120,11 @@ public class EntityTaintCreeper extends EntityMob implements ITaintedMob {
    }
 
    protected void dropFewItems(boolean flag, int i) {
-      if (this.worldObj.rand.nextBoolean()) {
+      if (this.world.rand.nextBoolean()) {
          this.entityDropItem(new ItemStack(ConfigItems.itemResource, 1, 11), this.height / 2.0F);
       } else {
          this.entityDropItem(new ItemStack(ConfigItems.itemResource, 1, 12), this.height / 2.0F);
       }
-
    }
 
    public void onUpdate() {
@@ -125,7 +132,7 @@ public class EntityTaintCreeper extends EntityMob implements ITaintedMob {
          this.lastActiveTime = this.timeSinceIgnited;
          int var1 = this.getCreeperState();
          if (var1 > 0 && this.timeSinceIgnited == 0) {
-            this.worldObj.playSoundAtEntity(this, "random.fuse", 1.0F, 0.5F);
+            this.world.playSound(null, this.posX, this.posY, this.posZ, SoundEvents.ENTITY_CREEPER_PRIMED, SoundCategory.HOSTILE, 1.0F, 0.5F);
          }
 
          this.timeSinceIgnited += var1;
@@ -135,14 +142,18 @@ public class EntityTaintCreeper extends EntityMob implements ITaintedMob {
 
          if (this.timeSinceIgnited >= 30) {
             this.timeSinceIgnited = 30;
-            if (!this.worldObj.isRemote) {
-               this.worldObj.createExplosion(this, this.posX, this.posY + (double)(this.height / 2.0F), this.posZ, 1.5F, false);
-               List ents = this.worldObj.getEntitiesWithinAABB(EntityLivingBase.class, AxisAlignedBB.getBoundingBox(this.posX, this.posY, this.posZ, this.posX, this.posY, this.posZ).expand(6.0F, 6.0F, 6.0F));
+            if (!this.world.isRemote) {
+               this.world.createExplosion(this, this.posX, this.posY + (double)(this.height / 2.0F), this.posZ, 1.5F, false);
+               List ents = this.world.getEntitiesWithinAABB(EntityLivingBase.class,
+                  new AxisAlignedBB(this.posX, this.posY, this.posZ, this.posX, this.posY, this.posZ).grow(6.0F, 6.0F, 6.0F));
                if (!ents.isEmpty()) {
-                  for(Object ent : ents) {
+                  for (Object ent : ents) {
                      EntityLivingBase el = (EntityLivingBase)ent;
                      if (!(el instanceof ITaintedMob) && !el.isEntityUndead()) {
-                        el.addPotionEffect(new PotionEffect(Config.potionTaintPoisonID, 100, 0, false));
+                        Potion taintPoison = Potion.getPotionById(Config.potionTaintPoisonID);
+                        if (taintPoison != null) {
+                           el.addPotionEffect(new PotionEffect(taintPoison, 100, 0));
+                        }
                      }
                   }
                }
@@ -151,20 +162,23 @@ public class EntityTaintCreeper extends EntityMob implements ITaintedMob {
                int y = (int)this.posY;
                int z = (int)this.posZ;
 
-               for(int a = 0; a < 10; ++a) {
+               for (int a = 0; a < 10; ++a) {
                   int xx = x + (int)((this.rand.nextFloat() - this.rand.nextFloat()) * 5.0F);
                   int zz = z + (int)((this.rand.nextFloat() - this.rand.nextFloat()) * 5.0F);
-                  if (this.worldObj.rand.nextBoolean() && this.worldObj.getBiomeGenForCoords(xx, zz) != ThaumcraftWorldGenerator.biomeTaint) {
-                     Utils.setBiomeAt(this.worldObj, xx, zz, ThaumcraftWorldGenerator.biomeTaint);
-                     if (this.worldObj.isBlockNormalCubeDefault(xx, y - 1, zz, false) && this.worldObj.getBlock(xx, y, zz).isReplaceable(this.worldObj, xx, y, zz)) {
-                        this.worldObj.setBlock(xx, y, zz, ConfigBlocks.blockTaintFibres, 0, 3);
+                  if (this.world.rand.nextBoolean()
+                        && this.world.getBiome(new BlockPos(xx, y, zz)) != ThaumcraftWorldGenerator.biomeTaint) {
+                     Utils.setBiomeAt(this.world, xx, zz, ThaumcraftWorldGenerator.biomeTaint);
+                     BlockPos pos = new BlockPos(xx, y, zz);
+                     if (this.world.getBlockState(new BlockPos(xx, y - 1, zz)).isNormalCube()
+                           && this.world.getBlockState(pos).getBlock().isReplaceable(this.world, pos)) {
+                        this.world.setBlockState(pos, ConfigBlocks.blockTaintFibres.getDefaultState(), 3);
                      }
                   }
                }
 
                this.setDead();
             } else {
-               for(int a = 0; a < Thaumcraft.proxy.particleCount(100); ++a) {
+               for (int a = 0; a < Thaumcraft.proxy.particleCount(100); ++a) {
                   Thaumcraft.proxy.taintsplosionFX(this);
                }
             }
@@ -176,24 +190,20 @@ public class EntityTaintCreeper extends EntityMob implements ITaintedMob {
 
    public void onLivingUpdate() {
       super.onLivingUpdate();
-      if (this.worldObj.isRemote && this.ticksExisted < 5) {
-         for(int a = 0; a < Thaumcraft.proxy.particleCount(10); ++a) {
+      if (this.world.isRemote && this.ticksExisted < 5) {
+         for (int a = 0; a < Thaumcraft.proxy.particleCount(10); ++a) {
             Thaumcraft.proxy.splooshFX(this);
          }
       }
-
    }
 
    public float getCreeperFlashIntensity(float par1) {
       return ((float)this.lastActiveTime + (float)(this.timeSinceIgnited - this.lastActiveTime) * par1) / 28.0F;
    }
 
-   protected String getHurtSound() {
-      return "mob.creeper.say";
-   }
-
-   protected String getDeathSound() {
-      return "mob.creeper.death";
+   @Override
+   protected SoundEvent getDeathSound() {
+      return SoundEvents.ENTITY_CREEPER_DEATH;
    }
 
    protected float getSoundPitch() {
@@ -205,10 +215,10 @@ public class EntityTaintCreeper extends EntityMob implements ITaintedMob {
    }
 
    public int getCreeperState() {
-      return this.dataWatcher.getWatchableObjectByte(16);
+      return this.dataManager.get(CREEPER_STATE);
    }
 
    public void setCreeperState(int par1) {
-      this.dataWatcher.updateObject(16, (byte)par1);
+      this.dataManager.set(CREEPER_STATE, par1);
    }
 }

@@ -1,25 +1,25 @@
 package thaumcraft.common.items;
 
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import net.minecraft.client.renderer.texture.IIconRegister;
+import thaumcraft.client.renderers.compat.IIconRegister;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.Entity;
 import net.minecraft.item.EnumRarity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.IIcon;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.world.World;
 import thaumcraft.api.WorldCoordinates;
 import thaumcraft.common.Thaumcraft;
 import thaumcraft.common.lib.utils.EntityUtils;
 
 public class ItemCompassStone extends Item {
-   public IIcon[] icon = new IIcon[2];
-   private IIcon t = null;
+   public TextureAtlasSprite[] icon = new TextureAtlasSprite[2];
+   private TextureAtlasSprite t = null;
    public static HashMap<WorldCoordinates,Long> sinisterNodes = new HashMap<>();
 
    public ItemCompassStone() {
@@ -31,16 +31,16 @@ public class ItemCompassStone extends Item {
 
    @SideOnly(Side.CLIENT)
    public void registerIcons(IIconRegister ir) {
-      this.icon[0] = ir.registerIcon("thaumcraft:sinister_stone");
-      this.icon[1] = ir.registerIcon("thaumcraft:sinister_stone_active");
+      this.icon[0] = ir.registerSprite("thaumcraft:sinister_stone");
+      this.icon[1] = ir.registerSprite("thaumcraft:sinister_stone_active");
    }
 
    @SideOnly(Side.CLIENT)
-   public IIcon getIconFromDamage(int par1) {
+   public TextureAtlasSprite getIconFromDamage(int par1) {
       return par1 == 1 ? this.icon[1] : (this.t == null ? this.icon[0] : this.t);
    }
 
-   public void onUpdate(ItemStack p_77663_1_, World world, Entity entity, int p_77663_4_, boolean p_77663_5_) {
+   public void onUpdate(ItemStack stack, World world, Entity entity, int itemSlot, boolean isSelected) {
       if (world.isRemote) {
          ArrayList<WorldCoordinates> del = new ArrayList<>();
          this.t = null;
@@ -50,7 +50,7 @@ public class ItemCompassStone extends Item {
                del.add(wc);
             }
 
-            if (wc.dim == world.provider.dimensionId && EntityUtils.isVisibleTo(0.66F, entity, (double)wc.x + (double)0.5F, (double)wc.y + (double)0.5F, (double)wc.z + (double)0.5F, 256.0F)) {
+            if (wc.dim == world.provider.getDimension() && EntityUtils.isVisibleTo(0.66F, entity, (double)wc.x + (double)0.5F, (double)wc.y + (double)0.5F, (double)wc.z + (double)0.5F, 256.0F)) {
                this.t = this.icon[1];
                break;
             }
@@ -70,11 +70,12 @@ public class ItemCompassStone extends Item {
    }
 
    @SideOnly(Side.CLIENT)
-   public void getSubItems(Item par1, CreativeTabs par2CreativeTabs, List par3List) {
+   @Override
+   public void getSubItems(CreativeTabs par2CreativeTabs, net.minecraft.util.NonNullList<ItemStack> par3List) {
       par3List.add(new ItemStack(this, 1, 0));
    }
 
    public EnumRarity getRarity(ItemStack stack) {
-      return EnumRarity.rare;
+      return EnumRarity.RARE;
    }
 }

@@ -1,12 +1,12 @@
 package thaumcraft.common.tiles;
 
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.AxisAlignedBB;
+import net.minecraft.util.math.AxisAlignedBB;
 import thaumcraft.common.config.ConfigBlocks;
 
-public class TileNodeStabilizer extends TileEntity {
+public class TileNodeStabilizer extends TileEntity implements net.minecraft.util.ITickable {
    public int count = 0;
    public int lock = 0;
 
@@ -17,15 +17,15 @@ public class TileNodeStabilizer extends TileEntity {
    public TileNodeStabilizer() {
    }
 
-   public boolean canUpdate() {
-       return super.canUpdate();
-   }
+   @Override
+   public void update() { updateEntity(); }
 
    public void updateEntity() {
-      super.updateEntity();
-      if (this.worldObj.isRemote && this.yCoord < this.worldObj.provider.getHeight() - 1) {
-         int md = this.worldObj.getBlockMetadata(this.xCoord, this.yCoord + 1, this.zCoord);
-         if (this.worldObj.getBlock(this.xCoord, this.yCoord + 1, this.zCoord) == ConfigBlocks.blockAiry && (md == 0 || md == 5) && !this.worldObj.isBlockIndirectlyGettingPowered(this.xCoord, this.yCoord, this.zCoord)) {
+      if (this.world.isRemote && this.getPos().getY() < this.world.provider.getHeight() - 1) {
+         net.minecraft.util.math.BlockPos above = this.getPos().up();
+         net.minecraft.block.state.IBlockState aboveState = this.world.getBlockState(above);
+         int md = aboveState.getBlock().getMetaFromState(aboveState);
+         if (aboveState.getBlock() == ConfigBlocks.blockAiry && (md == 0 || md == 5) && !this.world.isBlockPowered(this.getPos())) {
             if (this.count < 37) {
                ++this.count;
             }
@@ -38,6 +38,6 @@ public class TileNodeStabilizer extends TileEntity {
 
    @SideOnly(Side.CLIENT)
    public AxisAlignedBB getRenderBoundingBox() {
-      return AxisAlignedBB.getBoundingBox(this.xCoord, this.yCoord, this.zCoord, this.xCoord + 1, this.yCoord + 2, this.zCoord + 1);
+      return new AxisAlignedBB(this.getPos().getX(), this.getPos().getY(), this.getPos().getZ(), this.getPos().getX() + 1, this.getPos().getY() + 2, this.getPos().getZ() + 1);
    }
 }

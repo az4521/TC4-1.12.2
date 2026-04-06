@@ -1,0 +1,52 @@
+{
+  "variants": {
+    "meta=0": {
+      "model": "thaumcraft:blocktable"
+    },
+    "meta=1": {
+      "model": "thaumcraft:blocktable"
+    },
+    "meta=2": {
+      "model": "thaumcraft:blocktable"
+    },
+    "meta=3": {
+      "model": "thaumcraft:blocktable"
+    },
+    "meta=4": {
+      "model": "thaumcraft:blocktable"
+    },
+    "meta=5": {
+      "model": "thaumcraft:blocktable"
+    },
+    "meta=6": {
+      "model": "thaumcraft:blocktable"
+    },
+    "meta=7": {
+      "model": "thaumcraft:blocktable"
+    },
+    "meta=8": {
+      "model": "thaumcraft:blocktable"
+    },
+    "meta=9": {
+      "model": "thaumcraft:blocktable"
+    },
+    "meta=10": {
+      "model": "thaumcraft:blocktable"
+    },
+    "meta=11": {
+      "model": "thaumcraft:blocktable"
+    },
+    "meta=12": {
+      "model": "thaumcraft:blocktable"
+    },
+    "meta=13": {
+      "model": "thaumcraft:blocktable"
+    },
+    "meta=14": {
+      "model": "thaumcraft:blocktable"
+    },
+    "meta=15": {
+      "model": "thaumcraft:blocktable"
+    }
+  }
+}

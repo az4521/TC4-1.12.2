@@ -13,19 +13,18 @@ import thaumcraft.common.config.ConfigItems;
 import thaumcraft.common.entities.monster.boss.EntityCultistLeader;
 
 public class EntityCultist extends EntityMob {
-   public EntityCultist(World p_i1745_1_) {
-      super(p_i1745_1_);
+   public EntityCultist(World worldIn) {
+      super(worldIn);
       this.setSize(0.6F, 1.8F);
       this.experienceValue = 10;
-      this.getNavigator().setBreakDoors(true);
-      this.getNavigator().setAvoidsWater(true);
+      ((net.minecraft.pathfinding.PathNavigateGround)this.getNavigator()).setBreakDoors(true);
    }
 
    protected void applyEntityAttributes() {
       super.applyEntityAttributes();
-      this.getEntityAttribute(SharedMonsterAttributes.followRange).setBaseValue(32.0F);
-      this.getEntityAttribute(SharedMonsterAttributes.movementSpeed).setBaseValue(0.3);
-      this.getEntityAttribute(SharedMonsterAttributes.attackDamage).setBaseValue(4.0F);
+      this.getEntityAttribute(SharedMonsterAttributes.FOLLOW_RANGE).setBaseValue(32.0F);
+      this.getEntityAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).setBaseValue(0.3);
+      this.getEntityAttribute(SharedMonsterAttributes.ATTACK_DAMAGE).setBaseValue(4.0F);
    }
 
    protected void entityInit() {
@@ -57,7 +56,7 @@ public class EntityCultist extends EntityMob {
       super.dropFewItems(flag, i);
    }
 
-   protected void dropRareDrop(int p_70600_1_) {
+   protected void dropRareDrop(int id) {
       this.entityDropItem(new ItemStack(ConfigItems.itemEldritchObject, 1, 1), 1.0F);
    }
 
@@ -67,35 +66,35 @@ public class EntityCultist extends EntityMob {
    protected void enchantEquipment() {
    }
 
-   public IEntityLivingData onSpawnWithEgg(IEntityLivingData p_110161_1_) {
+   public IEntityLivingData onInitialSpawn(net.minecraft.world.DifficultyInstance difficulty, IEntityLivingData entityData) {
       this.addRandomArmor();
       this.enchantEquipment();
-      return super.onSpawnWithEgg(p_110161_1_);
+      return super.onInitialSpawn(difficulty, entityData);
    }
 
    protected boolean canDespawn() {
        return super.canDespawn();
    }
 
-   public boolean attackEntityAsMob(Entity p_70652_1_) {
-      return super.attackEntityAsMob(p_70652_1_);
+   public boolean attackEntityAsMob(Entity entityIn) {
+      return super.attackEntityAsMob(entityIn);
    }
 
    public void readEntityFromNBT(NBTTagCompound nbt) {
       super.readEntityFromNBT(nbt);
       if (nbt.hasKey("HomeD")) {
-         this.setHomeArea(nbt.getInteger("HomeX"), nbt.getInteger("HomeY"), nbt.getInteger("HomeZ"), nbt.getInteger("HomeD"));
+         this.setHomePosAndDistance(new net.minecraft.util.math.BlockPos(nbt.getInteger("HomeX"), nbt.getInteger("HomeY"), nbt.getInteger("HomeZ")), nbt.getInteger("HomeD"));
       }
 
    }
 
    public void writeEntityToNBT(NBTTagCompound nbt) {
       super.writeEntityToNBT(nbt);
-      if (this.getHomePosition() != null && this.func_110174_bM() > 0.0F) {
-         nbt.setInteger("HomeD", (int)this.func_110174_bM());
-         nbt.setInteger("HomeX", this.getHomePosition().posX);
-         nbt.setInteger("HomeY", this.getHomePosition().posY);
-         nbt.setInteger("HomeZ", this.getHomePosition().posZ);
+      if (this.getHomePosition() != null && this.getMaximumHomeDistance() > 0.0F) {
+         nbt.setInteger("HomeD", (int)this.getMaximumHomeDistance());
+         nbt.setInteger("HomeX", this.getHomePosition().getX());
+         nbt.setInteger("HomeY", this.getHomePosition().getY());
+         nbt.setInteger("HomeZ", this.getHomePosition().getZ());
       }
 
    }

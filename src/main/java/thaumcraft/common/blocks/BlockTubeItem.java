@@ -5,8 +5,11 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.EnumActionResult;
+import net.minecraft.util.EnumFacing;
+import net.minecraft.util.EnumHand;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
-import net.minecraftforge.common.util.ForgeDirection;
 import thaumcraft.common.tiles.TileEssentiaCrystalizer;
 import thaumcraft.common.tiles.TileTube;
 
@@ -21,23 +24,23 @@ public class BlockTubeItem extends ItemBlock {
       return par1;
    }
 
-   public String getUnlocalizedName(ItemStack par1ItemStack) {
-      return super.getUnlocalizedName() + "." + par1ItemStack.getItemDamage();
+   public String getTranslationKey(ItemStack par1ItemStack) {
+      return super.getTranslationKey() + "." + par1ItemStack.getItemDamage();
    }
 
-   public boolean placeBlockAt(ItemStack stack, EntityPlayer player, World world, int x, int y, int z, int side, float hitX, float hitY, float hitZ, int metadata) {
-      boolean ret = super.placeBlockAt(stack, player, world, x, y, z, side, hitX, hitY, hitZ, metadata);
-      if (ret) {
-         TileEntity te = world.getTileEntity(x, y, z);
+   @Override
+   public EnumActionResult onItemUse(EntityPlayer player, World world, BlockPos pos, EnumHand hand, EnumFacing facing, float hitX, float hitY, float hitZ) {
+      EnumActionResult ret = super.onItemUse(player, world, pos, hand, facing, hitX, hitY, hitZ);
+      if (ret == EnumActionResult.SUCCESS) {
+         BlockPos placed = pos.offset(facing);
+         TileEntity te = world.getTileEntity(placed);
          if (te instanceof TileTube) {
-            ((TileTube)te).facing = ForgeDirection.getOrientation(side);
+            ((TileTube)te).facing = facing;
          }
-
          if (te instanceof TileEssentiaCrystalizer) {
-            ((TileEssentiaCrystalizer)te).facing = ForgeDirection.getOrientation(side).getOpposite();
+            ((TileEssentiaCrystalizer)te).facing = facing.getOpposite();
          }
       }
-
       return ret;
    }
 }

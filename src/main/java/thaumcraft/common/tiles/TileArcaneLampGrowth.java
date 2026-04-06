@@ -1,6 +1,6 @@
 package thaumcraft.common.tiles;
 
-import cpw.mods.fml.common.network.NetworkRegistry;
+import net.minecraftforge.fml.common.network.NetworkRegistry;
 import java.util.ArrayList;
 import java.util.Collections;
 import net.minecraft.block.Block;
@@ -10,10 +10,10 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.NetworkManager;
-import net.minecraft.network.play.server.S35PacketUpdateTileEntity;
+import net.minecraft.network.play.server.SPacketUpdateTileEntity;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.world.EnumSkyBlock;
-import net.minecraftforge.common.util.ForgeDirection;
+import net.minecraft.util.EnumFacing;
 import thaumcraft.api.BlockCoordinates;
 import thaumcraft.api.ThaumcraftApiHelper;
 import thaumcraft.api.TileThaumcraft;
@@ -22,9 +22,10 @@ import thaumcraft.api.aspects.IEssentiaTransport;
 import thaumcraft.common.lib.network.PacketHandler;
 import thaumcraft.common.lib.network.fx.PacketFXBlockSparkle;
 import thaumcraft.common.lib.utils.CropUtils;
+import net.minecraft.util.math.BlockPos;
 
 public class TileArcaneLampGrowth extends TileThaumcraft implements IEssentiaTransport {
-   public ForgeDirection facing = ForgeDirection.getOrientation(0);
+   public EnumFacing facing = EnumFacing.byIndex(0);
    private boolean reserve = false;
    public int charges = -1;
    int lx = 0;
@@ -36,34 +37,30 @@ public class TileArcaneLampGrowth extends TileThaumcraft implements IEssentiaTra
    int drawDelay;
 
    public TileArcaneLampGrowth() {
-      this.lid = Blocks.air;
+      this.lid = Blocks.AIR;
       this.lmd = 0;
       this.checklist = new ArrayList<>();
       this.drawDelay = 0;
    }
 
-   public boolean canUpdate() {
-       return super.canUpdate();
-   }
-
-   public void onDataPacket(NetworkManager net, S35PacketUpdateTileEntity pkt) {
+   public void onDataPacket(NetworkManager net, SPacketUpdateTileEntity pkt) {
       super.onDataPacket(net, pkt);
-      if (this.worldObj != null && this.worldObj.isRemote) {
-         this.worldObj.updateLightByType(EnumSkyBlock.Block, this.xCoord, this.yCoord, this.zCoord);
+      if (this.world != null && this.world.isRemote) {
+         this.world.checkLightFor(EnumSkyBlock.BLOCK, this.getPos());
       }
 
    }
 
    public void updateEntity() {
-      if (!this.worldObj.isRemote) {
+      if (!this.world.isRemote) {
          if (this.charges <= 0) {
             if (this.reserve) {
                this.charges = 100;
                this.reserve = false;
-               this.worldObj.markBlockForUpdate(this.xCoord, this.yCoord, this.zCoord);
+               { net.minecraft.block.state.IBlockState _bs = this.world.getBlockState(this.pos); this.world.notifyBlockUpdate(this.pos, _bs, _bs, 3); }
             } else if (this.drawEssentia()) {
                this.charges = 100;
-               this.worldObj.markBlockForUpdate(this.xCoord, this.yCoord, this.zCoord);
+               { net.minecraft.block.state.IBlockState _bs = this.world.getBlockState(this.pos); this.world.notifyBlockUpdate(this.pos, _bs, _bs, 3); }
             }
          }
 
@@ -73,7 +70,7 @@ public class TileArcaneLampGrowth extends TileThaumcraft implements IEssentiaTra
 
          if (this.charges == 0) {
             this.charges = -1;
-            this.worldObj.markBlockForUpdate(this.xCoord, this.yCoord, this.zCoord);
+            { net.minecraft.block.state.IBlockState _bs = this.world.getBlockState(this.pos); this.world.notifyBlockUpdate(this.pos, _bs, _bs, 3); }
          }
 
          if (this.charges > 0) {
@@ -84,31 +81,33 @@ public class TileArcaneLampGrowth extends TileThaumcraft implements IEssentiaTra
    }
 
    boolean isPlant(int x, int y, int z) {
-      boolean flag = this.worldObj.getBlock(x, y, z) instanceof IGrowable;
-      Material mat = this.worldObj.getBlock(x, y, z).getMaterial();
-      return (flag || mat == Material.cactus || mat == Material.plants) && mat != Material.grass;
+      boolean flag = this.world.getBlockState(new BlockPos(x, y, z)).getBlock() instanceof IGrowable;
+      Material mat = this.world.getBlockState(new BlockPos(x, y, z)).getMaterial();
+      return (flag || mat == Material.CACTUS || mat == Material.PLANTS) && mat != Material.GRASS;
    }
 
    private void updatePlant() {
-      if (this.lid != this.worldObj.getBlock(this.lx, this.ly, this.lz) || this.lmd != this.worldObj.getBlockMetadata(this.lx, this.ly, this.lz)) {
-         EntityPlayer p = this.worldObj.getClosestPlayer(this.lx, this.ly, this.lz, 32.0F);
+      if (this.lid != this.world.getBlockState(new BlockPos(this.lx, this.ly, this.lz)).getBlock() || this.lmd != this.
+        world.getBlockState(new net.minecraft.util.math.BlockPos(this.lx, this.ly, this.lz)).getBlock().getMetaFromState(world.getBlockState(new net.minecraft.util.math.BlockPos(this.lx, this.ly, this.lz)))) {
+         EntityPlayer p = this.world.getClosestPlayer(this.lx, this.ly, this.lz, 32.0F, false);
          if (p != null) {
-            PacketHandler.INSTANCE.sendToAllAround(new PacketFXBlockSparkle(this.lx, this.ly, this.lz, 4259648), new NetworkRegistry.TargetPoint(this.worldObj.provider.dimensionId, this.lx, this.ly, this.lz, 32.0F));
+            PacketHandler.INSTANCE.sendToAllAround(new PacketFXBlockSparkle(this.lx, this.ly, this.lz, 4259648), new NetworkRegistry.TargetPoint(this.world.provider.getDimension(), this.lx, this.ly, this.lz, 32.0F));
          }
 
-         this.lid = this.worldObj.getBlock(this.lx, this.ly, this.lz);
-         this.lmd = this.worldObj.getBlockMetadata(this.lx, this.ly, this.lz);
+         this.lid = this.world.getBlockState(new BlockPos(this.lx, this.ly, this.lz)).getBlock();
+         this.lmd = this.
+        world.getBlockState(new net.minecraft.util.math.BlockPos(this.lx, this.ly, this.lz)).getBlock().getMetaFromState(world.getBlockState(new net.minecraft.util.math.BlockPos(this.lx, this.ly, this.lz)));
       }
 
       int distance = 6;
       if (this.checklist.isEmpty()) {
          for(int a = -distance; a <= distance; ++a) {
             for(int b = -distance; b <= distance; ++b) {
-               this.checklist.add(new BlockCoordinates(this.xCoord + a, this.yCoord + distance, this.zCoord + b));
+               this.checklist.add(new BlockCoordinates(this.getPos().getX() + a, this.getPos().getY() + distance, this.getPos().getZ() + b));
             }
          }
 
-         Collections.shuffle(this.checklist, this.worldObj.rand);
+         Collections.shuffle(this.checklist, this.world.rand);
       }
 
       int x = ((BlockCoordinates)this.checklist.get(0)).x;
@@ -116,15 +115,16 @@ public class TileArcaneLampGrowth extends TileThaumcraft implements IEssentiaTra
       int z = ((BlockCoordinates)this.checklist.get(0)).z;
       this.checklist.remove(0);
 
-      while(y >= this.yCoord - distance) {
-         if (!this.worldObj.isAirBlock(x, y, z) && this.isPlant(x, y, z) && this.getDistanceFrom((double)x + (double)0.5F, (double)y + (double)0.5F, (double)z + (double)0.5F) < (double)(distance * distance) && !CropUtils.isGrownCrop(this.worldObj, x, y, z) && CropUtils.doesLampGrow(this.worldObj, x, y, z)) {
+      while(y >= this.getPos().getY() - distance) {
+         if (!this.world.isAirBlock(new BlockPos(x, y, z)) && this.isPlant(x, y, z) && this.getDistanceSq((double)x + (double)0.5F, (double)y + (double)0.5F, (double)z + (double)0.5F) < (double)(distance * distance) && !CropUtils.isGrownCrop(this.world, x, y, z) && CropUtils.doesLampGrow(this.world, x, y, z)) {
             --this.charges;
             this.lx = x;
             this.ly = y;
             this.lz = z;
-            this.lid = this.worldObj.getBlock(x, y, z);
-            this.lmd = this.worldObj.getBlockMetadata(x, y, z);
-            this.worldObj.scheduleBlockUpdate(x, y, z, this.worldObj.getBlock(x, y, z), 1);
+            this.lid = this.world.getBlockState(new BlockPos(x, y, z)).getBlock();
+            this.lmd = this.
+        world.getBlockState(new net.minecraft.util.math.BlockPos(x, y, z)).getBlock().getMetaFromState(world.getBlockState(new net.minecraft.util.math.BlockPos(x, y, z)));
+            this.world.scheduleUpdate(new BlockPos(x, y, z), this.world.getBlockState(new BlockPos(x, y, z)).getBlock(), 1);
             return;
          }
 
@@ -134,7 +134,7 @@ public class TileArcaneLampGrowth extends TileThaumcraft implements IEssentiaTra
    }
 
    public void readCustomNBT(NBTTagCompound nbttagcompound) {
-      this.facing = ForgeDirection.getOrientation(nbttagcompound.getInteger("orientation"));
+      this.facing = EnumFacing.byIndex(nbttagcompound.getInteger("orientation"));
       this.reserve = nbttagcompound.getBoolean("reserve");
       this.charges = nbttagcompound.getInteger("charges");
    }
@@ -149,7 +149,7 @@ public class TileArcaneLampGrowth extends TileThaumcraft implements IEssentiaTra
       if (++this.drawDelay % 5 != 0) {
          return false;
       } else {
-         TileEntity te = ThaumcraftApiHelper.getConnectableTile(this.worldObj, this.xCoord, this.yCoord, this.zCoord, this.facing);
+         TileEntity te = ThaumcraftApiHelper.getConnectableTile(this.world, this.getPos().getX(), this.getPos().getY(), this.getPos().getZ(), this.facing);
          if (te != null) {
             IEssentiaTransport ic = (IEssentiaTransport)te;
             if (!ic.canOutputTo(this.facing.getOpposite())) {
@@ -163,15 +163,15 @@ public class TileArcaneLampGrowth extends TileThaumcraft implements IEssentiaTra
       }
    }
 
-   public boolean isConnectable(ForgeDirection face) {
+   public boolean isConnectable(EnumFacing face) {
       return face == this.facing;
    }
 
-   public boolean canInputFrom(ForgeDirection face) {
+   public boolean canInputFrom(EnumFacing face) {
       return face == this.facing;
    }
 
-   public boolean canOutputTo(ForgeDirection face) {
+   public boolean canOutputTo(EnumFacing face) {
       return false;
    }
 
@@ -186,27 +186,27 @@ public class TileArcaneLampGrowth extends TileThaumcraft implements IEssentiaTra
       return 0;
    }
 
-   public Aspect getSuctionType(ForgeDirection face) {
+   public Aspect getSuctionType(EnumFacing face) {
       return Aspect.PLANT;
    }
 
-   public int getSuctionAmount(ForgeDirection face) {
+   public int getSuctionAmount(EnumFacing face) {
       return face != this.facing || this.reserve && this.charges > 0 ? 0 : 128;
    }
 
-   public Aspect getEssentiaType(ForgeDirection loc) {
+   public Aspect getEssentiaType(EnumFacing loc) {
       return null;
    }
 
-   public int getEssentiaAmount(ForgeDirection loc) {
+   public int getEssentiaAmount(EnumFacing loc) {
       return 0;
    }
 
-   public int takeEssentia(Aspect aspect, int amount, ForgeDirection loc) {
+   public int takeEssentia(Aspect aspect, int amount, EnumFacing loc) {
       return 0;
    }
 
-   public int addEssentia(Aspect aspect, int amount, ForgeDirection loc) {
+   public int addEssentia(Aspect aspect, int amount, EnumFacing loc) {
       return 0;
    }
 }

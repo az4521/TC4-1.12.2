@@ -1,14 +1,14 @@
 package thaumcraft.common.lib.network.playerdata;
 
-import cpw.mods.fml.common.network.ByteBufUtils;
-import cpw.mods.fml.common.network.simpleimpl.IMessage;
-import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
-import cpw.mods.fml.common.network.simpleimpl.MessageContext;
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
+import net.minecraftforge.fml.common.network.ByteBufUtils;
+import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
+import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
+import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.client.Minecraft;
-import net.minecraft.util.StatCollector;
+import net.minecraft.util.text.translation.I18n;
 import thaumcraft.api.aspects.Aspect;
 import thaumcraft.client.lib.PlayerNotifications;
 import thaumcraft.common.Thaumcraft;
@@ -42,10 +42,11 @@ public class PacketAspectPool implements IMessage, IMessageHandler<PacketAspectP
 
    @SideOnly(Side.CLIENT)
    public IMessage onMessage(PacketAspectPool message, MessageContext ctx) {
+      Minecraft.getMinecraft().addScheduledTask(() -> {
       if (Aspect.getAspect(message.key) != null) {
-         boolean success = Thaumcraft.proxy.getPlayerKnowledge().setAspectPool(Minecraft.getMinecraft().thePlayer.getCommandSenderName(), Aspect.getAspect(message.key), message.total);
+         boolean success = Thaumcraft.proxy.getPlayerKnowledge().setAspectPool(Minecraft.getMinecraft().player.getName(), Aspect.getAspect(message.key), message.total);
          if (success && message.amount > 0) {
-            String text = StatCollector.translateToLocal("tc.addaspectpool");
+            String text = I18n.translateToLocal("tc.addaspectpool");
             text = text.replaceAll("%s", message.amount + "");
             text = text.replaceAll("%n", Aspect.getAspect(message.key).getName());
             PlayerNotifications.addNotification(text, Aspect.getAspect(message.key));
@@ -55,12 +56,13 @@ public class PacketAspectPool implements IMessage, IMessageHandler<PacketAspectP
             }
 
             if (System.currentTimeMillis() > lastSound) {
-               Minecraft.getMinecraft().thePlayer.playSound("random.orb", 0.1F, 0.9F + Minecraft.getMinecraft().thePlayer.worldObj.rand.nextFloat() * 0.2F);
+               { net.minecraft.entity.player.EntityPlayer player = Minecraft.getMinecraft().player; net.minecraft.util.SoundEvent _snd = net.minecraft.util.SoundEvent.REGISTRY.getObject(new net.minecraft.util.ResourceLocation("random.orb")); if (_snd != null) player.world.playSound(null, player.posX, player.posY, player.posZ, _snd, net.minecraft.util.SoundCategory.NEUTRAL, 0.1F, 0.9F + player.world.rand.nextFloat() * 0.2F); }
                lastSound = System.currentTimeMillis() + 100L;
             }
          }
       }
 
+            });
       return null;
    }
 }

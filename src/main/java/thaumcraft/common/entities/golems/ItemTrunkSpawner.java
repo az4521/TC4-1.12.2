@@ -1,10 +1,10 @@
 package thaumcraft.common.entities.golems;
 
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import java.util.List;
 import net.minecraft.block.Block;
-import net.minecraft.client.renderer.texture.IIconRegister;
+import thaumcraft.client.renderers.compat.IIconRegister;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLiving;
@@ -13,15 +13,19 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagList;
-import net.minecraft.util.Facing;
-import net.minecraft.util.IIcon;
-import net.minecraft.util.MathHelper;
-import net.minecraft.util.StatCollector;
+import net.minecraft.util.EnumFacing;
+import net.minecraft.util.EnumHand;
+import net.minecraft.util.EnumActionResult;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.text.translation.I18n;
+import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.World;
 import thaumcraft.common.Thaumcraft;
+import net.minecraft.util.math.BlockPos;
 
 public class ItemTrunkSpawner extends Item {
-   private IIcon icon;
+   private TextureAtlasSprite icon;
 
    public ItemTrunkSpawner() {
       this.setMaxStackSize(1);
@@ -32,80 +36,87 @@ public class ItemTrunkSpawner extends Item {
 
    @SideOnly(Side.CLIENT)
    public void registerIcons(IIconRegister par1IconRegister) {
-      this.icon = par1IconRegister.registerIcon("thaumcraft:blank");
+      this.icon = par1IconRegister.registerSprite("thaumcraft:blank");
    }
 
    @SideOnly(Side.CLIENT)
-   public IIcon getIconFromDamage(int par1) {
+   public TextureAtlasSprite getIconFromDamage(int par1) {
       return this.icon;
    }
 
    @SideOnly(Side.CLIENT)
-   public void getSubItems(Item par1, CreativeTabs par2CreativeTabs, List par3List) {
+   @Override
+   public void getSubItems(CreativeTabs par2CreativeTabs, net.minecraft.util.NonNullList<ItemStack> par3List) {
       par3List.add(new ItemStack(this, 1, 0));
    }
 
-   public void addInformation(ItemStack stack, EntityPlayer player, List list, boolean par4) {
+   public void addInformation(ItemStack stack, World worldIn, List<String> list, net.minecraft.client.util.ITooltipFlag flag) {
       if (stack.hasTagCompound()) {
-         if (stack.stackTagCompound.hasKey("upgrade")) {
-            byte ba = stack.stackTagCompound.getByte("upgrade");
+         if (stack.getTagCompound().hasKey("upgrade")) {
+            byte ba = stack.getTagCompound().getByte("upgrade");
             String text = "§9";
             if (ba > -1) {
-               text = text + StatCollector.translateToLocal("item.ItemGolemUpgrade." + ba + ".name") + " ";
+               text = text + I18n.translateToLocal("item.ItemGolemUpgrade." + ba + ".name") + " ";
             }
 
             list.add(text);
          }
 
-         if (stack.stackTagCompound.hasKey("inventory")) {
-            list.add(StatCollector.translateToLocal("item.TrunkSpawner.text.1"));
+         if (stack.getTagCompound().hasKey("inventory")) {
+            list.add(I18n.translateToLocal("item.TrunkSpawner.text.1"));
          }
       }
 
-      super.addInformation(stack, player, list, par4);
+      super.addInformation(stack, worldIn, list, flag);
    }
 
-   public boolean onItemUse(ItemStack stack, EntityPlayer par2EntityPlayer, World par3World, int par4, int par5, int par6, int par7, float par8, float par9, float par10) {
+   public EnumActionResult onItemUse(EntityPlayer par2EntityPlayer, World par3World, BlockPos pos, EnumHand hand, EnumFacing facing, float par8, float par9, float par10) {
+       ItemStack stack = par2EntityPlayer.getHeldItem(hand);
        if (!par3World.isRemote) {
-           Block i1 = par3World.getBlock(par4, par5, par6);
-           par4 += Facing.offsetsXForSide[par7];
-           par5 += Facing.offsetsYForSide[par7];
-           par6 += Facing.offsetsZForSide[par7];
+           int par7 = facing.getIndex();
+           int par4 = pos.getX();
+           int par5 = pos.getY();
+           int par6 = pos.getZ();
+           Block i1 = par3World.getBlockState(pos).getBlock();
+           par4 += facing.getXOffset();
+           par5 += facing.getYOffset();
+           par6 += facing.getZOffset();
            double d0 = 0.0F;
-           if (par7 == 1 && !i1.isAir(par3World, par4, par5, par6) && i1.getRenderType() == 11) {
+           if (par7 == 1 && !i1.isAir(par3World.getBlockState(new BlockPos(par4, par5, par6)), par3World, new BlockPos(par4, par5, par6))) {
                d0 = 0.5F;
            }
 
            EntityTravelingTrunk entity = new EntityTravelingTrunk(par3World);
-           if (entity != null && entity instanceof EntityLivingBase) {
+           if (entity instanceof EntityLivingBase) {
                EntityLiving entityliving = entity;
-               entity.setLocationAndAngles(par4, (double) par5 + d0, par6, MathHelper.wrapAngleTo180_float(par3World.rand.nextFloat() * 360.0F), 0.0F);
+               entity.setLocationAndAngles(par4, (double) par5 + d0, par6, MathHelper.wrapDegrees(par3World.rand.nextFloat() * 360.0F), 0.0F);
                entityliving.rotationYawHead = entityliving.rotationYaw;
                entityliving.renderYawOffset = entityliving.rotationYaw;
-               entity.setOwner(par2EntityPlayer.getCommandSenderName());
+               entity.setOwner(par2EntityPlayer.getName());
+               entity.setOwnerUUID(par2EntityPlayer.getUniqueID());
                if (stack.hasDisplayName()) {
                    entity.setCustomNameTag(stack.getDisplayName());
                }
 
-               if (stack.hasTagCompound() && stack.stackTagCompound.hasKey("upgrade")) {
-                   entity.setUpgrade(stack.stackTagCompound.getByte("upgrade"));
+               if (stack.hasTagCompound() && stack.getTagCompound().hasKey("upgrade")) {
+                   entity.setUpgrade(stack.getTagCompound().getByte("upgrade"));
                    entity.setInvSize();
                }
 
-               if (stack.hasTagCompound() && stack.stackTagCompound.hasKey("inventory")) {
-                   NBTTagList nbttaglist = stack.stackTagCompound.getTagList("inventory", 10);
+               if (stack.hasTagCompound() && stack.getTagCompound().hasKey("inventory")) {
+                   NBTTagList nbttaglist = stack.getTagCompound().getTagList("inventory", 10);
                    entity.inventory.readFromNBT(nbttaglist);
                }
 
-               entityliving.onSpawnWithEgg(null);
-               par3World.spawnEntityInWorld(entity);
+               entityliving.onInitialSpawn(par3World.getDifficultyForLocation(new BlockPos(entity)), null);
+               par3World.spawnEntity(entity);
                entityliving.playLivingSound();
                if (!par2EntityPlayer.capabilities.isCreativeMode) {
-                   --stack.stackSize;
+                   stack.shrink(1);
                }
            }
 
        }
-       return true;
+       return EnumActionResult.SUCCESS;
    }
 }

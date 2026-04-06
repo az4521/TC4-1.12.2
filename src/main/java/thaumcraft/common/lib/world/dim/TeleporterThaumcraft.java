@@ -6,16 +6,18 @@ import java.util.List;
 import java.util.Random;
 
 import net.minecraft.entity.Entity;
-import net.minecraft.util.LongHashMap;
-import net.minecraft.util.MathHelper;
+import java.util.HashMap;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.Teleporter;
+import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
 import thaumcraft.common.config.ConfigBlocks;
 
 public class TeleporterThaumcraft extends Teleporter {
     private final WorldServer worldServerInstance;
     private final Random random;
-    private static final LongHashMap destinationCoordinateCache = new LongHashMap();
+    private static final HashMap<Long, Teleporter.PortalPosition> destinationCoordinateCache = new HashMap<>();
     private static final List<Long> destinationCoordinateKeys = new ArrayList<>();
 
     public TeleporterThaumcraft(WorldServer par1WorldServer) {
@@ -25,44 +27,41 @@ public class TeleporterThaumcraft extends Teleporter {
     }
 
     @Override
-    public void placeInPortal(Entity par1Entity, double par2, double par4, double par6, float par8) {
-        if (this.worldServerInstance.provider.dimensionId != 1/*TheEnd*/) {
-            if (!this.placeInExistingPortal(par1Entity, par2, par4, par6, par8)) {
+    public void placeEntity(World world, Entity par1Entity, float yaw) {
+        if (this.worldServerInstance.provider.getDimension() != 1/*TheEnd*/) {
+            if (!this.placeInExistingPortal(par1Entity, yaw)) {
                 this.makePortal(par1Entity);
-                this.placeInExistingPortal(par1Entity, par2, par4, par6, par8);
+                this.placeInExistingPortal(par1Entity, yaw);
             }
-        } else if (!this.placeInExistingPortal(par1Entity, par2, par4, par6, par8)) {
-            int i = MathHelper.floor_double(par1Entity.posX);
-            int k = MathHelper.floor_double(par1Entity.posZ);
-            int j = this.worldServerInstance.getHeightValue(i, k);
-            byte b0 = 1;
-            byte b1 = 0;
+        } else if (!this.placeInExistingPortal(par1Entity, yaw)) {
+            int i = MathHelper.floor(par1Entity.posX);
+            int k = MathHelper.floor(par1Entity.posZ);
+            int j = this.worldServerInstance.getHeight(i, k);
             par1Entity.setLocationAndAngles(i, (double) j + (double) 4.0F, k, par1Entity.rotationYaw, 0.0F);
             par1Entity.motionX = par1Entity.motionY = par1Entity.motionZ = 0.0F;
         }
-
     }
 
     @Override
-    public boolean placeInExistingPortal(Entity par1Entity, double par2, double par4, double par6, float par8) {
+    public boolean placeInExistingPortal(Entity par1Entity, float yaw) {
         short short1 = 128;
         double d3 = -1.0F;
         int i = 0;
         int j = 0;
         int k = 0;
-        int l = MathHelper.floor_double(par1Entity.posX);
-        int i1 = MathHelper.floor_double(par1Entity.posZ);
+        int l = MathHelper.floor(par1Entity.posX);
+        int i1 = MathHelper.floor(par1Entity.posZ);
         int chunkX = l >> 4;
         int chunkZ = i1 >> 4;
-        String hs = chunkX + ":" + chunkZ + ":" + this.worldServerInstance.provider.dimensionId;
+        String hs = chunkX + ":" + chunkZ + ":" + this.worldServerInstance.provider.getDimension();
         long j1 = hs.hashCode();
         boolean flag = true;
-        if (destinationCoordinateCache.containsItem(j1)) {
-            Teleporter.PortalPosition portalposition = (Teleporter.PortalPosition) destinationCoordinateCache.getValueByKey(j1);
+        if (destinationCoordinateCache.containsKey(j1)) {
+            Teleporter.PortalPosition portalposition = (Teleporter.PortalPosition) destinationCoordinateCache.get(j1);
             d3 = 0.0F;
-            i = portalposition.posX;
-            j = portalposition.posY;
-            k = portalposition.posZ;
+            i = portalposition.getX();
+            j = portalposition.getY();
+            k = portalposition.getZ();
             portalposition.lastUpdateTime = this.worldServerInstance.getTotalWorldTime();
             flag = false;
         } else {
@@ -73,7 +72,7 @@ public class TeleporterThaumcraft extends Teleporter {
                     double d6 = (double) l1 + (double) 0.5F - par1Entity.posZ;
 
                     for (int i2 = this.worldServerInstance.getActualHeight() - 1; i2 >= 0; --i2) {
-                        if (this.worldServerInstance.getBlock(k1, i2, l1) == ConfigBlocks.blockEldritchPortal) {
+                        if (this.worldServerInstance.getBlockState(new BlockPos(k1, i2, l1)).getBlock() == ConfigBlocks.blockEldritchPortal) {
                             double d4 = (double) i2 + (double) 0.5F - par1Entity.posY;
                             double d7 = d5 * d5 + d4 * d4 + d6 * d6;
                             if (d3 < (double) 0.0F || d7 < d3) {
@@ -90,9 +89,7 @@ public class TeleporterThaumcraft extends Teleporter {
 
         if (d3 >= 0.0) {
             if (flag) {
-                //TODO:Find out why 'this' arg appears
-                destinationCoordinateCache.add(j1, new Teleporter.PortalPosition(i, j, k, this.worldServerInstance.getTotalWorldTime()));
-//            destinationCoordinateCache.add(j1, new Teleporter.PortalPosition(this, i, j, k, this.worldServerInstance.getTotalWorldTime()));
+                destinationCoordinateCache.put(j1, new Teleporter.PortalPosition(new BlockPos(i, j, k), this.worldServerInstance.getTotalWorldTime()));
                 destinationCoordinateKeys.add(j1);
             }
 
@@ -119,13 +116,12 @@ public class TeleporterThaumcraft extends Teleporter {
 
             while (iterator.hasNext()) {
                 Long olong = iterator.next();
-                Teleporter.PortalPosition portalposition = (Teleporter.PortalPosition) destinationCoordinateCache.getValueByKey(olong);
+                Teleporter.PortalPosition portalposition = (Teleporter.PortalPosition) destinationCoordinateCache.get(olong);
                 if (portalposition == null || portalposition.lastUpdateTime < j) {
                     iterator.remove();
                     destinationCoordinateCache.remove(olong);
                 }
             }
         }
-
     }
 }

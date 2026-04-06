@@ -1,10 +1,10 @@
 package thaumcraft.common.lib.network.playerdata;
 
-import cpw.mods.fml.common.network.simpleimpl.IMessage;
-import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
-import cpw.mods.fml.common.network.simpleimpl.MessageContext;
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
+import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
+import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
+import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.player.EntityPlayer;
@@ -19,15 +19,15 @@ public class PacketSyncWarp implements IMessage, IMessageHandler<PacketSyncWarp,
 
    public PacketSyncWarp(EntityPlayer player, byte type) {
       if (type == 0) {
-         this.data = Thaumcraft.proxy.getPlayerKnowledge().getWarpPerm(player.getCommandSenderName());
+         this.data = Thaumcraft.proxy.getPlayerKnowledge().getWarpPerm(player.getName());
       }
 
       if (type == 1) {
-         this.data = Thaumcraft.proxy.getPlayerKnowledge().getWarpSticky(player.getCommandSenderName());
+         this.data = Thaumcraft.proxy.getPlayerKnowledge().getWarpSticky(player.getName());
       }
 
       if (type == 2) {
-         this.data = Thaumcraft.proxy.getPlayerKnowledge().getWarpTemp(player.getCommandSenderName());
+         this.data = Thaumcraft.proxy.getPlayerKnowledge().getWarpTemp(player.getName());
       }
 
       this.type = type;
@@ -45,14 +45,16 @@ public class PacketSyncWarp implements IMessage, IMessageHandler<PacketSyncWarp,
 
    @SideOnly(Side.CLIENT)
    public IMessage onMessage(PacketSyncWarp message, MessageContext ctx) {
+      Minecraft.getMinecraft().addScheduledTask(() -> {
       if (message.type == 0) {
-         Thaumcraft.proxy.getPlayerKnowledge().setWarpPerm(Minecraft.getMinecraft().thePlayer.getCommandSenderName(), message.data);
+         Thaumcraft.proxy.getPlayerKnowledge().setWarpPerm(Minecraft.getMinecraft().player.getName(), message.data);
       } else if (message.type == 1) {
-         Thaumcraft.proxy.getPlayerKnowledge().setWarpSticky(Minecraft.getMinecraft().thePlayer.getCommandSenderName(), message.data);
+         Thaumcraft.proxy.getPlayerKnowledge().setWarpSticky(Minecraft.getMinecraft().player.getName(), message.data);
       } else {
-         Thaumcraft.proxy.getPlayerKnowledge().setWarpTemp(Minecraft.getMinecraft().thePlayer.getCommandSenderName(), message.data);
+         Thaumcraft.proxy.getPlayerKnowledge().setWarpTemp(Minecraft.getMinecraft().player.getName(), message.data);
       }
 
+            });
       return null;
    }
 }

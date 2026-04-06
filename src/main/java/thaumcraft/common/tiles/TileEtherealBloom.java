@@ -1,47 +1,49 @@
 package thaumcraft.common.tiles;
 
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.world.biome.BiomeGenBase;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.biome.Biome;
 import thaumcraft.common.config.Config;
 import thaumcraft.common.lib.utils.Utils;
 import thaumcraft.common.lib.world.ThaumcraftWorldGenerator;
 
-public class TileEtherealBloom extends TileEntity {
+public class TileEtherealBloom extends TileEntity implements net.minecraft.util.ITickable {
    public int counter = 0;
    public int growthCounter = 0;
 
-   public boolean canUpdate() {
-       return super.canUpdate();
-   }
+   @Override
+   public void update() { updateEntity(); }
 
    public void updateEntity() {
-      super.updateEntity();
-      if (this.counter == 0) {
-         this.counter = this.worldObj.rand.nextInt(100);
+            if (this.counter == 0) {
+         this.counter = this.world.rand.nextInt(100);
       }
 
       ++this.counter;
-      if (!this.worldObj.isRemote && this.counter % 20 == 0) {
-         int x = this.worldObj.rand.nextInt(8) - this.worldObj.rand.nextInt(8);
-         int z = this.worldObj.rand.nextInt(8) - this.worldObj.rand.nextInt(8);
-         if ((this.worldObj.getBiomeGenForCoords(x + this.xCoord, z + this.zCoord).biomeID == Config.biomeTaintID || this.worldObj.getBiomeGenForCoords(x + this.xCoord, z + this.zCoord).biomeID == Config.biomeEerieID || this.worldObj.getBiomeGenForCoords(x + this.xCoord, z + this.zCoord).biomeID == Config.biomeMagicalForestID)
-                 && this.getDistanceFrom(
-                         (double)(x + this.xCoord) + (double)0.5F, this.yCoord, (double)(z + this.zCoord) + (double)0.5F) <= (double)81.0F) {
-            BiomeGenBase[] biomesForGeneration = null;
-            biomesForGeneration = this.worldObj.getWorldChunkManager().loadBlockGeneratorData(biomesForGeneration, x + this.xCoord, z + this.zCoord, 1, 1);
+      if (!this.world.isRemote && this.counter % 20 == 0) {
+         int x = this.world.rand.nextInt(8) - this.world.rand.nextInt(8);
+         int z = this.world.rand.nextInt(8) - this.world.rand.nextInt(8);
+         int bx = x + this.getPos().getX();
+         int bz = z + this.getPos().getZ();
+         int currentBiomeId = Biome.getIdForBiome(this.world.getBiome(new BlockPos(bx, 0, bz)));
+         if ((currentBiomeId == Config.biomeTaintID || currentBiomeId == Config.biomeEerieID || currentBiomeId == Config.biomeMagicalForestID)
+                 && this.getDistanceSq(
+                         (double)bx + (double)0.5F, this.getPos().getY(), (double)bz + (double)0.5F) <= (double)81.0F) {
+            Biome[] biomesForGeneration = null;
+            biomesForGeneration = this.world.getBiomeProvider().getBiomes(biomesForGeneration, bx, bz, 1, 1);
             if (biomesForGeneration != null && biomesForGeneration[0] != null) {
-               BiomeGenBase biome = biomesForGeneration[0];
-               if (biome.biomeID == ThaumcraftWorldGenerator.biomeTaint.biomeID) {
-                  biome = BiomeGenBase.plains;
+               Biome biome = biomesForGeneration[0];
+               if (biome == ThaumcraftWorldGenerator.biomeTaint) {
+                  biome = net.minecraft.init.Biomes.PLAINS;
                }
 
-               Utils.setBiomeAt(this.worldObj, x + this.xCoord, z + this.zCoord, biome);
+               Utils.setBiomeAt(this.world, bx, bz, biome);
             }
          }
       }
 
-      if (this.worldObj.isRemote && this.growthCounter == 0) {
-         this.worldObj.playSound((double)this.xCoord + (double)0.5F, (double)this.yCoord + (double)0.5F, (double)this.zCoord + (double)0.5F, "thaumcraft:roots", 1.0F, 0.6F, false);
+      if (this.world.isRemote && this.growthCounter == 0) {
+         { net.minecraft.util.SoundEvent _snd = net.minecraft.util.SoundEvent.REGISTRY.getObject(new net.minecraft.util.ResourceLocation("thaumcraft:roots")); if (_snd != null) this.world.playSound(null, (double)this.getPos().getX() + (double)0.5F, (double)this.getPos().getY() + (double)0.5F, (double)this.getPos().getZ() + (double)0.5F, _snd, net.minecraft.util.SoundCategory.NEUTRAL, 1.0F, 0.6F); };
       }
 
       ++this.growthCounter;

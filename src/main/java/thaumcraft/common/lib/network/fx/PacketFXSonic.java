@@ -1,11 +1,10 @@
 package thaumcraft.common.lib.network.fx;
 
-import cpw.mods.fml.client.FMLClientHandler;
-import cpw.mods.fml.common.network.simpleimpl.IMessage;
-import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
-import cpw.mods.fml.common.network.simpleimpl.MessageContext;
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
+import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
+import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
+import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.entity.Entity;
 import thaumcraft.client.fx.other.FXSonic;
@@ -34,7 +33,7 @@ public class PacketFXSonic implements IMessage, IMessageHandler<PacketFXSonic,IM
       Entity p = Thaumcraft.proxy.getClientWorld().getEntityByID(message.source);
       if (p != null) {
          FXSonic fb = new FXSonic(Thaumcraft.proxy.getClientWorld(), p.posX, p.posY, p.posZ, p, 10);
-         FMLClientHandler.instance().getClient().effectRenderer.addEffect(fb);
+         thaumcraft.client.fx.ParticleEngine.instance.addEffect(Thaumcraft.proxy.getClientWorld(), fb);
       }
 
       return null;

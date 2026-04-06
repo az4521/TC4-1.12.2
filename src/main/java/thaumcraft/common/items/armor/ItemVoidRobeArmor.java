@@ -1,23 +1,21 @@
 package thaumcraft.common.items.armor;
 
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import java.util.List;
 import net.minecraft.client.model.ModelBiped;
-import net.minecraft.client.renderer.texture.IIconRegister;
+import thaumcraft.client.renderers.compat.IIconRegister;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
-import net.minecraft.item.EnumAction;
-import net.minecraft.item.EnumRarity;
 import net.minecraft.item.ItemArmor;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.DamageSource;
-import net.minecraft.util.EnumChatFormatting;
-import net.minecraft.util.IIcon;
-import net.minecraft.util.StatCollector;
+import net.minecraft.util.text.TextFormatting;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.util.text.translation.I18n;
 import net.minecraft.world.World;
 import net.minecraftforge.common.ISpecialArmor;
 import thaumcraft.api.IGoggles;
@@ -30,52 +28,57 @@ import thaumcraft.api.nodes.IRevealer;
 import thaumcraft.client.renderers.models.gear.ModelRobe;
 import thaumcraft.common.Thaumcraft;
 import thaumcraft.common.config.ConfigItems;
+import net.minecraft.util.math.BlockPos;
 
 public class ItemVoidRobeArmor extends ItemArmor implements IRepairable, IRunicArmor, IVisDiscountGear, IGoggles, IRevealer, ISpecialArmor, IWarpingGear {
-   public IIcon iconHelm;
-   public IIcon iconChest;
-   public IIcon iconLegs;
-   public IIcon iconChestOver;
-   public IIcon iconLegsOver;
-   public IIcon iconBlank;
+   public TextureAtlasSprite iconHelm;
+   public TextureAtlasSprite iconChest;
+   public TextureAtlasSprite iconLegs;
+   public TextureAtlasSprite iconChestOver;
+   public TextureAtlasSprite iconLegsOver;
+   public TextureAtlasSprite iconBlank;
    ModelBiped model1 = null;
    ModelBiped model2 = null;
    ModelBiped model = null;
 
+   private static net.minecraft.inventory.EntityEquipmentSlot slotFromIndex(int k) {
+      switch(k) { case 0: return net.minecraft.inventory.EntityEquipmentSlot.HEAD; case 1: return net.minecraft.inventory.EntityEquipmentSlot.CHEST; case 2: return net.minecraft.inventory.EntityEquipmentSlot.LEGS; default: return net.minecraft.inventory.EntityEquipmentSlot.FEET; }
+   }
+
    public ItemVoidRobeArmor(ItemArmor.ArmorMaterial enumarmormaterial, int j, int k) {
-      super(enumarmormaterial, j, k);
+      super(enumarmormaterial, j, slotFromIndex(k));
       this.setCreativeTab(Thaumcraft.tabTC);
    }
 
    @SideOnly(Side.CLIENT)
    public void registerIcons(IIconRegister ir) {
-      this.iconHelm = ir.registerIcon("thaumcraft:voidrobehelm");
-      this.iconBlank = ir.registerIcon("thaumcraft:blank");
-      this.iconChest = ir.registerIcon("thaumcraft:voidrobechestover");
-      this.iconLegs = ir.registerIcon("thaumcraft:voidrobelegsover");
-      this.iconChestOver = ir.registerIcon("thaumcraft:voidrobechest");
-      this.iconLegsOver = ir.registerIcon("thaumcraft:voidrobelegs");
+      this.iconHelm = ir.registerSprite("thaumcraft:voidrobehelm");
+      this.iconBlank = ir.registerSprite("thaumcraft:blank");
+      this.iconChest = ir.registerSprite("thaumcraft:voidrobechestover");
+      this.iconLegs = ir.registerSprite("thaumcraft:voidrobelegsover");
+      this.iconChestOver = ir.registerSprite("thaumcraft:voidrobechest");
+      this.iconLegsOver = ir.registerSprite("thaumcraft:voidrobelegs");
    }
 
    public String getArmorTexture(ItemStack stack, Entity entity, int slot, String type) {
       return type == null ? "thaumcraft:textures/models/void_robe_armor_overlay.png" : "thaumcraft:textures/models/void_robe_armor.png";
    }
 
-   public EnumRarity getRarity(ItemStack itemstack) {
-      return EnumRarity.epic;
+   public net.minecraft.item.EnumRarity getRarity(ItemStack itemstack) {
+      return net.minecraft.item.EnumRarity.EPIC;
    }
 
-   public void addInformation(ItemStack stack, EntityPlayer player, List list, boolean par4) {
-      list.add(EnumChatFormatting.DARK_PURPLE + StatCollector.translateToLocal("tc.visdiscount") + ": " + this.getVisDiscount(stack, player, null) + "%");
-      super.addInformation(stack, player, list, par4);
+   public void addInformation(ItemStack stack, @javax.annotation.Nullable net.minecraft.world.World worldIn, List list, net.minecraft.client.util.ITooltipFlag flagIn) {
+      list.add(TextFormatting.DARK_PURPLE + I18n.translateToLocal("tc.visdiscount") + ": " + this.getVisDiscount(stack, null, null) + "%");
+      super.addInformation(stack, worldIn, list, flagIn);
    }
 
    public boolean getIsRepairable(ItemStack par1ItemStack, ItemStack par2ItemStack) {
       return par2ItemStack.isItemEqual(new ItemStack(ConfigItems.itemResource, 1, 16)) || super.getIsRepairable(par1ItemStack, par2ItemStack);
    }
 
-   public void onUpdate(ItemStack stack, World world, Entity entity, int p_77663_4_, boolean p_77663_5_) {
-      super.onUpdate(stack, world, entity, p_77663_4_, p_77663_5_);
+   public void onUpdate(ItemStack stack, World world, Entity entity, int itemSlot, boolean isSelected) {
+      super.onUpdate(stack, world, entity, itemSlot, isSelected);
       if (!world.isRemote && stack.isItemDamaged() && entity.ticksExisted % 20 == 0 && entity instanceof EntityLivingBase) {
          stack.damageItem(-1, (EntityLivingBase)entity);
       }
@@ -95,13 +98,13 @@ public class ItemVoidRobeArmor extends ItemArmor implements IRepairable, IRunicA
    }
 
    public boolean showNodes(ItemStack itemstack, EntityLivingBase player) {
-      int type = ((ItemArmor)itemstack.getItem()).armorType;
-      return type == 0;
+      net.minecraft.inventory.EntityEquipmentSlot type = ((ItemArmor)itemstack.getItem()).armorType;
+      return type == net.minecraft.inventory.EntityEquipmentSlot.HEAD;
    }
 
    public boolean showIngamePopups(ItemStack itemstack, EntityLivingBase player) {
-      int type = ((ItemArmor)itemstack.getItem()).armorType;
-      return type == 0;
+      net.minecraft.inventory.EntityEquipmentSlot type = ((ItemArmor)itemstack.getItem()).armorType;
+      return type == net.minecraft.inventory.EntityEquipmentSlot.HEAD;
    }
 
    public int getVisDiscount(ItemStack stack, EntityPlayer player, Aspect aspect) {
@@ -109,8 +112,8 @@ public class ItemVoidRobeArmor extends ItemArmor implements IRepairable, IRunicA
    }
 
    @SideOnly(Side.CLIENT)
-   public ModelBiped getArmorModel(EntityLivingBase entityLiving, ItemStack itemStack, int armorSlot) {
-      int type = ((ItemArmor)itemStack.getItem()).armorType;
+   public net.minecraft.client.model.ModelBiped getArmorModel(EntityLivingBase entityLiving, ItemStack itemStack, net.minecraft.inventory.EntityEquipmentSlot armorSlot, net.minecraft.client.model.ModelBiped _default) {
+      net.minecraft.inventory.EntityEquipmentSlot type = ((ItemArmor)itemStack.getItem()).armorType;
       if (this.model1 == null) {
          this.model1 = new ModelRobe(1.0F);
       }
@@ -119,31 +122,30 @@ public class ItemVoidRobeArmor extends ItemArmor implements IRepairable, IRunicA
          this.model2 = new ModelRobe(0.5F);
       }
 
-      if (type != 1 && type != 3) {
+      if (type != net.minecraft.inventory.EntityEquipmentSlot.CHEST && type != net.minecraft.inventory.EntityEquipmentSlot.LEGS) {
          this.model = this.model2;
       } else {
          this.model = this.model1;
       }
 
       if (this.model != null) {
-         this.model.bipedHead.showModel = armorSlot == 0;
-         this.model.bipedHeadwear.showModel = armorSlot == 0;
-         this.model.bipedBody.showModel = armorSlot == 1 || armorSlot == 2;
-         this.model.bipedRightArm.showModel = armorSlot == 1;
-         this.model.bipedLeftArm.showModel = armorSlot == 1;
-         this.model.bipedRightLeg.showModel = armorSlot == 2;
-         this.model.bipedLeftLeg.showModel = armorSlot == 2;
+         this.model.bipedHead.showModel = armorSlot == net.minecraft.inventory.EntityEquipmentSlot.HEAD;
+         this.model.bipedHeadwear.showModel = armorSlot == net.minecraft.inventory.EntityEquipmentSlot.HEAD;
+         this.model.bipedBody.showModel = armorSlot == net.minecraft.inventory.EntityEquipmentSlot.CHEST || armorSlot == net.minecraft.inventory.EntityEquipmentSlot.LEGS;
+         this.model.bipedRightArm.showModel = armorSlot == net.minecraft.inventory.EntityEquipmentSlot.CHEST;
+         this.model.bipedLeftArm.showModel = armorSlot == net.minecraft.inventory.EntityEquipmentSlot.CHEST;
+         this.model.bipedRightLeg.showModel = armorSlot == net.minecraft.inventory.EntityEquipmentSlot.LEGS;
+         this.model.bipedLeftLeg.showModel = armorSlot == net.minecraft.inventory.EntityEquipmentSlot.LEGS;
          this.model.isSneak = entityLiving.isSneaking();
          this.model.isRiding = entityLiving.isRiding();
          this.model.isChild = entityLiving.isChild();
-         this.model.aimedBow = false;
-         this.model.heldItemRight = entityLiving.getHeldItem() != null ? 1 : 0;
-         if (entityLiving instanceof EntityPlayer && ((EntityPlayer)entityLiving).getItemInUseDuration() > 0) {
-            EnumAction enumaction = ((EntityPlayer)entityLiving).getItemInUse().getItemUseAction();
-            if (enumaction == EnumAction.block) {
-               this.model.heldItemRight = 3;
-            } else if (enumaction == EnumAction.bow) {
-               this.model.aimedBow = true;
+         this.model.rightArmPose = !entityLiving.getHeldItemMainhand().isEmpty() ? net.minecraft.client.model.ModelBiped.ArmPose.ITEM : net.minecraft.client.model.ModelBiped.ArmPose.EMPTY;
+         if (entityLiving instanceof EntityPlayer && ((EntityPlayer)entityLiving).isHandActive()) {
+            net.minecraft.item.EnumAction enumaction = ((EntityPlayer)entityLiving).getActiveItemStack().getItemUseAction();
+            if (enumaction == net.minecraft.item.EnumAction.BLOCK) {
+               this.model.rightArmPose = net.minecraft.client.model.ModelBiped.ArmPose.BLOCK;
+            } else if (enumaction == net.minecraft.item.EnumAction.BOW) {
+               this.model.rightArmPose = net.minecraft.client.model.ModelBiped.ArmPose.BOW_AND_ARROW;
             }
          }
       }
@@ -160,8 +162,8 @@ public class ItemVoidRobeArmor extends ItemArmor implements IRepairable, IRunicA
       return true;
    }
 
-   public IIcon getIconFromDamageForRenderPass(int par1, int par2) {
-      return par2 == 0 ? (this.armorType == 1 ? this.iconChest : (this.armorType == 2 ? this.iconLegs : this.iconHelm)) : (this.armorType == 1 ? this.iconChestOver : (this.armorType == 2 ? this.iconLegsOver : this.iconBlank));
+   public TextureAtlasSprite getIconFromDamageForRenderPass(int par1, int par2) {
+      return par2 == 0 ? (this.armorType == net.minecraft.inventory.EntityEquipmentSlot.CHEST ? this.iconChest : (this.armorType == net.minecraft.inventory.EntityEquipmentSlot.LEGS ? this.iconLegs : this.iconHelm)) : (this.armorType == net.minecraft.inventory.EntityEquipmentSlot.CHEST ? this.iconChestOver : (this.armorType == net.minecraft.inventory.EntityEquipmentSlot.LEGS ? this.iconLegsOver : this.iconBlank));
    }
 
    public int getColor(ItemStack par1ItemStack) {
@@ -185,7 +187,7 @@ public class ItemVoidRobeArmor extends ItemArmor implements IRepairable, IRunicA
 
    }
 
-   public void func_82813_b(ItemStack par1ItemStack, int par2) {
+   public void setColor(ItemStack par1ItemStack, int par2) {
       NBTTagCompound nbttagcompound = par1ItemStack.getTagCompound();
       if (nbttagcompound == null) {
          nbttagcompound = new NBTTagCompound();
@@ -219,20 +221,23 @@ public class ItemVoidRobeArmor extends ItemArmor implements IRepairable, IRunicA
    }
 
    public void damageArmor(EntityLivingBase entity, ItemStack stack, DamageSource source, int damage, int slot) {
-      if (source != DamageSource.fall) {
+      if (source != DamageSource.FALL) {
          stack.damageItem(damage, entity);
       }
 
    }
 
-   public boolean onItemUseFirst(ItemStack stack, EntityPlayer player, World world, int x, int y, int z, int side, float hitX, float hitY, float hitZ) {
-      if (!world.isRemote && world.getBlock(x, y, z) == Blocks.cauldron && world.getBlockMetadata(x, y, z) > 0) {
+   public net.minecraft.util.EnumActionResult onItemUseFirst(EntityPlayer player, net.minecraft.world.World world, net.minecraft.util.math.BlockPos pos, net.minecraft.util.EnumFacing side, float hitX, float hitY, float hitZ, net.minecraft.util.EnumHand hand) {
+      ItemStack stack = player.getHeldItem(hand);
+      int x = pos.getX(), y = pos.getY(), z = pos.getZ();
+      if (!world.isRemote && world.getBlockState(new BlockPos(x, y, z)).getBlock() == Blocks.CAULDRON &&
+        world.getBlockState(new net.minecraft.util.math.BlockPos(x, y, z)).getBlock().getMetaFromState(world.getBlockState(new net.minecraft.util.math.BlockPos(x, y, z))) > 0) {
          this.removeColor(stack);
-         world.setBlockMetadataWithNotify(x, y, z, world.getBlockMetadata(x, y, z) - 1, 2);
-         world.func_147453_f(x, y, z, Blocks.cauldron);
-         return true;
+         { net.minecraft.util.math.BlockPos _p = new net.minecraft.util.math.BlockPos(x, y, z); int _m = world.getBlockState(_p).getBlock().getMetaFromState(world.getBlockState(_p)); world.setBlockState(_p, world.getBlockState(_p).getBlock().getStateFromMeta(_m - 1), 2); }
+         world.notifyNeighborsOfStateChange(new net.minecraft.util.math.BlockPos(x, y, z), Blocks.CAULDRON, false);
+         return net.minecraft.util.EnumActionResult.SUCCESS;
       } else {
-         return super.onItemUseFirst(stack, player, world, x, y, z, side, hitX, hitY, hitZ);
+         return net.minecraft.util.EnumActionResult.PASS;
       }
    }
 

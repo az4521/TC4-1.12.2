@@ -7,24 +7,34 @@ import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.IEntityLivingData;
 import net.minecraft.entity.SharedMonsterAttributes;
 import net.minecraft.entity.ai.attributes.IAttributeInstance;
-import net.minecraft.entity.boss.IBossDisplayData;
 import net.minecraft.entity.monster.EntityMob;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.world.BossInfoServer;
+import net.minecraft.world.BossInfo;
+import net.minecraft.init.MobEffects;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.potion.Potion;
+import net.minecraft.network.datasync.DataParameter;
+import net.minecraft.network.datasync.DataSerializers;
+import net.minecraft.network.datasync.EntityDataManager;
 import net.minecraft.potion.PotionEffect;
-import net.minecraft.util.ChatComponentText;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.EnumParticleTypes;
+import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.DamageSource;
-import net.minecraft.util.StatCollector;
+import net.minecraft.util.text.translation.I18n;
+import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.World;
 import thaumcraft.api.entities.IEldritchMob;
 import thaumcraft.common.config.ConfigItems;
 import thaumcraft.common.lib.utils.EntityUtils;
 
-public class EntityThaumcraftBoss extends EntityMob implements IBossDisplayData {
+public class EntityThaumcraftBoss extends EntityMob {
+   private static final DataParameter<Integer> ANGER = EntityDataManager.createKey(EntityThaumcraftBoss.class, DataSerializers.VARINT);
    HashMap<Integer,Integer> aggro = new HashMap<>();
    int spawnTimer = 0;
+   protected final BossInfoServer bossInfo = new BossInfoServer(this.getDisplayName(), BossInfo.Color.PURPLE, BossInfo.Overlay.NOTCHED_6);
 
    public EntityThaumcraftBoss(World world) {
       super(world);
@@ -34,31 +44,31 @@ public class EntityThaumcraftBoss extends EntityMob implements IBossDisplayData 
    public void readEntityFromNBT(NBTTagCompound nbt) {
       super.readEntityFromNBT(nbt);
       if (nbt.hasKey("HomeD")) {
-         this.setHomeArea(nbt.getInteger("HomeX"), nbt.getInteger("HomeY"), nbt.getInteger("HomeZ"), nbt.getInteger("HomeD"));
+         this.setHomePosAndDistance(new BlockPos(nbt.getInteger("HomeX"), nbt.getInteger("HomeY"), nbt.getInteger("HomeZ")), nbt.getInteger("HomeD"));
       }
 
    }
 
    public void writeEntityToNBT(NBTTagCompound nbt) {
       super.writeEntityToNBT(nbt);
-      if (this.getHomePosition() != null && this.func_110174_bM() > 0.0F) {
-         nbt.setInteger("HomeD", (int)this.func_110174_bM());
-         nbt.setInteger("HomeX", this.getHomePosition().posX);
-         nbt.setInteger("HomeY", this.getHomePosition().posY);
-         nbt.setInteger("HomeZ", this.getHomePosition().posZ);
+      if (this.getHomePosition() != null && this.getMaximumHomeDistance() > 0.0F) {
+         nbt.setInteger("HomeD", (int)this.getMaximumHomeDistance());
+         nbt.setInteger("HomeX", this.getHomePosition().getX());
+         nbt.setInteger("HomeY", this.getHomePosition().getY());
+         nbt.setInteger("HomeZ", this.getHomePosition().getZ());
       }
 
    }
 
    protected void applyEntityAttributes() {
       super.applyEntityAttributes();
-      this.getEntityAttribute(SharedMonsterAttributes.knockbackResistance).setBaseValue(0.95);
-      this.getEntityAttribute(SharedMonsterAttributes.followRange).setBaseValue(40.0F);
+      this.getEntityAttribute(SharedMonsterAttributes.KNOCKBACK_RESISTANCE).setBaseValue(0.95);
+      this.getEntityAttribute(SharedMonsterAttributes.FOLLOW_RANGE).setBaseValue(40.0F);
    }
 
    protected void entityInit() {
       super.entityInit();
-      this.getDataWatcher().addObject(14, (short) 0);
+      this.dataManager.register(ANGER, 0);
    }
 
    protected void updateAITasks() {
@@ -72,25 +82,38 @@ public class EntityThaumcraftBoss extends EntityMob implements IBossDisplayData 
 
    }
 
-   public IEntityLivingData onSpawnWithEgg(IEntityLivingData data) {
-      this.setHomeArea((int)this.posX, (int)this.posY, (int)this.posZ, 24);
-      return data;
+   public IEntityLivingData onInitialSpawn(DifficultyInstance difficulty, IEntityLivingData data) {
+      this.setHomePosAndDistance(new BlockPos((int)this.posX, (int)this.posY, (int)this.posZ), 24);
+      return super.onInitialSpawn(difficulty, data);
    }
 
    public int getAnger() {
-      return this.dataWatcher.getWatchableObjectShort(14);
+      return this.dataManager.get(ANGER);
    }
 
    public void setAnger(int par1) {
-      this.dataWatcher.updateObject(14, (short)par1);
+      this.dataManager.set(ANGER, par1);
    }
 
    public int getSpawnTimer() {
       return this.spawnTimer;
    }
 
+   @Override
+   public void addTrackingPlayer(EntityPlayerMP player) {
+      super.addTrackingPlayer(player);
+      this.bossInfo.addPlayer(player);
+   }
+
+   @Override
+   public void removeTrackingPlayer(EntityPlayerMP player) {
+      super.removeTrackingPlayer(player);
+      this.bossInfo.removePlayer(player);
+   }
+
    public void onUpdate() {
       super.onUpdate();
+      this.bossInfo.setPercent(this.getHealth() / this.getMaxHealth());
       if (this.getSpawnTimer() > 0) {
          --this.spawnTimer;
       }
@@ -99,14 +122,14 @@ public class EntityThaumcraftBoss extends EntityMob implements IBossDisplayData 
          this.setAnger(this.getAnger() - 1);
       }
 
-      if (this.worldObj.isRemote && this.rand.nextInt(15) == 0 && this.getAnger() > 0) {
+      if (this.world.isRemote && this.rand.nextInt(15) == 0 && this.getAnger() > 0) {
          double d0 = this.rand.nextGaussian() * 0.02;
          double d1 = this.rand.nextGaussian() * 0.02;
          double d2 = this.rand.nextGaussian() * 0.02;
-         this.worldObj.spawnParticle("angryVillager", this.posX + (double)(this.rand.nextFloat() * this.width) - (double)this.width / (double)2.0F, this.boundingBox.minY + (double)this.height + (double)this.rand.nextFloat() * (double)0.5F, this.posZ + (double)(this.rand.nextFloat() * this.width) - (double)this.width / (double)2.0F, d0, d1, d2);
+         this.world.spawnParticle(EnumParticleTypes.VILLAGER_ANGRY, this.posX + (double)(this.rand.nextFloat() * this.width) - (double)this.width / (double)2.0F, this.getEntityBoundingBox().minY + (double)this.height + (double)this.rand.nextFloat() * (double)0.5F, this.posZ + (double)(this.rand.nextFloat() * this.width) - (double)this.width / (double)2.0F, d0, d1, d2);
       }
 
-      if (!this.worldObj.isRemote) {
+      if (!this.world.isRemote) {
          if (this.ticksExisted % 30 == 0) {
             this.heal(1.0F);
          }
@@ -122,8 +145,8 @@ public class EntityThaumcraftBoss extends EntityMob implements IBossDisplayData 
             for(Integer ei : this.aggro.keySet()) {
                int ca = this.aggro.get(ei);
                if (ca > ad + 25 && (double)ca > (double)ad * 1.1 && ca > ld) {
-                  newTarget = this.worldObj.getEntityByID(hei);
-                  if (newTarget != null && !newTarget.isDead && !(this.getDistanceSqToEntity(newTarget) > (double)16384.0F)) {
+                  newTarget = this.world.getEntityByID(hei);
+                  if (newTarget != null && !newTarget.isDead && !(this.getDistanceSq(newTarget) > (double)16384.0F)) {
                      hei = ei;
                      ld = ei;
                      if (newTarget instanceof EntityPlayer) {
@@ -144,8 +167,8 @@ public class EntityThaumcraftBoss extends EntityMob implements IBossDisplayData 
             }
 
             float om = this.getMaxHealth();
-            IAttributeInstance iattributeinstance = this.getEntityAttribute(SharedMonsterAttributes.maxHealth);
-            IAttributeInstance iattributeinstance2 = this.getEntityAttribute(SharedMonsterAttributes.attackDamage);
+            IAttributeInstance iattributeinstance = this.getEntityAttribute(SharedMonsterAttributes.MAX_HEALTH);
+            IAttributeInstance iattributeinstance2 = this.getEntityAttribute(SharedMonsterAttributes.ATTACK_DAMAGE);
 
             for(int a = 0; a < 5; ++a) {
                iattributeinstance2.removeModifier(EntityUtils.DMGBUFF[a]);
@@ -164,8 +187,8 @@ public class EntityThaumcraftBoss extends EntityMob implements IBossDisplayData 
 
    }
 
-   public boolean isEntityInvulnerable() {
-      return super.isEntityInvulnerable() || this.getSpawnTimer() > 0;
+   public boolean isEntityInvulnerable(DamageSource source) {
+      return super.isEntityInvulnerable(source) || this.getSpawnTimer() > 0;
    }
 
    public boolean canBreatheUnderwater() {
@@ -173,7 +196,7 @@ public class EntityThaumcraftBoss extends EntityMob implements IBossDisplayData 
    }
 
    public boolean canBePushed() {
-      return super.canBePushed() && !this.isEntityInvulnerable();
+      return super.canBePushed() && this.getSpawnTimer() <= 0;
    }
 
    protected int decreaseAirSupply(int air) {
@@ -210,14 +233,10 @@ public class EntityThaumcraftBoss extends EntityMob implements IBossDisplayData 
       this.entityDropItem(new ItemStack(ConfigItems.itemLootbag, 1, 2), 1.5F);
    }
 
-   protected void dropRareDrop(int fortune) {
-      super.dropRareDrop(fortune);
-   }
-
    public boolean attackEntityFrom(DamageSource source, float damage) {
-      if (!this.worldObj.isRemote) {
-         if (source.getEntity() != null && source.getEntity() instanceof EntityLivingBase) {
-            int target = source.getEntity().getEntityId();
+      if (!this.world.isRemote) {
+         if (source.getTrueSource() != null && source.getTrueSource() instanceof EntityLivingBase) {
+            int target = source.getTrueSource().getEntityId();
             int ad = (int)damage;
             if (this.aggro.containsKey(target)) {
                ad += this.aggro.get(target);
@@ -229,15 +248,15 @@ public class EntityThaumcraftBoss extends EntityMob implements IBossDisplayData 
          if (damage > 35.0F) {
             if (this.getAnger() == 0) {
                try {
-                  this.addPotionEffect(new PotionEffect(Potion.regeneration.id, 200, (int)(damage / 15.0F)));
-                  this.addPotionEffect(new PotionEffect(Potion.damageBoost.id, 200, (int)(damage / 40.0F)));
-                  this.addPotionEffect(new PotionEffect(Potion.moveSpeed.id, 200, (int)(damage / 40.0F)));
+                  this.addPotionEffect(new PotionEffect(MobEffects.REGENERATION, 200, (int)(damage / 15.0F)));
+                  this.addPotionEffect(new PotionEffect(MobEffects.STRENGTH, 200, (int)(damage / 40.0F)));
+                  this.addPotionEffect(new PotionEffect(MobEffects.SPEED, 200, (int)(damage / 40.0F)));
                   this.setAnger(200);
                } catch (Exception ignored) {
                }
 
-               if (source.getEntity() != null && source.getEntity() instanceof EntityPlayer) {
-                  ((EntityPlayer)source.getEntity()).addChatMessage(new ChatComponentText(this.getCommandSenderName() + " " + StatCollector.translateToLocal("tc.boss.enrage")));
+               if (source.getTrueSource() != null && source.getTrueSource() instanceof EntityPlayer) {
+                  ((EntityPlayer)source.getTrueSource()).sendMessage(new TextComponentString(this.getName() + " " + I18n.translateToLocal("tc.boss.enrage")));
                }
             }
 

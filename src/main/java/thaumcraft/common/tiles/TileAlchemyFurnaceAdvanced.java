@@ -1,19 +1,20 @@
 package thaumcraft.common.tiles;
 
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraft.block.Block;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.NetworkManager;
-import net.minecraft.network.play.server.S35PacketUpdateTileEntity;
-import net.minecraft.util.AxisAlignedBB;
+import net.minecraft.network.play.server.SPacketUpdateTileEntity;
+import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.world.EnumSkyBlock;
 import thaumcraft.api.TileThaumcraft;
 import thaumcraft.api.aspects.Aspect;
 import thaumcraft.api.aspects.AspectList;
 import thaumcraft.api.visnet.VisNetHandler;
 import thaumcraft.common.lib.crafting.ThaumcraftCraftingManager;
+import net.minecraft.util.math.BlockPos;
 
 public class TileAlchemyFurnaceAdvanced extends TileThaumcraft {
    public AspectList aspects = new AspectList();
@@ -30,7 +31,7 @@ public class TileAlchemyFurnaceAdvanced extends TileThaumcraft {
 
    @SideOnly(Side.CLIENT)
    public AxisAlignedBB getRenderBoundingBox() {
-      return AxisAlignedBB.getBoundingBox(this.xCoord - 1, this.yCoord, this.zCoord - 1, this.xCoord + 2, this.yCoord + 2, this.zCoord + 2);
+      return new AxisAlignedBB(this.getPos().getX() - 1, this.getPos().getY(), this.getPos().getZ() - 1, this.getPos().getX() + 2, this.getPos().getY() + 2, this.getPos().getZ() + 2);
    }
 
    public void readCustomNBT(NBTTagCompound nbttagcompound) {
@@ -50,41 +51,42 @@ public class TileAlchemyFurnaceAdvanced extends TileThaumcraft {
       this.power2 = nbtCompound.getShort("power2");
    }
 
-   public void writeToNBT(NBTTagCompound nbtCompound) {
+   public NBTTagCompound writeToNBT(NBTTagCompound nbtCompound) {
       super.writeToNBT(nbtCompound);
       this.aspects.writeToNBT(nbtCompound);
       nbtCompound.setShort("power1", (short)this.power1);
       nbtCompound.setShort("power2", (short)this.power2);
+      return nbtCompound;
    }
 
-   public void onDataPacket(NetworkManager net, S35PacketUpdateTileEntity pkt) {
+   public void onDataPacket(NetworkManager net, SPacketUpdateTileEntity pkt) {
       super.onDataPacket(net, pkt);
-      if (this.worldObj != null) {
-         this.worldObj.updateLightByType(EnumSkyBlock.Block, this.xCoord, this.yCoord, this.zCoord);
+      if (this.world != null) {
+         this.world.checkLightFor(EnumSkyBlock.BLOCK, this.getPos());
       }
 
    }
 
-   public boolean canUpdate() {
-       return super.canUpdate();
-   }
 
    public void updateEntity() {
       ++this.count;
-      if (!this.worldObj.isRemote) {
+      if (!this.world.isRemote) {
          if (this.destroy) {
             for(int a = -1; a <= 1; ++a) {
                for(int b = 0; b <= 1; ++b) {
                   for(int c = -1; c <= 1; ++c) {
-                     if ((a != 0 || b != 0 || c != 0) && this.worldObj.getBlock(this.xCoord + a, this.yCoord + b, this.zCoord + c) == this.getBlockType()) {
-                        int m = this.worldObj.getBlockMetadata(this.xCoord + a, this.yCoord + b, this.zCoord + c);
-                        this.worldObj.setBlock(this.xCoord + a, this.yCoord + b, this.zCoord + c, Block.getBlockFromItem(this.getBlockType().getItemDropped(m, this.worldObj.rand, 0)), this.getBlockType().damageDropped(m), 3);
+                     if ((a != 0 || b != 0 || c != 0)) {
+                        BlockPos np = this.getPos().add(a, b, c);
+                        net.minecraft.block.state.IBlockState nstate = this.world.getBlockState(np);
+                        if (nstate.getBlock() == this.getBlockType()) {
+                           this.world.setBlockState(np, nstate.getBlock().getDefaultState(), 3);
+                        }
                      }
                   }
                }
             }
 
-            this.worldObj.setBlock(this.xCoord, this.yCoord, this.zCoord, Block.getBlockFromItem(this.getBlockType().getItemDropped(0, this.worldObj.rand, 0)), this.getBlockType().damageDropped(0), 3);
+            this.world.setBlockState(this.getPos(), this.getBlockType().getDefaultState(), 3);
             return;
          }
 
@@ -95,19 +97,19 @@ public class TileAlchemyFurnaceAdvanced extends TileThaumcraft {
          if (this.count % 5 == 0) {
             int pt = this.heat--;
             if (this.heat <= this.maxPower) {
-               this.heat += VisNetHandler.drainVis(this.worldObj, this.xCoord, this.yCoord, this.zCoord, Aspect.FIRE, 50);
+               this.heat += VisNetHandler.drainVis(this.world, this.getPos().getX(), this.getPos().getY(), this.getPos().getZ(), Aspect.FIRE, 50);
             }
 
             if (this.power1 <= this.maxPower) {
-               this.power1 += VisNetHandler.drainVis(this.worldObj, this.xCoord, this.yCoord, this.zCoord, Aspect.ENTROPY, 50);
+               this.power1 += VisNetHandler.drainVis(this.world, this.getPos().getX(), this.getPos().getY(), this.getPos().getZ(), Aspect.ENTROPY, 50);
             }
 
             if (this.power2 <= this.maxPower) {
-               this.power2 += VisNetHandler.drainVis(this.worldObj, this.xCoord, this.yCoord, this.zCoord, Aspect.WATER, 50);
+               this.power2 += VisNetHandler.drainVis(this.world, this.getPos().getX(), this.getPos().getY(), this.getPos().getZ(), Aspect.WATER, 50);
             }
 
             if (pt / 50 != this.heat / 50) {
-               this.worldObj.markBlockForUpdate(this.xCoord, this.yCoord, this.zCoord);
+               { net.minecraft.block.state.IBlockState _bs = this.world.getBlockState(this.pos); this.world.notifyBlockUpdate(this.pos, _bs, _bs, 3); }
             }
          }
       }
@@ -127,7 +129,7 @@ public class TileAlchemyFurnaceAdvanced extends TileThaumcraft {
             this.aspects.add(al);
             this.vis = this.aspects.visSize();
             this.markDirty();
-            this.worldObj.markBlockForUpdate(this.xCoord, this.yCoord, this.zCoord);
+            { net.minecraft.block.state.IBlockState _bs = this.world.getBlockState(this.pos); this.world.notifyBlockUpdate(this.pos, _bs, _bs, 3); }
             return true;
          } else {
             return false;

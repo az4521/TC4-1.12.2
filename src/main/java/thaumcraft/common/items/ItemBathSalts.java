@@ -1,17 +1,17 @@
 package thaumcraft.common.items;
 
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
-import net.minecraft.client.renderer.texture.IIconRegister;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
+import thaumcraft.client.renderers.compat.IIconRegister;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.IIcon;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.world.World;
 import thaumcraft.common.Thaumcraft;
 
 public class ItemBathSalts extends Item {
    @SideOnly(Side.CLIENT)
-   public IIcon icon;
+   public TextureAtlasSprite icon;
 
    public ItemBathSalts() {
       this.setCreativeTab(Thaumcraft.tabTC);
@@ -20,11 +20,11 @@ public class ItemBathSalts extends Item {
 
    @SideOnly(Side.CLIENT)
    public void registerIcons(IIconRegister ir) {
-      this.icon = ir.registerIcon("thaumcraft:bath_salts");
+      this.icon = ir.registerSprite("thaumcraft:bath_salts");
    }
 
    @SideOnly(Side.CLIENT)
-   public IIcon getIconFromDamage(int par1) {
+   public TextureAtlasSprite getIconFromDamage(int par1) {
       return this.icon;
    }
 

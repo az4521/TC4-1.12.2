@@ -34,7 +34,7 @@ public class ContainerTravelingTrunk extends Container {
       }
 
       trunk.setOpen(true);
-      trunk.worldObj.playSoundAtEntity(trunk, "random.chestopen", 0.5F, trunk.worldObj.rand.nextFloat() * 0.1F + 0.9F);
+      trunk.world.playSound(null, trunk.posX, trunk.posY, trunk.posZ, net.minecraft.init.SoundEvents.BLOCK_CHEST_OPEN, net.minecraft.util.SoundCategory.BLOCKS, 0.5F, trunk.world.rand.nextFloat() * 0.1F + 0.9F);
    }
 
    public boolean enchantItem(EntityPlayer par1EntityPlayer, int button) {
@@ -47,21 +47,21 @@ public class ContainerTravelingTrunk extends Container {
    }
 
    public ItemStack transferStackInSlot(EntityPlayer par1EntityPlayer, int par2) {
-      ItemStack itemstack = null;
+      ItemStack itemstack = ItemStack.EMPTY;
       Slot slot = (Slot)this.inventorySlots.get(par2);
       if (slot != null && slot.getHasStack()) {
          ItemStack itemstack1 = slot.getStack();
          itemstack = itemstack1.copy();
          if (par2 < this.numRows * 9) {
             if (!this.mergeItemStack(itemstack1, this.numRows * 9, this.inventorySlots.size(), true)) {
-               return null;
+               return ItemStack.EMPTY;
             }
          } else if (!this.mergeItemStack(itemstack1, 0, this.numRows * 9, false)) {
-            return null;
+            return ItemStack.EMPTY;
          }
 
-         if (itemstack1.stackSize == 0) {
-            slot.putStack(null);
+         if (itemstack1.isEmpty()) {
+            slot.putStack(ItemStack.EMPTY);
          } else {
             slot.onSlotChanged();
          }
@@ -77,6 +77,6 @@ public class ContainerTravelingTrunk extends Container {
    public void onContainerClosed(EntityPlayer par1EntityPlayer) {
       super.onContainerClosed(par1EntityPlayer);
       this.trunk.setOpen(false);
-      this.trunk.worldObj.playSoundAtEntity(this.trunk, "random.chestclosed", 0.5F, this.trunk.worldObj.rand.nextFloat() * 0.1F + 0.9F);
+      this.trunk.world.playSound(null, this.trunk.posX, this.trunk.posY, this.trunk.posZ, net.minecraft.init.SoundEvents.BLOCK_CHEST_CLOSE, net.minecraft.util.SoundCategory.BLOCKS, 0.5F, this.trunk.world.rand.nextFloat() * 0.1F + 0.9F);
    }
 }

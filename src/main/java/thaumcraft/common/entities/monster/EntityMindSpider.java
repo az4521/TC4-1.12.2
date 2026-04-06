@@ -1,16 +1,21 @@
 package thaumcraft.common.entities.monster;
 
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
-import net.minecraft.entity.Entity;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraft.entity.SharedMonsterAttributes;
 import net.minecraft.entity.monster.EntitySpider;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.network.datasync.DataParameter;
+import net.minecraft.network.datasync.DataSerializers;
+import net.minecraft.network.datasync.EntityDataManager;
 import net.minecraft.world.World;
 
 public class EntityMindSpider extends EntitySpider {
+   private static final DataParameter<Byte> HARMLESS = EntityDataManager.createKey(EntityMindSpider.class, DataSerializers.BYTE);
+   private static final DataParameter<String> VIEWER = EntityDataManager.createKey(EntityMindSpider.class, DataSerializers.STRING);
+
    private int lifeSpan = Integer.MAX_VALUE;
 
    public EntityMindSpider(World par1World) {
@@ -19,50 +24,46 @@ public class EntityMindSpider extends EntitySpider {
       this.experienceValue = 1;
    }
 
-   protected int getExperiencePoints(EntityPlayer p_70693_1_) {
-      return this.isHarmless() ? 0 : super.getExperiencePoints(p_70693_1_);
+   protected int getExperiencePoints(EntityPlayer player) {
+      return this.isHarmless() ? 0 : super.getExperiencePoints(player);
    }
 
    protected void applyEntityAttributes() {
       super.applyEntityAttributes();
-      this.getEntityAttribute(SharedMonsterAttributes.maxHealth).setBaseValue(1.0F);
-      this.getEntityAttribute(SharedMonsterAttributes.attackDamage).setBaseValue(1.0F);
+      this.getEntityAttribute(SharedMonsterAttributes.MAX_HEALTH).setBaseValue(1.0F);
+      this.getEntityAttribute(SharedMonsterAttributes.ATTACK_DAMAGE).setBaseValue(1.0F);
    }
 
    protected void entityInit() {
       super.entityInit();
-      this.dataWatcher.addObject(22, (byte) 0);
-      this.dataWatcher.addObject(23, "");
+      this.dataManager.register(HARMLESS, (byte) 0);
+      this.dataManager.register(VIEWER, "");
    }
 
    public String getViewer() {
-      return this.dataWatcher.getWatchableObjectString(23);
+      return this.dataManager.get(VIEWER);
    }
 
    public void setViewer(String player) {
-      this.dataWatcher.updateObject(23, String.valueOf(player));
+      this.dataManager.set(VIEWER, player);
    }
 
    public boolean isHarmless() {
-      return this.dataWatcher.getWatchableObjectByte(22) != 0;
+      return this.dataManager.get(HARMLESS) != 0;
    }
 
    public void setHarmless(boolean h) {
       if (h) {
          this.lifeSpan = 1200;
       }
-
-      this.dataWatcher.updateObject(22, (byte)(h ? 1 : 0));
+      this.dataManager.set(HARMLESS, (byte)(h ? 1 : 0));
    }
 
    protected float getSoundPitch() {
       return 0.7F;
    }
 
-   protected Entity findPlayerToAttack() {
-      double d0 = 12.0F;
-      return this.worldObj.getClosestVulnerablePlayerToEntity(this, d0);
-   }
+   // findPlayerToAttack removed — EntitySpider uses AI tasks in 1.12.2
 
    @SideOnly(Side.CLIENT)
    public float spiderScaleAmount() {
@@ -71,10 +72,9 @@ public class EntityMindSpider extends EntitySpider {
 
    public void onUpdate() {
       super.onUpdate();
-      if (!this.worldObj.isRemote && this.ticksExisted > this.lifeSpan) {
+      if (!this.world.isRemote && this.ticksExisted > this.lifeSpan) {
          this.setDead();
       }
-
    }
 
    public float getShadowSize() {
@@ -85,7 +85,7 @@ public class EntityMindSpider extends EntitySpider {
       return Item.getItemById(0);
    }
 
-   protected void dropFewItems(boolean p_70628_1_, int p_70628_2_) {
+   protected void dropFewItems(boolean wasRecentlyHit, int lootingModifier) {
    }
 
    public boolean doesEntityNotTriggerPressurePlate() {
@@ -96,21 +96,21 @@ public class EntityMindSpider extends EntitySpider {
       return false;
    }
 
-   protected void attackEntity(Entity p_70785_1_, float p_70785_2_) {
-      if (!this.isHarmless()) {
-         super.attackEntity(p_70785_1_, p_70785_2_);
-      }
+   // attackEntity(Entity, float) removed — harmless spiders simply never attack
+   // Override attackEntityAsMob instead to suppress damage when harmless
+   public boolean attackEntityAsMob(net.minecraft.entity.Entity entityIn) {
+      return !this.isHarmless() && super.attackEntityAsMob(entityIn);
    }
 
    public void readEntityFromNBT(NBTTagCompound par1NBTTagCompound) {
       super.readEntityFromNBT(par1NBTTagCompound);
-      this.dataWatcher.updateObject(22, par1NBTTagCompound.getByte("harmless"));
-      this.dataWatcher.updateObject(23, String.valueOf(par1NBTTagCompound.getString("viewer")));
+      this.dataManager.set(HARMLESS, par1NBTTagCompound.getByte("harmless"));
+      this.dataManager.set(VIEWER, par1NBTTagCompound.getString("viewer"));
    }
 
    public void writeEntityToNBT(NBTTagCompound par1NBTTagCompound) {
       super.writeEntityToNBT(par1NBTTagCompound);
-      par1NBTTagCompound.setByte("harmless", this.dataWatcher.getWatchableObjectByte(22));
-      par1NBTTagCompound.setString("viewer", this.dataWatcher.getWatchableObjectString(23));
+      par1NBTTagCompound.setByte("harmless", this.dataManager.get(HARMLESS));
+      par1NBTTagCompound.setString("viewer", this.dataManager.get(VIEWER));
    }
 }

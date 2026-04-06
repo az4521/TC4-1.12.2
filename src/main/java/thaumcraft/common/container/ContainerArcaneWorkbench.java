@@ -6,8 +6,8 @@ import net.minecraft.inventory.Container;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.inventory.InventoryCrafting;
 import net.minecraft.inventory.Slot;
+import net.minecraft.inventory.ClickType;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.crafting.CraftingManager;
 import thaumcraft.common.items.wands.ItemWandCasting;
 import thaumcraft.common.lib.crafting.ThaumcraftCraftingManager;
 import thaumcraft.common.tiles.TileArcaneWorkbench;
@@ -52,10 +52,10 @@ public class ContainerArcaneWorkbench extends Container {
 
       this.tileEntity.setInventorySlotContentsSoftly(
               9,
-              getNormalCraftingRecipeOutput(CraftingManager.getInstance(),ic, this.tileEntity.getWorldObj())
+              getNormalCraftingRecipeOutput(ic, this.tileEntity.getWorld())
       );
-      if (this.tileEntity.getStackInSlot(9) == null
-              && this.tileEntity.getStackInSlot(10) != null
+      if (this.tileEntity.getStackInSlot(9).isEmpty()
+              && !this.tileEntity.getStackInSlot(10).isEmpty()
               && this.tileEntity.getStackInSlot(10).getItem() instanceof ItemWandCasting
       ) {
          ItemWandCasting wand = (ItemWandCasting)this.tileEntity.getStackInSlot(10).getItem();
@@ -70,70 +70,70 @@ public class ContainerArcaneWorkbench extends Container {
 
    public void onContainerClosed(EntityPlayer par1EntityPlayer) {
       super.onContainerClosed(par1EntityPlayer);
-      if (!this.tileEntity.getWorldObj().isRemote) {
+      if (!this.tileEntity.getWorld().isRemote) {
          this.tileEntity.eventHandler = null;
       }
 
    }
 
    public boolean canInteractWith(EntityPlayer par1EntityPlayer) {
-      return this.tileEntity.getWorldObj().getTileEntity(this.tileEntity.xCoord, this.tileEntity.yCoord, this.tileEntity.zCoord) == this.tileEntity && par1EntityPlayer.getDistanceSq((double) this.tileEntity.xCoord + (double) 0.5F, (double) this.tileEntity.yCoord + (double) 0.5F, (double) this.tileEntity.zCoord + (double) 0.5F) <= (double) 64.0F;
+      return this.tileEntity.getWorld().getTileEntity(this.tileEntity.getPos()) == this.tileEntity && par1EntityPlayer.getDistanceSq((double) this.tileEntity.getPos().getX() + 0.5D, (double) this.tileEntity.getPos().getY() + 0.5D, (double) this.tileEntity.getPos().getZ() + 0.5D) <= 64.0D;
    }
 
    public ItemStack transferStackInSlot(EntityPlayer par1EntityPlayer, int par1) {
-      ItemStack var2 = null;
+      ItemStack var2 = ItemStack.EMPTY;
       Slot var3 = (Slot)this.inventorySlots.get(par1);
       if (var3 != null && var3.getHasStack()) {
          ItemStack var4 = var3.getStack();
          var2 = var4.copy();
          if (par1 == 0) {
             if (!this.mergeItemStack(var4, 11, 47, true)) {
-               return null;
+               return ItemStack.EMPTY;
             }
 
             var3.onSlotChange(var4, var2);
          } else if (par1 >= 11 && par1 < 38) {
             if (var4.getItem() instanceof ItemWandCasting && !((ItemWandCasting)var4.getItem()).isStaff(var4)) {
                if (!this.mergeItemStack(var4, 1, 2, false)) {
-                  return null;
+                  return ItemStack.EMPTY;
                }
 
                var3.onSlotChange(var4, var2);
             } else if (!this.mergeItemStack(var4, 38, 47, false)) {
-               return null;
+               return ItemStack.EMPTY;
             }
          } else if (par1 >= 38 && par1 < 47) {
             if (var4.getItem() instanceof ItemWandCasting && !((ItemWandCasting)var4.getItem()).isStaff(var4)) {
                if (!this.mergeItemStack(var4, 1, 2, false)) {
-                  return null;
+                  return ItemStack.EMPTY;
                }
 
                var3.onSlotChange(var4, var2);
             } else if (!this.mergeItemStack(var4, 11, 38, false)) {
-               return null;
+               return ItemStack.EMPTY;
             }
          } else if (!this.mergeItemStack(var4, 11, 47, false)) {
-            return null;
+            return ItemStack.EMPTY;
          }
 
-         if (var4.stackSize == 0) {
-            var3.putStack(null);
+         if (var4.isEmpty()) {
+            var3.putStack(ItemStack.EMPTY);
          } else {
             var3.onSlotChanged();
          }
 
-         if (var4.stackSize == var2.stackSize) {
-            return null;
+         if (var4.getCount() == var2.getCount()) {
+            return ItemStack.EMPTY;
          }
 
-         var3.onPickupFromSlot(this.ip.player, var4);
+         var3.onTake(this.ip.player, var4);
       }
 
       return var2;
    }
 
-   public ItemStack slotClick(int par1, int par2, int par3, EntityPlayer par4EntityPlayer) {
-      if (par3 == 4) {
+   public ItemStack slotClick(int par1, int par2, ClickType par3, EntityPlayer par4EntityPlayer) {
+      if (par3 == ClickType.THROW) {
          par2 = 1;
       } else {
          if ((par1 == 0 || par1 == 1) && par2 > 0) {
@@ -144,7 +144,7 @@ public class ContainerArcaneWorkbench extends Container {
        return super.slotClick(par1, par2, par3, par4EntityPlayer);
    }
 
-   public boolean func_94530_a(ItemStack par1ItemStack, Slot par2Slot) {
-      return par2Slot.inventory != this.tileEntity && super.func_94530_a(par1ItemStack, par2Slot);
+   public boolean canMergeSlot(ItemStack par1ItemStack, Slot par2Slot) {
+      return par2Slot.inventory != this.tileEntity && super.canMergeSlot(par1ItemStack, par2Slot);
    }
 }

@@ -1,8 +1,8 @@
 package thaumcraft.common.entities.projectile;
 
-import cpw.mods.fml.common.registry.IEntityAdditionalSpawnData;
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
+import net.minecraftforge.fml.common.registry.IEntityAdditionalSpawnData;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.projectile.EntityThrowable;
@@ -10,8 +10,10 @@ import net.minecraft.init.Blocks;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.DamageSource;
 import net.minecraft.util.EntityDamageSourceIndirect;
-import net.minecraft.util.MovingObjectPosition;
+import net.minecraft.util.EnumFacing;
+import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.world.World;
+import net.minecraft.util.math.BlockPos;
 
 public class EntityEmber extends EntityThrowable implements IEntityAdditionalSpawnData {
    public int duration = 20;
@@ -24,14 +26,14 @@ public class EntityEmber extends EntityThrowable implements IEntityAdditionalSpa
 
    public EntityEmber(World par1World, EntityLivingBase par2EntityLiving, float scatter) {
       super(par1World, par2EntityLiving);
-      this.setThrowableHeading(this.motionX, this.motionY, this.motionZ, this.func_70182_d(), scatter);
+      this.shoot(this.motionX, this.motionY, this.motionZ, this.getVelocity(), scatter);
    }
 
    protected float getGravityVelocity() {
       return 0.0F;
    }
 
-   protected float func_70182_d() {
+   protected float getVelocity() {
       return 1.0F;
    }
 
@@ -67,38 +69,39 @@ public class EntityEmber extends EntityThrowable implements IEntityAdditionalSpa
       this.duration = data.readByte();
    }
 
-   protected void onImpact(MovingObjectPosition mop) {
-      if (!this.worldObj.isRemote) {
+   protected void onImpact(RayTraceResult mop) {
+      if (!this.world.isRemote) {
          if (mop.entityHit != null) {
             if (!mop.entityHit.isImmuneToFire() && mop.entityHit.attackEntityFrom((new EntityDamageSourceIndirect("fireball", this, this.getThrower())).setFireDamage(), this.damage)) {
                mop.entityHit.setFire(3 + this.firey);
             }
          } else if (this.rand.nextFloat() < 0.025F * (float)this.firey) {
-            int i = mop.blockX;
-            int j = mop.blockY;
-            int k = mop.blockZ;
+            int i = mop.getBlockPos().getX();
+            int j = mop.getBlockPos().getY();
+            int k = mop.getBlockPos().getZ();
             switch (mop.sideHit) {
-               case 0:
+               case DOWN:
                   --j;
                   break;
-               case 1:
+               case UP:
                   ++j;
                   break;
-               case 2:
+               case NORTH:
                   --k;
                   break;
-               case 3:
+               case SOUTH:
                   ++k;
                   break;
-               case 4:
+               case WEST:
                   --i;
                   break;
-               case 5:
+               case EAST:
                   ++i;
+                  break;
             }
 
-            if (this.worldObj.isAirBlock(i, j, k)) {
-               this.worldObj.setBlock(i, j, k, Blocks.fire);
+            if (this.world.isAirBlock(new BlockPos(i, j, k))) {
+               this.world.setBlockState(new BlockPos(i, j, k), Blocks.FIRE.getDefaultState());
             }
          }
       }
@@ -133,7 +136,7 @@ public class EntityEmber extends EntityThrowable implements IEntityAdditionalSpa
        return super.canBeCollidedWith();
    }
 
-   public boolean attackEntityFrom(DamageSource p_70097_1_, float p_70097_2_) {
+   public boolean attackEntityFrom(DamageSource source, float amount) {
       return false;
    }
 }

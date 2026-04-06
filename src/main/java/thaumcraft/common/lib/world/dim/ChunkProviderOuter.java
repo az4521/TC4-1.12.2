@@ -1,119 +1,116 @@
 package thaumcraft.common.lib.world.dim;
 
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
-import net.minecraft.block.Block;
 import net.minecraft.block.BlockFalling;
 import net.minecraft.entity.EnumCreatureType;
-import net.minecraft.util.IProgressUpdate;
-import net.minecraft.world.ChunkPosition;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldType;
-import net.minecraft.world.biome.BiomeGenBase;
+import net.minecraft.world.biome.Biome;
+import net.minecraft.world.biome.BiomeProvider;
 import net.minecraft.world.chunk.Chunk;
+import net.minecraft.world.chunk.ChunkPrimer;
+import net.minecraft.world.gen.IChunkGenerator;
 import net.minecraft.world.chunk.IChunkProvider;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.event.terraingen.PopulateChunkEvent;
 
-public class ChunkProviderOuter implements IChunkProvider {
+public class ChunkProviderOuter implements IChunkProvider, IChunkGenerator {
     private Random rand;
-    private World worldObj;
+    private World world;
     private WorldType worldType;
-    private BiomeGenBase[] biomesForGeneration;
+    private Biome[] biomesForGeneration;
 
-    public ChunkProviderOuter(World p_i2006_1_, long p_i2006_2_, boolean p_i2006_4_) {
-        this.worldObj = p_i2006_1_;
-        this.worldType = p_i2006_1_.getWorldInfo().getTerrainType();
-        this.rand = new Random(p_i2006_2_);
+    public ChunkProviderOuter(World world, long seed, boolean structures) {
+        this.world = world;
+        this.worldType = world.getWorldInfo().getTerrainType();
+        this.rand = new Random(seed);
     }
 
-   @Override
-    public Chunk loadChunk(int p_73158_1_, int p_73158_2_) {
-        return this.provideChunk(p_73158_1_, p_73158_2_);
+    @Override
+    public Chunk getLoadedChunk(int chunkX, int chunkZ) {
+        return this.provideChunk(chunkX, chunkZ);
     }
 
     @Override
     public Chunk provideChunk(int chunkX, int chunkZ) {
         this.rand.setSeed((long) chunkX * 341873128712L + (long) chunkZ * 132897987541L);
-        Block[] ablock = new Block[32768];
-        byte[] meta = new byte[ablock.length];
 
-        Arrays.fill(ablock, null);
-        Arrays.fill(meta, (byte) 0);
+        ChunkPrimer primer = new ChunkPrimer();
+        Chunk chunk = new Chunk(this.world, primer, chunkX, chunkZ);
 
-        this.biomesForGeneration = this.worldObj.getWorldChunkManager().loadBlockGeneratorData(this.biomesForGeneration
-                , chunkX * 16, chunkZ * 16, 16, 16);
-        Chunk chunk = new Chunk(this.worldObj, ablock, meta, chunkX, chunkZ);
+        BiomeProvider biomeProvider = this.world.getBiomeProvider();
+        this.biomesForGeneration = biomeProvider.getBiomes(this.biomesForGeneration,
+                chunkX * 16, chunkZ * 16, 16, 16, true);
         byte[] abyte = chunk.getBiomeArray();
 
         for (int k = 0; k < abyte.length; ++k) {
-            abyte[k] = (byte) this.biomesForGeneration[k].biomeID;
+            abyte[k] = (byte) Biome.getIdForBiome(this.biomesForGeneration[k]);
         }
 
         chunk.generateSkylightMap();
         return chunk;
     }
 
-   @Override
-    public boolean chunkExists(int p_73149_1_, int p_73149_2_) {
+    @Override
+    public boolean isChunkGeneratedAt(int x, int z) {
         return true;
     }
 
-   @Override
-    public void populate(IChunkProvider p_73153_1_, int p_73153_2_, int p_73153_3_) {
+    public void populate(int x, int z) {
         BlockFalling.fallInstantly = true;
-        MinecraftForge.EVENT_BUS.post(new PopulateChunkEvent.Pre(p_73153_1_, this.worldObj, this.worldObj.rand, p_73153_2_, p_73153_3_, false));
-        int k = p_73153_2_ * 16;
-        int l = p_73153_3_ * 16;
-        BiomeGenBase biomegenbase = this.worldObj.getBiomeGenForCoords(k + 16, l + 16);
-        biomegenbase.decorate(this.worldObj, this.worldObj.rand, k, l);
-        MinecraftForge.EVENT_BUS.post(new PopulateChunkEvent.Post(p_73153_1_, this.worldObj, this.worldObj.rand, p_73153_2_, p_73153_3_, false));
+        int k = x * 16;
+        int l = z * 16;
+        Biome biome = this.world.getBiome(new BlockPos(k + 16, 0, l + 16));
+        biome.decorate(this.world, this.world.rand, new BlockPos(k, 0, l));
         BlockFalling.fallInstantly = false;
     }
 
-   @Override
-    public boolean saveChunks(boolean p_73151_1_, IProgressUpdate p_73151_2_) {
-        return true;
-    }
-
-   @Override
-    public void saveExtraData() {
-    }
-
-   @Override
-    public boolean unloadQueuedChunks() {
+    @Override
+    public boolean tick() {
         return false;
     }
 
-   @Override
     public boolean canSave() {
         return true;
     }
 
-   @Override
     public String makeString() {
         return "RandomLevelSource";
     }
 
-   @Override
-    public List getPossibleCreatures(EnumCreatureType p_73155_1_, int p_73155_2_, int p_73155_3_, int p_73155_4_) {
-        BiomeGenBase biomegenbase = this.worldObj.getBiomeGenForCoords(p_73155_2_, p_73155_4_);
-        return biomegenbase.getSpawnableList(p_73155_1_);
-    }
-
-   @Override
-    public ChunkPosition func_147416_a(World p_147416_1_, String p_147416_2_, int p_147416_3_, int p_147416_4_, int p_147416_5_) {
-        return null;
-    }
-
-   @Override
     public int getLoadedChunkCount() {
         return 0;
     }
 
-   @Override
-    public void recreateStructures(int p_82695_1_, int p_82695_2_) {
+    // IChunkGenerator implementation
+    @Override
+    public Chunk generateChunk(int x, int z) {
+        return this.provideChunk(x, z);
+    }
+
+    @Override
+    public boolean generateStructures(Chunk chunkIn, int x, int z) {
+        return false;
+    }
+
+    @Override
+    public List<Biome.SpawnListEntry> getPossibleCreatures(EnumCreatureType creatureType, BlockPos pos) {
+        return Collections.emptyList();
+    }
+
+    @Override
+    public BlockPos getNearestStructurePos(World worldIn, String structureName, BlockPos position, boolean findUnexplored) {
+        return null;
+    }
+
+    @Override
+    public boolean isInsideStructure(World worldIn, String structureName, BlockPos pos) {
+        return false;
+    }
+
+    @Override
+    public void recreateStructures(Chunk chunkIn, int x, int z) {
     }
 }

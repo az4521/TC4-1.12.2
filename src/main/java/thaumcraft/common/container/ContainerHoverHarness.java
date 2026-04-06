@@ -2,25 +2,27 @@ package thaumcraft.common.container;
 
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.InventoryPlayer;
+import net.minecraft.inventory.ClickType;
 import net.minecraft.inventory.Container;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.util.EnumHand;
 import net.minecraft.world.World;
 
 public class ContainerHoverHarness extends Container {
-   private World worldObj;
+   private World world;
    private int posX;
    private int posY;
    private int posZ;
    public IInventory input = new InventoryHoverHarness(this);
-   ItemStack armor = null;
+   ItemStack armor = ItemStack.EMPTY;
    EntityPlayer player = null;
    private int blockSlot;
 
    public ContainerHoverHarness(InventoryPlayer iinventory, World par2World, int par3, int par4, int par5) {
-      this.worldObj = par2World;
+      this.world = par2World;
       this.posX = par3;
       this.posY = par4;
       this.posZ = par5;
@@ -31,7 +33,7 @@ public class ContainerHoverHarness extends Container {
       this.bindPlayerInventory(iinventory);
       if (!par2World.isRemote) {
          try {
-            ItemStack jar = ItemStack.loadItemStackFromNBT(this.armor.stackTagCompound.getCompoundTag("jar"));
+            ItemStack jar = new ItemStack(this.armor.getTagCompound().getCompoundTag("jar"));
             this.input.setInventorySlotContents(0, jar);
          } catch (Exception ignored) {
          }
@@ -55,23 +57,23 @@ public class ContainerHoverHarness extends Container {
 
    public ItemStack transferStackInSlot(EntityPlayer par1EntityPlayer, int slot) {
       if (slot == this.blockSlot) {
-         return null;
+         return ItemStack.EMPTY;
       } else {
-         ItemStack stack = null;
+         ItemStack stack = ItemStack.EMPTY;
          Slot slotObject = (Slot)this.inventorySlots.get(slot);
          if (slotObject != null && slotObject.getHasStack()) {
             ItemStack stackInSlot = slotObject.getStack();
             stack = stackInSlot.copy();
             if (slot == 0) {
                if (!this.input.isItemValidForSlot(slot, stackInSlot) || !this.mergeItemStack(stackInSlot, 1, this.inventorySlots.size(), true, 64)) {
-                  return null;
+                  return ItemStack.EMPTY;
                }
             } else if (!this.input.isItemValidForSlot(slot, stackInSlot) || !this.mergeItemStack(stackInSlot, 0, 1, false, 1)) {
-               return null;
+               return ItemStack.EMPTY;
             }
 
-            if (stackInSlot.stackSize == 0) {
-               slotObject.putStack(null);
+            if (stackInSlot.getCount() == 0) {
+               slotObject.putStack(ItemStack.EMPTY);
             } else {
                slotObject.onSlotChanged();
             }
@@ -81,12 +83,12 @@ public class ContainerHoverHarness extends Container {
       }
    }
 
-   public ItemStack slotClick(int par1, int par2, int par3, EntityPlayer par4EntityPlayer) {
+   public ItemStack slotClick(int par1, int par2, ClickType par3, EntityPlayer par4EntityPlayer) {
       if (par1 == this.blockSlot) {
-         return null;
+         return ItemStack.EMPTY;
       } else {
          InventoryPlayer inventoryplayer = par4EntityPlayer.inventory;
-         return par1 == 0 && !this.input.isItemValidForSlot(par1, inventoryplayer.getItemStack()) && (par1 != 0 || inventoryplayer.getItemStack() != null) ? null : super.slotClick(par1, par2, par3, par4EntityPlayer);
+         return par1 == 0 && !this.input.isItemValidForSlot(par1, inventoryplayer.getItemStack()) && (par1 != 0 || !inventoryplayer.getItemStack().isEmpty()) ? ItemStack.EMPTY : super.slotClick(par1, par2, par3, par4EntityPlayer);
       }
    }
 
@@ -102,9 +104,9 @@ public class ContainerHoverHarness extends Container {
    }
 
    public void onContainerClosed(EntityPlayer par1EntityPlayer) {
-      if (!this.worldObj.isRemote) {
-         ItemStack var3 = this.input.getStackInSlotOnClosing(0);
-         if (var3 != null) {
+      if (!this.world.isRemote) {
+         ItemStack var3 = this.input.removeStackFromSlot(0);
+         if (!var3.isEmpty()) {
             NBTTagCompound var4 = new NBTTagCompound();
             var3.writeToNBT(var4);
             this.armor.setTagInfo("jar", var4);
@@ -116,8 +118,8 @@ public class ContainerHoverHarness extends Container {
             return;
          }
 
-         if (this.player.getHeldItem() != null && this.player.getHeldItem().isItemEqual(this.armor)) {
-            this.player.setCurrentItemOrArmor(0, this.armor);
+         if (!this.player.getHeldItemMainhand().isEmpty() && this.player.getHeldItemMainhand().isItemEqual(this.armor)) {
+            this.player.setHeldItem(EnumHand.MAIN_HAND, this.armor);
          }
 
          this.player.inventory.markDirty();
@@ -133,19 +135,19 @@ public class ContainerHoverHarness extends Container {
       }
 
       if (par1ItemStack.isStackable()) {
-         while(par1ItemStack.stackSize > 0 && (!par4 && var6 < par3 || par4 && var6 >= par2)) {
+         while(par1ItemStack.getCount() > 0 && (!par4 && var6 < par3 || par4 && var6 >= par2)) {
             Slot var7 = (Slot)this.inventorySlots.get(var6);
             ItemStack var8 = var7.getStack();
-            if (var8 != null && var8.getItem() == par1ItemStack.getItem() && (!par1ItemStack.getHasSubtypes() || par1ItemStack.getItemDamage() == var8.getItemDamage()) && ItemStack.areItemStackTagsEqual(par1ItemStack, var8)) {
-               int var9 = var8.stackSize + par1ItemStack.stackSize;
+            if (!var8.isEmpty() && var8.getItem() == par1ItemStack.getItem() && (!par1ItemStack.getHasSubtypes() || par1ItemStack.getItemDamage() == var8.getItemDamage()) && ItemStack.areItemStackTagsEqual(par1ItemStack, var8)) {
+               int var9 = var8.getCount() + par1ItemStack.getCount();
                if (var9 <= Math.min(par1ItemStack.getMaxStackSize(), limit)) {
-                  par1ItemStack.stackSize = 0;
-                  var8.stackSize = var9;
+                  par1ItemStack.setCount(0);
+                  var8.setCount(var9);
                   var7.onSlotChanged();
                   var5 = true;
-               } else if (var8.stackSize < Math.min(par1ItemStack.getMaxStackSize(), limit)) {
-                  par1ItemStack.stackSize -= Math.min(par1ItemStack.getMaxStackSize(), limit) - var8.stackSize;
-                  var8.stackSize = Math.min(par1ItemStack.getMaxStackSize(), limit);
+               } else if (var8.getCount() < Math.min(par1ItemStack.getMaxStackSize(), limit)) {
+                  par1ItemStack.shrink(Math.min(par1ItemStack.getMaxStackSize(), limit) - var8.getCount());
+                  var8.setCount(Math.min(par1ItemStack.getMaxStackSize(), limit));
                   var7.onSlotChanged();
                   var5 = true;
                }
@@ -159,7 +161,7 @@ public class ContainerHoverHarness extends Container {
          }
       }
 
-      if (par1ItemStack.stackSize > 0) {
+      if (par1ItemStack.getCount() > 0) {
          if (par4) {
             var6 = par3 - 1;
          } else {
@@ -169,12 +171,12 @@ public class ContainerHoverHarness extends Container {
          while(!par4 && var6 < par3 || par4 && var6 >= par2) {
             Slot var7 = (Slot)this.inventorySlots.get(var6);
             ItemStack var8 = var7.getStack();
-            if (var8 == null) {
+            if (var8.isEmpty()) {
                ItemStack res = par1ItemStack.copy();
-               res.stackSize = Math.min(res.stackSize, limit);
+               res.setCount(Math.min(res.getCount(), limit));
                var7.putStack(res);
                var7.onSlotChanged();
-               par1ItemStack.stackSize -= res.stackSize;
+               par1ItemStack.shrink(res.getCount());
                var5 = true;
                break;
             }

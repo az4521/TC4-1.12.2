@@ -43,7 +43,7 @@ public class ContainerThaumatorium extends Container {
 
    public void onContainerClosed(EntityPlayer par1EntityPlayer) {
       super.onContainerClosed(par1EntityPlayer);
-      if (!this.thaumatorium.getWorldObj().isRemote) {
+      if (!this.thaumatorium.getWorld().isRemote) {
          this.thaumatorium.eventHandler = null;
       }
 
@@ -54,7 +54,7 @@ public class ContainerThaumatorium extends Container {
       if (this.thaumatorium.inputStack != null || this.thaumatorium.recipeHash != null) {
          for(Object r : ThaumcraftApi.getCraftingRecipes()) {
             if (r instanceof CrucibleRecipe) {
-               if (ResearchManager.isResearchComplete(this.player.getCommandSenderName(), ((CrucibleRecipe)r).key) && ((CrucibleRecipe)r).catalystMatches(this.thaumatorium.inputStack)) {
+               if (ResearchManager.isResearchComplete(this.player.getName(), ((CrucibleRecipe)r).key) && ((CrucibleRecipe)r).catalystMatches(this.thaumatorium.inputStack)) {
                   this.recipes.add((CrucibleRecipe)r);
                } else if (this.thaumatorium.recipeHash != null && !this.thaumatorium.recipeHash.isEmpty()) {
                   for(Integer hash : this.thaumatorium.recipeHash) {
@@ -87,12 +87,12 @@ public class ContainerThaumatorium extends Container {
 
          if (!found) {
             this.thaumatorium.recipeEssentia.add(this.recipes.get(button).aspects.copy());
-            this.thaumatorium.recipePlayer.add(par1EntityPlayer.getCommandSenderName());
+            this.thaumatorium.recipePlayer.add(par1EntityPlayer.getName());
             this.thaumatorium.recipeHash.add(this.recipes.get(button).hash);
          }
 
          this.thaumatorium.markDirty();
-         this.thaumatorium.getWorldObj().markBlockForUpdate(this.thaumatorium.xCoord, this.thaumatorium.yCoord, this.thaumatorium.zCoord);
+         { net.minecraft.block.state.IBlockState _bs = this.thaumatorium.getWorld().getBlockState(this.thaumatorium.getPos()); this.thaumatorium.getWorld().notifyBlockUpdate(this.thaumatorium.getPos(), _bs, _bs, 3); }
          return true;
       } else {
          return false;
@@ -100,44 +100,44 @@ public class ContainerThaumatorium extends Container {
    }
 
    public boolean canInteractWith(EntityPlayer par1EntityPlayer) {
-      return this.thaumatorium.isUseableByPlayer(par1EntityPlayer);
+      return this.thaumatorium.isUsableByPlayer(par1EntityPlayer);
    }
 
    public ItemStack transferStackInSlot(EntityPlayer par1EntityPlayer, int par2) {
-      ItemStack itemstack = null;
+      ItemStack itemstack = ItemStack.EMPTY;
       Slot slot = (Slot)this.inventorySlots.get(par2);
       if (slot != null && slot.getHasStack()) {
          ItemStack itemstack1 = slot.getStack();
          itemstack = itemstack1.copy();
          if (par2 != 0) {
             if (!this.mergeItemStack(itemstack1, 0, 1, false)) {
-               return null;
+               return ItemStack.EMPTY;
             }
          } else if (par2 >= 1 && par2 < 28) {
             if (!this.mergeItemStack(itemstack1, 28, 37, false)) {
-               return null;
+               return ItemStack.EMPTY;
             }
          } else {
             if (par2 >= 28 && par2 < 37 && !this.mergeItemStack(itemstack1, 1, 28, false)) {
-               return null;
+               return ItemStack.EMPTY;
             }
 
             if (!this.mergeItemStack(itemstack1, 1, 37, false)) {
-               return null;
+               return ItemStack.EMPTY;
             }
          }
 
-         if (itemstack1.stackSize == 0) {
-            slot.putStack(null);
+         if (itemstack1.isEmpty()) {
+            slot.putStack(ItemStack.EMPTY);
          } else {
             slot.onSlotChanged();
          }
 
-         if (itemstack1.stackSize == itemstack.stackSize) {
-            return null;
+         if (itemstack1.getCount() == itemstack.getCount()) {
+            return ItemStack.EMPTY;
          }
 
-         slot.onPickupFromSlot(par1EntityPlayer, itemstack1);
+         slot.onTake(par1EntityPlayer, itemstack1);
       }
 
       return itemstack;

@@ -1,8 +1,8 @@
 package thaumcraft.common.lib.network.misc;
 
-import cpw.mods.fml.common.network.simpleimpl.IMessage;
-import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
-import cpw.mods.fml.common.network.simpleimpl.MessageContext;
+import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
+import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
+import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
@@ -22,7 +22,7 @@ public class PacketItemKeyToServer implements IMessage, IMessageHandler<PacketIt
    }
 
    public PacketItemKeyToServer(EntityPlayer player, int key) {
-      this.dim = player.worldObj.provider.dimensionId;
+      this.dim = player.world.provider.getDimension();
       this.playerid = player.getEntityId();
       this.key = (byte)key;
    }
@@ -43,20 +43,20 @@ public class PacketItemKeyToServer implements IMessage, IMessageHandler<PacketIt
       World world = DimensionManager.getWorld(message.dim);
        if (world != null) {
            Entity player = world.getEntityByID(message.playerid);
-           if (player instanceof EntityPlayer && ((EntityPlayer) player).getHeldItem() != null) {
-               if (message.key == 0 && ((EntityPlayer) player).getHeldItem().getItem() instanceof ItemGolemBell) {
-                   ItemGolemBell.resetMarkers(((EntityPlayer) player).getHeldItem(), world, (EntityPlayer) player);
+           if (player instanceof EntityPlayer && ((EntityPlayer) player).getHeldItemMainhand() != null) {
+               if (message.key == 0 && ((EntityPlayer) player).getHeldItemMainhand().getItem() instanceof ItemGolemBell) {
+                   ItemGolemBell.resetMarkers(((EntityPlayer) player).getHeldItemMainhand(), world, (EntityPlayer) player);
                }
 
-               if (message.key == 1 && ((EntityPlayer) player).getHeldItem().getItem() instanceof ItemWandCasting) {
-                   WandManager.toggleMisc(((EntityPlayer) player).getHeldItem(), world, (EntityPlayer) player);
+               if (message.key == 1 && ((EntityPlayer) player).getHeldItemMainhand().getItem() instanceof ItemWandCasting) {
+                   WandManager.toggleMisc(((EntityPlayer) player).getHeldItemMainhand(), world, (EntityPlayer) player);
                }
 
-               if (message.key == 1 && ((EntityPlayer) player).getHeldItem().getItem() instanceof ItemElementalShovel) {
-                   ItemElementalShovel var10000 = (ItemElementalShovel) ((EntityPlayer) player).getHeldItem().getItem();
-                   byte b = ItemElementalShovel.getOrientation(((EntityPlayer) player).getHeldItem());
-                   var10000 = (ItemElementalShovel) ((EntityPlayer) player).getHeldItem().getItem();
-                   ItemElementalShovel.setOrientation(((EntityPlayer) player).getHeldItem(), (byte) (b + 1));
+               if (message.key == 1 && ((EntityPlayer) player).getHeldItemMainhand().getItem() instanceof ItemElementalShovel) {
+                   ItemElementalShovel var10000 = (ItemElementalShovel) ((EntityPlayer) player).getHeldItemMainhand().getItem();
+                   byte b = ItemElementalShovel.getOrientation(((EntityPlayer) player).getHeldItemMainhand());
+                   var10000 = (ItemElementalShovel) ((EntityPlayer) player).getHeldItemMainhand().getItem();
+                   ItemElementalShovel.setOrientation(((EntityPlayer) player).getHeldItemMainhand(), (byte) (b + 1));
                }
            }
 

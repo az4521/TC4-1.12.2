@@ -2,26 +2,28 @@ package thaumcraft.common.container;
 
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.InventoryPlayer;
+import net.minecraft.inventory.ClickType;
 import net.minecraft.inventory.Container;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.EnumHand;
 import net.minecraft.world.World;
 import thaumcraft.api.wands.ItemFocusBasic;
 import thaumcraft.common.items.wands.ItemFocusPouch;
 
 public class ContainerFocusPouch extends Container {
-   private World worldObj;
+   private World world;
    private int posX;
    private int posY;
    private int posZ;
    private int blockSlot;
    public IInventory input = new InventoryFocusPouch(this);
-   ItemStack pouch = null;
+   ItemStack pouch = ItemStack.EMPTY;
    EntityPlayer player = null;
 
    public ContainerFocusPouch(InventoryPlayer iinventory, World par2World, int par3, int par4, int par5) {
-      this.worldObj = par2World;
+      this.world = par2World;
       this.posX = par3;
       this.posY = par4;
       this.posZ = par5;
@@ -59,23 +61,23 @@ public class ContainerFocusPouch extends Container {
 
    public ItemStack transferStackInSlot(EntityPlayer par1EntityPlayer, int slot) {
       if (slot == this.blockSlot) {
-         return null;
+         return ItemStack.EMPTY;
       } else {
-         ItemStack stack = null;
+         ItemStack stack = ItemStack.EMPTY;
          Slot slotObject = (Slot)this.inventorySlots.get(slot);
          if (slotObject != null && slotObject.getHasStack()) {
             ItemStack stackInSlot = slotObject.getStack();
             stack = stackInSlot.copy();
             if (slot < 18) {
                if (!this.input.isItemValidForSlot(slot, stackInSlot) || !this.mergeItemStack(stackInSlot, 18, this.inventorySlots.size(), true)) {
-                  return null;
+                  return ItemStack.EMPTY;
                }
             } else if (!this.input.isItemValidForSlot(slot, stackInSlot) || !this.mergeItemStack(stackInSlot, 0, 18, false)) {
-               return null;
+               return ItemStack.EMPTY;
             }
 
-            if (stackInSlot.stackSize == 0) {
-               slotObject.putStack(null);
+            if (stackInSlot.isEmpty()) {
+               slotObject.putStack(ItemStack.EMPTY);
             } else {
                slotObject.onSlotChanged();
             }
@@ -89,20 +91,20 @@ public class ContainerFocusPouch extends Container {
       return true;
    }
 
-   public ItemStack slotClick(int par1, int par2, int par3, EntityPlayer par4EntityPlayer) {
-      return par1 == this.blockSlot ? null : super.slotClick(par1, par2, par3, par4EntityPlayer);
+   public ItemStack slotClick(int par1, int par2, ClickType par3, EntityPlayer par4EntityPlayer) {
+      return par1 == this.blockSlot ? ItemStack.EMPTY : super.slotClick(par1, par2, par3, par4EntityPlayer);
    }
 
    public void onContainerClosed(EntityPlayer par1EntityPlayer) {
       super.onContainerClosed(par1EntityPlayer);
-      if (!this.worldObj.isRemote) {
+      if (!this.world.isRemote) {
          ((ItemFocusPouch)this.pouch.getItem()).setInventory(this.pouch, ((InventoryFocusPouch)this.input).stackList);
          if (this.player == null) {
             return;
          }
 
-         if (this.player.getHeldItem() != null && this.player.getHeldItem().isItemEqual(this.pouch)) {
-            this.player.setCurrentItemOrArmor(0, this.pouch);
+         if (!this.player.getHeldItemMainhand().isEmpty() && this.player.getHeldItemMainhand().isItemEqual(this.pouch)) {
+            this.player.setHeldItem(EnumHand.MAIN_HAND, this.pouch);
          }
 
          this.player.inventory.markDirty();

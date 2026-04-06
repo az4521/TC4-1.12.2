@@ -7,10 +7,10 @@ import net.minecraft.entity.ai.RandomPositionGenerator;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.ChunkCoordinates;
-import net.minecraft.util.MathHelper;
-import net.minecraft.util.Vec3;
-import net.minecraftforge.common.util.ForgeDirection;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.EnumFacing;
 import net.minecraftforge.oredict.OreDictionary;
 import thaumcraft.common.config.Config;
 import thaumcraft.common.entities.golems.EntityGolemBase;
@@ -21,7 +21,7 @@ public class AIFillGoto extends EntityAIBase {
     private double movePosX;
     private double movePosY;
     private double movePosZ;
-    private ChunkCoordinates dest = null;
+    private BlockPos dest = null;
     int count = 0;
     int prevX = 0;
     int prevY = 0;
@@ -41,7 +41,7 @@ public class AIFillGoto extends EntityAIBase {
                     for (ItemStack stack : mi) {
                        for (int oreID:OreDictionary.getOreIDs(stack)){
                           if (oreID != -1) {
-                             ItemStack[] ores = OreDictionary.getOres(oreID).toArray(new ItemStack[0]);
+                             ItemStack[] ores = OreDictionary.getOres(OreDictionary.getOreName(oreID)).toArray(new ItemStack[0]);
 
                              for (ItemStack ore : ores) {
                                 missingItems.add(ore.copy());
@@ -63,7 +63,7 @@ public class AIFillGoto extends EntityAIBase {
                     this.theGolem.itemWatched = stack.copy();
 
                     for (byte color : this.theGolem.getColorsMatching(this.theGolem.itemWatched)) {
-                        results = GolemHelper.getContainersWithGoods(this.theGolem.worldObj, this.theGolem, this.theGolem.itemWatched, color);
+                        results = GolemHelper.getContainersWithGoods(this.theGolem.world, this.theGolem, this.theGolem.itemWatched, color);
                     }
 
                     if (!results.isEmpty()) {
@@ -72,11 +72,11 @@ public class AIFillGoto extends EntityAIBase {
                 }
 
                 if (results != null && !results.isEmpty()) {
-                    ForgeDirection facing = ForgeDirection.getOrientation(this.theGolem.homeFacing);
-                    ChunkCoordinates home = this.theGolem.getHomePosition();
-                    int cX = home.posX - facing.offsetX;
-                    int cY = home.posY - facing.offsetY;
-                    int cZ = home.posZ - facing.offsetZ;
+                    EnumFacing facing = EnumFacing.byIndex(this.theGolem.homeFacing);
+                    BlockPos home = this.theGolem.getHomePosition();
+                    int cX = home.getX() - facing.getXOffset();
+                    int cY = home.getY() - facing.getYOffset();
+                    int cZ = home.getZ() - facing.getZOffset();
                     int tX = 0;
                     int tY = 0;
                     int tZ = 0;
@@ -85,13 +85,13 @@ public class AIFillGoto extends EntityAIBase {
 
                     for (IInventory i : results) {
                         TileEntity te = (TileEntity) i;
-                        double distance = this.theGolem.getDistanceSq((double) te.xCoord + (double) 0.5F, (double) te.yCoord + (double) 0.5F, (double) te.zCoord + (double) 0.5F);
-                        if (distance < range && distance <= (double) (dmod * dmod) && (te.xCoord != cX || te.yCoord != cY || te.zCoord != cZ)) {
+                        double distance = this.theGolem.getDistanceSq((double) te.getPos().getX() + (double) 0.5F, (double) te.getPos().getY() + (double) 0.5F, (double) te.getPos().getZ() + (double) 0.5F);
+                        if (distance < range && distance <= (double) (dmod * dmod) && (te.getPos().getX() != cX || te.getPos().getY() != cY || te.getPos().getZ() != cZ)) {
                             range = distance;
-                            tX = te.xCoord;
-                            tY = te.yCoord;
-                            tZ = te.zCoord;
-                            this.dest = new ChunkCoordinates(tX, tY, tZ);
+                            tX = te.getPos().getX();
+                            tY = te.getPos().getY();
+                            tZ = te.getPos().getZ();
+                            this.dest = new BlockPos(tX, tY, tZ);
                         }
                     }
 
@@ -120,11 +120,11 @@ public class AIFillGoto extends EntityAIBase {
 
     public void updateTask() {
         --this.count;
-        if (this.count == 0 && this.prevX == MathHelper.floor_double(this.theGolem.posX) && this.prevY == MathHelper.floor_double(this.theGolem.posY) && this.prevZ == MathHelper.floor_double(this.theGolem.posZ)) {
-            Vec3 var2 = RandomPositionGenerator.findRandomTarget(this.theGolem, 2, 1);
+        if (this.count == 0 && this.prevX == MathHelper.floor(this.theGolem.posX) && this.prevY == MathHelper.floor(this.theGolem.posY) && this.prevZ == MathHelper.floor(this.theGolem.posZ)) {
+            Vec3d var2 = RandomPositionGenerator.findRandomTarget(this.theGolem, 2, 1);
             if (var2 != null) {
                 this.count = 20;
-                this.theGolem.getNavigator().tryMoveToXYZ(var2.xCoord, var2.yCoord, var2.zCoord, this.theGolem.getAIMoveSpeed());
+                this.theGolem.getNavigator().tryMoveToXYZ(var2.x, var2.y, var2.z, this.theGolem.getAIMoveSpeed());
             }
         }
 
@@ -138,9 +138,9 @@ public class AIFillGoto extends EntityAIBase {
 
     public void startExecuting() {
         this.count = 200;
-        this.prevX = MathHelper.floor_double(this.theGolem.posX);
-        this.prevY = MathHelper.floor_double(this.theGolem.posY);
-        this.prevZ = MathHelper.floor_double(this.theGolem.posZ);
+        this.prevX = MathHelper.floor(this.theGolem.posX);
+        this.prevY = MathHelper.floor(this.theGolem.posY);
+        this.prevZ = MathHelper.floor(this.theGolem.posZ);
         this.theGolem.getNavigator().tryMoveToXYZ(this.movePosX, this.movePosY, this.movePosZ, this.theGolem.getAIMoveSpeed());
     }
 }

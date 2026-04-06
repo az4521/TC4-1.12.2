@@ -1,10 +1,10 @@
 package tc4tweak.modules.researchBrowser;
 
-import cpw.mods.fml.common.FMLCommonHandler;
-import cpw.mods.fml.common.eventhandler.EventPriority;
-import cpw.mods.fml.common.eventhandler.SubscribeEvent;
-import cpw.mods.fml.common.gameevent.TickEvent;
-import cpw.mods.fml.relauncher.ReflectionHelper;
+import net.minecraftforge.fml.common.FMLCommonHandler;
+import net.minecraftforge.fml.common.eventhandler.EventPriority;
+import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import net.minecraftforge.fml.common.gameevent.TickEvent;
+import net.minecraftforge.fml.relauncher.ReflectionHelper;
 import tc4tweak.ClientUtils;
 import tc4tweak.CommonUtils;
 import tc4tweak.ConfigurationHandler;
@@ -12,7 +12,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraftforge.client.event.GuiScreenEvent;
 import net.minecraftforge.common.MinecraftForge;
-import org.lwjgl.opengl.GL11;
+
 import tc4tweak.api.BrowserPagingAPI;
 import thaumcraft.api.research.ResearchCategories;
 import thaumcraft.api.research.ResearchCategoryList;
@@ -26,6 +26,7 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static tc4tweak.modules.researchBrowser.DrawResearchBrowserBorders.*;
+import net.minecraft.client.renderer.GlStateManager;
 
 public class BrowserPaging {
     public static final int BUTTON_HEIGHT = 8;
@@ -123,22 +124,22 @@ public class BrowserPaging {
         }
 
         @Override
-        public void drawButton(Minecraft p_146112_1_, int p_146112_2_, int p_146112_3_) {
+        public void drawButton(Minecraft mc, int mouseX, int mouseY, float partialTicks) {
             updateState();
             if (visible) {
-                GL11.glColor4f(1, 1, 1, 1);
-                GL11.glEnable(GL11.GL_BLEND);
-                GL11.glEnable(GL11.GL_DEPTH_TEST);
+                GlStateManager.color(1, 1, 1, 1);
+                GlStateManager.enableBlend();
+                GlStateManager.enableDepth();
                 UtilsFX.bindTexture("textures/gui/guiresearchtable2.png");
-                ClientUtils.drawRectTextured(xPosition, xPosition + width, yPosition, yPosition + height, 184, 184 + 24, 208, 208 + 8, zLevel);
-                GL11.glDisable(GL11.GL_DEPTH_TEST);
+                ClientUtils.drawRectTextured(x, x + width, y, y + height, 184, 184 + 24, 208, 208 + 8, zLevel);
+                GlStateManager.disableDepth();
             }
         }
 
         @Override
-        public boolean mousePressed(Minecraft p_146116_1_, int p_146116_2_, int p_146116_3_) {
+        public boolean mousePressed(Minecraft mc, int mouseX, int mouseY) {
             updateState();
-            if (super.mousePressed(p_146116_1_, p_146116_2_, p_146116_3_)) {
+            if (super.mousePressed(mc, mouseX, mouseY)) {
                 prevPage();
                 return true;
             } else {
@@ -160,22 +161,22 @@ public class BrowserPaging {
         }
 
         @Override
-        public void drawButton(Minecraft p_146112_1_, int p_146112_2_, int p_146112_3_) {
+        public void drawButton(Minecraft mc, int mouseX, int mouseY, float partialTicks) {
             updateState();
             if (visible) {
-                GL11.glColor4f(1, 1, 1, 1);
-                GL11.glEnable(GL11.GL_BLEND);
-                GL11.glEnable(GL11.GL_DEPTH_TEST);
+                GlStateManager.color(1, 1, 1, 1);
+                GlStateManager.enableBlend();
+                GlStateManager.enableDepth();
                 UtilsFX.bindTexture("textures/gui/guiresearchtable2.png");
-                ClientUtils.drawRectTextured(xPosition, xPosition + width, yPosition, yPosition + height, 207, 207 + 25, 208, 208 + 8, zLevel);
-                GL11.glDisable(GL11.GL_DEPTH_TEST);
+                ClientUtils.drawRectTextured(x, x + width, y, y + height, 207, 207 + 25, 208, 208 + 8, zLevel);
+                GlStateManager.disableDepth();
             }
         }
 
         @Override
-        public boolean mousePressed(Minecraft p_146116_1_, int p_146116_2_, int p_146116_3_) {
+        public boolean mousePressed(Minecraft mc, int mouseX, int mouseY) {
             updateState();
-            if (super.mousePressed(p_146116_1_, p_146116_2_, p_146116_3_)) {
+            if (super.mousePressed(mc, mouseX, mouseY)) {
                 nextPage();
                 return true;
             } else {
@@ -199,7 +200,7 @@ public class BrowserPaging {
 
         @SubscribeEvent(priority = EventPriority.HIGHEST)
         public void onGuiInitPre(GuiScreenEvent.InitGuiEvent.Pre e) {
-            if (e.gui instanceof GuiResearchBrowser && ConfigurationHandler.INSTANCE.isInferBrowserScale()) {
+            if (e.getGui() instanceof GuiResearchBrowser && ConfigurationHandler.INSTANCE.isInferBrowserScale()) {
                 // factors to consider:
                 // width: browser itself. tab icons on both sides. search area. a visual gap (BORDER_WIDTH * 2) between the furthest element and window border
                 // height: browser itself. a visual gap (BORDER_HEIGHT * 2) between the furthest element and window border
@@ -212,9 +213,9 @@ public class BrowserPaging {
                 float oldScale;
                 do {
                     oldScale = ConfigurationHandler.INSTANCE.getBrowserScale();
-                    int searchAreaSizeTimesTwo = ConfigurationHandler.INSTANCE.isInferBrowserScaleConsiderSearch() ? ThaumonomiconIndexSearcher.getResultDisplayAreaWidth(e.gui) * 2 : 0;
-                    float factorByWidth = ((float) e.gui.width - BORDER_WIDTH * 2 - searchAreaSizeTimesTwo - 24 * Math.min(2, ResearchCategories.researchCategories.size() / getTabPerSide())) / TEXTURE_WIDTH;
-                    float factorByHeight = ((float) e.gui.height - BORDER_HEIGHT * 2) / TEXTURE_HEIGHT;
+                    int searchAreaSizeTimesTwo = ConfigurationHandler.INSTANCE.isInferBrowserScaleConsiderSearch() ? ThaumonomiconIndexSearcher.getResultDisplayAreaWidth(e.getGui()) * 2 : 0;
+                    float factorByWidth = ((float) e.getGui().width - BORDER_WIDTH * 2 - searchAreaSizeTimesTwo - 24 * Math.min(2, ResearchCategories.researchCategories.size() / getTabPerSide())) / TEXTURE_WIDTH;
+                    float factorByHeight = ((float) e.getGui().height - BORDER_HEIGHT * 2) / TEXTURE_HEIGHT;
                     ConfigurationHandler.INSTANCE.setBrowserScale(Math.max(1, Math.min(factorByWidth, factorByHeight)));
                 } while (Math.abs(oldScale - ConfigurationHandler.INSTANCE.getBrowserScale()) > 1e-4 && iterations++ < 1000);
             }
@@ -223,15 +224,15 @@ public class BrowserPaging {
         @SubscribeEvent
         @SuppressWarnings("unchecked")
         public void onGuiInitPost(GuiScreenEvent.InitGuiEvent.Post e) {
-            if (e.gui instanceof GuiResearchBrowser) {
-                GuiResearchBrowser gui = (GuiResearchBrowser) e.gui;
+            if (e.getGui() instanceof GuiResearchBrowser) {
+                GuiResearchBrowser gui = (GuiResearchBrowser) e.getGui();
                 // 5 here is small gap
                 int x1 = gui.width / 2 - ConfigurationHandler.INSTANCE.getBrowserWidth() / 2 + BORDER_WIDTH + 5;
                 // draw an additional black line
                 int x2 = gui.width / 2 + ConfigurationHandler.INSTANCE.getBrowserWidth() / 2 - BORDER_WIDTH - 5 - 1 - BUTTON_WIDTH;
                 int y = gui.height / 2 + ConfigurationHandler.INSTANCE.getBrowserHeight() / 2 - BORDER_HEIGHT / 2 - BUTTON_HEIGHT / 2;
-                e.buttonList.add(new ButtonPrevPage(0, x1, y));
-                e.buttonList.add(new ButtonNextPage(1, x2, y));
+                e.getButtonList().add(new ButtonPrevPage(0, x1, y));
+                e.getButtonList().add(new ButtonNextPage(1, x2, y));
 
 
                 ReflectionHelper.setPrivateValue(GuiResearchBrowser.class, gui, ConfigurationHandler.INSTANCE.getBrowserWidth(), "paneWidth");
@@ -245,10 +246,10 @@ public class BrowserPaging {
 
         @SubscribeEvent
         public void onGuiPreDraw(GuiScreenEvent.DrawScreenEvent.Pre e) {
-            if (e.gui instanceof GuiResearchBrowser) {
+            if (e.getGui() instanceof GuiResearchBrowser) {
                 if (ticks % 10 == 0 && !updated) {
                     updated = true;
-                    updateMaxPageIndex((GuiResearchBrowser) e.gui);
+                    updateMaxPageIndex((GuiResearchBrowser) e.getGui());
                 }
             }
         }

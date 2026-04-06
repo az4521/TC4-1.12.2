@@ -1,11 +1,11 @@
 package thaumcraft.common.blocks;
 
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockContainer;
 import net.minecraft.block.material.Material;
-import net.minecraft.client.renderer.texture.IIconRegister;
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
@@ -13,9 +13,9 @@ import net.minecraft.entity.item.EntityItem;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.AxisAlignedBB;
-import net.minecraft.util.IIcon;
-import net.minecraft.util.MathHelper;
+import net.minecraft.util.math.AxisAlignedBB;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 import thaumcraft.client.fx.ParticleEngine;
@@ -28,116 +28,97 @@ import java.util.List;
 import java.util.Random;
 
 public class BlockAlchemyFurnace extends BlockContainer {
-    public IIcon icon;
 
     public BlockAlchemyFurnace() {
-        super(Material.iron);
+        super(Material.IRON);
         this.setHardness(3.0F);
         this.setResistance(17.0F);
-        this.setStepSound(Block.soundTypeMetal);
-        this.setBlockBounds(0.0F, 0.0F, 0.0F, 1.0F, 1.0F, 1.0F);
+        this.setSoundType(net.minecraft.block.SoundType.METAL);
     }
 
     @Override
     @SideOnly(Side.CLIENT)
-    public void registerBlockIcons(IIconRegister ir) {
-        this.icon = ir.registerIcon("thaumcraft:metalbase");
+    public void getSubBlocks(CreativeTabs par2CreativeTabs, net.minecraft.util.NonNullList<ItemStack> par3List) {
+        par3List.add(new ItemStack(this, 1, 0));
     }
 
     @Override
-    public IIcon getIcon(int i, int md) {
-        return this.icon;
+    public net.minecraft.block.state.BlockStateContainer createBlockState() {
+        return new net.minecraft.block.state.BlockStateContainer(this);
     }
 
     @Override
-    @SideOnly(Side.CLIENT)
-    public void getSubBlocks(Item par1, CreativeTabs par2CreativeTabs, List par3List) {
-        par3List.add(new ItemStack(par1, 1, 0));
+    public IBlockState getStateFromMeta(int meta) {
+        return this.getDefaultState();
     }
 
     @Override
-    public int getRenderType() {
-        return -1;
+    public int getMetaFromState(IBlockState state) {
+        return 0;
     }
 
     @Override
-    public boolean isOpaqueCube() {
+    public boolean isOpaqueCube(IBlockState state) {
         return false;
     }
 
     @Override
-    public boolean renderAsNormalBlock() {
+    public boolean isFullCube(IBlockState state) {
         return false;
     }
 
     @Override
-    public void setBlockBoundsBasedOnState(IBlockAccess world, int i, int j, int k) {
-        this.setBlockBounds(0.0F, 0.0F, 0.0F, 1.0F, 1.0F, 1.0F);
+    public net.minecraft.util.BlockRenderLayer getRenderLayer() {
+        return net.minecraft.util.BlockRenderLayer.CUTOUT;
     }
 
     @Override
-    public AxisAlignedBB getSelectedBoundingBoxFromPool(World w, int i, int j, int k) {
-        this.setBlockBounds(0.0F, 0.0F, 0.0F, 1.0F, 1.0F, 1.0F);
-        return super.getSelectedBoundingBoxFromPool(w, i, j, k);
-    }
-
-    @Override
-    public void addCollisionBoxesToList(World world, int i, int j, int k, AxisAlignedBB axisalignedbb, List arraylist, Entity entity) {
-        int md = world.getBlockMetadata(i, j, k);
-        if (md == 0 && !(entity instanceof EntityLivingBase)) {
-            this.setBlockBounds(0.0F, 0.0F, 0.0F, 1.0F, 0.7F, 1.0F);
-            super.addCollisionBoxesToList(world, i, j, k, axisalignedbb, arraylist, entity);
-        } else {
-            this.setBlockBounds(0.0F, 0.0F, 0.0F, 1.0F, 1.0F, 1.0F);
-            super.addCollisionBoxesToList(world, i, j, k, axisalignedbb, arraylist, entity);
-        }
-
-    }
-
-    @Override
-    public int getLightValue(IBlockAccess world, int x, int y, int z) {
-        int metadata = world.getBlockMetadata(x, y, z);
+    public int getLightValue(IBlockState state, IBlockAccess world, BlockPos pos) {
+        int metadata = world.getBlockState(pos).getBlock().getMetaFromState(world.getBlockState(pos));
         if (metadata == 0) {
-            TileAlchemyFurnaceAdvanced tile = (TileAlchemyFurnaceAdvanced) world.getTileEntity(x, y, z);
+            TileAlchemyFurnaceAdvanced tile = (TileAlchemyFurnaceAdvanced) world.getTileEntity(pos);
             if (tile != null && tile.heat > 100) {
                 return (int) ((float) tile.heat / (float) tile.maxPower * 12.0F);
             }
         }
-
-        return super.getLightValue(world, x, y, z);
+        return super.getLightValue(state, world, pos);
     }
 
     @Override
-    public void onEntityCollidedWithBlock(World world, int i, int j, int k, Entity entity) {
+    public void onEntityCollision(World world, BlockPos pos, IBlockState state, Entity entity) {
         if (!world.isRemote) {
-            int metadata = world.getBlockMetadata(i, j, k);
+            int metadata = state.getBlock().getMetaFromState(state);
             if (metadata == 0) {
-                TileAlchemyFurnaceAdvanced tile = (TileAlchemyFurnaceAdvanced) world.getTileEntity(i, j, k);
+                TileAlchemyFurnaceAdvanced tile = (TileAlchemyFurnaceAdvanced) world.getTileEntity(pos);
                 if (tile != null
                         && entity instanceof EntityItem
-                        && tile.process(((EntityItem) entity).getEntityItem())) {
-                    ItemStack s = ((EntityItem) entity).getEntityItem();
-                    --s.stackSize;
-                    world.playSoundAtEntity(entity, "thaumcraft:bubble", 0.2F, 1.0F + world.rand.nextFloat() * 0.4F);
-                    if (s.stackSize <= 0) {
+                        && tile.process(((EntityItem) entity).getItem())) {
+                    ItemStack s = ((EntityItem) entity).getItem();
+                    s.shrink(1);
+                    world.playSound(null, entity.posX, entity.posY, entity.posZ,
+                            net.minecraft.util.SoundEvent.REGISTRY.getObject(new net.minecraft.util.ResourceLocation("thaumcraft:bubble")),
+                            net.minecraft.util.SoundCategory.BLOCKS,
+                            0.2F, 1.0F + world.rand.nextFloat() * 0.4F);
+                    if (s.getCount() <= 0) {
                         entity.setDead();
                     } else {
-                        ((EntityItem) entity).setEntityItemStack(s);
+                        ((EntityItem) entity).setItem(s);
                     }
                 }
             }
         }
-
     }
 
     @Override
-    public Item getItemDropped(int md, Random par2Random, int par3) {
+    public Item getItemDropped(IBlockState state, Random par2Random, int par3) {
+        int md = state.getBlock().getMetaFromState(state);
         return md == 0 ? Item.getItemFromBlock(ConfigBlocks.blockStoneDevice) :
                 (md != 1 && md != 2 && md != 3 && md != 4 ? Item.getItemById(0) : Item.getItemFromBlock(ConfigBlocks.blockMetalDevice));
     }
 
     @Override
-    public int damageDropped(int metadata) {
+    public int damageDropped(IBlockState state) {
+        int metadata = state.getBlock().getMetaFromState(state);
         if (metadata != 1 && metadata != 4) {
             if (metadata == 3) {
                 return 9;
@@ -150,26 +131,27 @@ public class BlockAlchemyFurnace extends BlockContainer {
     }
 
     @Override
-    public TileEntity createTileEntity(World world, int metadata) {
+    public TileEntity createTileEntity(World world, IBlockState state) {
+        int metadata = state.getBlock().getMetaFromState(state);
         if (metadata == 0) {
             return new TileAlchemyFurnaceAdvanced();
         } else {
-            return metadata == 1 ? new TileAlchemyFurnaceAdvancedNozzle() : super.createTileEntity(world, metadata);
+            return metadata == 1 ? new TileAlchemyFurnaceAdvancedNozzle() : super.createTileEntity(world, state);
         }
     }
 
     @Override
-    public boolean hasComparatorInputOverride() {
+    public boolean hasComparatorInputOverride(IBlockState state) {
         return true;
     }
 
     @Override
-    public int getComparatorInputOverride(World world, int x, int y, int z, int rs) {
-        TileEntity te = world.getTileEntity(x, y, z);
+    public int getComparatorInputOverride(IBlockState state, World world, BlockPos pos) {
+        TileEntity te = world.getTileEntity(pos);
         if (te instanceof TileAlchemyFurnaceAdvancedNozzle) {
             if (((TileAlchemyFurnaceAdvancedNozzle) te).furnace != null) {
                 float r = (float) ((TileAlchemyFurnaceAdvancedNozzle) te).furnace.vis / (float) ((TileAlchemyFurnaceAdvancedNozzle) te).furnace.maxVis;
-                return MathHelper.floor_float(r * 14.0F) + ((TileAlchemyFurnaceAdvancedNozzle) te).furnace.vis > 0 ? 1 : 0;
+                return MathHelper.floor(r * 14.0F) + ((TileAlchemyFurnaceAdvancedNozzle) te).furnace.vis > 0 ? 1 : 0;
             } else {
                 return 0;
             }
@@ -184,15 +166,14 @@ public class BlockAlchemyFurnace extends BlockContainer {
     }
 
     private interface FunctionForEachBlock {
-
        boolean apply(int xOffset, int yOffset, int zOffset);
     }
 
-    private static void forEachBlockInStruct(FunctionForEachBlock doSomeThing){
+    private static void forEachBlockInStruct(FunctionForEachBlock doSomeThing) {
        for (int a = -1; a <= 1; ++a) {
           for (int b = -1; b <= 1; ++b) {
              for (int c = -1; c <= 1; ++c) {
-                if (doSomeThing.apply(a,b,c)){
+                if (doSomeThing.apply(a, b, c)) {
                    return;
                 }
              }
@@ -201,15 +182,18 @@ public class BlockAlchemyFurnace extends BlockContainer {
     }
 
     @Override
-    public void breakBlock(World world, int x, int y, int z, Block bl, int md) {
+    public void breakBlock(World world, BlockPos pos, IBlockState state) {
         if (!world.isRemote) {
+            int md = state.getBlock().getMetaFromState(state);
             if (md != 0) {
                forEachBlockInStruct((xOffset, yOffset, zOffset) -> {
-                  Block blockCurrent = world.getBlock(x + xOffset, y + yOffset, z + zOffset);
-                  int metaCurrent = world.getBlockMetadata(x + xOffset, y + yOffset, z + zOffset);
+                  BlockPos neighborPos = pos.add(xOffset, yOffset, zOffset);
+                  IBlockState neighborState = world.getBlockState(neighborPos);
+                  Block blockCurrent = neighborState.getBlock();
+                  int metaCurrent = blockCurrent.getMetaFromState(neighborState);
                   if (blockCurrent == BlockAlchemyFurnace.this && metaCurrent == 0) {
                      TileAlchemyFurnaceAdvanced tile =
-                             (TileAlchemyFurnaceAdvanced) world.getTileEntity(x + xOffset, y + yOffset, z + zOffset);
+                             (TileAlchemyFurnaceAdvanced) world.getTileEntity(neighborPos);
                      if (tile != null) {
                         tile.destroy = true;
                         return true;
@@ -218,50 +202,45 @@ public class BlockAlchemyFurnace extends BlockContainer {
                   return false;
                });
             }
-//            it has been handled by AlchemyFurnace BE
-//            else {
-//               forEachBlockInStruct((xOffset,yOffset,zOffset)->{
-//                     if (world.getBlock(x + xOffset, y + yOffset, z + zOffset) == BlockAlchemyFurnace.this) {
-//                        int m = world.getBlockMetadata(x + xOffset, y + yOffset, z + zOffset);
-//                        world.setBlock(x + xOffset, y + yOffset, z + zOffset,
-//                                Block.getBlockFromItem(BlockAlchemyFurnace.this.getItemDropped(m, world.rand, 0)),
-//                                BlockAlchemyFurnace.this.damageDropped(m), 3);
-//                     }
-//                     return false;
-//
-//               });
-//            }
         }
-
+        super.breakBlock(world, pos, state);
     }
 
     @Override
     @SideOnly(Side.CLIENT)
-    public void randomDisplayTick(World world, int x, int y, int z, Random rand) {
-        int meta = world.getBlockMetadata(x, y, z);
+    public void randomDisplayTick(IBlockState state, World world, BlockPos pos, Random rand) {
+        int meta = state.getBlock().getMetaFromState(state);
         if (meta == 0) {
-            TileAlchemyFurnaceAdvanced tile = (TileAlchemyFurnaceAdvanced) world.getTileEntity(x, y, z);
+            TileAlchemyFurnaceAdvanced tile = (TileAlchemyFurnaceAdvanced) world.getTileEntity(pos);
             if (tile != null && tile.vis > 0) {
-                FXSlimyBubble ef = new FXSlimyBubble(world, (float) x + rand.nextFloat(), y + 1, (float) z + rand.nextFloat(), 0.06F + rand.nextFloat() * 0.06F);
+                FXSlimyBubble ef = new FXSlimyBubble(world, (float) pos.getX() + rand.nextFloat(), pos.getY() + 1, (float) pos.getZ() + rand.nextFloat(), 0.06F + rand.nextFloat() * 0.06F);
                 ef.setAlphaF(0.8F);
                 ef.setRBGColorF(0.6F - rand.nextFloat() * 0.2F, 0.0F, 0.6F + rand.nextFloat() * 0.2F);
                 ParticleEngine.instance.addEffect(world, ef);
                 if (rand.nextInt(50) == 0) {
-                    double var21 = (float) x + rand.nextFloat();
-                    double var22 = (double) y + this.maxY;
-                    double var23 = (float) z + rand.nextFloat();
-                    world.playSound(var21, var22, var23, "liquid.lavapop", 0.1F + rand.nextFloat() * 0.1F, 0.9F + rand.nextFloat() * 0.15F, false);
+                    double var21 = (float) pos.getX() + rand.nextFloat();
+                    double var22 = (double) pos.getY() + 1.0;
+                    double var23 = (float) pos.getZ() + rand.nextFloat();
+                    world.playSound(null, var21, var22, var23,
+                            net.minecraft.util.SoundEvent.REGISTRY.getObject(new net.minecraft.util.ResourceLocation("liquid.lavapop")),
+                            net.minecraft.util.SoundCategory.BLOCKS,
+                            0.1F + rand.nextFloat() * 0.1F, 0.9F + rand.nextFloat() * 0.15F);
                 }
 
                 int q = rand.nextInt(2);
                 int w = rand.nextInt(2);
-                FXSlimyBubble ef2 = new FXSlimyBubble(world, (double) x - 0.6 + (double) rand.nextFloat() * 0.2 + (double) (q * 2), y + 2, (double) z - 0.6 + (double) rand.nextFloat() * 0.2 + (double) (w * 2), 0.06F + rand.nextFloat() * 0.06F);
+                FXSlimyBubble ef2 = new FXSlimyBubble(world, (double) pos.getX() - 0.6 + (double) rand.nextFloat() * 0.2 + (double) (q * 2), pos.getY() + 2, (double) pos.getZ() - 0.6 + (double) rand.nextFloat() * 0.2 + (double) (w * 2), 0.06F + rand.nextFloat() * 0.06F);
                 ef2.setAlphaF(0.8F);
                 ef2.setRBGColorF(0.6F - rand.nextFloat() * 0.2F, 0.0F, 0.6F + rand.nextFloat() * 0.2F);
                 ParticleEngine.instance.addEffect(world, ef2);
             }
         }
 
-        super.randomDisplayTick(world, x, y, z, rand);
+        super.randomDisplayTick(state, world, pos, rand);
     }
+
+   @Override
+   public net.minecraft.util.EnumBlockRenderType getRenderType(net.minecraft.block.state.IBlockState state) {
+      return net.minecraft.util.EnumBlockRenderType.INVISIBLE;
+   }
 }

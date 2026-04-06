@@ -1,11 +1,15 @@
 package thaumcraft.client.fx.particles;
 
-import net.minecraft.client.particle.EntityFX;
+import net.minecraft.client.particle.Particle;
+import net.minecraft.entity.Entity;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.world.World;
-import org.lwjgl.opengl.GL11;
 
-public class FXSpark extends EntityFX {
+import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.client.renderer.BufferBuilder;
+import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
+
+public class FXSpark extends Particle {
    int particle = 0;
    boolean flip = false;
 
@@ -18,14 +22,15 @@ public class FXSpark extends EntityFX {
       this.motionX = this.motionY = this.motionZ = 0.0F;
       this.particleScale = f;
       this.particleMaxAge = 5 + world.rand.nextInt(5);
-      this.noClip = false;
+      this.canCollide = true;
       this.setSize(0.01F, 0.01F);
       this.particle = world.rand.nextInt(3) * 8;
       this.flip = world.rand.nextBoolean();
    }
 
-   public void renderParticle(Tessellator tessellator, float f, float f1, float f2, float f3, float f4, float f5) {
-      GL11.glColor4f(1.0F, 1.0F, 1.0F, this.particleAlpha);
+   public void renderParticle(BufferBuilder buffer, Entity entityIn, float f, float f1, float f2, float f3, float f4, float f5) {
+      Tessellator tessellator = Tessellator.getInstance();
+      GlStateManager.color(1.0F, 1.0F, 1.0F, this.particleAlpha);
       int part = this.particle + (int)((float)this.particleAge / (float)this.particleMaxAge * 7.0F);
       float var8 = (float)(part % 8) / 8.0F;
       float var9 = var8 + 0.125F;
@@ -41,12 +46,14 @@ public class FXSpark extends EntityFX {
       float var13 = (float)(this.prevPosX + (this.posX - this.prevPosX) * (double)f - interpPosX);
       float var14 = (float)(this.prevPosY + (this.posY - this.prevPosY) * (double)f - interpPosY);
       float var15 = (float)(this.prevPosZ + (this.posZ - this.prevPosZ) * (double)f - interpPosZ);
-      tessellator.setBrightness(this.getBrightnessForRender(f));
-      tessellator.setColorRGBA_F(this.particleRed, this.particleGreen, this.particleBlue, this.particleAlpha);
-      tessellator.addVertexWithUV(var13 - f1 * var12 - f4 * var12, var14 - f2 * var12, var15 - f3 * var12 - f5 * var12, var9, var11);
-      tessellator.addVertexWithUV(var13 - f1 * var12 + f4 * var12, var14 + f2 * var12, var15 - f3 * var12 + f5 * var12, var9, var10);
-      tessellator.addVertexWithUV(var13 + f1 * var12 + f4 * var12, var14 + f2 * var12, var15 + f3 * var12 + f5 * var12, var8, var10);
-      tessellator.addVertexWithUV(var13 + f1 * var12 - f4 * var12, var14 - f2 * var12, var15 + f3 * var12 - f5 * var12, var8, var11);
+      buffer.pos(var13 - f1 * var12 - f4 * var12, var14 - f2 * var12, var15 - f3 * var12 - f5 * var12).tex(var9, var11).color(this.particleRed, this.particleGreen, this.particleBlue, this.particleAlpha)
+        .endVertex();
+      buffer.pos(var13 - f1 * var12 + f4 * var12, var14 + f2 * var12, var15 - f3 * var12 + f5 * var12).tex(var9, var10).color(this.particleRed, this.particleGreen, this.particleBlue, this.particleAlpha)
+        .endVertex();
+      buffer.pos(var13 + f1 * var12 + f4 * var12, var14 + f2 * var12, var15 + f3 * var12 + f5 * var12).tex(var8, var10).color(this.particleRed, this.particleGreen, this.particleBlue, this.particleAlpha)
+        .endVertex();
+      buffer.pos(var13 + f1 * var12 - f4 * var12, var14 - f2 * var12, var15 + f3 * var12 - f5 * var12).tex(var8, var11).color(this.particleRed, this.particleGreen, this.particleBlue, this.particleAlpha)
+        .endVertex();
    }
 
    public int getFXLayer() {
@@ -58,7 +65,7 @@ public class FXSpark extends EntityFX {
       this.prevPosY = this.posY;
       this.prevPosZ = this.posZ;
       if (this.particleAge++ >= this.particleMaxAge) {
-         this.setDead();
+         this.setExpired();
       }
 
    }

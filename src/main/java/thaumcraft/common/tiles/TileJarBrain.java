@@ -4,7 +4,8 @@ import java.util.List;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.item.EntityXPOrb;
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.util.AxisAlignedBB;
+import net.minecraft.util.math.AxisAlignedBB;
+import net.minecraft.util.math.BlockPos;
 
 public class TileJarBrain extends TileJar {
    public float field_40063_b;
@@ -26,13 +27,8 @@ public class TileJarBrain extends TileJar {
       nbttagcompound.setInteger("XP", this.xp);
    }
 
-   public boolean canUpdate() {
-       return super.canUpdate();
-   }
-
    public void updateEntity() {
-      super.updateEntity();
-      Entity entity = null;
+            Entity entity = null;
       if (this.xp > this.xpMax) {
          this.xp = this.xpMax;
       }
@@ -40,9 +36,9 @@ public class TileJarBrain extends TileJar {
       if (this.xp < this.xpMax) {
          entity = this.getClosestXPOrb();
          if (entity != null && this.eatDelay == 0) {
-            double var3 = ((double)this.xCoord + (double)0.5F - entity.posX) / (double)7.0F;
-            double var5 = ((double)this.yCoord + (double)0.5F - entity.posY) / (double)7.0F;
-            double var7 = ((double)this.zCoord + (double)0.5F - entity.posZ) / (double)7.0F;
+            double var3 = ((double)this.getPos().getX() + (double)0.5F - entity.posX) / (double)7.0F;
+            double var5 = ((double)this.getPos().getY() + (double)0.5F - entity.posY) / (double)7.0F;
+            double var7 = ((double)this.getPos().getZ() + (double)0.5F - entity.posZ) / (double)7.0F;
             double var9 = Math.sqrt(var3 * var3 + var5 * var5 + var7 * var7);
             double var11 = (double)1.0F - var9;
             if (var11 > (double)0.0F) {
@@ -54,19 +50,19 @@ public class TileJarBrain extends TileJar {
          }
       }
 
-      if (this.worldObj.isRemote) {
+      if (this.world.isRemote) {
          this.rotb = this.rota;
          if (entity == null) {
-            entity = this.worldObj.getClosestPlayer((float)this.xCoord + 0.5F, (float)this.yCoord + 0.5F, (float)this.zCoord + 0.5F, 6.0F);
+            entity = this.world.getClosestPlayer((float)this.getPos().getX() + 0.5F, (float)this.getPos().getY() + 0.5F, (float)this.getPos().getZ() + 0.5F, 6.0F, false);
             if (entity != null && this.lastsigh < System.currentTimeMillis()) {
-               this.worldObj.playSound((double)this.xCoord + (double)0.5F, (double)this.yCoord + (double)0.5F, (double)this.zCoord + (double)0.5F, "thaumcraft:brain", 0.15F, 0.8F + this.worldObj.rand.nextFloat() * 0.4F, false);
-               this.lastsigh = System.currentTimeMillis() + 5000L + (long)this.worldObj.rand.nextInt(25000);
+               { net.minecraft.util.SoundEvent _snd = net.minecraft.util.SoundEvent.REGISTRY.getObject(new net.minecraft.util.ResourceLocation("thaumcraft:brain")); if (_snd != null) this.world.playSound(null, this.getPos(), _snd, net.minecraft.util.SoundCategory.BLOCKS, 0.15F, 0.8F + this.world.rand.nextFloat() * 0.4F); }
+               this.lastsigh = System.currentTimeMillis() + 5000L + (long)this.world.rand.nextInt(25000);
             }
          }
 
          if (entity != null) {
-            double d = entity.posX - (double)((float)this.xCoord + 0.5F);
-            double d1 = entity.posZ - (double)((float)this.zCoord + 0.5F);
+            double d = entity.posX - (double)((float)this.getPos().getX() + 0.5F);
+            double d1 = entity.posZ - (double)((float)this.getPos().getZ() + 0.5F);
             this.field_40066_q = (float)Math.atan2(d1, d);
             this.field_40059_f += 0.1F;
             if (this.field_40059_f < 0.5F || rand.nextInt(40) == 0) {
@@ -110,16 +106,16 @@ public class TileJarBrain extends TileJar {
       if (this.eatDelay > 0) {
          --this.eatDelay;
       } else if (this.xp < this.xpMax) {
-         List ents = this.worldObj.getEntitiesWithinAABB(EntityXPOrb.class, AxisAlignedBB.getBoundingBox((double)this.xCoord - 0.1, (double)this.yCoord - 0.1, (double)this.zCoord - 0.1, (double)this.xCoord + 1.1, (double)this.yCoord + 1.1, (double)this.zCoord + 1.1));
+         List ents = this.world.getEntitiesWithinAABB(EntityXPOrb.class, new AxisAlignedBB((double)this.getPos().getX() - 0.1, (double)this.getPos().getY() - 0.1, (double)this.getPos().getZ() - 0.1, (double)this.getPos().getX() + 1.1, (double)this.getPos().getY() + 1.1, (double)this.getPos().getZ() + 1.1));
          if (!ents.isEmpty()) {
             for(Object ent : ents) {
                EntityXPOrb eo = (EntityXPOrb)ent;
                this.xp += eo.getXpValue();
-               this.worldObj.playSoundAtEntity(eo, "random.eat", 0.1F, (this.worldObj.rand.nextFloat() - this.worldObj.rand.nextFloat()) * 0.2F + 1.0F);
+               { net.minecraft.util.SoundEvent _snd = net.minecraft.util.SoundEvent.REGISTRY.getObject(new net.minecraft.util.ResourceLocation("entity.generic.eat")); if (_snd != null) this.world.playSound(null, eo.getPosition(), _snd, net.minecraft.util.SoundCategory.NEUTRAL, 0.1F, (this.world.rand.nextFloat() - this.world.rand.nextFloat()) * 0.2F + 1.0F); }
                eo.setDead();
             }
 
-            this.worldObj.markBlockForUpdate(this.xCoord, this.yCoord, this.zCoord);
+            { net.minecraft.block.state.IBlockState _bs = this.world.getBlockState(this.pos); this.world.notifyBlockUpdate(this.pos, _bs, _bs, 3); }
             this.markDirty();
          }
       }
@@ -129,7 +125,7 @@ public class TileJarBrain extends TileJar {
    public Entity getClosestXPOrb() {
       double cdist = Double.MAX_VALUE;
       Entity orb = null;
-      List ents = this.worldObj.getEntitiesWithinAABB(EntityXPOrb.class, AxisAlignedBB.getBoundingBox(this.xCoord, this.yCoord, this.zCoord, this.xCoord + 1, this.yCoord + 1, this.zCoord + 1).expand(6.0F, 6.0F, 6.0F));
+      List ents = this.world.getEntitiesWithinAABB(EntityXPOrb.class, new AxisAlignedBB(this.getPos().getX(), this.getPos().getY(), this.getPos().getZ(), this.getPos().getX() + 1, this.getPos().getY() + 1, this.getPos().getZ() + 1).expand(6.0F, 6.0F, 6.0F));
       if (!ents.isEmpty()) {
          for(Object ent : ents) {
             EntityXPOrb eo = (EntityXPOrb)ent;
@@ -145,9 +141,9 @@ public class TileJarBrain extends TileJar {
    }
 
    public double getDistanceTo(double par1, double par3, double par5) {
-      double var7 = (double)this.xCoord + (double)0.5F - par1;
-      double var9 = (double)this.yCoord + (double)0.5F - par3;
-      double var11 = (double)this.zCoord + (double)0.5F - par5;
+      double var7 = (double)this.getPos().getX() + (double)0.5F - par1;
+      double var9 = (double)this.getPos().getY() + (double)0.5F - par3;
+      double var11 = (double)this.getPos().getZ() + (double)0.5F - par5;
       return var7 * var7 + var9 * var9 + var11 * var11;
    }
 }

@@ -4,8 +4,9 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.tileentity.TileEntityFurnace;
 import net.minecraft.world.World;
-import net.minecraftforge.common.util.ForgeDirection;
+import net.minecraft.util.EnumFacing;
 import thaumcraft.api.TileThaumcraft;
+import net.minecraft.util.math.BlockPos;
 
 public class TileBellows extends TileThaumcraft {
    public float inflation = 1.0F;
@@ -16,10 +17,10 @@ public class TileBellows extends TileThaumcraft {
    public int delay = 0;
 
    public void updateEntity() {
-      if (this.worldObj.isRemote) {
+      if (this.world.isRemote) {
          if (!this.gettingPower()) {
             if (this.firstrun) {
-               this.inflation = 0.35F + this.worldObj.rand.nextFloat() * 0.55F;
+               this.inflation = 0.35F + this.world.rand.nextFloat() * 0.55F;
             }
 
             this.firstrun = false;
@@ -37,19 +38,20 @@ public class TileBellows extends TileThaumcraft {
 
             if (this.inflation >= 1.0F && this.direction) {
                this.direction = false;
-               this.worldObj.playSound((double)this.xCoord + (double)0.5F, (double)this.yCoord + (double)0.5F, (double)this.zCoord + (double)0.5F, "mob.ghast.fireball", 0.01F, 0.5F + (this.worldObj.rand.nextFloat() - this.worldObj.rand.nextFloat()) * 0.2F, false);
+               this.world.playSound(null, this.getPos(), net.minecraft.init.SoundEvents.ENTITY_GHAST_SHOOT, net.minecraft.util.SoundCategory.BLOCKS, 0.01F, 0.5F + (this.world.rand.nextFloat() - this.world.rand.nextFloat()) * 0.2F);
             }
          }
       } else if (this.onVanillaFurnace && !this.gettingPower()) {
          ++this.delay;
          if (this.delay >= 2) {
             this.delay = 0;
-            ForgeDirection dir = ForgeDirection.getOrientation(this.orientation);
-            TileEntity tile = this.worldObj.getTileEntity(this.xCoord + dir.offsetX, this.yCoord, this.zCoord + dir.offsetZ);
+            EnumFacing dir = EnumFacing.byIndex(this.orientation);
+            TileEntity tile = this.world.getTileEntity(this.getPos().offset(dir));
             if (tile instanceof TileEntityFurnace) {
                TileEntityFurnace tf = (TileEntityFurnace)tile;
-               if (tf.furnaceCookTime > 0 && tf.furnaceCookTime < 199) {
-                  ++tf.furnaceCookTime;
+               int cookTime = tf.getField(2); // 2 is cookTime
+               if (cookTime > 0 && cookTime < 199) {
+                  tf.setField(2, ++cookTime);
                }
             }
          }
@@ -58,18 +60,18 @@ public class TileBellows extends TileThaumcraft {
    }
 
    public boolean gettingPower() {
-      return this.worldObj.isBlockIndirectlyGettingPowered(this.xCoord, this.yCoord, this.zCoord);
+      return this.world.isBlockPowered(this.getPos());
    }
 
-   public static int getBellows(World world, int x, int y, int z, ForgeDirection[] directions) {
+   public static int getBellows(World world, int x, int y, int z, EnumFacing[] directions) {
       int bellows = 0;
 
-      for(ForgeDirection dir : directions) {
-         int xx = x + dir.offsetX;
-         int yy = y + dir.offsetY;
-         int zz = z + dir.offsetZ;
-         TileEntity tile = world.getTileEntity(xx, yy, zz);
-         if (tile instanceof TileBellows && ((TileBellows) tile).orientation == dir.getOpposite().ordinal() && !world.isBlockIndirectlyGettingPowered(xx, yy, zz)) {
+      for(EnumFacing dir : directions) {
+         int xx = x + dir.getXOffset();
+         int yy = y + dir.getYOffset();
+         int zz = z + dir.getZOffset();
+         TileEntity tile = world.getTileEntity(new BlockPos(xx, yy, zz));
+         if (tile instanceof TileBellows && ((TileBellows) tile).orientation == dir.getOpposite().ordinal() && !world.isBlockPowered(new BlockPos(xx, yy, zz))) {
             ++bellows;
          }
       }

@@ -29,10 +29,10 @@ public class WorldCoordinates implements Comparable<WorldCoordinates>
     
     public WorldCoordinates(TileEntity tile)
     {
-        this.x = tile.xCoord;
-        this.y = tile.yCoord;
-        this.z = tile.zCoord;
-        this.dim = tile.getWorldObj().provider.dimensionId;
+        this.x = tile.getPos().getX();
+        this.y = tile.getPos().getY();
+        this.z = tile.getPos().getZ();
+        this.dim = tile.getWorld().provider.getDimension();
     }
 
     public WorldCoordinates(WorldCoordinates par1ChunkCoordinates)
@@ -92,7 +92,7 @@ public class WorldCoordinates implements Comparable<WorldCoordinates>
     }
 
     /**
-     * Return the squared distance between this coordinates and the ChunkCoordinates given as argument.
+     * Return the squared distance between this coordinates and the BlockPos given as argument.
      */
     public float getDistanceSquaredToWorldCoordinates(WorldCoordinates par1ChunkCoordinates)
     {

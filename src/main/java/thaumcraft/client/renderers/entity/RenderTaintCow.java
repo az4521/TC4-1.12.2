@@ -7,11 +7,12 @@ import net.minecraft.entity.EntityLiving;
 import net.minecraft.util.ResourceLocation;
 import thaumcraft.common.entities.monster.EntityTaintCow;
 
+import net.minecraft.client.renderer.entity.RenderManager;
 public class RenderTaintCow extends RenderLiving {
    private static final ResourceLocation rl = new ResourceLocation("thaumcraft", "textures/models/cow.png");
 
-   public RenderTaintCow(ModelBase par1ModelBase, float par2) {
-      super(par1ModelBase, par2);
+   public RenderTaintCow(RenderManager renderManager, ModelBase par1ModelBase, float par2) {
+      super(renderManager, par1ModelBase, par2);
    }
 
    protected ResourceLocation getEntityTexture(Entity entity) {

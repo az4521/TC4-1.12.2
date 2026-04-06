@@ -4,6 +4,8 @@ import java.text.DecimalFormat;
 import java.util.LinkedHashMap;
 import java.util.List;
 
+import javax.annotation.Nullable;
+
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.EnumRarity;
@@ -11,15 +13,16 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
-import net.minecraft.util.EnumChatFormatting;
-import net.minecraft.util.IIcon;
-import net.minecraft.util.MovingObjectPosition;
-import net.minecraft.util.StatCollector;
+import net.minecraft.util.text.TextFormatting;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.util.ITooltipFlag;
+import net.minecraft.util.math.RayTraceResult;
+import net.minecraft.util.text.translation.I18n;
 import net.minecraft.world.World;
 import thaumcraft.api.aspects.Aspect;
 import thaumcraft.api.aspects.AspectList;
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 
 public class ItemFocusBasic extends Item {
 	
@@ -31,11 +34,10 @@ public class ItemFocusBasic extends Item {
         this.setMaxDamage(0);
     }
 	
-	public IIcon icon;
+	public TextureAtlasSprite icon;
 	
 	@SideOnly(Side.CLIENT)
-	@Override
-	public IIcon getIconFromDamage(int par1) {
+	public TextureAtlasSprite getIconFromDamage(int par1) {
 		return icon;
 	}
 	
@@ -45,20 +47,20 @@ public class ItemFocusBasic extends Item {
 	}
 
 	@Override
-	public void addInformation(ItemStack stack,EntityPlayer player, List list, boolean par4) {
+	public void addInformation(ItemStack stack, @Nullable World world, List<String> list, ITooltipFlag flag) {
 		AspectList al = this.getVisCost(stack);
 		if (al!=null && al.size()>0) {
-			list.add(StatCollector.translateToLocal(isVisCostPerTick(stack)?"item.Focus.cost2":"item.Focus.cost1"));
+			list.add(I18n.translateToLocal(isVisCostPerTick(stack)?"item.Focus.cost2":"item.Focus.cost1"));
 			for (Aspect aspect:al.getAspectsSorted()) {
 				DecimalFormat myFormatter = new DecimalFormat("#####.##");
 				String amount = myFormatter.format(al.getAmount(aspect)/100f);
 				list.add(" §"+aspect.getChatcolor()+aspect.getName()+"§r x "+ amount);
 			}
 		}
-		addFocusInformation(stack,player,list,par4);
+		addFocusInformation(stack, list, flag);
 	}
-	
-	public void addFocusInformation(ItemStack focusstack,EntityPlayer player, List list, boolean par4) {
+
+	public void addFocusInformation(ItemStack focusstack, List<String> list, ITooltipFlag flag) {
 		LinkedHashMap<Short, Integer> map = new LinkedHashMap<>();
 		for (short id:this.getAppliedUpgrades(focusstack)) {
 			if (id>=0) {
@@ -70,8 +72,8 @@ public class ItemFocusBasic extends Item {
 			}
 		}
 		for (Short id:map.keySet()) {	
-			list.add(EnumChatFormatting.DARK_PURPLE +FocusUpgradeType.types[id].getLocalizedName()+
-					(map.get(id)>1?" "+StatCollector.translateToLocal("enchantment.level." + map.get(id)):""));
+			list.add(TextFormatting.DARK_PURPLE +FocusUpgradeType.types[id].getLocalizedName()+
+					(map.get(id)>1?" "+I18n.translateToLocal("enchantment.level." + map.get(id)):""));
 		}
 	}
 	
@@ -85,7 +87,7 @@ public class ItemFocusBasic extends Item {
 	@Override
 	public EnumRarity getRarity(ItemStack focusstack)
     {
-        return EnumRarity.rare;
+        return EnumRarity.RARE;
     }	
 	
 	/**
@@ -99,7 +101,7 @@ public class ItemFocusBasic extends Item {
 	/**
 	 * Does the focus have ornamentation like the focus of the nine hells. Ornamentation is a standard icon rendered in a cross around the focus
 	 */	
-	public IIcon getOrnament(ItemStack focusstack) {
+	public TextureAtlasSprite getOrnament(ItemStack focusstack) {
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -107,7 +109,7 @@ public class ItemFocusBasic extends Item {
 	/**
 	 * An icon to be rendered inside the focus itself
 	 */
-	public IIcon getFocusDepthLayerIcon(ItemStack focusstack) {
+	public TextureAtlasSprite getFocusDepthLayerIcon(ItemStack focusstack) {
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -217,7 +219,7 @@ public class ItemFocusBasic extends Item {
         return level;
 	}	
 	
-	public ItemStack onFocusRightClick(ItemStack wandstack, World world,EntityPlayer player, MovingObjectPosition movingobjectposition) {
+	public ItemStack onFocusRightClick(ItemStack wandstack, World world,EntityPlayer player, RayTraceResult movingobjectposition) {
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -241,7 +243,7 @@ public class ItemFocusBasic extends Item {
 	 */
 	private NBTTagList getFocusUpgradeTagList(ItemStack focusstack)
     {
-        return focusstack.stackTagCompound == null ? null : focusstack.stackTagCompound.getTagList("upgrade", 10);
+        return focusstack.getTagCompound() == null ? null : focusstack.getTagCompound().getTagList("upgrade", 10);
     }
 	
 	private void setFocusUpgradeTagList(ItemStack focusstack, short[] upgrades) {
@@ -258,11 +260,11 @@ public class ItemFocusBasic extends Item {
 	}
 
 	@Override
-	public void onUpdate(ItemStack stack, World world, Entity entity, int p_77663_4_, boolean p_77663_5_) {
-		if (stack.stackTagCompound !=null && stack.stackTagCompound.hasKey("ench")) {
-			stack.stackTagCompound.removeTag("ench");
+	public void onUpdate(ItemStack stack, World world, Entity entity, int itemSlot, boolean isSelected) {
+		if (stack.getTagCompound() != null && stack.getTagCompound().hasKey("ench")) {
+			stack.getTagCompound().removeTag("ench");
 		}
-		super.onUpdate(stack, world, entity, p_77663_4_, p_77663_5_);
+		super.onUpdate(stack, world, entity, itemSlot, isSelected);
 	}
 
 	

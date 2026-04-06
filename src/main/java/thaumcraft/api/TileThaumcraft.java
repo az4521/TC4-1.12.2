@@ -2,8 +2,7 @@ package thaumcraft.api;
 
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.NetworkManager;
-import net.minecraft.network.Packet;
-import net.minecraft.network.play.server.S35PacketUpdateTileEntity;
+import net.minecraft.network.play.server.SPacketUpdateTileEntity;
 import net.minecraft.tileentity.TileEntity;
 
 /**
@@ -13,42 +12,61 @@ import net.minecraft.tileentity.TileEntity;
  * the nbt data within readCustomNBT / writeCustomNBT will be sent to the client when the tile
  * updates. Apart from all the normal TE data that gets sent that is.
  */
-public class TileThaumcraft extends TileEntity {
+public class TileThaumcraft extends TileEntity implements net.minecraft.util.ITickable {
 
     //NBT stuff
 
     @Override
     public void readFromNBT(NBTTagCompound nbttagcompound) {
+
         super.readFromNBT(nbttagcompound);
         readCustomNBT(nbttagcompound);
     }
 
     public void readCustomNBT(NBTTagCompound nbttagcompound) {
-        //TODO
     }
 
     @Override
-    public void writeToNBT(NBTTagCompound nbttagcompound) {
+    public NBTTagCompound writeToNBT(NBTTagCompound nbttagcompound) {
         super.writeToNBT(nbttagcompound);
         writeCustomNBT(nbttagcompound);
+        return nbttagcompound;
     }
 
     public void writeCustomNBT(NBTTagCompound nbttagcompound) {
-        //TODO
+    }
+
+    // ITickable - delegates to updateEntity() for backward compatibility with 1.7.10 code
+    @Override
+    public void update() {
+        updateEntity();
+    }
+
+    public void updateEntity() {
     }
 
     //Client Packet stuff
     @Override
-    public Packet getDescriptionPacket() {
+    public SPacketUpdateTileEntity getUpdatePacket() {
         NBTTagCompound nbttagcompound = new NBTTagCompound();
-        this.writeCustomNBT(nbttagcompound);
-        return new S35PacketUpdateTileEntity(this.xCoord, this.yCoord, this.zCoord, -999, nbttagcompound);
+        this.writeToNBT(nbttagcompound);
+        return new SPacketUpdateTileEntity(this.pos, -999, nbttagcompound);
     }
 
     @Override
-    public void onDataPacket(NetworkManager net, S35PacketUpdateTileEntity pkt) {
+    public void onDataPacket(NetworkManager net, SPacketUpdateTileEntity pkt) {
         super.onDataPacket(net, pkt);
-        this.readCustomNBT(pkt.func_148857_g());
+        this.readFromNBT(pkt.getNbtCompound());
+    }
+
+    @Override
+    public NBTTagCompound getUpdateTag() {
+        return this.writeToNBT(new NBTTagCompound());
+    }
+
+    @Override
+    public void handleUpdateTag(NBTTagCompound tag) {
+        this.readFromNBT(tag);
     }
 
 }

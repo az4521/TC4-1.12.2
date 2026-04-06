@@ -1,15 +1,15 @@
 package thaumcraft.common.items.equipment;
 
 import com.google.common.collect.ImmutableSet;
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 
 import java.util.ArrayList;
 import java.util.Set;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.material.Material;
-import net.minecraft.client.renderer.texture.IIconRegister;
+import thaumcraft.client.renderers.compat.IIconRegister;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
@@ -19,13 +19,17 @@ import net.minecraft.item.ItemSpade;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.IIcon;
-import net.minecraft.util.MathHelper;
-import net.minecraft.util.MovingObjectPosition;
-import net.minecraft.util.MovingObjectPosition.MovingObjectType;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.block.state.IBlockState;
+import net.minecraft.util.EnumActionResult;
+import net.minecraft.util.EnumFacing;
+import net.minecraft.util.EnumHand;
+import net.minecraft.util.SoundCategory;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.world.World;
 import net.minecraftforge.common.ForgeHooks;
-import net.minecraftforge.common.util.ForgeDirection;
 import thaumcraft.api.BlockCoordinates;
 import thaumcraft.api.IArchitect;
 import thaumcraft.api.IRepairable;
@@ -36,8 +40,8 @@ import thaumcraft.common.lib.utils.InventoryUtils;
 
 public class ItemElementalShovel extends ItemSpade implements IRepairable, IArchitect {
     private static final Block[] isEffective;
-    public IIcon icon;
-    int side = 0;
+    public TextureAtlasSprite icon;
+    net.minecraft.util.EnumFacing side = net.minecraft.util.EnumFacing.DOWN;
 
     public ItemElementalShovel(Item.ToolMaterial enumtoolmaterial) {
         super(enumtoolmaterial);
@@ -49,21 +53,19 @@ public class ItemElementalShovel extends ItemSpade implements IRepairable, IArch
         return ImmutableSet.of("shovel");
     }
 
-    @Override
     @SideOnly(Side.CLIENT)
     public void registerIcons(IIconRegister ir) {
-        this.icon = ir.registerIcon("thaumcraft:elementalshovel");
+        this.icon = ir.registerSprite("thaumcraft:elementalshovel");
     }
 
-    @Override
     @SideOnly(Side.CLIENT)
-    public IIcon getIconFromDamage(int par1) {
+    public TextureAtlasSprite getIconFromDamage(int par1) {
         return this.icon;
     }
 
     @Override
     public EnumRarity getRarity(ItemStack itemstack) {
-        return EnumRarity.rare;
+        return EnumRarity.RARE;
     }
 
     @Override
@@ -72,14 +74,18 @@ public class ItemElementalShovel extends ItemSpade implements IRepairable, IArch
     }
 
     @Override
-    public boolean onItemUse(ItemStack itemstack, EntityPlayer player, World world, int x, int y, int z, int side, float par8, float par9, float par10) {
-        int xm = ForgeDirection.getOrientation(side).offsetX;
-        int ym = ForgeDirection.getOrientation(side).offsetY;
-        int zm = ForgeDirection.getOrientation(side).offsetZ;
+    public EnumActionResult onItemUse(EntityPlayer player, World world, BlockPos pos, EnumHand hand, EnumFacing facing, float hitX, float hitY, float hitZ) {
+        int x = pos.getX();
+        int y = pos.getY();
+        int z = pos.getZ();
+        int xm = facing.getXOffset();
+        int ym = facing.getYOffset();
+        int zm = facing.getZOffset();
         boolean result = false;
-        Block bi = world.getBlock(x, y, z);
-        int md = world.getBlockMetadata(x, y, z);
-        TileEntity te = world.getTileEntity(x, y, z);
+        ItemStack itemstack = player.getHeldItem(hand);
+        Block bi = world.getBlockState(new BlockPos(x, y, z)).getBlock();
+        int md = world.getBlockState(new BlockPos(x, y, z)).getBlock().getMetaFromState(world.getBlockState(new BlockPos(x, y, z)));
+        TileEntity te = world.getTileEntity(new BlockPos(x, y, z));
         if (te == null) {
             for (int aa = -1; aa <= 1; ++aa) {
                 for (int bb = -1; bb <= 1; ++bb) {
@@ -89,21 +95,21 @@ public class ItemElementalShovel extends ItemSpade implements IRepairable, IArch
                     byte o = getOrientation(itemstack);
                     if (o == 1) {
                         yy = bb;
-                        if (side <= 1) {
-                            int l = MathHelper.floor_double((double) (player.rotationYaw * 4.0F / 360.0F) + (double) 0.5F) & 3;
+                        if (facing.getIndex() <= 1) {
+                            int l = MathHelper.floor((double) (player.rotationYaw * 4.0F / 360.0F) + (double) 0.5F) & 3;
                             if (l != 0 && l != 2) {
                                 zz = aa;
                             } else {
                                 xx = aa;
                             }
-                        } else if (side <= 3) {
+                        } else if (facing.getIndex() <= 3) {
                             zz = aa;
                         } else {
                             xx = aa;
                         }
                     } else if (o == 2) {
-                        if (side <= 1) {
-                            int l = MathHelper.floor_double((double) (player.rotationYaw * 4.0F / 360.0F) + (double) 0.5F) & 3;
+                        if (facing.getIndex() <= 1) {
+                            int l = MathHelper.floor((double) (player.rotationYaw * 4.0F / 360.0F) + (double) 0.5F) & 3;
                             yy = bb;
                             if (l != 0 && l != 2) {
                                 zz = aa;
@@ -114,10 +120,10 @@ public class ItemElementalShovel extends ItemSpade implements IRepairable, IArch
                             zz = bb;
                             xx = aa;
                         }
-                    } else if (side <= 1) {
+                    } else if (facing.getIndex() <= 1) {
                         xx = aa;
                         zz = bb;
-                    } else if (side <= 3) {
+                    } else if (facing.getIndex() <= 3) {
                         xx = aa;
                         yy = bb;
                     } else {
@@ -125,31 +131,32 @@ public class ItemElementalShovel extends ItemSpade implements IRepairable, IArch
                         yy = bb;
                     }
 
-                    Block b2 = world.getBlock(x + xx + xm, y + yy + ym, z + zz + zm);
-                    if (world.isAirBlock(x + xx + xm, y + yy + ym, z + zz + zm) || b2 == Blocks.vine || b2 == Blocks.tallgrass || b2.getMaterial() == Material.water || b2 == Blocks.deadbush || b2.isReplaceable(world, x + xx + xm, y + yy + ym, z + zz + zm)) {
+                    BlockPos targetPos = new BlockPos(x + xx + xm, y + yy + ym, z + zz + zm);
+                    Block b2 = world.getBlockState(targetPos).getBlock();
+                    if (world.isAirBlock(targetPos) || b2 == Blocks.VINE || b2 == Blocks.TALLGRASS || world.getBlockState(targetPos).getMaterial() == Material.WATER || b2 == Blocks.DEADBUSH || b2.isReplaceable(world, targetPos)) {
                         if (!player.capabilities.isCreativeMode && !InventoryUtils.consumeInventoryItem(player, Item.getItemFromBlock(bi), md)) {
-                            if (bi == Blocks.grass && (player.capabilities.isCreativeMode || InventoryUtils.consumeInventoryItem(player, Item.getItemFromBlock(Blocks.dirt), 0))) {
-                                world.playSound(x + xx + xm, y + yy + ym, z + zz + zm, bi.stepSound.func_150496_b(), 0.6F, 0.9F + world.rand.nextFloat() * 0.2F, false);
-                                world.setBlock(x + xx + xm, y + yy + ym, z + zz + zm, Blocks.dirt, 0, 3);
+                            if (bi == Blocks.GRASS && (player.capabilities.isCreativeMode || InventoryUtils.consumeInventoryItem(player, Item.getItemFromBlock(Blocks.DIRT), 0))) {
+                                world.playSound(null, targetPos, bi.getSoundType(world.getBlockState(targetPos), world, targetPos, null).getPlaceSound(), SoundCategory.BLOCKS, 0.6F, 0.9F + world.rand.nextFloat() * 0.2F);
+                                world.setBlockState(targetPos, Blocks.DIRT.getStateFromMeta(0), 3);
                                 result = true;
                                 itemstack.damageItem(1, player);
                                 Thaumcraft.proxy.blockSparkle(world, x + xx + xm, y + yy + ym, z + zz + zm, 3, 4);
-                                player.swingItem();
+                                player.swingArm(EnumHand.MAIN_HAND);
                             }
                         } else {
-                            world.playSound(x + xx + xm, y + yy + ym, z + zz + zm, bi.stepSound.func_150496_b(), 0.6F, 0.9F + world.rand.nextFloat() * 0.2F, false);
-                            world.setBlock(x + xx + xm, y + yy + ym, z + zz + zm, bi, md, 3);
+                            world.playSound(null, targetPos, bi.getSoundType(world.getBlockState(targetPos), world, targetPos, null).getPlaceSound(), SoundCategory.BLOCKS, 0.6F, 0.9F + world.rand.nextFloat() * 0.2F);
+                            world.setBlockState(targetPos, bi.getStateFromMeta(md), 3);
                             result = true;
                             itemstack.damageItem(1, player);
                             Thaumcraft.proxy.blockSparkle(world, x + xx + xm, y + yy + ym, z + zz + zm, 8401408, 4);
-                            player.swingItem();
+                            player.swingArm(EnumHand.MAIN_HAND);
                         }
                     }
                 }
             }
         }
 
-        return result;
+        return result ? EnumActionResult.SUCCESS : EnumActionResult.PASS;
     }
 
     private boolean isEffectiveAgainst(Block block) {
@@ -162,31 +169,35 @@ public class ItemElementalShovel extends ItemSpade implements IRepairable, IArch
         return false;
     }
 
-    public boolean onBlockStartBreak(ItemStack itemstack, int X, int Y, int Z, EntityPlayer player) {
-        MovingObjectPosition movingobjectposition = BlockUtils.getTargetBlock(player.worldObj, player, true);
-        if (movingobjectposition != null && movingobjectposition.typeOfHit == MovingObjectType.BLOCK) {
+    public boolean onBlockStartBreak(ItemStack itemstack, BlockPos pos, EntityPlayer player) {
+        RayTraceResult movingobjectposition = BlockUtils.getTargetBlock(player.world, player, true);
+        if (movingobjectposition != null && movingobjectposition.typeOfHit == RayTraceResult.Type.BLOCK) {
             this.side = movingobjectposition.sideHit;
         }
 
-        return super.onBlockStartBreak(itemstack, X, Y, Z, player);
+        return super.onBlockStartBreak(itemstack, pos, player);
     }
 
-    public boolean onBlockDestroyed(ItemStack stack, World world, Block bi, int x, int y, int z, EntityLivingBase ent) {
+    public boolean onBlockDestroyed(ItemStack stack, World world, IBlockState state, BlockPos pos, EntityLivingBase ent) {
+        Block bi = state.getBlock();
+        int x = pos.getX();
+        int y = pos.getY();
+        int z = pos.getZ();
         if (ent.isSneaking()) {
-            return super.onBlockDestroyed(stack, world, bi, x, y, z, ent);
+            return super.onBlockDestroyed(stack, world, state, pos, ent);
         } else {
-            if (!ent.worldObj.isRemote) {
-                int md = world.getBlockMetadata(x, y, z);
-                if (ForgeHooks.isToolEffective(stack, bi, md) || this.isEffectiveAgainst(bi)) {
+            if (!ent.world.isRemote) {
+                int md = world.getBlockState(new BlockPos(x, y, z)).getBlock().getMetaFromState(world.getBlockState(new BlockPos(x, y, z)));
+                if (ForgeHooks.isToolEffective(world, new BlockPos(x, y, z), stack) || this.isEffectiveAgainst(bi)) {
                     for (int aa = -1; aa <= 1; ++aa) {
                         for (int bb = -1; bb <= 1; ++bb) {
                             int xx = 0;
                             int yy = 0;
                             int zz = 0;
-                            if (this.side <= 1) {
+                            if (this.side.getIndex() <= 1) {
                                 xx = aa;
                                 zz = bb;
-                            } else if (this.side <= 3) {
+                            } else if (this.side.getIndex() <= 3) {
                                 xx = aa;
                                 yy = bb;
                             } else {
@@ -194,10 +205,11 @@ public class ItemElementalShovel extends ItemSpade implements IRepairable, IArch
                                 yy = bb;
                             }
 
-                            if (!(ent instanceof EntityPlayer) || world.canMineBlock((EntityPlayer) ent, x + xx, y + yy, z + zz)) {
-                                Block bl = world.getBlock(x + xx, y + yy, z + zz);
-                                md = world.getBlockMetadata(x + xx, y + yy, z + zz);
-                                if (bl.getBlockHardness(world, x + xx, y + yy, z + zz) >= 0.0F && (ForgeHooks.isToolEffective(stack, bl, md) || this.isEffectiveAgainst(bl))) {
+                            BlockPos innerPos = new BlockPos(x + xx, y + yy, z + zz);
+                            if (!(ent instanceof EntityPlayer) || world.isBlockModifiable((EntityPlayer) ent, innerPos)) {
+                                Block bl = world.getBlockState(innerPos).getBlock();
+                                md = world.getBlockState(innerPos).getBlock().getMetaFromState(world.getBlockState(innerPos));
+                                if (bl.getBlockHardness(world.getBlockState(innerPos), world, innerPos) >= 0.0F && (ForgeHooks.isToolEffective(world, innerPos, stack) || this.isEffectiveAgainst(bl))) {
                                     stack.damageItem(1, ent);
                                     BlockUtils.harvestBlock(world, (EntityPlayer) ent, x + xx, y + yy, z + zz, true, 3);
                                 }
@@ -211,14 +223,14 @@ public class ItemElementalShovel extends ItemSpade implements IRepairable, IArch
         }
     }
 
-    public ArrayList<BlockCoordinates> getArchitectBlocks(ItemStack focusstack, World world, int x, int y, int z, int side, EntityPlayer player) {
+    public ArrayList<BlockCoordinates> getArchitectBlocks(ItemStack focusstack, World world, int x, int y, int z, net.minecraft.util.EnumFacing side, EntityPlayer player) {
         ArrayList<BlockCoordinates> b = new ArrayList<>();
         if (!player.isSneaking()) {
             return b;
         } else {
-            int xm = ForgeDirection.getOrientation(side).offsetX;
-            int ym = ForgeDirection.getOrientation(side).offsetY;
-            int zm = ForgeDirection.getOrientation(side).offsetZ;
+            int xm = side.getXOffset();
+            int ym = side.getYOffset();
+            int zm = side.getZOffset();
 
             for (int aa = -1; aa <= 1; ++aa) {
                 for (int bb = -1; bb <= 1; ++bb) {
@@ -228,21 +240,21 @@ public class ItemElementalShovel extends ItemSpade implements IRepairable, IArch
                     byte o = getOrientation(focusstack);
                     if (o == 1) {
                         yy = bb;
-                        if (side <= 1) {
-                            int l = MathHelper.floor_double((double) (player.rotationYaw * 4.0F / 360.0F) + (double) 0.5F) & 3;
+                        if (side.getIndex() <= 1) {
+                            int l = MathHelper.floor((double) (player.rotationYaw * 4.0F / 360.0F) + (double) 0.5F) & 3;
                             if (l != 0 && l != 2) {
                                 zz = aa;
                             } else {
                                 xx = aa;
                             }
-                        } else if (side <= 3) {
+                        } else if (side.getIndex() <= 3) {
                             zz = aa;
                         } else {
                             xx = aa;
                         }
                     } else if (o == 2) {
-                        if (side <= 1) {
-                            int l = MathHelper.floor_double((double) (player.rotationYaw * 4.0F / 360.0F) + (double) 0.5F) & 3;
+                        if (side.getIndex() <= 1) {
+                            int l = MathHelper.floor((double) (player.rotationYaw * 4.0F / 360.0F) + (double) 0.5F) & 3;
                             yy = bb;
                             if (l != 0 && l != 2) {
                                 zz = aa;
@@ -253,10 +265,10 @@ public class ItemElementalShovel extends ItemSpade implements IRepairable, IArch
                             zz = bb;
                             xx = aa;
                         }
-                    } else if (side <= 1) {
+                    } else if (side.getIndex() <= 1) {
                         xx = aa;
                         zz = bb;
-                    } else if (side <= 3) {
+                    } else if (side.getIndex() <= 3) {
                         xx = aa;
                         yy = bb;
                     } else {
@@ -264,8 +276,9 @@ public class ItemElementalShovel extends ItemSpade implements IRepairable, IArch
                         yy = bb;
                     }
 
-                    Block b2 = world.getBlock(x + xx + xm, y + yy + ym, z + zz + zm);
-                    if (world.isAirBlock(x + xx + xm, y + yy + ym, z + zz + zm) || b2 == Blocks.vine || b2 == Blocks.tallgrass || b2.getMaterial() == Material.water || b2 == Blocks.deadbush || b2.isReplaceable(world, x + xx + xm, y + yy + ym, z + zz + zm)) {
+                    BlockPos targetPos = new BlockPos(x + xx + xm, y + yy + ym, z + zz + zm);
+                    Block b2 = world.getBlockState(targetPos).getBlock();
+                    if (world.isAirBlock(targetPos) || b2 == Blocks.VINE || b2 == Blocks.TALLGRASS || world.getBlockState(targetPos).getMaterial() == Material.WATER || b2 == Blocks.DEADBUSH || b2.isReplaceable(world, targetPos)) {
                         b.add(new BlockCoordinates(x + xx + xm, y + yy + ym, z + zz + zm));
                     }
                 }
@@ -275,12 +288,12 @@ public class ItemElementalShovel extends ItemSpade implements IRepairable, IArch
         }
     }
 
-    public boolean showAxis(ItemStack stack, World world, EntityPlayer player, int side, IArchitect.EnumAxis axis) {
+    public boolean showAxis(ItemStack stack, World world, EntityPlayer player, net.minecraft.util.EnumFacing side, IArchitect.EnumAxis axis) {
         return false;
     }
 
     public static byte getOrientation(ItemStack stack) {
-        return stack.hasTagCompound() && stack.stackTagCompound.hasKey("or") ? stack.stackTagCompound.getByte("or") : 0;
+        return stack.hasTagCompound() && stack.getTagCompound().hasKey("or") ? stack.getTagCompound().getByte("or") : 0;
     }
 
     public static void setOrientation(ItemStack stack, byte o) {
@@ -289,12 +302,12 @@ public class ItemElementalShovel extends ItemSpade implements IRepairable, IArch
         }
 
         if (stack.hasTagCompound()) {
-            stack.stackTagCompound.setByte("or", (byte) (o % 3));
+            stack.getTagCompound().setByte("or", (byte) (o % 3));
         }
 
     }
 
     static {
-        isEffective = new Block[]{Blocks.grass, Blocks.dirt, Blocks.sand, Blocks.gravel, Blocks.snow_layer, Blocks.snow, Blocks.clay, Blocks.farmland, Blocks.soul_sand, Blocks.mycelium};
+        isEffective = new Block[]{Blocks.GRASS, Blocks.DIRT, Blocks.SAND, Blocks.GRAVEL, Blocks.SNOW_LAYER, Blocks.SNOW, Blocks.CLAY, Blocks.FARMLAND, Blocks.SOUL_SAND, Blocks.MYCELIUM};
     }
 }

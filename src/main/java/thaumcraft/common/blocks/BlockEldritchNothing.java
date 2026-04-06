@@ -1,19 +1,20 @@
 package thaumcraft.common.blocks;
 
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraft.block.Block;
 import net.minecraft.block.material.Material;
-import net.minecraft.client.renderer.texture.IIconRegister;
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.AxisAlignedBB;
 import net.minecraft.util.DamageSource;
-import net.minecraft.util.IIcon;
-import net.minecraft.util.MovingObjectPosition;
+import net.minecraft.util.math.AxisAlignedBB;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.RayTraceResult;
+import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 import thaumcraft.common.lib.utils.BlockUtils;
 import thaumcraft.common.tiles.TileEldritchNothing;
@@ -21,74 +22,93 @@ import thaumcraft.common.tiles.TileEldritchNothing;
 import java.util.Random;
 
 public class BlockEldritchNothing extends Block {
-   public IIcon icon;
+   public static final net.minecraft.block.properties.PropertyInteger META =
+         net.minecraft.block.properties.PropertyInteger.create("meta", 0, 15);
+
+   @Override
+   protected net.minecraft.block.state.BlockStateContainer createBlockState() {
+      return new net.minecraft.block.state.BlockStateContainer(this, META);
+   }
+
+   @Override
+   public net.minecraft.block.state.IBlockState getStateFromMeta(int meta) {
+      return this.getDefaultState().withProperty(META, meta);
+   }
+
+   @Override
+   public int getMetaFromState(net.minecraft.block.state.IBlockState state) {
+      return state.getValue(META);
+   }
+
 
    public BlockEldritchNothing() {
-      super(Material.rock);
+      super(Material.ROCK);
       this.setBlockUnbreakable();
       this.setResistance(6000000.0F);
-      this.setStepSound(Block.soundTypeCloth);
       this.setLightLevel(0.2F);
-      this.setBlockBounds(0.0F, 0.0F, 0.0F, 1.0F, 1.0F, 1.0F);
       this.setTickRandomly(true);
    }
 
-   @SideOnly(Side.CLIENT)
-   public void registerBlockIcons(IIconRegister ir) {
-      this.icon = ir.registerIcon("thaumcraft:blank");
+   // registerBlockIcons removed — textures are handled by JSON models in 1.12.2
+   // getIcon removed — textures are handled by JSON models in 1.12.2
+
+   @Override
+   public ItemStack getPickBlock(IBlockState state, RayTraceResult target, World world, BlockPos pos, EntityPlayer player) {
+      return ItemStack.EMPTY;
    }
 
-   public IIcon getIcon(int i, int m) {
-      return this.icon;
+   @Override
+   public AxisAlignedBB getSelectedBoundingBox(IBlockState state, World world, BlockPos pos) {
+      return new AxisAlignedBB(0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
    }
 
-   public ItemStack getPickBlock(MovingObjectPosition target, World world, int x, int y, int z) {
-      return null;
-   }
-
-   public AxisAlignedBB getSelectedBoundingBoxFromPool(World w, int i, int j, int k) {
-      return AxisAlignedBB.getBoundingBox(0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F);
-   }
-
-   public boolean renderAsNormalBlock() {
+   @Override
+   public boolean isOpaqueCube(IBlockState state) {
       return false;
    }
 
-   public int getRenderType() {
-      return -1;
+   @Override
+   public boolean isFullCube(IBlockState state) {
+      return false;
    }
 
-   public boolean hasTileEntity(int metadata) {
-      return metadata == 1;
+   @Override
+   public boolean hasTileEntity(IBlockState state) {
+      return this.getMetaFromState(state) == 1;
    }
 
-   public TileEntity createTileEntity(World world, int metadata) {
-      return metadata == 1 ? new TileEldritchNothing() : null;
+   @Override
+   public TileEntity createTileEntity(World world, IBlockState state) {
+      return this.getMetaFromState(state) == 1 ? new TileEldritchNothing() : null;
    }
 
-   public Item getItemDropped(int par1, Random par2Random, int par3) {
+   @Override
+   public Item getItemDropped(IBlockState state, Random rand, int fortune) {
       return Item.getItemById(0);
    }
 
-   public void onNeighborBlockChange(World world, int x, int y, int z, Block block) {
+   @Override
+   public void neighborChanged(IBlockState state, World world, BlockPos pos, Block block, BlockPos fromPos) {
+      int x = pos.getX(), y = pos.getY(), z = pos.getZ();
       if (BlockUtils.isBlockExposed(world, x, y, z)) {
-         world.setBlockMetadataWithNotify(x, y, z, 1, 3);
+         world.setBlockState(pos, this.getStateFromMeta(1), 3);
       } else {
-         world.setBlockMetadataWithNotify(x, y, z, 0, 3);
+         world.setBlockState(pos, this.getStateFromMeta(0), 3);
       }
 
-      super.onNeighborBlockChange(world, x, y, z, block);
+      super.neighborChanged(state, world, pos, block, fromPos);
    }
 
-   public void onEntityCollidedWithBlock(World world, int x, int y, int z, Entity entity) {
+   @Override
+   public void onEntityCollision(World world, BlockPos pos, IBlockState state, Entity entity) {
       if (entity.ticksExisted > 20 && (!(entity instanceof EntityPlayer) || !((EntityPlayer)entity).capabilities.isCreativeMode)) {
-         entity.attackEntityFrom(DamageSource.outOfWorld, 8.0F);
+         entity.attackEntityFrom(DamageSource.OUT_OF_WORLD, 8.0F);
       }
-
    }
 
-   public AxisAlignedBB getCollisionBoundingBoxFromPool(World world, int x, int y, int z) {
+   @Override
+   public AxisAlignedBB getCollisionBoundingBox(IBlockState state, IBlockAccess world, BlockPos pos) {
       float f = 0.125F;
-      return AxisAlignedBB.getBoundingBox((float)x + f, (double)y + (double)f, (float)z + f, (float)(x + 1) - f, (float)(y + 1) - f, (float)(z + 1) - f);
+      return new AxisAlignedBB(f, f, f, 1.0F - f, 1.0F - f, 1.0F - f);
    }
 }

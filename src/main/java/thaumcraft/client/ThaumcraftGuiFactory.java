@@ -1,6 +1,6 @@
 package thaumcraft.client;
 
-import cpw.mods.fml.client.IModGuiFactory;
+import net.minecraftforge.fml.client.IModGuiFactory;
 import java.util.Set;
 
 import net.minecraft.client.Minecraft;
@@ -19,7 +19,13 @@ public class ThaumcraftGuiFactory implements IModGuiFactory {
       return null;
    }
 
-   public IModGuiFactory.RuntimeOptionGuiHandler getHandlerFor(IModGuiFactory.RuntimeOptionCategoryElement element) {
+   @Override
+   public boolean hasConfigGui() {
+      return false;
+   }
+
+   @Override
+   public net.minecraft.client.gui.GuiScreen createConfigGui(net.minecraft.client.gui.GuiScreen parentScreen) {
       return null;
    }
 }

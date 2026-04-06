@@ -1,20 +1,23 @@
 package thaumcraft.client.fx.beams;
 
-import cpw.mods.fml.client.FMLClientHandler;
+import net.minecraftforge.fml.client.FMLClientHandler;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.particle.EntityFX;
+import net.minecraft.client.particle.Particle;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.util.MathHelper;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
 import org.lwjgl.opengl.GL11;
 import thaumcraft.api.nodes.IRevealer;
 import thaumcraft.client.fx.ParticleEngine;
 import thaumcraft.client.lib.UtilsFX;
+import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.client.renderer.BufferBuilder;
+import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 
-public class FXBeamPower extends EntityFX {
+public class FXBeamPower extends Particle {
    public int particle = 16;
    private double offset = 0.0F;
    private double tX = 0.0F;
@@ -38,7 +41,7 @@ public class FXBeamPower extends EntityFX {
       this.particleGreen = 0.5F;
       this.particleBlue = 0.5F;
       this.setSize(0.02F, 0.02F);
-      this.noClip = true;
+      this.canCollide = false;
       this.motionX = 0.0F;
       this.motionY = 0.0F;
       this.motionZ = 0.0F;
@@ -48,7 +51,7 @@ public class FXBeamPower extends EntityFX {
       this.prevYaw = this.rotYaw;
       this.prevPitch = this.rotPitch;
       this.particleMaxAge = age;
-      EntityLivingBase renderentity = FMLClientHandler.instance().getClient().renderViewEntity;
+      EntityLivingBase renderentity = (EntityLivingBase)FMLClientHandler.instance().getClient().getRenderViewEntity();
       int visibleDistance = 50;
       if (!FMLClientHandler.instance().getClient().gameSettings.fancyGraphics) {
          visibleDistance = 25;
@@ -82,8 +85,8 @@ public class FXBeamPower extends EntityFX {
       float xd = (float)(this.posX - this.tX);
       float yd = (float)(this.posY - this.tY);
       float zd = (float)(this.posZ - this.tZ);
-      this.length = MathHelper.sqrt_float(xd * xd + yd * yd + zd * zd);
-      double var7 = MathHelper.sqrt_double(xd * xd + zd * zd);
+      this.length = MathHelper.sqrt(xd * xd + yd * yd + zd * zd);
+      double var7 = MathHelper.sqrt(xd * xd + zd * zd);
       this.rotYaw = (float)(Math.atan2(xd, zd) * (double)180.0F / Math.PI);
       this.rotPitch = (float)(Math.atan2(yd, var7) * (double)180.0F / Math.PI);
       this.prevYaw = this.rotYaw;
@@ -97,7 +100,7 @@ public class FXBeamPower extends EntityFX {
       }
 
       if (this.particleAge++ >= this.particleMaxAge) {
-         this.setDead();
+         this.setExpired();
       }
 
    }
@@ -116,34 +119,34 @@ public class FXBeamPower extends EntityFX {
 
    }
 
-   public void renderParticle(Tessellator tessellator, float f, float f1, float f2, float f3, float f4, float f5) {
-      tessellator.draw();
-      GL11.glPushMatrix();
+   public void renderParticle(BufferBuilder buffer, Entity entityIn, float f, float f1, float f2, float f3, float f4, float f5) {
+      Tessellator tessellator = Tessellator.getInstance();
+      GlStateManager.pushMatrix();
       float var9 = 1.0F;
-      float slide = (float)Minecraft.getMinecraft().thePlayer.ticksExisted;
+      float slide = (float)Minecraft.getMinecraft().player.ticksExisted;
       float size = 0.7F;
       UtilsFX.bindTexture("textures/misc/beam1.png");
       GL11.glTexParameterf(3553, 10242, 10497.0F);
       GL11.glTexParameterf(3553, 10243, 10497.0F);
-      GL11.glDisable(2884);
+      GlStateManager.disableCull();
       float var11 = slide + f;
-      float var12 = -var11 * 0.2F - (float)MathHelper.floor_float(-var11 * 0.1F);
-      GL11.glEnable(GL11.GL_BLEND);
-      GL11.glBlendFunc(770, 1);
-      GL11.glDepthMask(false);
+      float var12 = -var11 * 0.2F - (float)MathHelper.floor(-var11 * 0.1F);
+      GlStateManager.enableBlend();
+      GlStateManager.blendFunc(770, 1);
+      GlStateManager.depthMask(false);
       float xx = (float)(this.prevPosX + (this.posX - this.prevPosX) * (double)f - interpPosX);
       float yy = (float)(this.prevPosY + (this.posY - this.prevPosY) * (double)f - interpPosY);
       float zz = (float)(this.prevPosZ + (this.posZ - this.prevPosZ) * (double)f - interpPosZ);
-      GL11.glTranslated(xx, yy, zz);
+      GlStateManager.translate(xx, yy, zz);
       float ry = (float)((double)this.prevYaw + (double)(this.rotYaw - this.prevYaw) * (double)f);
       float rp = (float)((double)this.prevPitch + (double)(this.rotPitch - this.prevPitch) * (double)f);
-      GL11.glRotatef(90.0F, 1.0F, 0.0F, 0.0F);
-      GL11.glRotatef(180.0F + ry, 0.0F, 0.0F, -1.0F);
-      GL11.glRotatef(rp, 1.0F, 0.0F, 0.0F);
+      GlStateManager.rotate(90.0F, 1.0F, 0.0F, 0.0F);
+      GlStateManager.rotate(180.0F + ry, 0.0F, 0.0F, -1.0F);
+      GlStateManager.rotate(rp, 1.0F, 0.0F, 0.0F);
       double var44 = -0.15 * (double)size;
       double var17 = 0.15 * (double)size;
       float opmod = 0.1F;
-      EntityLivingBase v = FMLClientHandler.instance().getClient().renderViewEntity;
+      EntityLivingBase v = (EntityLivingBase)FMLClientHandler.instance().getClient().getRenderViewEntity();
       if (v instanceof EntityPlayer && ((EntityPlayer)v).inventory.armorItemInSlot(3) != null && ((EntityPlayer)v).inventory.armorItemInSlot(3).getItem() instanceof IRevealer) {
          opmod = 1.0F;
       }
@@ -154,42 +157,45 @@ public class FXBeamPower extends EntityFX {
          double var33 = 1.0F;
          double var35 = -1.0F + var12 + (float)t / 3.0F;
          double var37 = (double)(this.length * var9) + var35;
-         GL11.glRotatef(90.0F, 0.0F, 1.0F, 0.0F);
-         tessellator.startDrawingQuads();
-         tessellator.setBrightness(200);
-         tessellator.setColorRGBA_F(this.particleRed, this.particleGreen, this.particleBlue, this.opacity * opmod);
-         tessellator.addVertexWithUV(var44, var29, 0.0F, var33, var37);
-         tessellator.addVertexWithUV(var44, 0.0F, 0.0F, var33, var35);
-         tessellator.addVertexWithUV(var17, 0.0F, 0.0F, var31, var35);
-         tessellator.addVertexWithUV(var17, var29, 0.0F, var31, var37);
+         GlStateManager.rotate(90.0F, 0.0F, 1.0F, 0.0F);
+         buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX_COLOR); 
+        
+        
+         buffer.pos(var44, var29, 0.0F).tex(var33, var37).color(this.particleRed, this.particleGreen, this.particleBlue, this.opacity * opmod)
+        .endVertex();
+         buffer.pos(var44, 0.0F, 0.0F).tex(var33, var35).color(this.particleRed, this.particleGreen, this.particleBlue, this.opacity * opmod)
+        .endVertex();
+         buffer.pos(var17, 0.0F, 0.0F).tex(var31, var35).color(this.particleRed, this.particleGreen, this.particleBlue, this.opacity * opmod)
+        .endVertex();
+         buffer.pos(var17, var29, 0.0F).tex(var31, var37).color(this.particleRed, this.particleGreen, this.particleBlue, this.opacity * opmod)
+        .endVertex();
          tessellator.draw();
       }
 
-      GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
-      GL11.glDepthMask(true);
-      GL11.glBlendFunc(770, 771);
-      GL11.glDisable(GL11.GL_BLEND);
-      GL11.glEnable(2884);
-      GL11.glPopMatrix();
-      this.renderFlare(tessellator, f, f1, f2, f3, f4, f5);
-      Minecraft.getMinecraft().renderEngine.bindTexture(UtilsFX.getParticleTexture());
-      tessellator.startDrawingQuads();
+      GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
+      GlStateManager.depthMask(true);
+      GlStateManager.blendFunc(770, 771);
+      GlStateManager.disableBlend();
+      GlStateManager.enableCull();
+      GlStateManager.popMatrix();
+      this.renderFlare(buffer, f, f1, f2, f3, f4, f5);
       this.prevSize = size;
    }
 
-   public void renderFlare(Tessellator tessellator, float f, float f1, float f2, float f3, float f4, float f5) {
+   public void renderFlare(BufferBuilder buffer, float f, float f1, float f2, float f3, float f4, float f5) {
+      Tessellator tessellator = Tessellator.getInstance();
       float opmod = 0.2F;
-      EntityLivingBase v = FMLClientHandler.instance().getClient().renderViewEntity;
+      EntityLivingBase v = (EntityLivingBase)FMLClientHandler.instance().getClient().getRenderViewEntity();
       if (v instanceof EntityPlayer && ((EntityPlayer)v).inventory.armorItemInSlot(3) != null && ((EntityPlayer)v).inventory.armorItemInSlot(3).getItem() instanceof IRevealer) {
          opmod = 1.0F;
       }
 
-      GL11.glPushMatrix();
-      GL11.glDepthMask(false);
-      GL11.glEnable(GL11.GL_BLEND);
-      GL11.glBlendFunc(770, 1);
+      GlStateManager.pushMatrix();
+      GlStateManager.depthMask(false);
+      GlStateManager.enableBlend();
+      GlStateManager.blendFunc(770, 1);
       UtilsFX.bindTexture(ParticleEngine.particleTexture);
-      GL11.glColor4f(1.0F, 1.0F, 1.0F, 0.66F);
+      GlStateManager.color(1.0F, 1.0F, 1.0F, 0.66F);
       int part = this.particleAge % 16;
       float var8 = (float)part / 16.0F;
       float var9 = var8 + 0.0624375F;
@@ -200,17 +206,25 @@ public class FXBeamPower extends EntityFX {
       float var14 = (float)(this.ptY + (this.tY - this.ptY) * (double)f - interpPosY);
       float var15 = (float)(this.ptZ + (this.tZ - this.ptZ) * (double)f - interpPosZ);
       float var16 = 1.0F;
-      tessellator.startDrawingQuads();
-      tessellator.setBrightness(200);
-      tessellator.setColorRGBA_F(this.particleRed, this.particleGreen, this.particleBlue, this.opacity * opmod);
-      tessellator.addVertexWithUV(var13 - f1 * var12 - f4 * var12, var14 - f2 * var12, var15 - f3 * var12 - f5 * var12, var9, var11);
-      tessellator.addVertexWithUV(var13 - f1 * var12 + f4 * var12, var14 + f2 * var12, var15 - f3 * var12 + f5 * var12, var9, var10);
-      tessellator.addVertexWithUV(var13 + f1 * var12 + f4 * var12, var14 + f2 * var12, var15 + f3 * var12 + f5 * var12, var8, var10);
-      tessellator.addVertexWithUV(var13 + f1 * var12 - f4 * var12, var14 - f2 * var12, var15 + f3 * var12 - f5 * var12, var8, var11);
+      buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX_COLOR); 
+     
+     
+      buffer.pos(var13 - f1 * var12 - f4 * var12, var14 - f2 * var12, var15 - f3 * var12 - f5 * var12).tex(var9, var11).color(this.particleRed, this.particleGreen, this.particleBlue, this.opacity * opmod)
+        .endVertex();
+      buffer.pos(var13 - f1 * var12 + f4 * var12, var14 + f2 * var12, var15 - f3 * var12 + f5 * var12).tex(var9, var10).color(this.particleRed, this.particleGreen, this.particleBlue, this.opacity * opmod)
+        .endVertex();
+      buffer.pos(var13 + f1 * var12 + f4 * var12, var14 + f2 * var12, var15 + f3 * var12 + f5 * var12).tex(var8, var10).color(this.particleRed, this.particleGreen, this.particleBlue, this.opacity * opmod)
+        .endVertex();
+      buffer.pos(var13 + f1 * var12 - f4 * var12, var14 - f2 * var12, var15 + f3 * var12 - f5 * var12).tex(var8, var11).color(this.particleRed, this.particleGreen, this.particleBlue, this.opacity * opmod)
+        .endVertex();
       tessellator.draw();
-      GL11.glBlendFunc(770, 771);
-      GL11.glDisable(GL11.GL_BLEND);
-      GL11.glDepthMask(true);
-      GL11.glPopMatrix();
+      GlStateManager.blendFunc(770, 771);
+      GlStateManager.disableBlend();
+      GlStateManager.depthMask(true);
+      GlStateManager.popMatrix();
+      net.minecraft.client.Minecraft.getMinecraft().renderEngine.bindTexture(thaumcraft.client.lib.UtilsFX.getParticleTexture());
+      buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX_COLOR);
    }
+
+   public boolean isDead() { return this.isExpired; }
 }

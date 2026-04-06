@@ -1,26 +1,26 @@
 package thaumcraft.common.blocks;
 
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockContainer;
 import net.minecraft.block.material.Material;
-import net.minecraft.client.renderer.texture.IIconRegister;
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagInt;
 import net.minecraft.nbt.NBTTagString;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.AxisAlignedBB;
-import net.minecraft.util.IIcon;
+import net.minecraft.util.EnumFacing;
+import net.minecraft.util.EnumHand;
+import net.minecraft.util.NonNullList;
+import net.minecraft.util.math.AxisAlignedBB;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
-import net.minecraftforge.common.DimensionManager;
-import net.minecraftforge.common.util.ForgeDirection;
 import thaumcraft.common.Thaumcraft;
 import thaumcraft.common.tiles.TileMirror;
 import thaumcraft.common.tiles.TileMirrorEssentia;
@@ -29,236 +29,223 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class BlockMirror extends BlockContainer {
-   public IIcon icon;
-   public IIcon iconEss;
+   public static final net.minecraft.block.properties.PropertyInteger META =
+         net.minecraft.block.properties.PropertyInteger.create("meta", 0, 15);
+
+   @Override
+   protected net.minecraft.block.state.BlockStateContainer createBlockState() {
+      return new net.minecraft.block.state.BlockStateContainer(this, META);
+   }
+
+   @Override
+   public net.minecraft.block.state.IBlockState getStateFromMeta(int meta) {
+      return this.getDefaultState().withProperty(META, meta);
+   }
+
+   @Override
+   public int getMetaFromState(net.minecraft.block.state.IBlockState state) {
+      return state.getValue(META);
+   }
+
 
    public BlockMirror() {
-      super(Material.glass);
+      super(Material.GLASS);
       this.setHardness(1.0F);
       this.setResistance(10.0F);
-      this.setStepSound(new CustomStepSound("jar", 0.5F, 2.0F));
+      this.setSoundType(new CustomStepSound("jar", 0.5F, 2.0F));
       this.setCreativeTab(Thaumcraft.tabTC);
    }
 
+   @Override
+   public int damageDropped(IBlockState state) {
+      return state.getBlock().getMetaFromState(state);
+   }
+
+   @Override
    @SideOnly(Side.CLIENT)
-   public void registerBlockIcons(IIconRegister ir) {
-      this.icon = ir.registerIcon("thaumcraft:mirrorframe");
-      this.iconEss = ir.registerIcon("thaumcraft:mirrorframe2");
+   public void getSubBlocks(CreativeTabs par2CreativeTabs, NonNullList<ItemStack> par3List) {
+      par3List.add(new ItemStack(this, 1, 0));
+      par3List.add(new ItemStack(this, 1, 6));
    }
 
-   public IIcon getIcon(int i, int m) {
-      return m < 6 ? this.icon : this.iconEss;
-   }
-
-   public int damageDropped(int par1) {
-      return par1;
-   }
-
-   @SideOnly(Side.CLIENT)
-   public void getSubBlocks(Item par1, CreativeTabs par2CreativeTabs, List par3List) {
-      par3List.add(new ItemStack(par1, 1, 0));
-      par3List.add(new ItemStack(par1, 1, 6));
-   }
-
-   public TileEntity createTileEntity(World world, int metadata) {
+   @Override
+   public TileEntity createTileEntity(World world, IBlockState state) {
+      int metadata = state.getBlock().getMetaFromState(state);
       if (metadata <= 5) {
-         new TileMirror();
+         return new TileMirror();
       }
-
-      return metadata > 5 && metadata <= 11 ? new TileMirrorEssentia() : super.createTileEntity(world, metadata);
+      return metadata > 5 && metadata <= 11 ? new TileMirrorEssentia() : null;
    }
 
+   @Override
    public TileEntity createNewTileEntity(World var1, int md) {
       return new TileMirror();
    }
 
-   public boolean isOpaqueCube() {
+   @Override
+   public boolean isOpaqueCube(IBlockState state) {
       return false;
    }
 
-   public int getRenderType() {
-      return -1;
-   }
-
-   public boolean renderAsNormalBlock() {
+   @Override
+   public boolean isFullCube(IBlockState state) {
       return false;
    }
 
-   public void onBlockHarvested(World par1World, int par2, int par3, int par4, int par5, EntityPlayer par6EntityPlayer) {
-      this.dropBlockAsItem(par1World, par2, par3, par4, par5, 0);
-      super.onBlockHarvested(par1World, par2, par3, par4, par5, par6EntityPlayer);
+   @Override
+   public void onBlockHarvested(World world, BlockPos pos, IBlockState state, EntityPlayer player) {
+      int meta = state.getBlock().getMetaFromState(state);
+      Block.spawnAsEntity(world, pos, new ItemStack(this, 1, meta));
+      super.onBlockHarvested(world, pos, state, player);
    }
 
-   public ArrayList getDrops(World world, int x, int y, int z, int metadata, int fortune) {
+   @Override
+   public List<ItemStack> getDrops(IBlockAccess world, BlockPos pos, IBlockState state, int fortune) {
       ArrayList<ItemStack> drops = new ArrayList<>();
-      int md = world.getBlockMetadata(x, y, z);
+      int md = state.getBlock().getMetaFromState(state);
       if (md < 6) {
-         TileMirror tm = (TileMirror)world.getTileEntity(x, y, z);
-         ItemStack drop = new ItemStack(this, 1, 0);
-         if (tm instanceof TileMirror) {
+         TileEntity rawTe = world.getTileEntity(pos);
+         if (rawTe instanceof TileMirror) {
+            TileMirror tm = (TileMirror) rawTe;
+            ItemStack drop = new ItemStack(this, 1, 0);
             if (tm.linked) {
                drop.setTagInfo("linkX", new NBTTagInt(tm.linkX));
                drop.setTagInfo("linkY", new NBTTagInt(tm.linkY));
                drop.setTagInfo("linkZ", new NBTTagInt(tm.linkZ));
                drop.setTagInfo("linkDim", new NBTTagInt(tm.linkDim));
-               drop.setTagInfo("dimname", new NBTTagString(DimensionManager.getProvider(world.provider.dimensionId).getDimensionName()));
+               drop.setTagInfo("dimname", new NBTTagString(((World) world).provider.getDimensionType().getName()));
                drop.setItemDamage(1);
                tm.invalidateLink();
             }
-
             drops.add(drop);
          }
-
       } else {
-         TileMirrorEssentia tm = (TileMirrorEssentia)world.getTileEntity(x, y, z);
-         ItemStack drop = new ItemStack(this, 1, 6);
-         if (tm instanceof TileMirrorEssentia) {
+         TileEntity rawTe = world.getTileEntity(pos);
+         if (rawTe instanceof TileMirrorEssentia) {
+            TileMirrorEssentia tm = (TileMirrorEssentia) rawTe;
+            ItemStack drop = new ItemStack(this, 1, 6);
             if (tm.linked) {
                drop.setTagInfo("linkX", new NBTTagInt(tm.linkX));
                drop.setTagInfo("linkY", new NBTTagInt(tm.linkY));
                drop.setTagInfo("linkZ", new NBTTagInt(tm.linkZ));
                drop.setTagInfo("linkDim", new NBTTagInt(tm.linkDim));
-               drop.setTagInfo("dimname", new NBTTagString(DimensionManager.getProvider(world.provider.dimensionId).getDimensionName()));
+               drop.setTagInfo("dimname", new NBTTagString(((World) world).provider.getDimensionType().getName()));
                drop.setItemDamage(7);
                tm.invalidateLink();
             }
-
             drops.add(drop);
          }
-
       }
-       return drops;
+      return drops;
    }
 
-   public void onEntityCollidedWithBlock(World world, int x, int y, int z, Entity entity) {
-      int md = world.getBlockMetadata(x, y, z);
+   @Override
+   public void onEntityCollision(World world, BlockPos pos, IBlockState state, Entity entity) {
+      int md = state.getBlock().getMetaFromState(state);
       if (md < 6 && !world.isRemote && entity instanceof EntityItem && !entity.isDead && entity.timeUntilPortal == 0) {
-         TileMirror taf = (TileMirror)world.getTileEntity(x, y, z);
+         TileMirror taf = (TileMirror) world.getTileEntity(pos);
          if (taf != null) {
-            taf.transport((EntityItem)entity);
+            taf.transport((EntityItem) entity);
          }
       }
-
    }
 
-   public int onBlockPlaced(World par1World, int par2, int par3, int par4, int par5, float par6, float par7, float par8, int par9) {
-      if (par9 > 6) {
-         par9 = 6;
-      } else if (par9 > 0 && par9 < 6) {
-         par9 = 0;
-      }
-
-      return par9 + par5;
-   }
-
-   public void onNeighborBlockChange(World world, int i, int j, int k, Block l) {
+   @Override
+   public void neighborChanged(IBlockState state, World world, BlockPos pos, Block blockIn, BlockPos fromPos) {
       if (!world.isRemote) {
-         int i1 = world.getBlockMetadata(i, j, k);
-         boolean flag = !world.isSideSolid(i - 1, j, k, ForgeDirection.getOrientation(5)) && i1 % 6 == 5;
+         int i1 = state.getBlock().getMetaFromState(state);
+         int i = pos.getX();
+         int j = pos.getY();
+         int k = pos.getZ();
+         boolean flag = !world.isSideSolid(pos.add(-1, 0, 0), EnumFacing.byIndex(5)) && i1 % 6 == 5;
 
-          if (!world.isSideSolid(i + 1, j, k, ForgeDirection.getOrientation(4)) && i1 % 6 == 4) {
+         if (!world.isSideSolid(pos.add(1, 0, 0), EnumFacing.byIndex(4)) && i1 % 6 == 4) {
             flag = true;
          }
-
-         if (!world.isSideSolid(i, j, k - 1, ForgeDirection.getOrientation(3)) && i1 % 6 == 3) {
+         if (!world.isSideSolid(pos.add(0, 0, -1), EnumFacing.byIndex(3)) && i1 % 6 == 3) {
             flag = true;
          }
-
-         if (!world.isSideSolid(i, j, k + 1, ForgeDirection.getOrientation(2)) && i1 % 6 == 2) {
+         if (!world.isSideSolid(pos.add(0, 0, 1), EnumFacing.byIndex(2)) && i1 % 6 == 2) {
             flag = true;
          }
-
-         if (!world.isSideSolid(i, j - 1, k, ForgeDirection.getOrientation(1)) && i1 % 6 == 1) {
+         if (!world.isSideSolid(pos.add(0, -1, 0), EnumFacing.byIndex(1)) && i1 % 6 == 1) {
             flag = true;
          }
-
-         if (!world.isSideSolid(i, j + 1, k, ForgeDirection.getOrientation(0)) && i1 % 6 == 0) {
+         if (!world.isSideSolid(pos.add(0, 1, 0), EnumFacing.byIndex(0)) && i1 % 6 == 0) {
             flag = true;
          }
 
          if (flag) {
-            this.dropBlockAsItem(world, i, j, k, i1, 0);
-            world.setBlockToAir(i, j, k);
+            Block.spawnAsEntity(world, pos, new ItemStack(this, 1, i1));
+            world.setBlockToAir(pos);
          }
       }
-
    }
 
-   private boolean checkIfAttachedToBlock(World world, int i, int j, int k) {
-      return this.canPlaceBlockAt(world, i, j, k);
-   }
-
-   public boolean canPlaceBlockOnSide(World world, int i, int j, int k, int l) {
-      if (l == 0 && world.isSideSolid(i, j + 1, k, ForgeDirection.getOrientation(0))) {
+   @Override
+   public boolean canPlaceBlockOnSide(World world, BlockPos pos, EnumFacing side) {
+      int l = side.getIndex();
+      if (l == 0 && world.isSideSolid(pos.up(), EnumFacing.byIndex(0))) {
          return true;
-      } else if (l == 1 && world.isSideSolid(i, j - 1, k, ForgeDirection.getOrientation(1))) {
+      } else if (l == 1 && world.isSideSolid(pos.down(), EnumFacing.byIndex(1))) {
          return true;
-      } else if (l == 2 && world.isSideSolid(i, j, k + 1, ForgeDirection.getOrientation(2))) {
+      } else if (l == 2 && world.isSideSolid(pos.south(), EnumFacing.byIndex(2))) {
          return true;
-      } else if (l == 3 && world.isSideSolid(i, j, k - 1, ForgeDirection.getOrientation(3))) {
+      } else if (l == 3 && world.isSideSolid(pos.north(), EnumFacing.byIndex(3))) {
          return true;
-      } else if (l == 4 && world.isSideSolid(i + 1, j, k, ForgeDirection.getOrientation(4))) {
+      } else if (l == 4 && world.isSideSolid(pos.east(), EnumFacing.byIndex(4))) {
          return true;
       } else {
-         return l == 5 && world.isSideSolid(i - 1, j, k, ForgeDirection.getOrientation(5));
+         return l == 5 && world.isSideSolid(pos.west(), EnumFacing.byIndex(5));
       }
    }
 
-   public boolean canPlaceBlockAt(World world, int i, int j, int k) {
-      if (world.isSideSolid(i - 1, j, k, ForgeDirection.getOrientation(5))) {
+   @Override
+   public boolean canPlaceBlockAt(World world, BlockPos pos) {
+      if (world.isSideSolid(pos.west(), EnumFacing.byIndex(5))) {
          return true;
-      } else if (world.isSideSolid(i + 1, j, k, ForgeDirection.getOrientation(4))) {
+      } else if (world.isSideSolid(pos.east(), EnumFacing.byIndex(4))) {
          return true;
-      } else if (world.isSideSolid(i, j, k - 1, ForgeDirection.getOrientation(3))) {
+      } else if (world.isSideSolid(pos.north(), EnumFacing.byIndex(3))) {
          return true;
-      } else if (world.isSideSolid(i, j, k + 1, ForgeDirection.getOrientation(2))) {
+      } else if (world.isSideSolid(pos.south(), EnumFacing.byIndex(2))) {
          return true;
       } else {
-         return world.isSideSolid(i, j - 1, k, ForgeDirection.getOrientation(1)) || world.isSideSolid(i, j + 1, k, ForgeDirection.getOrientation(0));
+         return world.isSideSolid(pos.down(), EnumFacing.byIndex(1)) || world.isSideSolid(pos.up(), EnumFacing.byIndex(0));
       }
    }
 
-   public boolean onBlockActivated(World par1World, int par2, int par3, int par4, EntityPlayer par5EntityPlayer, int par6, float par7, float par8, float par9) {
+   @Override
+   public boolean onBlockActivated(World world, BlockPos pos, IBlockState state, EntityPlayer player, EnumHand hand, EnumFacing facing, float hitX, float hitY, float hitZ) {
       return true;
    }
 
-   public AxisAlignedBB getCollisionBoundingBoxFromPool(World par1World, int par2, int par3, int par4) {
-      return null;
+   @Override
+   public AxisAlignedBB getCollisionBoundingBox(IBlockState state, IBlockAccess worldIn, BlockPos pos) {
+      return NULL_AABB;
    }
 
-   public AxisAlignedBB getSelectedBoundingBoxFromPool(World par1World, int par2, int par3, int par4) {
-      this.setBlockBoundsBasedOnState(par1World, par2, par3, par4);
-      return super.getSelectedBoundingBoxFromPool(par1World, par2, par3, par4);
+   @Override
+   public AxisAlignedBB getBoundingBox(IBlockState state, IBlockAccess source, BlockPos pos) {
+      int meta = state.getBlock().getMetaFromState(state);
+      return getBoundsForMeta(meta);
    }
 
-   public void setBlockBoundsBasedOnState(IBlockAccess par1IBlockAccess, int par2, int par3, int par4) {
-      this.setBlockBoundsForBlockRender(par1IBlockAccess.getBlockMetadata(par2, par3, par4));
-   }
-
-   public void addCollisionBoxesToList(World world, int i, int j, int k, AxisAlignedBB axisalignedbb, List arraylist, Entity par7Entity) {
-   }
-
-   public void setBlockBoundsForBlockRender(int par1) {
+   private static AxisAlignedBB getBoundsForMeta(int par1) {
       float w = 0.0625F;
       switch (par1 % 6) {
-         case 0:
-            this.setBlockBounds(0.0F, 1.0F - w, 0.0F, 1.0F, 1.0F, 1.0F);
-            break;
-         case 1:
-            this.setBlockBounds(0.0F, 0.0F, 0.0F, 1.0F, w, 1.0F);
-            break;
-         case 2:
-            this.setBlockBounds(0.0F, 0.0F, 1.0F - w, 1.0F, 1.0F, 1.0F);
-            break;
-         case 3:
-            this.setBlockBounds(0.0F, 0.0F, 0.0F, 1.0F, 1.0F, w);
-            break;
-         case 4:
-            this.setBlockBounds(1.0F - w, 0.0F, 0.0F, 1.0F, 1.0F, 1.0F);
-            break;
+         case 0: return new AxisAlignedBB(0.0F, 1.0F - w, 0.0F, 1.0F, 1.0F, 1.0F);
+         case 1: return new AxisAlignedBB(0.0F, 0.0F, 0.0F, 1.0F, w, 1.0F);
+         case 2: return new AxisAlignedBB(0.0F, 0.0F, 1.0F - w, 1.0F, 1.0F, 1.0F);
+         case 3: return new AxisAlignedBB(0.0F, 0.0F, 0.0F, 1.0F, 1.0F, w);
+         case 4: return new AxisAlignedBB(1.0F - w, 0.0F, 0.0F, 1.0F, 1.0F, 1.0F);
          case 5:
-            this.setBlockBounds(0.0F, 0.0F, 0.0F, w, 1.0F, 1.0F);
+         default: return new AxisAlignedBB(0.0F, 0.0F, 0.0F, w, 1.0F, 1.0F);
       }
+   }
 
+   @Override
+   public net.minecraft.util.EnumBlockRenderType getRenderType(net.minecraft.block.state.IBlockState state) {
+      return net.minecraft.util.EnumBlockRenderType.MODEL;
    }
 }

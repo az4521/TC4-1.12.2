@@ -1,18 +1,18 @@
 package thaumcraft.common.items;
 
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import java.util.List;
-import net.minecraft.client.renderer.texture.IIconRegister;
+import thaumcraft.client.renderers.compat.IIconRegister;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.IIcon;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import thaumcraft.common.Thaumcraft;
 import thaumcraft.common.config.Config;
 
 public class ItemNugget extends Item {
-   public IIcon[] icon = new IIcon[64];
+   public TextureAtlasSprite[] icon = new TextureAtlasSprite[64];
 
    public ItemNugget() {
       this.setMaxStackSize(64);
@@ -23,30 +23,31 @@ public class ItemNugget extends Item {
 
    @SideOnly(Side.CLIENT)
    public void registerIcons(IIconRegister ir) {
-      this.icon[0] = ir.registerIcon("thaumcraft:nuggetiron");
-      this.icon[16] = ir.registerIcon("thaumcraft:clusteriron");
-      this.icon[5] = ir.registerIcon("thaumcraft:nuggetquicksilver");
-      this.icon[21] = ir.registerIcon("thaumcraft:clustercinnabar");
-      this.icon[6] = ir.registerIcon("thaumcraft:nuggetthaumium");
-      this.icon[7] = ir.registerIcon("thaumcraft:nuggetvoid");
-      this.icon[31] = ir.registerIcon("thaumcraft:clustergold");
-      this.icon[1] = ir.registerIcon("thaumcraft:nuggetcopper");
-      this.icon[17] = ir.registerIcon("thaumcraft:clustercopper");
-      this.icon[2] = ir.registerIcon("thaumcraft:nuggettin");
-      this.icon[18] = ir.registerIcon("thaumcraft:clustertin");
-      this.icon[3] = ir.registerIcon("thaumcraft:nuggetsilver");
-      this.icon[19] = ir.registerIcon("thaumcraft:clustersilver");
-      this.icon[4] = ir.registerIcon("thaumcraft:nuggetlead");
-      this.icon[20] = ir.registerIcon("thaumcraft:clusterlead");
+      this.icon[0] = ir.registerSprite("thaumcraft:nuggetiron");
+      this.icon[16] = ir.registerSprite("thaumcraft:clusteriron");
+      this.icon[5] = ir.registerSprite("thaumcraft:nuggetquicksilver");
+      this.icon[21] = ir.registerSprite("thaumcraft:clustercinnabar");
+      this.icon[6] = ir.registerSprite("thaumcraft:nuggetthaumium");
+      this.icon[7] = ir.registerSprite("thaumcraft:nuggetvoid");
+      this.icon[31] = ir.registerSprite("thaumcraft:clustergold");
+      this.icon[1] = ir.registerSprite("thaumcraft:nuggetcopper");
+      this.icon[17] = ir.registerSprite("thaumcraft:clustercopper");
+      this.icon[2] = ir.registerSprite("thaumcraft:nuggettin");
+      this.icon[18] = ir.registerSprite("thaumcraft:clustertin");
+      this.icon[3] = ir.registerSprite("thaumcraft:nuggetsilver");
+      this.icon[19] = ir.registerSprite("thaumcraft:clustersilver");
+      this.icon[4] = ir.registerSprite("thaumcraft:nuggetlead");
+      this.icon[20] = ir.registerSprite("thaumcraft:clusterlead");
    }
 
    @SideOnly(Side.CLIENT)
-   public IIcon getIconFromDamage(int meta) {
+   public TextureAtlasSprite getIconFromDamage(int meta) {
       return this.icon[meta];
    }
 
    @SideOnly(Side.CLIENT)
-   public void getSubItems(Item par1, CreativeTabs par2CreativeTabs, List par3List) {
+   @Override
+   public void getSubItems(CreativeTabs par2CreativeTabs, net.minecraft.util.NonNullList<ItemStack> par3List) {
       par3List.add(new ItemStack(this, 1, 0));
       par3List.add(new ItemStack(this, 1, 5));
       par3List.add(new ItemStack(this, 1, 21));
@@ -76,7 +77,8 @@ public class ItemNugget extends Item {
 
    }
 
-   public String getUnlocalizedName(ItemStack par1ItemStack) {
-      return super.getUnlocalizedName() + "." + par1ItemStack.getItemDamage();
+   @Override
+   public String getTranslationKey(ItemStack par1ItemStack) {
+      return getTranslationKey() + "." + par1ItemStack.getItemDamage();
    }
 }

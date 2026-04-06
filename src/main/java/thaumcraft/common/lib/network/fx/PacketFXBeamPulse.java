@@ -1,11 +1,11 @@
 package thaumcraft.common.lib.network.fx;
 
-import cpw.mods.fml.client.FMLClientHandler;
-import cpw.mods.fml.common.network.simpleimpl.IMessage;
-import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
-import cpw.mods.fml.common.network.simpleimpl.MessageContext;
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
+import net.minecraftforge.fml.client.FMLClientHandler;
+import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
+import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
+import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import io.netty.buffer.ByteBuf;
 import java.awt.Color;
 import net.minecraft.client.Minecraft;
@@ -42,7 +42,7 @@ public class PacketFXBeamPulse implements IMessage, IMessageHandler<PacketFXBeam
    @SideOnly(Side.CLIENT)
    public IMessage onMessage(PacketFXBeamPulse message, MessageContext ctx) {
       Minecraft mc = FMLClientHandler.instance().getClient();
-      WorldClient world = mc.theWorld;
+      WorldClient world = mc.world;
       Entity var2 = this.getEntityByID(message.source, mc, world);
       Entity var3 = this.getEntityByID(message.target, mc, world);
       if (var2 != null && var3 != null) {
@@ -53,7 +53,7 @@ public class PacketFXBeamPulse implements IMessage, IMessageHandler<PacketFXBeam
          beamcon.setType(1);
          beamcon.setReverse(true);
          beamcon.setPulse(true);
-         FMLClientHandler.instance().getClient().effectRenderer.addEffect(beamcon);
+         thaumcraft.client.fx.ParticleEngine.instance.addEffect(world, beamcon);
       }
 
       return null;
@@ -61,6 +61,6 @@ public class PacketFXBeamPulse implements IMessage, IMessageHandler<PacketFXBeam
 
    @SideOnly(Side.CLIENT)
    private Entity getEntityByID(int par1, Minecraft mc, WorldClient world) {
-      return par1 == mc.thePlayer.getEntityId() ? mc.thePlayer : world.getEntityByID(par1);
+      return par1 == mc.player.getEntityId() ? mc.player : world.getEntityByID(par1);
    }
 }

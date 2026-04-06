@@ -1,10 +1,10 @@
 package thaumcraft.common.lib.network;
 
-import cpw.mods.fml.common.FMLCommonHandler;
-import cpw.mods.fml.common.eventhandler.SubscribeEvent;
-import cpw.mods.fml.common.gameevent.PlayerEvent;
-import cpw.mods.fml.common.network.FMLNetworkEvent;
-import cpw.mods.fml.relauncher.Side;
+import net.minecraftforge.fml.common.FMLCommonHandler;
+import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import net.minecraftforge.fml.common.gameevent.PlayerEvent;
+import net.minecraftforge.fml.common.network.FMLNetworkEvent;
+import net.minecraftforge.fml.relauncher.Side;
 import java.util.ArrayList;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.player.EntityPlayer;
@@ -43,8 +43,8 @@ public class EventHandlerNetwork {
 
    @SubscribeEvent
    public void clientLoggedIn(FMLNetworkEvent.ClientConnectedToServerEvent event) {
-      if (Thaumcraft.proxy.getClientWorld() != null && Minecraft.getMinecraft().thePlayer != null) {
-         GuiResearchBrowser.completedResearch.put(Minecraft.getMinecraft().thePlayer.getCommandSenderName(), new ArrayList());
+      if (Thaumcraft.proxy.getClientWorld() != null && Minecraft.getMinecraft().player != null) {
+         GuiResearchBrowser.completedResearch.put(Minecraft.getMinecraft().player.getName(), new ArrayList());
          Thaumcraft.log.info("Resetting research to defaults.");
       }
 

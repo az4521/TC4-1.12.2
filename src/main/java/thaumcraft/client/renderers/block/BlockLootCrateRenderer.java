@@ -1,8 +1,8 @@
 package thaumcraft.client.renderers.block;
 
-import cpw.mods.fml.client.registry.ISimpleBlockRenderingHandler;
+import thaumcraft.client.renderers.compat.ISimpleBlockRenderingHandler;
 import net.minecraft.block.Block;
-import net.minecraft.client.renderer.RenderBlocks;
+import thaumcraft.client.renderers.compat.RenderBlocks;
 import net.minecraft.world.IBlockAccess;
 import thaumcraft.common.config.ConfigBlocks;
 
@@ -11,14 +11,7 @@ public class BlockLootCrateRenderer extends BlockRenderer implements ISimpleBloc
    }
 
    public boolean renderWorldBlock(IBlockAccess world, int x, int y, int z, Block block, int modelId, RenderBlocks renderer) {
-      world.getBlockMetadata(x, y, z);
-      block.setBlockBounds(W1, 0.0F, W1, W15, W14, W15);
-      renderer.setRenderBoundsFromBlock(block);
-      renderer.renderStandardBlock(block, x, y, z);
-      renderer.clearOverrideBlockTexture();
-      block.setBlockBounds(0.0F, 0.0F, 0.0F, 1.0F, 1.0F, 1.0F);
-      renderer.setRenderBoundsFromBlock(block);
-      return true;
+      return false;
    }
 
    public boolean shouldRender3DInInventory(int modelId) {

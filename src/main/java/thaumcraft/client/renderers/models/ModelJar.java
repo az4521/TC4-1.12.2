@@ -2,7 +2,8 @@ package thaumcraft.client.renderers.models;
 
 import net.minecraft.client.model.ModelBase;
 import net.minecraft.client.model.ModelRenderer;
-import org.lwjgl.opengl.GL11;
+
+import net.minecraft.client.renderer.GlStateManager;
 
 public class ModelJar extends ModelBase {
    public ModelRenderer Core;
@@ -32,18 +33,18 @@ public class ModelJar extends ModelBase {
    }
 
    public void renderBrine() {
-      GL11.glEnable(GL11.GL_BLEND);
-      GL11.glBlendFunc(770, 771);
+      GlStateManager.enableBlend();
+      GlStateManager.blendFunc(770, 771);
       this.Brine.render(0.0625F);
-      GL11.glDisable(GL11.GL_BLEND);
+      GlStateManager.disableBlend();
    }
 
    public void renderAll() {
       this.Lid.render(0.0625F);
-      GL11.glEnable(GL11.GL_BLEND);
-      GL11.glBlendFunc(770, 771);
+      GlStateManager.enableBlend();
+      GlStateManager.blendFunc(770, 771);
       this.Core.render(0.0625F);
-      GL11.glDisable(GL11.GL_BLEND);
+      GlStateManager.disableBlend();
    }
 
    private void setRotation(ModelRenderer model, float x, float y, float z) {

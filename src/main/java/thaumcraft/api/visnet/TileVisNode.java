@@ -6,7 +6,8 @@ import java.util.HashMap;
 import java.util.List;
 
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.util.ChunkCoordinates;
+import net.minecraft.util.ITickable;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import tc4tweak.modules.visrelay.SavedLinkHandler;
 import thaumcraft.api.TileThaumcraft;
@@ -20,11 +21,11 @@ import thaumcraft.api.aspects.Aspect;
  * a transport relay or vis receiver (like the infernal furnace).
  *
  */
-public abstract class TileVisNode extends TileThaumcraft {
+public abstract class TileVisNode extends TileThaumcraft implements ITickable {
 	
 	WeakReference<TileVisNode> parent = null;
 	ArrayList<WeakReference<TileVisNode>> children = new ArrayList<>();
-	List<ChunkCoordinates> loadedLink = null;
+	List<BlockPos> loadedLink = null;
 	
 	/**
 	 * @return the WorldCoordinates location of where this node is located
@@ -75,15 +76,16 @@ public abstract class TileVisNode extends TileThaumcraft {
 		this.parentChanged();
 		
 		if (this.isSource()) {
-			HashMap<WorldCoordinates, WeakReference<TileVisNode>> sourcelist = VisNetHandler.sources.get(worldObj.provider.dimensionId);
+			int dim = getWorld().provider.getDimension();
+			HashMap<WorldCoordinates, WeakReference<TileVisNode>> sourcelist = VisNetHandler.sources.get(dim);
 			if (sourcelist==null) {
 				sourcelist = new HashMap<>();
 			}
 			sourcelist.remove(getLocation());
-			VisNetHandler.sources.put( worldObj.provider.dimensionId, sourcelist );
+			VisNetHandler.sources.put(dim, sourcelist);
 		}
-		
-		worldObj.markBlockForUpdate(xCoord, yCoord, zCoord);
+
+		{ net.minecraft.block.state.IBlockState _bs = getWorld().getBlockState(this.pos); getWorld().notifyBlockUpdate(this.pos, _bs, _bs, 3); }
 	}
 	
 	
@@ -126,19 +128,14 @@ public abstract class TileVisNode extends TileThaumcraft {
 		return children;
 	}
 	
-	@Override
-	public boolean canUpdate() {
-        return super.canUpdate();
-    }
-	
 	protected int nodeCounter = 0;
 	private boolean nodeRegged = false;
 	public boolean nodeRefresh = false;
 
 	@Override
-	public void updateEntity() {
+	public void update() {
 		if (SavedLinkHandler.processSavedLink(this)){return;}
-		if (!worldObj.isRemote && ((nodeCounter++) % 40==0 || nodeRefresh)) {
+		if (!getWorld().isRemote && ((nodeCounter++) % 40==0 || nodeRefresh)) {
 			//check for changes
 			if (!nodeRefresh
 					&& !children.isEmpty()) {
@@ -163,16 +160,16 @@ public abstract class TileVisNode extends TileThaumcraft {
 			
 			//redo stuff
 			if (isSource() && !nodeRegged) {
-				VisNetHandler.addSource(getWorldObj(), this);
+				VisNetHandler.addSource(getWorld(), this);
 				nodeRegged = true;
-			} else 
+			} else
 			if (!isSource() && !VisNetHandler.isNodeValid(getParent())) {
-				setParent(VisNetHandler.addNode(getWorldObj(), this));				
+				setParent(VisNetHandler.addNode(getWorld(), this));
 				nodeRefresh=true;
 			}
-			
+
 			if (nodeRefresh) {
-				worldObj.markBlockForUpdate(xCoord, yCoord, zCoord);
+				{ net.minecraft.block.state.IBlockState _bs = getWorld().getBlockState(this.pos); getWorld().notifyBlockUpdate(this.pos, _bs, _bs, 3); }
 				parentChanged();
 			}
 			nodeRefresh=false;
@@ -198,12 +195,13 @@ public abstract class TileVisNode extends TileThaumcraft {
 	}
 
 	@Override
-	public void writeToNBT(NBTTagCompound nbttagcompound) {
+	public NBTTagCompound writeToNBT(NBTTagCompound nbttagcompound) {
 		super.writeToNBT(nbttagcompound);
 		SavedLinkHandler.writeToNBT(this, nbttagcompound);
+		return nbttagcompound;
 	}
 
-	public List<ChunkCoordinates> getSavedLink() {
+	public List<BlockPos> getSavedLink() {
 		return loadedLink;
 	}
 

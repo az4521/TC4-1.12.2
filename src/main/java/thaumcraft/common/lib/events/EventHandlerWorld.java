@@ -1,10 +1,10 @@
 package thaumcraft.common.lib.events;
 
-import cpw.mods.fml.common.FMLCommonHandler;
-import cpw.mods.fml.common.IFuelHandler;
-import cpw.mods.fml.common.eventhandler.SubscribeEvent;
-import cpw.mods.fml.common.eventhandler.Event.Result;
-import cpw.mods.fml.common.gameevent.PlayerEvent;
+import net.minecraftforge.fml.common.FMLCommonHandler;
+import net.minecraftforge.fml.common.IFuelHandler;
+import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import net.minecraftforge.fml.common.eventhandler.Event.Result;
+import net.minecraftforge.fml.common.gameevent.PlayerEvent;
 import java.util.ArrayList;
 import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.entity.Entity;
@@ -12,8 +12,8 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.util.MovingObjectPosition.MovingObjectType;
-import net.minecraft.world.ChunkCoordIntPair;
+import net.minecraft.util.math.RayTraceResult;
+import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.World;
 import net.minecraftforge.event.entity.player.FillBucketEvent;
 import net.minecraftforge.event.world.BlockEvent;
@@ -41,31 +41,32 @@ import thaumcraft.common.lib.world.dim.Cell;
 import thaumcraft.common.lib.world.dim.CellLoc;
 import thaumcraft.common.lib.world.dim.MazeHandler;
 import thaumcraft.common.tiles.TileSensor;
+import net.minecraft.util.math.BlockPos;
 
 public class EventHandlerWorld implements IFuelHandler {
    @SubscribeEvent
    public void worldLoad(WorldEvent.Load event) {
-      if (!event.world.isRemote && event.world.provider.dimensionId == 0) {
-         MazeHandler.loadMaze(event.world);
+      if (!event.getWorld().isRemote && event.getWorld().provider.getDimension() == 0) {
+         MazeHandler.loadMaze(event.getWorld());
       }
 
    }
 
    @SubscribeEvent
    public void worldSave(WorldEvent.Save event) {
-      if (!event.world.isRemote && event.world.provider.dimensionId == 0) {
-         MazeHandler.saveMaze(event.world);
+      if (!event.getWorld().isRemote && event.getWorld().provider.getDimension() == 0) {
+         MazeHandler.saveMaze(event.getWorld());
       }
 
    }
 
    @SubscribeEvent
    public void worldUnload(WorldEvent.Unload event) {
-      if (!event.world.isRemote) {
-         VisNetHandler.sources.remove(event.world.provider.dimensionId);
+      if (!event.getWorld().isRemote) {
+         VisNetHandler.sources.remove(event.getWorld().provider.getDimension());
 
          try {
-            TileSensor.noteBlockEvents.remove(event.world);
+            TileSensor.noteBlockEvents.remove(event.getWorld());
          } catch (Exception e) {
             FMLCommonHandler.instance().getFMLLogger().log(Level.WARN, "[Thaumcraft] Error unloading noteblock even handlers.", e);
          }
@@ -82,10 +83,10 @@ public class EventHandlerWorld implements IFuelHandler {
 
    @SubscribeEvent
    public void chunkLoad(ChunkDataEvent.Load event) {
-      int dim = event.world.provider.dimensionId;
-      ChunkCoordIntPair loc = event.getChunk().getChunkCoordIntPair();
+      int dim = event.getWorld().provider.getDimension();
+      ChunkPos loc = event.getChunk().getPos();
       if (!event.getData().getCompoundTag("Thaumcraft").hasKey(Config.regenKey) && (Config.regenAmber || Config.regenAura || Config.regenCinnibar || Config.regenInfusedStone || Config.regenStructure || Config.regenTrees)) {
-         FMLCommonHandler.instance().getFMLLogger().log(Level.WARN, "[Thaumcraft] World gen was never run for chunk at {}. Adding to queue for regeneration.",event.getChunk().getChunkCoordIntPair());
+         FMLCommonHandler.instance().getFMLLogger().log(Level.WARN, "[Thaumcraft] World gen was never run for chunk at {}. Adding to queue for regeneration.",event.getChunk().getPos());
          ArrayList<ChunkLoc> chunks = (ArrayList)ServerTickEventsFML.chunksToGenerate.get(dim);
          if (chunks == null) {
             ServerTickEventsFML.chunksToGenerate.put(dim, new ArrayList());
@@ -93,7 +94,7 @@ public class EventHandlerWorld implements IFuelHandler {
          }
 
          if (chunks != null) {
-            chunks.add(new ChunkLoc(loc.chunkXPos, loc.chunkZPos));
+            chunks.add(new ChunkLoc(loc.x, loc.z));
             ServerTickEventsFML.chunksToGenerate.put(dim, chunks);
          }
       }
@@ -111,7 +112,7 @@ public class EventHandlerWorld implements IFuelHandler {
    @SubscribeEvent
    public void onCrafting(PlayerEvent.ItemCraftedEvent event) {
       int warp = ThaumcraftApi.getWarp(event.crafting);
-      if (!Config.wuss && warp > 0 && !event.player.worldObj.isRemote) {
+      if (!Config.wuss && warp > 0 && !event.player.world.isRemote) {
          Thaumcraft.addStickyWarpToPlayer(event.player, warp);
       }
 
@@ -119,7 +120,7 @@ public class EventHandlerWorld implements IFuelHandler {
          for(int var2 = 0; var2 < 9; ++var2) {
             ItemStack var3 = event.craftMatrix.getStackInSlot(var2);
             if (var3 != null && var3.getItem() instanceof ItemEssence) {
-               ++var3.stackSize;
+               var3.grow(1);
                event.craftMatrix.setInventorySlotContents(var2, var3);
             }
          }
@@ -127,7 +128,7 @@ public class EventHandlerWorld implements IFuelHandler {
 
       if (event.crafting.getItem() == Item.getItemFromBlock(ConfigBlocks.blockMetalDevice) && event.crafting.getItemDamage() == 3) {
          ItemStack var3 = event.craftMatrix.getStackInSlot(4);
-         ++var3.stackSize;
+         var3.grow(1);
          event.craftMatrix.setInventorySlotContents(4, var3);
       }
 
@@ -135,24 +136,24 @@ public class EventHandlerWorld implements IFuelHandler {
 
    @SubscribeEvent
    public void harvestEvent(BlockEvent.HarvestDropsEvent event) {
-      EntityPlayer player = event.harvester;
-      if (event.drops != null && !event.drops.isEmpty() && player != null) {
+      EntityPlayer player = event.getHarvester();
+      if (event.getDrops() != null && !event.getDrops().isEmpty() && player != null) {
          ItemStack held = player.inventory.getCurrentItem();
          if (held != null && (held.getItem() instanceof ItemElementalPickaxe || held.getItem() instanceof ItemPrimalCrusher || held.getItem() instanceof ItemWandCasting && ((ItemWandCasting)held.getItem()).getFocus(held) != null && ((ItemWandCasting)held.getItem()).getFocus(held).isUpgradedWith(((ItemWandCasting)held.getItem()).getFocusItem(held), ItemFocusExcavation.dowsing))) {
-            int fortune = EnchantmentHelper.getFortuneModifier(player);
+            int fortune = event.getFortuneLevel();
             if (held.getItem() instanceof ItemWandCasting) {
                fortune = ((ItemWandCasting)held.getItem()).getFocus(held).getUpgradeLevel(((ItemWandCasting)held.getItem()).getFocusItem(held), FocusUpgradeType.treasure);
             }
 
             float chance = 0.2F + (float)fortune * 0.075F;
 
-            for(int a = 0; a < event.drops.size(); ++a) {
-               ItemStack is = event.drops.get(a);
-               ItemStack smr = Utils.findSpecialMiningResult(is, chance, event.world.rand);
+            for(int a = 0; a < event.getDrops().size(); ++a) {
+               ItemStack is = event.getDrops().get(a);
+               ItemStack smr = Utils.findSpecialMiningResult(is, chance, event.getWorld().rand);
                if (!is.isItemEqual(smr)) {
-                  event.drops.set(a, smr);
-                  if (!event.world.isRemote) {
-                     event.world.playSoundEffect((float)event.x + 0.5F, (float)event.y + 0.5F, (float)event.z + 0.5F, "random.orb", 0.2F, 0.7F + event.world.rand.nextFloat() * 0.2F);
+                  event.getDrops().set(a, smr);
+                  if (!event.getWorld().isRemote) {
+                     event.getWorld().playSound(null, event.getPos(), net.minecraft.init.SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP, net.minecraft.util.SoundCategory.PLAYERS, 0.2F, 0.7F + event.getWorld().rand.nextFloat() * 0.2F);
                   }
                }
             }
@@ -163,30 +164,34 @@ public class EventHandlerWorld implements IFuelHandler {
 
    @SubscribeEvent
    public void noteEvent(NoteBlockEvent.Play event) {
-      if (!event.world.isRemote) {
-         if (!TileSensor.noteBlockEvents.containsKey(event.world)) {
-            TileSensor.noteBlockEvents.put(event.world, new ArrayList());
+      if (!event.getWorld().isRemote) {
+         if (!TileSensor.noteBlockEvents.containsKey(event.getWorld())) {
+            TileSensor.noteBlockEvents.put(event.getWorld(), new ArrayList());
          }
 
-         ArrayList<Integer[]> list = (ArrayList)TileSensor.noteBlockEvents.get(event.world);
-         list.add(new Integer[]{event.x, event.y, event.z, event.instrument.ordinal(), event.getVanillaNoteId()});
-         TileSensor.noteBlockEvents.put(event.world, list);
+         ArrayList<Integer[]> list = (ArrayList)TileSensor.noteBlockEvents.get(event.getWorld());
+         list.add(new Integer[]{event.getPos().getX(), event.getPos().getY(), event.getPos().getZ(), event.getInstrument().ordinal(), event.getVanillaNoteId()});
+         TileSensor.noteBlockEvents.put(event.getWorld(), list);
       }
    }
 
    @SubscribeEvent
    public void fillBucket(FillBucketEvent event) {
-      if (event.target.typeOfHit == MovingObjectType.BLOCK) {
-         if (event.world.getBlock(event.target.blockX, event.target.blockY, event.target.blockZ) == ConfigBlocks.blockFluidPure && event.world.getBlockMetadata(event.target.blockX, event.target.blockY, event.target.blockZ) == 0) {
-            event.world.setBlockToAir(event.target.blockX, event.target.blockY, event.target.blockZ);
-            event.result = new ItemStack(ConfigItems.itemBucketPure);
+      if (event.getTarget().typeOfHit == RayTraceResult.Type.BLOCK) {
+         BlockPos targetPos = event.getTarget().getBlockPos();
+         net.minecraft.block.state.IBlockState targetState = event.getWorld().getBlockState(targetPos);
+         if (targetState.getBlock() == ConfigBlocks.blockFluidPure
+                 && targetState.getBlock().getMetaFromState(targetState) == 0) {
+            event.getWorld().setBlockToAir(targetPos);
+            event.setFilledBucket(new ItemStack(ConfigItems.itemBucketPure));
             event.setResult(Result.ALLOW);
             return;
          }
 
-         if (event.world.getBlock(event.target.blockX, event.target.blockY, event.target.blockZ) == ConfigBlocks.blockFluidDeath && event.world.getBlockMetadata(event.target.blockX, event.target.blockY, event.target.blockZ) == 3) {
-            event.world.setBlockToAir(event.target.blockX, event.target.blockY, event.target.blockZ);
-            event.result = new ItemStack(ConfigItems.itemBucketDeath);
+         if (targetState.getBlock() == ConfigBlocks.blockFluidDeath
+                 && targetState.getBlock().getMetaFromState(targetState) == 3) {
+            event.getWorld().setBlockToAir(targetPos);
+            event.setFilledBucket(new ItemStack(ConfigItems.itemBucketDeath));
             event.setResult(Result.ALLOW);
             return;
          }
@@ -196,7 +201,7 @@ public class EventHandlerWorld implements IFuelHandler {
 
    @SubscribeEvent
    public void placeBlockEvent(BlockEvent.PlaceEvent event) {
-      if (this.isNearActiveBoss(event.world, event.player, event.x, event.y, event.z)) {
+      if (this.isNearActiveBoss(event.getWorld(), event.getPlayer(), event.getPos().getX(), event.getPos().getY(), event.getPos().getZ())) {
          event.setCanceled(true);
       }
 
@@ -204,14 +209,14 @@ public class EventHandlerWorld implements IFuelHandler {
 
    @SubscribeEvent
    public void placeBlockEvent(BlockEvent.MultiPlaceEvent event) {
-      if (this.isNearActiveBoss(event.world, event.player, event.x, event.y, event.z)) {
+      if (this.isNearActiveBoss(event.getWorld(), event.getPlayer(), event.getPos().getX(), event.getPos().getY(), event.getPos().getZ())) {
          event.setCanceled(true);
       }
 
    }
 
    private boolean isNearActiveBoss(World world, EntityPlayer player, int x, int y, int z) {
-      if (world.provider.dimensionId == Config.dimensionOuterId && player != null && !player.capabilities.isCreativeMode) {
+      if (world.provider.getDimension() == Config.dimensionOuterId && player != null && !player.capabilities.isCreativeMode) {
          int xx = x >> 4;
          int zz = z >> 4;
          Cell c = MazeHandler.getFromHashMap(new CellLoc(xx, zz));

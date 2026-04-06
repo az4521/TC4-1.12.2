@@ -6,13 +6,14 @@ import net.minecraft.client.gui.ScaledResolution;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.util.vector.Matrix4f;
+import net.minecraft.client.renderer.GlStateManager;
 
 public class FontHelper {
    private static final String formatEscape = "§";
 
    public static void drawString(String s, float x, float y, TrueTypeFont font, float scaleX, float scaleY, int format, float... rgba) {
       Minecraft mc = Minecraft.getMinecraft();
-      ScaledResolution sr = new ScaledResolution(Minecraft.getMinecraft(), mc.displayWidth, mc.displayHeight);
+      ScaledResolution sr = new ScaledResolution(mc);
       if (!mc.gameSettings.hideGUI) {
          int amt = 1;
          if (sr.getScaleFactor() == 1) {
@@ -25,7 +26,7 @@ public class FontHelper {
          matrix.load(matrixData);
          set2DMode();
          y = (float)mc.displayHeight - y * (float)sr.getScaleFactor() - font.getLineHeight() / (float)amt;
-         GL11.glEnable(GL11.GL_BLEND);
+         GlStateManager.enableBlend();
          if (s.contains(formatEscape)) {
             String[] pars = s.split(formatEscape);
             float totalOffset = 0.0F;
@@ -45,7 +46,7 @@ public class FontHelper {
             font.drawString(x * (float)sr.getScaleFactor(), y - matrix.m31 * (float)sr.getScaleFactor(), s, scaleX / (float)amt, scaleY / (float)amt, format, rgba);
          }
 
-         GL11.glDisable(GL11.GL_BLEND);
+         GlStateManager.disableBlend();
          set3DMode();
       }
    }
@@ -53,18 +54,18 @@ public class FontHelper {
    private static void set2DMode() {
       Minecraft mc = Minecraft.getMinecraft();
       GL11.glMatrixMode(5889);
-      GL11.glPushMatrix();
+      GlStateManager.pushMatrix();
       GL11.glLoadIdentity();
       GL11.glOrtho(0.0F, mc.displayWidth, 0.0F, mc.displayHeight, -1.0F, 1.0F);
       GL11.glMatrixMode(5888);
-      GL11.glPushMatrix();
+      GlStateManager.pushMatrix();
       GL11.glLoadIdentity();
    }
 
    private static void set3DMode() {
       GL11.glMatrixMode(5889);
-      GL11.glPopMatrix();
+      GlStateManager.popMatrix();
       GL11.glMatrixMode(5888);
-      GL11.glPopMatrix();
+      GlStateManager.popMatrix();
    }
 }

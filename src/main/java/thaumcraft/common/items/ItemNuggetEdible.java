@@ -1,17 +1,17 @@
 package thaumcraft.common.items;
 
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
-import net.minecraft.client.renderer.texture.IIconRegister;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
+import thaumcraft.client.renderers.compat.IIconRegister;
 import net.minecraft.item.ItemFood;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.IIcon;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import thaumcraft.common.Thaumcraft;
 
 public class ItemNuggetEdible extends ItemFood {
    public final int itemUseDuration = 10;
    public final String iconName;
-   public IIcon icon;
+   public TextureAtlasSprite icon;
 
    public ItemNuggetEdible(String iconName) {
       super(1, 0.3F, false);
@@ -25,11 +25,11 @@ public class ItemNuggetEdible extends ItemFood {
 
    @SideOnly(Side.CLIENT)
    public void registerIcons(IIconRegister ir) {
-      this.icon = ir.registerIcon("thaumcraft:" + this.iconName);
+      this.icon = ir.registerSprite("thaumcraft:" + this.iconName);
    }
 
    @SideOnly(Side.CLIENT)
-   public IIcon getIconFromDamage(int meta) {
+   public TextureAtlasSprite getIconFromDamage(int meta) {
       return this.icon;
    }
 }

@@ -20,6 +20,9 @@ import net.minecraft.client.renderer.Tessellator;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.util.glu.GLU;
+import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.client.renderer.BufferBuilder;
+import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 
 public class TrueTypeFont {
    public static final int ALIGN_LEFT = 0;
@@ -170,11 +173,16 @@ public class TrueTypeFont {
       float SrcHeight = srcY2 - srcY;
       float RenderWidth = SrcWidth / (float)this.textureWidth;
       float RenderHeight = SrcHeight / (float)this.textureHeight;
-      Tessellator t = Tessellator.instance;
-      t.addVertexWithUV(drawX, drawY, 0.0F, TextureSrcX, TextureSrcY);
-      t.addVertexWithUV(drawX, drawY + DrawHeight, 0.0F, TextureSrcX, TextureSrcY + RenderHeight);
-      t.addVertexWithUV(drawX + DrawWidth, drawY + DrawHeight, 0.0F, TextureSrcX + RenderWidth, TextureSrcY + RenderHeight);
-      t.addVertexWithUV(drawX + DrawWidth, drawY, 0.0F, TextureSrcX + RenderWidth, TextureSrcY);
+      Tessellator t = Tessellator.getInstance();
+      BufferBuilder buf = t.getBuffer();
+      buf.pos(drawX, drawY, 0.0F).tex(TextureSrcX, TextureSrcY).color(1.0f, 1.0f, 1.0f, 1.0f) // TODO_PORT: set actual color
+        .endVertex();
+      buf.pos(drawX, drawY + DrawHeight, 0.0F).tex(TextureSrcX, TextureSrcY + RenderHeight).color(1.0f, 1.0f, 1.0f, 1.0f) // TODO_PORT: set actual color
+        .endVertex();
+      buf.pos(drawX + DrawWidth, drawY + DrawHeight, 0.0F).tex(TextureSrcX + RenderWidth, TextureSrcY + RenderHeight).color(1.0f, 1.0f, 1.0f, 1.0f) // TODO_PORT: set actual color
+        .endVertex();
+      buf.pos(drawX + DrawWidth, drawY, 0.0F).tex(TextureSrcX + RenderWidth, TextureSrcY).color(1.0f, 1.0f, 1.0f, 1.0f) // TODO_PORT: set actual color
+        .endVertex();
    }
 
    public float getWidth(String whatchars) {
@@ -233,8 +241,8 @@ public class TrueTypeFont {
          rgba = new float[]{1.0F, 1.0F, 1.0F, 1.0F};
       }
 
-      GL11.glPushMatrix();
-      GL11.glScalef(scaleX, scaleY, 1.0F);
+      GlStateManager.pushMatrix();
+      GlStateManager.scale(scaleX, scaleY, 1.0F);
       FloatObject floatObject = null;
       float totalwidth = 0.0F;
       int i = startIndex;
@@ -274,11 +282,12 @@ public class TrueTypeFont {
             c = this.correctL;
       }
 
-      GL11.glBindTexture(3553, this.fontTextureID);
-      Tessellator t = Tessellator.instance;
-      t.startDrawingQuads();
+      GlStateManager.bindTexture(this.fontTextureID);
+      Tessellator t = Tessellator.getInstance();
+      BufferBuilder buf = t.getBuffer();
+      buf.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX_COLOR); // TODO_PORT: verify vertex format
       if (rgba.length == 4) {
-         t.setColorRGBA_F(rgba[0], rgba[1], rgba[2], rgba[3]);
+         // TODO_PORT: color now per-vertex -- use buf.pos(...).tex(...).color(r,g,b,a).endVertex()
       }
 
       while(i >= startIndex && i <= endIndex) {
@@ -327,7 +336,7 @@ public class TrueTypeFont {
       }
 
       t.draw();
-      GL11.glPopMatrix();
+      GlStateManager.popMatrix();
    }
 
    public static int loadImage(BufferedImage bufferedImage) {
@@ -360,7 +369,7 @@ public class TrueTypeFont {
          int format = 6408;
          IntBuffer textureId = BufferUtils.createIntBuffer(1);
          GL11.glGenTextures(textureId);
-         GL11.glBindTexture(3553, textureId.get(0));
+         GlStateManager.bindTexture(textureId.get(0));
          GL11.glTexParameteri(3553, 10242, 10496);
          GL11.glTexParameteri(3553, 10243, 10496);
          GL11.glTexParameteri(3553, 10240, 9728);
@@ -398,7 +407,7 @@ public class TrueTypeFont {
    public void destroy() {
       IntBuffer scratch = BufferUtils.createIntBuffer(1);
       scratch.put(0, this.fontTextureID);
-      GL11.glBindTexture(3553, 0);
+      GlStateManager.bindTexture(0);
       GL11.glDeleteTextures(scratch);
    }
 

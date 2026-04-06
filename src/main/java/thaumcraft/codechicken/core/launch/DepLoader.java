@@ -3,11 +3,11 @@ package thaumcraft.codechicken.core.launch;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import cpw.mods.fml.common.versioning.ComparableVersion;
-import cpw.mods.fml.relauncher.FMLInjectionData;
-import cpw.mods.fml.relauncher.FMLLaunchHandler;
-import cpw.mods.fml.relauncher.IFMLCallHook;
-import cpw.mods.fml.relauncher.IFMLLoadingPlugin;
+import net.minecraftforge.fml.common.versioning.ComparableVersion;
+import net.minecraftforge.fml.relauncher.FMLInjectionData;
+import net.minecraftforge.fml.relauncher.FMLLaunchHandler;
+import net.minecraftforge.fml.relauncher.IFMLCallHook;
+import net.minecraftforge.fml.relauncher.IFMLLoadingPlugin;
 
 import java.awt.Desktop;
 import java.awt.Dimension;
@@ -66,7 +66,7 @@ public class DepLoader implements IFMLLoadingPlugin, IFMLCallHook {
     }
 
     public Void call() {
-        load();
+        // DepLoader disabled for 1.12.2 - dependencies are loaded as regular mods
         return null;
     }
 
@@ -461,10 +461,9 @@ public class DepLoader implements IFMLLoadingPlugin, IFMLCallHook {
 
         private void load(Dependency dep) {
             dep.existing = this.checkExisting(dep);
-            if (dep.existing == null && dep.file.name.equalsIgnoreCase("baubles")) {
-                throw new RuntimeException("needs BaublesExpanded,I recommend https://github.com/GTNewHorizons/Baubles-Expanded  (I'm using version 2.1.6 for testing when writing this.)");
-//                this.download(dep);
-//                dep.existing = dep.file.filename;
+            if (dep.existing == null) {
+                this.download(dep);
+                dep.existing = dep.file.filename;
             }
 
         }

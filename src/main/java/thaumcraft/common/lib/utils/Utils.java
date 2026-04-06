@@ -1,9 +1,9 @@
 package thaumcraft.common.lib.utils;
 
-import cpw.mods.fml.common.ObfuscationReflectionHelper;
-import cpw.mods.fml.common.eventhandler.Event.Result;
-import cpw.mods.fml.common.network.NetworkRegistry;
-import cpw.mods.fml.relauncher.ReflectionHelper;
+import net.minecraftforge.fml.common.ObfuscationReflectionHelper;
+import net.minecraftforge.fml.common.eventhandler.Event.Result;
+import net.minecraftforge.fml.common.network.NetworkRegistry;
+import net.minecraftforge.fml.relauncher.ReflectionHelper;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -28,11 +28,11 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.NetHandlerPlayServer;
-import net.minecraft.util.Vec3;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.WeightedRandom;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
-import net.minecraft.world.biome.BiomeGenBase;
+import net.minecraft.world.biome.Biome;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.entity.player.BonemealEvent;
@@ -48,6 +48,7 @@ import thaumcraft.common.lib.network.fx.PacketFXVisDrain;
 import thaumcraft.common.lib.network.misc.PacketBiomeChange;
 
 import static thaumcraft.common.Thaumcraft.log;
+import net.minecraft.util.math.BlockPos;
 
 public class Utils {
    public static HashMap<List<?/*0:ItemStack,1:int*/>,ItemStack> specialMiningResult = new HashMap<>();
@@ -59,12 +60,14 @@ public class Utils {
    public static boolean isChunkLoaded(World world, int x, int z) {
       int xx = x >> 4;
       int zz = z >> 4;
-      return world.getChunkProvider().chunkExists(xx, zz);
+      return world.getChunkProvider().isChunkGeneratedAt(xx, zz);
    }
 
    public static boolean useBonemealAtLoc(World world, EntityPlayer player, int x, int y, int z) {
-      Block block = world.getBlock(x, y, z);
-      BonemealEvent event = new BonemealEvent(player, world, block, x, y, z);
+      BlockPos bonePos = new BlockPos(x, y, z);
+      net.minecraft.block.state.IBlockState blockState = world.getBlockState(bonePos);
+      Block block = blockState.getBlock();
+      BonemealEvent event = new BonemealEvent(player, world, bonePos, blockState, null, player.getHeldItemMainhand());
       if (MinecraftForge.EVENT_BUS.post(event)) {
          return false;
       } else if (event.getResult() == Result.ALLOW) {
@@ -72,9 +75,9 @@ public class Utils {
       } else {
          if (block instanceof IGrowable) {
             IGrowable igrowable = (IGrowable)block;
-            if (igrowable.func_149851_a(world, x, y, z, world.isRemote)) {
-               if (!world.isRemote && igrowable.func_149852_a(world, world.rand, x, y, z)) {
-                  igrowable.func_149853_b(world, world.rand, x, y, z);
+            if (igrowable.canGrow(world, bonePos, blockState, world.isRemote)) {
+               if (!world.isRemote && igrowable.canUseBonemeal(world, world.rand, bonePos, blockState)) {
+                  igrowable.grow(world, world.rand, bonePos, blockState);
                }
 
                return true;
@@ -97,7 +100,7 @@ public class Utils {
 
    public static int getFirstUncoveredY(World world, int par1, int par2) {
       int var3;
-      for(var3 = 5; !world.isAirBlock(par1, var3 + 1, par2); ++var3) {
+      for(var3 = 5; !world.isAirBlock(new BlockPos(par1, var3 + 1, par2)); ++var3) {
       }
 
       return var3;
@@ -129,7 +132,7 @@ public class Utils {
 
    public static int getFirstUncoveredBlockHeight(World world, int par1, int par2) {
       int var3;
-      for(var3 = 10; !world.isAirBlock(par1, var3 + 1, par2) || var3 > 250; ++var3) {
+      for(var3 = 10; !world.isAirBlock(new BlockPos(par1, var3 + 1, par2)) || var3 > 250; ++var3) {
       }
 
       return var3;
@@ -146,7 +149,7 @@ public class Utils {
       List ik = Arrays.asList(is.getItem(), is.getItemDamage());
       if (specialMiningResult.containsKey(ik) && r <= chance * specialMiningChance.get(ik)) {
          dropped = specialMiningResult.get(ik).copy();
-         dropped.stackSize *= is.stackSize;
+         dropped.setCount(dropped.getCount() * (is.getCount()));
       }
 
       return dropped;
@@ -158,34 +161,27 @@ public class Utils {
 
    private static Method getRenderDistanceChunks;
    public static double getViewDistance(World w) {
-      int chunks;
-      try {
-         if (getRenderDistanceChunks == null) {
-            // the latest mcp mapping calls it getRenderDistanceChunks,
-            // but it remains as a srg name in the mapping comes with forge 1614
-            getRenderDistanceChunks = ReflectionHelper.findMethod(World.class, null, new String[]{"getRenderDistanceChunks", "func_152379_p", "p"});
-         }
-         chunks = (Integer) getRenderDistanceChunks.invoke(w);
-      } catch (ReflectiveOperationException | ReflectionHelper.UnableToFindMethodException ex) {
-         log.error("error calling World#getRenderDistanceChunks", ex);
-         chunks = 12;
+      int chunks = 12;
+      net.minecraft.server.MinecraftServer server = w.getMinecraftServer();
+      if (server != null) {
+         chunks = server.getPlayerList().getViewDistance();
       }
       return chunks * 16D;
    }
 
-   public static void setBiomeAt(World world, int x, int z, BiomeGenBase biome) {
+   public static void setBiomeAt(World world, int x, int z, Biome biome) {
       if (biome != null) {
-         Chunk chunk = world.getChunkFromBlockCoords(x, z);
+         Chunk chunk = world.getChunk(new BlockPos(x, 0, z));
          byte[] array = chunk.getBiomeArray();
-         array[(z & 15) << 4 | x & 15] = (byte)(biome.biomeID & 255);
+         array[(z & 15) << 4 | x & 15] = (byte)(Biome.getIdForBiome(biome) & 255);
          chunk.setBiomeArray(array);
          if (!world.isRemote) {
             PacketHandler.INSTANCE.sendToAllAround(
-                    new PacketBiomeChange(x, z, (short)biome.biomeID),
+                    new PacketBiomeChange(x, z, (short)Biome.getIdForBiome(biome)),
                     new NetworkRegistry.TargetPoint(
-                            world.provider.dimensionId,
+                            world.provider.getDimension(),
                             x,
-                            world.getHeightValue(x, z),
+                            world.getHeight(x, z),
                             z,
                             getViewDistance(world)//32.0F
                     )
@@ -196,11 +192,12 @@ public class Utils {
    }
 
    public static boolean isWoodLog(IBlockAccess world, int x, int y, int z) {
-      Block bi = world.getBlock(x, y, z);
-      int md = world.getBlockMetadata(x, y, z);
-      if (bi == Blocks.air) {
+      Block bi = world.getBlockState(new BlockPos(x, y, z)).getBlock();
+      int md =
+        world.getBlockState(new net.minecraft.util.math.BlockPos(x, y, z)).getBlock().getMetaFromState(world.getBlockState(new net.minecraft.util.math.BlockPos(x, y, z)));
+      if (bi == Blocks.AIR) {
          return false;
-      } else if (bi.canSustainLeaves(world, x, y, z)) {
+      } else if (bi.canSustainLeaves(world.getBlockState(new BlockPos(x, y, z)), world, new BlockPos(x, y, z))) {
          return true;
       } else {
          return ItemElementalAxe.oreDictLogs.contains(Arrays.asList(bi, md));
@@ -209,7 +206,7 @@ public class Utils {
 
    public static void resetFloatCounter(EntityPlayerMP player) {
       try {
-         ObfuscationReflectionHelper.setPrivateValue(NetHandlerPlayServer.class, player.playerNetServerHandler, 0, "floatingTickCount", "floatingTickCount");
+         ObfuscationReflectionHelper.setPrivateValue(NetHandlerPlayServer.class, player.connection, 0, "floatingTickCount", "field_147365_f");
       } catch (Exception ignored) {
       }
 
@@ -334,8 +331,8 @@ public class Utils {
       return Math.sqrt(a[0] * a[0] + a[1] * a[1] + a[2] * a[2]);
    }
 
-   public static Vec3 calculateVelocity(Vec3 from, Vec3 to, double heightGain, double gravity) {
-      double endGain = to.yCoord - from.yCoord;
+   public static Vec3d calculateVelocity(Vec3d from, Vec3d to, double heightGain, double gravity) {
+      double endGain = to.y - from.y;
       double horizDist = Math.sqrt(distanceSquared2d(from, to));
       double maxGain = Math.max(heightGain, endGain + heightGain);
       double a = -horizDist * horizDist / ((double)4.0F * maxGain);
@@ -343,26 +340,26 @@ public class Utils {
       double slope = -horizDist / ((double)2.0F * a) - Math.sqrt(horizDist * horizDist - (double)4.0F * a * c) / ((double)2.0F * a);
       double vy = Math.sqrt(maxGain * gravity);
       double vh = vy / slope;
-      double dx = to.xCoord - from.xCoord;
-      double dz = to.zCoord - from.zCoord;
+      double dx = to.x - from.x;
+      double dz = to.z - from.z;
       double mag = Math.sqrt(dx * dx + dz * dz);
       double dirx = dx / mag;
       double dirz = dz / mag;
       double vx = vh * dirx;
       double vz = vh * dirz;
-      return Vec3.createVectorHelper(vx, vy, vz);
+      return new Vec3d(vx, vy, vz);
    }
 
-   public static double distanceSquared2d(Vec3 from, Vec3 to) {
-      double dx = to.xCoord - from.xCoord;
-      double dz = to.zCoord - from.zCoord;
+   public static double distanceSquared2d(Vec3d from, Vec3d to) {
+      double dx = to.x - from.x;
+      double dz = to.z - from.z;
       return dx * dx + dz * dz;
    }
 
-   public static double distanceSquared3d(Vec3 from, Vec3 to) {
-      double dx = to.xCoord - from.xCoord;
-      double dy = to.yCoord - from.yCoord;
-      double dz = to.zCoord - from.zCoord;
+   public static double distanceSquared3d(Vec3d from, Vec3d to) {
+      double dx = to.x - from.x;
+      double dy = to.y - from.y;
+      double dz = to.z - from.z;
       return dx * dx + dy * dy + dz * dz;
    }
 
@@ -401,8 +398,8 @@ public class Utils {
       }
 
       is = is.copy();
-      if (is.getItem() == Items.book) {
-         EnchantmentHelper.addRandomEnchantment(rand, is, (int)(5.0F + (float)rarity * 0.75F * (float)rand.nextInt(18)));
+      if (is.getItem() == Items.BOOK) {
+         EnchantmentHelper.addRandomEnchantment(rand, is, (int)(5.0F + (float)rarity * 0.75F * (float)rand.nextInt(18)), false);
       }
 
       return mutateGeneratedLoot(is);
@@ -435,7 +432,7 @@ public class Utils {
       if (item != null) {
          is = new ItemStack(item, 1, rand.nextInt(1 + item.getMaxDamage() / 6));
          if (rand.nextInt(4) < rarity) {
-            EnchantmentHelper.addRandomEnchantment(rand, is, (int)(5.0F + (float)rarity * 0.75F * (float)rand.nextInt(18)));
+            EnchantmentHelper.addRandomEnchantment(rand, is, (int)(5.0F + (float)rarity * 0.75F * (float)rand.nextInt(18)), false);
          }
 
          return is.copy();
@@ -448,81 +445,81 @@ public class Utils {
       switch (slot) {
          case 4:
             if (quality == 0) {
-               return Items.leather_helmet;
+               return Items.LEATHER_HELMET;
             } else if (quality == 1) {
-               return Items.golden_helmet;
+               return Items.GOLDEN_HELMET;
             } else if (quality == 2) {
-               return Items.chainmail_helmet;
+               return Items.CHAINMAIL_HELMET;
             } else if (quality == 3) {
-               return Items.iron_helmet;
+               return Items.IRON_HELMET;
             } else if (quality == 4) {
                return ConfigItems.itemHelmetThaumium;
             } else if (quality == 5) {
-               return Items.diamond_helmet;
+               return Items.DIAMOND_HELMET;
             } else if (quality == 6) {
                return ConfigItems.itemHelmetVoid;
             }
          case 3:
             if (quality == 0) {
-               return Items.leather_chestplate;
+               return Items.LEATHER_CHESTPLATE;
             } else if (quality == 1) {
-               return Items.golden_chestplate;
+               return Items.GOLDEN_CHESTPLATE;
             } else if (quality == 2) {
-               return Items.chainmail_chestplate;
+               return Items.CHAINMAIL_CHESTPLATE;
             } else if (quality == 3) {
-               return Items.iron_chestplate;
+               return Items.IRON_CHESTPLATE;
             } else if (quality == 4) {
                return ConfigItems.itemChestThaumium;
             } else if (quality == 5) {
-               return Items.diamond_chestplate;
+               return Items.DIAMOND_CHESTPLATE;
             } else if (quality == 6) {
                return ConfigItems.itemChestVoid;
             }
          case 2:
             if (quality == 0) {
-               return Items.leather_leggings;
+               return Items.LEATHER_LEGGINGS;
             } else if (quality == 1) {
-               return Items.golden_leggings;
+               return Items.GOLDEN_LEGGINGS;
             } else if (quality == 2) {
-               return Items.chainmail_leggings;
+               return Items.CHAINMAIL_LEGGINGS;
             } else if (quality == 3) {
-               return Items.iron_leggings;
+               return Items.IRON_LEGGINGS;
             } else if (quality == 4) {
                return ConfigItems.itemLegsThaumium;
             } else if (quality == 5) {
-               return Items.diamond_leggings;
+               return Items.DIAMOND_LEGGINGS;
             } else if (quality == 6) {
                return ConfigItems.itemLegsVoid;
             }
          case 1:
             if (quality == 0) {
-               return Items.leather_boots;
+               return Items.LEATHER_BOOTS;
             } else if (quality == 1) {
-               return Items.golden_boots;
+               return Items.GOLDEN_BOOTS;
             } else if (quality == 2) {
-               return Items.chainmail_boots;
+               return Items.CHAINMAIL_BOOTS;
             } else if (quality == 3) {
-               return Items.iron_boots;
+               return Items.IRON_BOOTS;
             } else if (quality == 4) {
                return ConfigItems.itemBootsThaumium;
             } else if (quality == 5) {
-               return Items.diamond_boots;
+               return Items.DIAMOND_BOOTS;
             } else if (quality == 6) {
                return ConfigItems.itemBootsVoid;
             }
          case 0:
             if (quality == 0) {
-               return Items.iron_axe;
+               return Items.IRON_AXE;
             } else if (quality == 1) {
-               return Items.iron_sword;
+               return Items.IRON_SWORD;
             } else if (quality == 2) {
-               return Items.golden_axe;
+               return Items.GOLDEN_AXE;
             } else if (quality == 3) {
-               return Items.golden_sword;
+               return Items.GOLDEN_SWORD;
             } else if (quality == 4) {
                return ConfigItems.itemSwordThaumium;
             } else if (quality == 5) {
-               return Items.diamond_sword;
+               return Items.DIAMOND_SWORD;
             } else if (quality == 6) {
                return ConfigItems.itemSwordVoid;
             }

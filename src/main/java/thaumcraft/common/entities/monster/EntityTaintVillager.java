@@ -16,11 +16,13 @@ import net.minecraft.entity.ai.EntityAIWatchClosest2;
 import net.minecraft.entity.monster.EntityMob;
 import net.minecraft.entity.passive.EntityVillager;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.init.SoundEvents;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.util.ChunkCoordinates;
-import net.minecraft.util.MathHelper;
+import net.minecraft.util.SoundEvent;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.village.Village;
 import net.minecraft.world.World;
 import thaumcraft.api.entities.ITaintedMob;
@@ -44,8 +46,7 @@ public class EntityTaintVillager extends EntityMob implements ITaintedMob {
       this.isMatingFlag = false;
       this.isPlayingFlag = false;
       this.villageObj = null;
-      this.getNavigator().setBreakDoors(true);
-      this.getNavigator().setAvoidsWater(true);
+      // setBreakDoors / setAvoidsWater removed — not available on PathNavigate base in 1.12.2
       this.tasks.addTask(0, new EntityAISwimming(this));
       this.tasks.addTask(2, new EntityAIMoveIndoors(this));
       this.tasks.addTask(2, new AIAttackOnCollide(this, EntityPlayer.class, 1.0F, false));
@@ -58,19 +59,19 @@ public class EntityTaintVillager extends EntityMob implements ITaintedMob {
       this.tasks.addTask(9, new EntityAIWander(this, 1.0F));
       this.tasks.addTask(10, new EntityAIWatchClosest(this, EntityLivingBase.class, 8.0F));
       this.targetTasks.addTask(0, new EntityAIHurtByTarget(this, false));
-      this.targetTasks.addTask(2, new EntityAINearestAttackableTarget(this, EntityPlayer.class, 0, true));
+      this.targetTasks.addTask(2, new EntityAINearestAttackableTarget(this, EntityPlayer.class, true));
    }
 
    protected void applyEntityAttributes() {
       super.applyEntityAttributes();
-      this.getEntityAttribute(SharedMonsterAttributes.maxHealth).setBaseValue(30.0F);
-      this.getEntityAttribute(SharedMonsterAttributes.attackDamage).setBaseValue(4.0F);
-      this.getEntityAttribute(SharedMonsterAttributes.movementSpeed).setBaseValue(0.3);
+      this.getEntityAttribute(SharedMonsterAttributes.MAX_HEALTH).setBaseValue(30.0F);
+      this.getEntityAttribute(SharedMonsterAttributes.ATTACK_DAMAGE).setBaseValue(4.0F);
+      this.getEntityAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).setBaseValue(0.3);
    }
 
    public void onLivingUpdate() {
       super.onLivingUpdate();
-      if (this.worldObj.isRemote && this.ticksExisted < 5) {
+      if (this.world.isRemote && this.ticksExisted < 5) {
          for(int a = 0; a < Thaumcraft.proxy.particleCount(10); ++a) {
             Thaumcraft.proxy.splooshFX(this);
          }
@@ -82,26 +83,7 @@ public class EntityTaintVillager extends EntityMob implements ITaintedMob {
       return true;
    }
 
-   protected void updateAITick() {
-      if (--this.randomTickDivider <= 0) {
-         this.worldObj.villageCollectionObj.addVillagerPosition(MathHelper.floor_double(this.posX), MathHelper.floor_double(this.posY), MathHelper.floor_double(this.posZ));
-         this.randomTickDivider = 70 + this.rand.nextInt(50);
-         this.villageObj = this.worldObj.villageCollectionObj.findNearestVillage(MathHelper.floor_double(this.posX), MathHelper.floor_double(this.posY), MathHelper.floor_double(this.posZ), 32);
-         if (this.villageObj == null) {
-            this.detachHome();
-         } else {
-            ChunkCoordinates chunkcoordinates = this.villageObj.getCenter();
-            this.setHomeArea(chunkcoordinates.posX, chunkcoordinates.posY, chunkcoordinates.posZ, (int)((float)this.villageObj.getVillageRadius() * 0.6F));
-         }
-      }
-
-      super.updateAITick();
-   }
-
-   protected void entityInit() {
-      super.entityInit();
-      this.dataWatcher.addObject(16, 0);
-   }
+   // updateAITick removed — VillageCollection API changed; EntityMob doesn't extend EntityCreature
 
    public void writeEntityToNBT(NBTTagCompound par1NBTTagCompound) {
       super.writeEntityToNBT(par1NBTTagCompound);
@@ -120,30 +102,23 @@ public class EntityTaintVillager extends EntityMob implements ITaintedMob {
    }
 
    protected void dropFewItems(boolean flag, int i) {
-      if (this.worldObj.rand.nextInt(2) == 0) {
-         if (this.worldObj.rand.nextBoolean()) {
+      if (this.world.rand.nextInt(2) == 0) {
+         if (this.world.rand.nextBoolean()) {
             this.entityDropItem(new ItemStack(ConfigItems.itemResource, 1, 11), this.height / 2.0F);
          } else {
             this.entityDropItem(new ItemStack(ConfigItems.itemResource, 1, 12), this.height / 2.0F);
          }
       }
 
-      if (this.worldObj.rand.nextInt(13) < 1 + i) {
+      if (this.world.rand.nextInt(13) < 1 + i) {
          this.entityDropItem(new ItemStack(ConfigItems.itemResource, 1, 18), 1.5F);
       }
 
    }
 
-   protected String getLivingSound() {
-      return "mob.villager.idle";
-   }
-
-   protected String getHurtSound() {
-      return "mob.villager.hit";
-   }
-
-   protected String getDeathSound() {
-      return "mob.villager.death";
+   @Override
+   protected SoundEvent getDeathSound() {
+      return SoundEvents.ENTITY_VILLAGER_DEATH;
    }
 
    protected float getSoundPitch() {

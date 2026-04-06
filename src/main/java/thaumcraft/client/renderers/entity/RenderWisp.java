@@ -5,76 +5,83 @@ import net.minecraft.client.entity.AbstractClientPlayer;
 import net.minecraft.client.renderer.ActiveRenderInfo;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.entity.Render;
+import net.minecraft.client.renderer.entity.RenderManager;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLiving;
-import net.minecraft.util.MathHelper;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.ResourceLocation;
 import org.lwjgl.opengl.GL11;
+
 import thaumcraft.api.aspects.Aspect;
 import thaumcraft.client.fx.ParticleEngine;
 import thaumcraft.client.lib.UtilsFX;
 import thaumcraft.common.entities.monster.EntityWisp;
+import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.client.renderer.BufferBuilder;
+import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 
 public class RenderWisp extends Render {
    int size1 = 0;
    int size2 = 0;
 
-   public RenderWisp() {
+   public RenderWisp(RenderManager renderManager) {
+      super(renderManager);
       this.shadowSize = 0.0F;
    }
 
    public void renderEntityAt(Entity entity, double x, double y, double z, float fq, float pticks) {
       if (!(((EntityLiving)entity).getHealth() <= 0.0F)) {
-         float f1 = ActiveRenderInfo.rotationX;
-         float f2 = ActiveRenderInfo.rotationXZ;
-         float f3 = ActiveRenderInfo.rotationZ;
-         float f4 = ActiveRenderInfo.rotationYZ;
-         float f5 = ActiveRenderInfo.rotationXY;
+         float yaw = this.renderManager.playerViewY;
+         float pitch = this.renderManager.playerViewX;
+         float f1 = MathHelper.cos(yaw * (float)(Math.PI / 180.0));                               // rotationX
+         float f2 = MathHelper.cos(pitch * (float)(Math.PI / 180.0));                             // rotationXZ
+         float f3 = MathHelper.sin(yaw * (float)(Math.PI / 180.0));                               // rotationZ
+         float f4 = -f3 * MathHelper.sin(pitch * (float)(Math.PI / 180.0));                      // rotationYZ
+         float f5 = f1 * MathHelper.sin(pitch * (float)(Math.PI / 180.0));                       // rotationXY
          float f10 = 1.0F;
          float f11 = (float)x;
          float f12 = (float)y + 0.45F;
          float f13 = (float)z;
-         Tessellator tessellator = Tessellator.instance;
+         Tessellator tessellator = Tessellator.getInstance();
+         BufferBuilder buffer = tessellator.getBuffer();
          Color color = new Color(0);
          if (Aspect.getAspect(((EntityWisp)entity).getType()) != null) {
             color = new Color(Aspect.getAspect(((EntityWisp)entity).getType()).getColor());
          }
 
-         GL11.glPushMatrix();
-         GL11.glDepthMask(false);
-         GL11.glEnable(GL11.GL_BLEND);
-         GL11.glBlendFunc(770, 1);
+         float cr, cg, cb;
+         if (((EntityLiving)entity).hurtTime > 0) {
+            cr = 1.0F; cg = (float)color.getGreen() / 300.0F; cb = (float)color.getBlue() / 300.0F;
+         } else {
+            cr = (float)color.getRed() / 255.0F; cg = (float)color.getGreen() / 255.0F; cb = (float)color.getBlue() / 255.0F;
+         }
+
+         GlStateManager.pushMatrix();
+         GlStateManager.depthMask(false);
+         GlStateManager.enableBlend();
+         GlStateManager.blendFunc(770, 1);
          UtilsFX.bindTexture("textures/misc/wisp.png");
          int i = entity.ticksExisted % 16;
          float size4 = (float)(this.size1 * 4);
          float float_sizeMinus0_01 = (float)this.size1 - 0.01F;
-         float float_texNudge = 1.0F / ((float)this.size1 * (float)this.size1 * 2.0F);
-         float float_reciprocal = 1.0F / (float)this.size1;
          float x0 = ((float)(i % 4 * this.size1) + 0.0F) / size4;
          float x1 = ((float)(i % 4 * this.size1) + float_sizeMinus0_01) / size4;
          float x2 = ((float)(i / 4 * this.size1) + 0.0F) / size4;
          float x3 = ((float)(i / 4 * this.size1) + float_sizeMinus0_01) / size4;
-         tessellator.startDrawingQuads();
-         tessellator.setBrightness(240);
-         if (((EntityLiving)entity).hurtTime > 0) {
-            tessellator.setColorRGBA_F(1.0F, (float)color.getGreen() / 300.0F, (float)color.getBlue() / 300.0F, 1.0F);
-         } else {
-            tessellator.setColorRGBA_F((float)color.getRed() / 255.0F, (float)color.getGreen() / 255.0F, (float)color.getBlue() / 255.0F, 1.0F);
-         }
-
-         tessellator.addVertexWithUV(f11 - f1 * f10 - f4 * f10, f12 - f2 * f10, f13 - f3 * f10 - f5 * f10, x1, x3);
-         tessellator.addVertexWithUV(f11 - f1 * f10 + f4 * f10, f12 + f2 * f10, f13 - f3 * f10 + f5 * f10, x1, x2);
-         tessellator.addVertexWithUV(f11 + f1 * f10 + f4 * f10, f12 + f2 * f10, f13 + f3 * f10 + f5 * f10, x0, x2);
-         tessellator.addVertexWithUV(f11 + f1 * f10 - f4 * f10, f12 - f2 * f10, f13 + f3 * f10 - f5 * f10, x0, x3);
+         buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX_COLOR);
+         buffer.pos(f11 - f1 * f10 - f4 * f10, f12 - f2 * f10, f13 - f3 * f10 - f5 * f10).tex(x1, x3).color(cr, cg, cb, 1.0f).endVertex();
+         buffer.pos(f11 - f1 * f10 + f4 * f10, f12 + f2 * f10, f13 - f3 * f10 + f5 * f10).tex(x1, x2).color(cr, cg, cb, 1.0f).endVertex();
+         buffer.pos(f11 + f1 * f10 + f4 * f10, f12 + f2 * f10, f13 + f3 * f10 + f5 * f10).tex(x0, x2).color(cr, cg, cb, 1.0f).endVertex();
+         buffer.pos(f11 + f1 * f10 - f4 * f10, f12 - f2 * f10, f13 + f3 * f10 - f5 * f10).tex(x0, x3).color(cr, cg, cb, 1.0f).endVertex();
          tessellator.draw();
-         GL11.glDisable(GL11.GL_BLEND);
-         GL11.glDepthMask(true);
-         GL11.glPopMatrix();
-         GL11.glPushMatrix();
-         GL11.glAlphaFunc(516, 0.003921569F);
-         GL11.glDepthMask(false);
-         GL11.glEnable(GL11.GL_BLEND);
-         GL11.glBlendFunc(770, 1);
+         GlStateManager.disableBlend();
+         GlStateManager.depthMask(true);
+         GlStateManager.popMatrix();
+         GlStateManager.pushMatrix();
+         GlStateManager.alphaFunc(516, 0.003921569F);
+         GlStateManager.depthMask(false);
+         GlStateManager.enableBlend();
+         GlStateManager.blendFunc(770, 1);
          UtilsFX.bindTexture(ParticleEngine.particleTexture);
          int qq = entity.ticksExisted % 16;
          float size8 = 16.0F;
@@ -84,18 +91,16 @@ public class RenderWisp extends Render {
          x3 = 6.0F / size8;
          float var11 = MathHelper.sin(((float)entity.ticksExisted + pticks) / 10.0F) * 0.1F;
          f10 = 0.4F + var11;
-         tessellator.startDrawingQuads();
-         tessellator.setBrightness(240);
-         tessellator.setColorRGBA_F(1.0F, 1.0F, 1.0F, 1.0F);
-         tessellator.addVertexWithUV(f11 - f1 * f10 - f4 * f10, f12 - f2 * f10, f13 - f3 * f10 - f5 * f10, x1, x3);
-         tessellator.addVertexWithUV(f11 - f1 * f10 + f4 * f10, f12 + f2 * f10, f13 - f3 * f10 + f5 * f10, x1, x2);
-         tessellator.addVertexWithUV(f11 + f1 * f10 + f4 * f10, f12 + f2 * f10, f13 + f3 * f10 + f5 * f10, x0, x2);
-         tessellator.addVertexWithUV(f11 + f1 * f10 - f4 * f10, f12 - f2 * f10, f13 + f3 * f10 - f5 * f10, x0, x3);
+         buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX_COLOR);
+         buffer.pos(f11 - f1 * f10 - f4 * f10, f12 - f2 * f10, f13 - f3 * f10 - f5 * f10).tex(x1, x3).color(cr, cg, cb, 1.0f).endVertex();
+         buffer.pos(f11 - f1 * f10 + f4 * f10, f12 + f2 * f10, f13 - f3 * f10 + f5 * f10).tex(x1, x2).color(cr, cg, cb, 1.0f).endVertex();
+         buffer.pos(f11 + f1 * f10 + f4 * f10, f12 + f2 * f10, f13 + f3 * f10 + f5 * f10).tex(x0, x2).color(cr, cg, cb, 1.0f).endVertex();
+         buffer.pos(f11 + f1 * f10 - f4 * f10, f12 - f2 * f10, f13 + f3 * f10 - f5 * f10).tex(x0, x3).color(cr, cg, cb, 1.0f).endVertex();
          tessellator.draw();
-         GL11.glDisable(GL11.GL_BLEND);
-         GL11.glDepthMask(true);
-         GL11.glAlphaFunc(516, 0.1F);
-         GL11.glPopMatrix();
+         GlStateManager.disableBlend();
+         GlStateManager.depthMask(true);
+         GlStateManager.alphaFunc(516, 0.1F);
+         GlStateManager.popMatrix();
       }
    }
 
@@ -108,6 +113,6 @@ public class RenderWisp extends Render {
    }
 
    protected ResourceLocation getEntityTexture(Entity entity) {
-      return AbstractClientPlayer.locationStevePng;
+      return new net.minecraft.util.ResourceLocation("textures/entity/steve.png");
    }
 }

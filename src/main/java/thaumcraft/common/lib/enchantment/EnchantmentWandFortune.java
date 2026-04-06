@@ -2,13 +2,14 @@ package thaumcraft.common.lib.enchantment;
 
 import net.minecraft.enchantment.Enchantment;
 import net.minecraft.enchantment.EnumEnchantmentType;
+import net.minecraft.inventory.EntityEquipmentSlot;
 import net.minecraft.item.ItemBook;
 import net.minecraft.item.ItemStack;
 import thaumcraft.api.wands.IWandFocus;
 
 public class EnchantmentWandFortune extends Enchantment {
    public EnchantmentWandFortune(int par1, int par2) {
-      super(par1, par2, EnumEnchantmentType.all);
+      super(Enchantment.Rarity.UNCOMMON, EnumEnchantmentType.ALL, new EntityEquipmentSlot[0]);
       this.setName("wandfortune");
    }
 
@@ -25,7 +26,7 @@ public class EnchantmentWandFortune extends Enchantment {
    }
 
    public boolean canApply(ItemStack stack) {
-      return stack.getItem() instanceof IWandFocus && ((IWandFocus)stack.getItem()).acceptsEnchant(this.effectId) || stack.getItem() instanceof ItemBook;
+      return stack.getItem() instanceof IWandFocus && ((IWandFocus)stack.getItem()).acceptsEnchant(Enchantment.getEnchantmentID(this)) || stack.getItem() instanceof ItemBook;
    }
 
    public boolean canApplyAtEnchantingTable(ItemStack stack) {

@@ -1,8 +1,8 @@
 package thaumcraft.common.lib.network.fx;
 
-import cpw.mods.fml.common.network.simpleimpl.IMessage;
-import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
-import cpw.mods.fml.common.network.simpleimpl.MessageContext;
+import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
+import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
+import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
 import io.netty.buffer.ByteBuf;
 import thaumcraft.common.Thaumcraft;
 
@@ -46,7 +46,7 @@ public class PacketFXBlockZap implements IMessage, IMessageHandler<PacketFXBlock
 
    public IMessage onMessage(PacketFXBlockZap message, MessageContext ctx) {
       Thaumcraft.proxy.nodeBolt(Thaumcraft.proxy.getClientWorld(), message.x, message.y, message.z, message.dx, message.dy, message.dz);
-      Thaumcraft.proxy.getClientWorld().playSound(message.x, message.y, message.z, "thaumcraft:zap", 0.1F, 1.0F + Thaumcraft.proxy.getClientWorld().rand.nextFloat() * 0.2F, false);
+      { net.minecraft.util.SoundEvent _snd = net.minecraft.util.SoundEvent.REGISTRY.getObject(new net.minecraft.util.ResourceLocation("thaumcraft:zap")); if (_snd != null) Thaumcraft.proxy.getClientWorld().playSound(null, message.x, message.y, message.z, _snd, net.minecraft.util.SoundCategory.NEUTRAL, 0.1F, 1.0F + Thaumcraft.proxy.getClientWorld().rand.nextFloat() * 0.2F); }
       return null;
    }
 }

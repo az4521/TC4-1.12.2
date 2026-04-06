@@ -11,9 +11,11 @@ import net.minecraft.entity.monster.EntityMob;
 import net.minecraft.entity.passive.EntityAnimal;
 import net.minecraft.entity.passive.EntityVillager;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.init.SoundEvents;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.util.SoundEvent;
 import net.minecraft.world.World;
 import thaumcraft.api.entities.ITaintedMob;
 import thaumcraft.common.Thaumcraft;
@@ -24,7 +26,6 @@ public class EntityTaintCow extends EntityMob implements ITaintedMob {
    public EntityTaintCow(World par1World) {
       super(par1World);
       this.setSize(0.9F, 1.3F);
-      this.getNavigator().setAvoidsWater(true);
       this.tasks.addTask(0, new EntityAISwimming(this));
       this.tasks.addTask(2, new AIAttackOnCollide(this, EntityPlayer.class, 1.0F, false));
       this.tasks.addTask(3, new AIAttackOnCollide(this, EntityVillager.class, 1.0F, true));
@@ -33,16 +34,16 @@ public class EntityTaintCow extends EntityMob implements ITaintedMob {
       this.tasks.addTask(7, new EntityAILookIdle(this));
       this.tasks.addTask(8, new AIAttackOnCollide(this, EntityAnimal.class, 1.0F, false));
       this.targetTasks.addTask(0, new EntityAIHurtByTarget(this, false));
-      this.targetTasks.addTask(2, new EntityAINearestAttackableTarget(this, EntityPlayer.class, 0, true));
-      this.targetTasks.addTask(2, new EntityAINearestAttackableTarget(this, EntityVillager.class, 0, false));
-      this.targetTasks.addTask(8, new EntityAINearestAttackableTarget(this, EntityAnimal.class, 0, false));
+      this.targetTasks.addTask(2, new EntityAINearestAttackableTarget(this, EntityPlayer.class, true));
+      this.targetTasks.addTask(2, new EntityAINearestAttackableTarget(this, EntityVillager.class, false));
+      this.targetTasks.addTask(8, new EntityAINearestAttackableTarget(this, EntityAnimal.class, false));
    }
 
    protected void applyEntityAttributes() {
       super.applyEntityAttributes();
-      this.getEntityAttribute(SharedMonsterAttributes.maxHealth).setBaseValue(40.0F);
-      this.getEntityAttribute(SharedMonsterAttributes.attackDamage).setBaseValue(6.0F);
-      this.getEntityAttribute(SharedMonsterAttributes.movementSpeed).setBaseValue(0.27);
+      this.getEntityAttribute(SharedMonsterAttributes.MAX_HEALTH).setBaseValue(40.0F);
+      this.getEntityAttribute(SharedMonsterAttributes.ATTACK_DAMAGE).setBaseValue(6.0F);
+      this.getEntityAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).setBaseValue(0.27);
    }
 
    public boolean isAIEnabled() {
@@ -57,20 +58,9 @@ public class EntityTaintCow extends EntityMob implements ITaintedMob {
       super.readEntityFromNBT(par1NBTTagCompound);
    }
 
-   protected String getLivingSound() {
-      return "mob.cow.say";
-   }
-
-   protected String getHurtSound() {
-      return "mob.cow.hurt";
-   }
-
-   protected String getDeathSound() {
-      return "mob.cow.hurt";
-   }
-
-   protected void playStepSound(int par1, int par2, int par3, int par4) {
-      this.playSound("mob.cow.step", 0.15F, 1.0F);
+   @Override
+   protected SoundEvent getDeathSound() {
+      return SoundEvents.ENTITY_COW_HURT;
    }
 
    protected float getSoundPitch() {
@@ -83,7 +73,7 @@ public class EntityTaintCow extends EntityMob implements ITaintedMob {
 
    public void onLivingUpdate() {
       super.onLivingUpdate();
-      if (this.worldObj.isRemote && this.ticksExisted < 5) {
+      if (this.world.isRemote && this.ticksExisted < 5) {
          for(int a = 0; a < Thaumcraft.proxy.particleCount(10); ++a) {
             Thaumcraft.proxy.splooshFX(this);
          }
@@ -96,7 +86,7 @@ public class EntityTaintCow extends EntityMob implements ITaintedMob {
    }
 
    protected void dropFewItems(boolean flag, int i) {
-      if (this.worldObj.rand.nextBoolean()) {
+      if (this.world.rand.nextBoolean()) {
          this.entityDropItem(new ItemStack(ConfigItems.itemResource, 1, 11), this.height / 2.0F);
       } else {
          this.entityDropItem(new ItemStack(ConfigItems.itemResource, 1, 12), this.height / 2.0F);

@@ -2,7 +2,7 @@ package thaumcraft.client.fx;
 
 import net.minecraft.entity.Entity;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.Vec3;
+import net.minecraft.util.math.Vec3d;
 
 public class WRVector3 {
    public float x;
@@ -16,9 +16,9 @@ public class WRVector3 {
    }
 
    public WRVector3(TileEntity tile) {
-      this.x = (float)tile.xCoord + 0.5F;
-      this.y = (float)tile.yCoord + 0.5F;
-      this.z = (float)tile.zCoord + 0.5F;
+      this.x = (float)tile.getPos().getX() + 0.5F;
+      this.y = (float)tile.getPos().getY() + 0.5F;
+      this.z = (float)tile.getPos().getZ() + 0.5F;
    }
 
    public WRVector3(Entity entity) {
@@ -105,8 +105,8 @@ public class WRVector3 {
       return "[" + this.x + "," + this.y + "," + this.z + "]";
    }
 
-   public Vec3 toVec3D() {
-      return Vec3.createVectorHelper(this.x, this.y, this.z);
+   public Vec3d toVec3D() {
+      return new Vec3d(this.x, this.y, this.z);
    }
 
    public static WRVector3 getPerpendicular(WRVector3 vec) {

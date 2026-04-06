@@ -4,15 +4,16 @@ import java.util.Random;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockSapling;
 import net.minecraft.init.Blocks;
-import net.minecraft.util.MathHelper;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
 import net.minecraft.world.gen.feature.WorldGenAbstractTree;
-import net.minecraftforge.common.util.ForgeDirection;
+import net.minecraft.util.EnumFacing;
+import net.minecraft.util.math.BlockPos;
 
 public class WorldGenBigMagicTree extends WorldGenAbstractTree {
    static final byte[] otherCoordPairs = new byte[]{2, 0, 0, 1, 2, 1};
    Random rand = new Random();
-   World worldObj;
+   World world;
    int[] basePos = new int[]{0, 0, 0};
    int heightLimit;
    int height;
@@ -59,8 +60,8 @@ public class WorldGenBigMagicTree extends WorldGenAbstractTree {
               for (double d0 = 0.5F; j1 < i; ++j1) {
                   double d1 = this.scaleWidth * (double) f * ((double) this.rand.nextFloat() + 0.328);
                   double d2 = (double) this.rand.nextFloat() * (double) 2.0F * Math.PI;
-                  int k1 = MathHelper.floor_double(d1 * Math.sin(d2) + (double) this.basePos[0] + d0);
-                  int l1 = MathHelper.floor_double(d1 * Math.cos(d2) + (double) this.basePos[2] + d0);
+                  int k1 = MathHelper.floor(d1 * Math.sin(d2) + (double) this.basePos[0] + d0);
+                  int l1 = MathHelper.floor(d1 * Math.cos(d2) + (double) this.basePos[2] + d0);
                   int[] aint1 = new int[]{k1, j, l1};
                   int[] aint2 = new int[]{k1, j + this.leafDistanceLimit, l1};
                   if (this.checkBlockLine(aint1, aint2) == -1) {
@@ -113,9 +114,9 @@ public class WorldGenBigMagicTree extends WorldGenAbstractTree {
                aint1[b2] = aint[b2] + k1;
 
                try {
-                  Block l1 = this.worldObj.getBlock(aint1[0], aint1[1], aint1[2]);
-                   if (l1 == Blocks.air || l1 == Blocks.leaves) {
-                       this.setBlockAndNotifyAdequately(this.worldObj, aint1[0], aint1[1], aint1[2], par6, 0);
+                  Block l1 = this.world.getBlockState(new BlockPos(aint1[0], aint1[1], aint1[2])).getBlock();
+                   if (l1 == Blocks.AIR || l1 == Blocks.LEAVES) {
+                       this.setBlockAndNotifyAdequately(this.world, new BlockPos(aint1[0], aint1[1], aint1[2]), par6.getDefaultState());
                    }
                    ++k1;
                } catch (Exception ignored) {
@@ -155,7 +156,7 @@ public class WorldGenBigMagicTree extends WorldGenAbstractTree {
 
       for(int i1 = par2 + this.leafDistanceLimit; l < i1; ++l) {
          float f = this.leafSize(l - par2);
-         this.genTreeLayer(par1, l, par3, f, (byte)1, Blocks.leaves);
+         this.genTreeLayer(par1, l, par3, f, (byte)1, Blocks.LEAVES);
       }
 
    }
@@ -188,9 +189,9 @@ public class WorldGenBigMagicTree extends WorldGenAbstractTree {
          int j = 0;
 
          for(int k = aint2[b1] + b4; j != k; j += b4) {
-            aint3[b1] = MathHelper.floor_double((double)(par1ArrayOfInteger[b1] + j) + (double)0.5F);
-            aint3[b2] = MathHelper.floor_double((double)par1ArrayOfInteger[b2] + (double)j * d0 + (double)0.5F);
-            aint3[b3] = MathHelper.floor_double((double)par1ArrayOfInteger[b3] + (double)j * d1 + (double)0.5F);
+            aint3[b1] = MathHelper.floor((double)(par1ArrayOfInteger[b1] + j) + (double)0.5F);
+            aint3[b2] = MathHelper.floor((double)par1ArrayOfInteger[b2] + (double)j * d0 + (double)0.5F);
+            aint3[b3] = MathHelper.floor((double)par1ArrayOfInteger[b3] + (double)j * d1 + (double)0.5F);
             byte b5 = 0;
             int l = Math.abs(aint3[0] - par1ArrayOfInteger[0]);
             int i1 = Math.abs(aint3[2] - par1ArrayOfInteger[2]);
@@ -203,7 +204,7 @@ public class WorldGenBigMagicTree extends WorldGenAbstractTree {
                }
             }
 
-            this.setBlockAndNotifyAdequately(this.worldObj, aint3[0], aint3[1], aint3[2], par3, b5);
+            this.setBlockAndNotifyAdequately(this.world, new BlockPos(aint3[0], aint3[1], aint3[2]), par3.getDefaultState());
          }
       }
 
@@ -235,17 +236,17 @@ public class WorldGenBigMagicTree extends WorldGenAbstractTree {
       int l = this.basePos[2];
       int[] aint = new int[]{i, j, l};
       int[] aint1 = new int[]{i, k, l};
-      this.placeBlockLine(aint, aint1, Blocks.log);
+      this.placeBlockLine(aint, aint1, Blocks.LOG);
       if (this.trunkSize == 2) {
          int var10002 = aint[0]++;
          var10002 = aint1[0]++;
-         this.placeBlockLine(aint, aint1, Blocks.log);
+         this.placeBlockLine(aint, aint1, Blocks.LOG);
          var10002 = aint[2]++;
          var10002 = aint1[2]++;
-         this.placeBlockLine(aint, aint1, Blocks.log);
+         this.placeBlockLine(aint, aint1, Blocks.LOG);
           aint[0] -= 1;
           aint1[0] -= 1;
-         this.placeBlockLine(aint, aint1, Blocks.log);
+         this.placeBlockLine(aint, aint1, Blocks.LOG);
       }
 
    }
@@ -260,7 +261,7 @@ public class WorldGenBigMagicTree extends WorldGenAbstractTree {
          aint[1] = aint1[3];
          int k = aint[1] - this.basePos[1];
          if (this.leafNodeNeedsBase(k)) {
-            this.placeBlockLine(aint, aint2, Blocks.log);
+            this.placeBlockLine(aint, aint2, Blocks.LOG);
          }
       }
 
@@ -299,10 +300,10 @@ public class WorldGenBigMagicTree extends WorldGenAbstractTree {
          try {
             for(j = aint2[b1] + b4; i != j; i += b4) {
                aint3[b1] = par1ArrayOfInteger[b1] + i;
-               aint3[b2] = MathHelper.floor_double((double)par1ArrayOfInteger[b2] + (double)i * d0);
-               aint3[b3] = MathHelper.floor_double((double)par1ArrayOfInteger[b3] + (double)i * d1);
-               Block k = this.worldObj.getBlock(aint3[0], aint3[1], aint3[2]);
-               if (k != Blocks.air && k != Blocks.leaves) {
+               aint3[b2] = MathHelper.floor((double)par1ArrayOfInteger[b2] + (double)i * d0);
+               aint3[b3] = MathHelper.floor((double)par1ArrayOfInteger[b3] + (double)i * d1);
+               Block k = this.world.getBlockState(new BlockPos(aint3[0], aint3[1], aint3[2])).getBlock();
+               if (k != Blocks.AIR && k != Blocks.LEAVES) {
                   break;
                }
             }
@@ -316,8 +317,9 @@ public class WorldGenBigMagicTree extends WorldGenAbstractTree {
    boolean validTreeLocation() {
       int[] aint = new int[]{this.basePos[0], this.basePos[1], this.basePos[2]};
       int[] aint1 = new int[]{this.basePos[0], this.basePos[1] + this.heightLimit - 1, this.basePos[2]};
-      Block soil = this.worldObj.getBlock(this.basePos[0], this.basePos[1] - 1, this.basePos[2]);
-      boolean isValidSoil = soil != null && soil.canSustainPlant(this.worldObj, this.basePos[0], this.basePos[1] - 1, this.basePos[2], ForgeDirection.UP, (BlockSapling)Blocks.sapling);
+      Block soil = this.world.getBlockState(new net.minecraft.util.math.BlockPos(this.basePos[0], this.basePos[1] - 1, this.basePos[2])).getBlock();
+      net.minecraft.block.state.IBlockState soilState = this.world.getBlockState(new net.minecraft.util.math.BlockPos(this.basePos[0], this.basePos[1] - 1, this.basePos[2]));
+      boolean isValidSoil = soil != null && soil.canSustainPlant(soilState, this.world, new net.minecraft.util.math.BlockPos(this.basePos[0], this.basePos[1] - 1, this.basePos[2]), EnumFacing.UP, (net.minecraftforge.common.IPlantable) Blocks.SAPLING);
       if (!isValidSoil) {
          return false;
       } else {
@@ -343,8 +345,13 @@ public class WorldGenBigMagicTree extends WorldGenAbstractTree {
       this.leafDensity = par5 * 0.8;
    }
 
+   @Override
+   public boolean generate(World par1World, Random par2Random, BlockPos pos) {
+      return generate(par1World, par2Random, pos.getX(), pos.getY(), pos.getZ());
+   }
+
    public boolean generate(World par1World, Random par2Random, int par3, int par4, int par5) {
-      this.worldObj = par1World;
+      this.world = par1World;
       long l = par2Random.nextLong();
       this.rand.setSeed(l);
       this.basePos[0] = par3;

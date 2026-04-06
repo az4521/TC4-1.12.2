@@ -1,17 +1,21 @@
 package thaumcraft.common.lib;
 
-import net.minecraft.block.Block;
+import net.minecraft.block.SoundType;
+import net.minecraft.init.SoundEvents;
 
-public class CustomSoundType extends Block.SoundType {
-   public CustomSoundType(String par1Str, float par2, float par3) {
-      super(par1Str, par2, par3);
-   }
+/**
+ * Custom sound type for taint/gore blocks using vanilla slime sounds.
+ */
+public class CustomSoundType extends SoundType {
+    public String soundName;
 
-   public String getBreakSound() {
-      return "thaumcraft:" + this.soundName;
-   }
-
-   public String getStepResourcePath() {
-      return "thaumcraft:" + this.soundName;
-   }
+    public CustomSoundType(String par1Str, float volume, float pitch) {
+        super(volume, pitch,
+            SoundEvents.BLOCK_SLIME_BREAK,
+            SoundEvents.BLOCK_SLIME_STEP,
+            SoundEvents.BLOCK_SLIME_PLACE,
+            SoundEvents.BLOCK_SLIME_HIT,
+            SoundEvents.BLOCK_SLIME_FALL);
+        this.soundName = par1Str;
+    }
 }

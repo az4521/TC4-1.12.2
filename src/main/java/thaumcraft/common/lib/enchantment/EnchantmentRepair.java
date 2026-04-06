@@ -2,13 +2,15 @@ package thaumcraft.common.lib.enchantment;
 
 import net.minecraft.enchantment.Enchantment;
 import net.minecraft.enchantment.EnumEnchantmentType;
+import net.minecraft.init.Enchantments;
+import net.minecraft.inventory.EntityEquipmentSlot;
 import net.minecraft.item.ItemBook;
 import net.minecraft.item.ItemStack;
 import thaumcraft.api.IRepairable;
 
 public class EnchantmentRepair extends Enchantment {
    public EnchantmentRepair(int par1, int par2) {
-      super(par1, par2, EnumEnchantmentType.all);
+      super(Enchantment.Rarity.UNCOMMON, EnumEnchantmentType.ALL, new EntityEquipmentSlot[0]);
       this.setName("repair");
    }
 
@@ -33,6 +35,6 @@ public class EnchantmentRepair extends Enchantment {
    }
 
    public boolean canApplyTogether(Enchantment par1Enchantment) {
-      return super.canApplyTogether(par1Enchantment) && par1Enchantment.effectId != Enchantment.unbreaking.effectId;
+      return super.canApplyTogether(par1Enchantment) && par1Enchantment != Enchantments.UNBREAKING;
    }
 }

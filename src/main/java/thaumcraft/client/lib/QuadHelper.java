@@ -1,7 +1,7 @@
 package thaumcraft.client.lib;
 
-import net.minecraft.util.MathHelper;
-import net.minecraft.util.Vec3;
+import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.Vec3d;
 
 public class QuadHelper {
    public double x;
@@ -16,19 +16,21 @@ public class QuadHelper {
       this.angle = ang;
    }
 
-   public static QuadHelper setAxis(Vec3 vec, double angle) {
+   public static QuadHelper setAxis(Vec3d vec, double angle) {
       angle *= 0.5F;
       double d4 = MathHelper.sin((float)angle);
-      return new QuadHelper(MathHelper.cos((float)angle), vec.xCoord * d4, vec.yCoord * d4, vec.zCoord * d4);
+      return new QuadHelper(MathHelper.cos((float)angle), vec.x * d4, vec.y * d4, vec.z * d4);
    }
 
-   public void rotate(Vec3 vec) {
-      double d = -this.x * vec.xCoord - this.y * vec.yCoord - this.z * vec.zCoord;
-      double d1 = this.angle * vec.xCoord + this.y * vec.zCoord - this.z * vec.yCoord;
-      double d2 = this.angle * vec.yCoord - this.x * vec.zCoord + this.z * vec.xCoord;
-      double d3 = this.angle * vec.zCoord + this.x * vec.yCoord - this.y * vec.xCoord;
-      vec.xCoord = d1 * this.angle - d * this.x - d2 * this.z + d3 * this.y;
-      vec.yCoord = d2 * this.angle - d * this.y + d1 * this.z - d3 * this.x;
-      vec.zCoord = d3 * this.angle - d * this.z - d1 * this.y + d2 * this.x;
+   public Vec3d rotate(Vec3d vec) {
+      double d = -this.x * vec.x - this.y * vec.y - this.z * vec.z;
+      double d1 = this.angle * vec.x + this.y * vec.z - this.z * vec.y;
+      double d2 = this.angle * vec.y - this.x * vec.z + this.z * vec.x;
+      double d3 = this.angle * vec.z + this.x * vec.y - this.y * vec.x;
+      return new Vec3d(
+         d1 * this.angle - d * this.x - d2 * this.z + d3 * this.y,
+         d2 * this.angle - d * this.y + d1 * this.z - d3 * this.x,
+         d3 * this.angle - d * this.z - d1 * this.y + d2 * this.x
+      );
    }
 }

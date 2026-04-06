@@ -5,9 +5,10 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.SharedMonsterAttributes;
 import net.minecraft.entity.ai.EntityAIBase;
 import net.minecraft.entity.item.EntityItem;
+import net.minecraft.init.SoundEvents;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.pathfinding.PathPoint;
+import net.minecraft.util.SoundCategory;
 import thaumcraft.common.config.Config;
 import thaumcraft.common.entities.monster.EntityPech;
 
@@ -30,14 +31,13 @@ public class AIPechItemEntityGoto extends EntityAIBase {
          return false;
       } else {
          double range = Double.MAX_VALUE;
-         List<Entity> targets = this.pech.worldObj.getEntitiesWithinAABBExcludingEntity(this.pech, this.pech.boundingBox.expand(this.maxTargetDistance, this.maxTargetDistance, this.maxTargetDistance));
+         List<Entity> targets = this.pech.world.getEntitiesWithinAABBExcludingEntity(this.pech, this.pech.getEntityBoundingBox().grow(this.maxTargetDistance, this.maxTargetDistance, this.maxTargetDistance));
          if (targets.isEmpty()) {
             return false;
          } else {
             for(Entity e : targets) {
-               if (e instanceof EntityItem && this.pech.canPickup(((EntityItem)e).getEntityItem())) {
-                  NBTTagCompound itemData = e.getEntityData();
-                  String username = ((EntityItem)e).func_145800_j();
+               if (e instanceof EntityItem && this.pech.canPickup(((EntityItem)e).getItem())) {
+                  String username = ((EntityItem)e).getThrower();
                   if (username == null || !username.equals("PechDrop")) {
                      double distance = e.getDistanceSq(this.pech.posX, this.pech.posY, this.pech.posZ);
                      if (distance < range && distance <= (double)(this.maxTargetDistance * this.maxTargetDistance)) {
@@ -48,13 +48,14 @@ public class AIPechItemEntityGoto extends EntityAIBase {
                }
             }
 
-             return this.targetEntity != null;
+            return this.targetEntity != null;
          }
       }
    }
 
    public boolean continueExecuting() {
-      return this.targetEntity != null && (this.targetEntity.isEntityAlive() && !this.pech.getNavigator().noPath() && this.targetEntity.getDistanceSqToEntity(this.pech) < (double) (this.maxTargetDistance * this.maxTargetDistance));
+      return this.targetEntity != null && this.targetEntity.isEntityAlive() && !this.pech.getNavigator().noPath()
+            && this.targetEntity.getDistanceSq(this.pech) < (double)(this.maxTargetDistance * this.maxTargetDistance);
    }
 
    public void resetTask() {
@@ -62,7 +63,8 @@ public class AIPechItemEntityGoto extends EntityAIBase {
    }
 
    public void startExecuting() {
-      this.pech.getNavigator().setPath(this.pech.getNavigator().getPathToEntityLiving(this.targetEntity), this.pech.getEntityAttribute(SharedMonsterAttributes.movementSpeed).getAttributeValue() * (double)1.5F);
+      this.pech.getNavigator().setPath(this.pech.getNavigator().getPathToEntityLiving(this.targetEntity),
+            this.pech.getEntityAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).getAttributeValue() * 1.5);
       this.count = 0;
    }
 
@@ -70,10 +72,11 @@ public class AIPechItemEntityGoto extends EntityAIBase {
       this.pech.getLookHelper().setLookPositionWithEntity(this.targetEntity, 30.0F, 30.0F);
       if (this.pech.getEntitySenses().canSee(this.targetEntity) && --this.count <= 0) {
          this.count = this.failedPathFindingPenalty + 4 + this.pech.getRNG().nextInt(4);
-         this.pech.getNavigator().tryMoveToEntityLiving(this.targetEntity, this.pech.getEntityAttribute(SharedMonsterAttributes.movementSpeed).getAttributeValue() * (double)1.5F);
+         this.pech.getNavigator().tryMoveToEntityLiving(this.targetEntity,
+               this.pech.getEntityAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).getAttributeValue() * 1.5);
          if (this.pech.getNavigator().getPath() != null) {
             PathPoint finalPathPoint = this.pech.getNavigator().getPath().getFinalPathPoint();
-            if (finalPathPoint != null && this.targetEntity.getDistanceSq(finalPathPoint.xCoord, finalPathPoint.yCoord, finalPathPoint.zCoord) < (double)1.0F) {
+            if (finalPathPoint != null && this.targetEntity.getDistanceSq(finalPathPoint.x, finalPathPoint.y, finalPathPoint.z) < 1.0) {
                this.failedPathFindingPenalty = 0;
             } else {
                this.failedPathFindingPenalty += 10;
@@ -83,21 +86,23 @@ public class AIPechItemEntityGoto extends EntityAIBase {
          }
       }
 
-      double distance = this.pech.getDistanceSq(this.targetEntity.posX, this.targetEntity.boundingBox.minY, this.targetEntity.posZ);
-      if (distance <= (double)1.5F) {
+      double distance = this.pech.getDistanceSq(this.targetEntity.posX, this.targetEntity.getEntityBoundingBox().minY, this.targetEntity.posZ);
+      if (distance <= 1.5) {
          this.count = 0;
-         int am = ((EntityItem)this.targetEntity).getEntityItem().stackSize;
-         ItemStack is = this.pech.pickupItem(((EntityItem)this.targetEntity).getEntityItem());
-         if (is != null && is.stackSize > 0) {
-            ((EntityItem)this.targetEntity).setEntityItemStack(is);
+         ItemStack entityItem = ((EntityItem)this.targetEntity).getItem();
+         int am = entityItem.getCount();
+         ItemStack is = this.pech.pickupItem(entityItem);
+         if (!is.isEmpty() && is.getCount() > 0) {
+            ((EntityItem)this.targetEntity).setItem(is);
          } else {
             this.targetEntity.setDead();
          }
 
-         if (is == null || is.stackSize != am) {
-            this.targetEntity.worldObj.playSoundAtEntity(this.targetEntity, "random.pop", 0.2F, ((this.targetEntity.worldObj.rand.nextFloat() - this.targetEntity.worldObj.rand.nextFloat()) * 0.7F + 1.0F) * 2.0F);
+         if (is.isEmpty() || is.getCount() != am) {
+            this.targetEntity.world.playSound(null, this.targetEntity.getPosition(),
+                  SoundEvents.ENTITY_ITEM_PICKUP, SoundCategory.PLAYERS,
+                  0.2F, ((this.targetEntity.world.rand.nextFloat() - this.targetEntity.world.rand.nextFloat()) * 0.7F + 1.0F) * 2.0F);
          }
       }
-
    }
 }

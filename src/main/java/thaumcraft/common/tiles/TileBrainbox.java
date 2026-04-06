@@ -1,18 +1,18 @@
 package thaumcraft.common.tiles;
 
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraftforge.common.util.ForgeDirection;
+import net.minecraft.util.EnumFacing;
 import thaumcraft.api.TileThaumcraft;
 
 public class TileBrainbox extends TileThaumcraft {
-   public ForgeDirection facing;
+   public EnumFacing facing;
 
    public TileBrainbox() {
-      this.facing = ForgeDirection.UNKNOWN;
+      this.facing = EnumFacing.UP;
    }
 
    public void readCustomNBT(NBTTagCompound nbttagcompound) {
-      this.facing = ForgeDirection.getOrientation(nbttagcompound.getByte("facing"));
+      this.facing = EnumFacing.byIndex(nbttagcompound.getByte("facing"));
    }
 
    public void writeCustomNBT(NBTTagCompound nbttagcompound) {

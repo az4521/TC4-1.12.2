@@ -35,7 +35,7 @@ public class WandRodPrimalOnUpdate implements IWandRodOnUpdate {
          }
 
          if (!q.isEmpty()) {
-            ((ItemWandCasting)itemstack.getItem()).addVis(itemstack, q.get(player.worldObj.rand.nextInt(q.size())), 1, true);
+            ((ItemWandCasting)itemstack.getItem()).addVis(itemstack, q.get(player.world.rand.nextInt(q.size())), 1, true);
          }
       }
 

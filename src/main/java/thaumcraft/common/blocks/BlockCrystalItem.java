@@ -4,6 +4,10 @@ import net.minecraft.block.Block;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.EnumActionResult;
+import net.minecraft.util.EnumFacing;
+import net.minecraft.util.EnumHand;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import thaumcraft.common.tiles.TileCrystal;
 
@@ -14,24 +18,33 @@ public class BlockCrystalItem extends ItemBlock {
       this.setHasSubtypes(true);
    }
 
+   @Override
    public int getMetadata(int par1) {
       return par1;
    }
 
-   public String getUnlocalizedName(ItemStack par1ItemStack) {
-      return super.getUnlocalizedName() + "." + par1ItemStack.getItemDamage();
+   @Override
+   public String getTranslationKey(ItemStack par1ItemStack) {
+      return super.getTranslationKey() + "." + par1ItemStack.getItemDamage();
    }
 
-   public boolean placeBlockAt(ItemStack stack, EntityPlayer player, World world, int x, int y, int z, int side, float hitX, float hitY, float hitZ, int metadata) {
-      boolean placed = super.placeBlockAt(stack, player, world, x, y, z, side, hitX, hitY, hitZ, metadata);
-      if (placed && metadata <= 7) {
+   @Override
+   public EnumActionResult onItemUse(EntityPlayer player, World world, BlockPos pos,
+                                     EnumHand hand, EnumFacing facing, float hitX, float hitY, float hitZ) {
+      ItemStack stack = player.getHeldItem(hand);
+      int metadata = this.getMetadata(stack.getMetadata());
+      EnumActionResult result = super.onItemUse(player, world, pos, hand, facing, hitX, hitY, hitZ);
+      if (result == EnumActionResult.SUCCESS && metadata <= 7) {
+         // The block was placed on the face of the clicked block, so the actual placed pos is:
+         BlockPos placedPos = pos.offset(facing);
          try {
-            TileCrystal ts = (TileCrystal)world.getTileEntity(x, y, z);
-            ts.orientation = (short)side;
+            TileCrystal ts = (TileCrystal) world.getTileEntity(placedPos);
+            if (ts != null) {
+               ts.orientation = (short) facing.getIndex();
+            }
          } catch (Exception ignored) {
          }
       }
-
-      return placed;
+      return result;
    }
 }

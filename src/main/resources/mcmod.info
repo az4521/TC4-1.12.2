@@ -1,10 +1,10 @@
 [
 {
-  "modid": "Thaumcraft",
+  "modid": "thaumcraft",
   "name": "Thaumcraft",
   "description": "Adding a touch of magic to Minecraft",
   "version": "1.7.10-4.2.3.5",
-  "mcversion": "1.7.10",
+  "mcversion": "1.12.2",
   "logoFile": "TCLogo.png",
   "url": "http://www.minecraftforum.net/topic/2011841-thaumcraft",
   "updateUrl": "",
@@ -12,6 +12,6 @@
   "credits": "Special thanks to CovertJaguar, Dan Scott, Lorc, bonemouse, Scott Killen, Rorax and chicken_bones",
   "parent": "",
   "screenshots": [],
-  "dependencies": ["Baubles"]
+  "dependencies": ["baubles"]
 }
 ]

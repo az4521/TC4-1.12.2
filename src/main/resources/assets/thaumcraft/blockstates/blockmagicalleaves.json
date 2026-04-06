@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "variant=greatwood": {
+      "model": "thaumcraft:blockmagicalleaves_greatwood"
+    },
+    "variant=silverwood": {
+      "model": "thaumcraft:blockmagicalleaves_silverwood"
+    }
+  }
+}

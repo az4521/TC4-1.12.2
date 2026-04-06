@@ -1,9 +1,9 @@
 package thaumcraft.common.lib.network.playerdata;
 
-import cpw.mods.fml.common.network.ByteBufUtils;
-import cpw.mods.fml.common.network.simpleimpl.IMessage;
-import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
-import cpw.mods.fml.common.network.simpleimpl.MessageContext;
+import net.minecraftforge.fml.common.network.ByteBufUtils;
+import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
+import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
+import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
@@ -20,6 +20,7 @@ import thaumcraft.common.lib.research.ScanManager;
 import thaumcraft.common.tiles.TileResearchTable;
 
 import static tc4tweak.PacketCheck.hasAspect;
+import net.minecraft.util.math.BlockPos;
 
 public class PacketAspectCombinationToServer implements IMessage, IMessageHandler<PacketAspectCombinationToServer,IMessage> {
    private int dim;
@@ -36,7 +37,7 @@ public class PacketAspectCombinationToServer implements IMessage, IMessageHandle
    }
 
    public PacketAspectCombinationToServer(EntityPlayer player, int x, int y, int z, Aspect aspect1, Aspect aspect2, boolean ab1, boolean ab2, boolean ret) {
-      this.dim = player.worldObj.provider.dimensionId;
+      this.dim = player.world.provider.getDimension();
       this.playerid = player.getEntityId();
       this.x = x;
       this.y = y;
@@ -83,34 +84,34 @@ public class PacketAspectCombinationToServer implements IMessage, IMessageHandle
       if (!sanityCheckAspectCombination0(message)) {return null;}
       World world = DimensionManager.getWorld(message.dim);
 
-      if (world != null && (ctx.getServerHandler().playerEntity == null
-              || ctx.getServerHandler().playerEntity.getEntityId() == message.playerid)) {
+      if (world != null && (ctx.getServerHandler().player == null
+              || ctx.getServerHandler().player.getEntityId() == message.playerid)) {
          Entity player = world.getEntityByID(message.playerid);
          if (player instanceof EntityPlayer && message.aspect1 != null) {
             Aspect combo = ResearchManager.getCombinationResult(message.aspect1, message.aspect2);
-            if ((Thaumcraft.proxy.playerKnowledge.getAspectPoolFor(player.getCommandSenderName(), message.aspect1) > 0 || message.ab1)
-                    && (Thaumcraft.proxy.playerKnowledge.getAspectPoolFor(player.getCommandSenderName(), message.aspect2) > 0 || message.ab2)) {
-               TileEntity rt = player.worldObj.getTileEntity(message.x, message.y, message.z);
-               if (Thaumcraft.proxy.playerKnowledge.getAspectPoolFor(player.getCommandSenderName(), message.aspect1) <= 0 && message.ab1) {
+            if ((Thaumcraft.proxy.playerKnowledge.getAspectPoolFor(player.getName(), message.aspect1) > 0 || message.ab1)
+                    && (Thaumcraft.proxy.playerKnowledge.getAspectPoolFor(player.getName(), message.aspect2) > 0 || message.ab2)) {
+               TileEntity rt = player.world.getTileEntity(new BlockPos(message.x, message.y, message.z));
+               if (Thaumcraft.proxy.playerKnowledge.getAspectPoolFor(player.getName(), message.aspect1) <= 0 && message.ab1) {
                   if (rt instanceof TileResearchTable) {
                      ((TileResearchTable)rt).bonusAspects.remove(message.aspect1, 1);
-                     player.worldObj.markBlockForUpdate(message.x, message.y, message.z);
+                     { BlockPos _mp = new BlockPos(message.x, message.y, message.z); net.minecraft.block.state.IBlockState _bs = player.world.getBlockState(_mp); player.world.notifyBlockUpdate(_mp, _bs, _bs, 3); }
                      rt.markDirty();
                   }
                } else {
-                  Thaumcraft.proxy.playerKnowledge.addAspectPool(player.getCommandSenderName(), message.aspect1, (short)-1);
-                  PacketHandler.INSTANCE.sendTo(new PacketAspectPool(message.aspect1.getTag(), (short) 0, Thaumcraft.proxy.playerKnowledge.getAspectPoolFor(player.getCommandSenderName(), message.aspect1)), (EntityPlayerMP)player);
+                  Thaumcraft.proxy.playerKnowledge.addAspectPool(player.getName(), message.aspect1, (short)-1);
+                  PacketHandler.INSTANCE.sendTo(new PacketAspectPool(message.aspect1.getTag(), (short) 0, Thaumcraft.proxy.playerKnowledge.getAspectPoolFor(player.getName(), message.aspect1)), (EntityPlayerMP)player);
                }
 
-               if (Thaumcraft.proxy.playerKnowledge.getAspectPoolFor(player.getCommandSenderName(), message.aspect2) <= 0 && message.ab2) {
+               if (Thaumcraft.proxy.playerKnowledge.getAspectPoolFor(player.getName(), message.aspect2) <= 0 && message.ab2) {
                   if (rt instanceof TileResearchTable) {
                      ((TileResearchTable)rt).bonusAspects.remove(message.aspect2, 1);
-                     player.worldObj.markBlockForUpdate(message.x, message.y, message.z);
+                     { BlockPos _mp = new BlockPos(message.x, message.y, message.z); net.minecraft.block.state.IBlockState _bs = player.world.getBlockState(_mp); player.world.notifyBlockUpdate(_mp, _bs, _bs, 3); }
                      rt.markDirty();
                   }
                } else {
-                  Thaumcraft.proxy.playerKnowledge.addAspectPool(player.getCommandSenderName(), message.aspect2, (short)-1);
-                  PacketHandler.INSTANCE.sendTo(new PacketAspectPool(message.aspect2.getTag(), (short) 0, Thaumcraft.proxy.playerKnowledge.getAspectPoolFor(player.getCommandSenderName(), message.aspect2)), (EntityPlayerMP)player);
+                  Thaumcraft.proxy.playerKnowledge.addAspectPool(player.getName(), message.aspect2, (short)-1);
+                  PacketHandler.INSTANCE.sendTo(new PacketAspectPool(message.aspect2.getTag(), (short) 0, Thaumcraft.proxy.playerKnowledge.getAspectPoolFor(player.getName(), message.aspect2)), (EntityPlayerMP)player);
                }
 
                if (combo != null) {
@@ -130,7 +131,7 @@ public class PacketAspectCombinationToServer implements IMessage, IMessageHandle
    public TileResearchTable table(){
       WorldServer worldServer = DimensionManager.getWorld(dim);
       if (worldServer == null) {return null;}
-      TileEntity probablyTable = worldServer.getTileEntity(x, y, z);
+      TileEntity probablyTable = worldServer.getTileEntity(new BlockPos(x, y, z));
       if (probablyTable instanceof TileResearchTable) {
          return (TileResearchTable)probablyTable;
       }

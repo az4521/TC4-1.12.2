@@ -1,272 +1,258 @@
 package thaumcraft.common.blocks;
 
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
-import net.minecraft.block.Block;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraft.block.BlockContainer;
 import net.minecraft.block.material.Material;
-import net.minecraft.client.renderer.texture.IIconRegister;
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.EnumCreatureType;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.world.Explosion;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.AxisAlignedBB;
-import net.minecraft.util.IIcon;
-import net.minecraft.util.MathHelper;
+import net.minecraft.util.EnumFacing;
+import net.minecraft.util.EnumHand;
+import net.minecraft.util.NonNullList;
+import net.minecraft.util.math.BlockPos;
+
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 import thaumcraft.client.fx.ParticleEngine;
 import thaumcraft.client.fx.particles.FXSpark;
 import thaumcraft.common.Thaumcraft;
-import thaumcraft.common.config.ConfigBlocks;
 import thaumcraft.common.config.ConfigItems;
 import thaumcraft.common.items.ItemEldritchObject;
 import thaumcraft.common.tiles.*;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Random;
 
 public class BlockEldritch extends BlockContainer {
-   public IIcon icon = null;
-   public IIcon[] insIcon = new IIcon[9];
+   public static final net.minecraft.block.properties.PropertyInteger META =
+         net.minecraft.block.properties.PropertyInteger.create("meta", 0, 15);
+
+   @Override
+   protected net.minecraft.block.state.BlockStateContainer createBlockState() {
+      return new net.minecraft.block.state.BlockStateContainer(this, META);
+   }
+
+   @Override
+   public net.minecraft.block.state.IBlockState getStateFromMeta(int meta) {
+      return this.getDefaultState().withProperty(META, meta);
+   }
+
+   @Override
+   public int getMetaFromState(net.minecraft.block.state.IBlockState state) {
+      return state.getValue(META);
+   }
+
    private Random rand = new Random();
 
    public BlockEldritch() {
-      super(Material.rock);
+      super(Material.ROCK);
       this.setResistance(20000.0F);
       this.setHardness(50.0F);
-      this.setStepSound(soundTypeStone);
+      // setStepSound removed in 1.12.2 — sound is now data-driven
       this.setTickRandomly(true);
-      this.setBlockBounds(0.0F, 0.0F, 0.0F, 1.0F, 1.0F, 1.0F);
+      // setBlockBounds removed in 1.12.2 — full cube is the default
       this.setLightOpacity(0);
       this.setCreativeTab(Thaumcraft.tabTC);
    }
 
+   // registerBlockIcons removed — textures are handled by JSON models in 1.12.2
+   // getIcon removed — textures are handled by JSON models in 1.12.2
+
+   @Override
    @SideOnly(Side.CLIENT)
-   public void registerBlockIcons(IIconRegister ir) {
-      this.icon = ir.registerIcon("thaumcraft:obsidiantile");
-      this.insIcon[0] = ir.registerIcon("thaumcraft:es_i_1");
-      this.insIcon[1] = ir.registerIcon("thaumcraft:es_i_2");
-      this.insIcon[2] = ir.registerIcon("thaumcraft:deco_1");
-      this.insIcon[3] = ir.registerIcon("thaumcraft:deco_2");
-      this.insIcon[4] = ir.registerIcon("thaumcraft:deco_3");
-      this.insIcon[5] = ir.registerIcon("thaumcraft:es_5");
-      this.insIcon[6] = ir.registerIcon("thaumcraft:es_6");
-      this.insIcon[7] = ir.registerIcon("thaumcraft:es_7");
-      this.insIcon[8] = ir.registerIcon("thaumcraft:es_8");
+   public void getSubBlocks(CreativeTabs tab, NonNullList<ItemStack> list) {
+      list.add(new ItemStack(this, 1, 4));
    }
 
-   @SideOnly(Side.CLIENT)
-   public IIcon getIcon(int side, int meta) {
-      return meta == 4 ? this.insIcon[0] : (meta == 5 ? this.insIcon[1] : (meta == 6 ? this.insIcon[2] : (meta == 7 ? this.insIcon[4] : (meta == 8 ? this.insIcon[3] : (meta == 9 ? ConfigBlocks.blockCosmeticSolid.getIcon(side, 14) : (meta == 10 ? this.insIcon[5] : this.icon))))));
+   @Override
+   public int getLightValue(IBlockState state, IBlockAccess world, BlockPos pos) {
+      int meta = this.getMetaFromState(state);
+      if (meta == 4 || meta == 5 || meta == 7) return 12;
+      if (meta == 6 || meta == 8) return 5;
+      if (meta == 9) return 4;
+      if (meta == 10) return 0;
+      return 8;
    }
 
-   @SideOnly(Side.CLIENT)
-   public IIcon getIcon(IBlockAccess ba, int x, int y, int z, int side) {
-      int md = ba.getBlockMetadata(x, y, z);
-      if (md == 8) {
-         TileEntity te = ba.getTileEntity(x, y, z);
-         return te instanceof TileEldritchLock && ((TileEldritchLock)te).getFacing() == side ? this.insIcon[3] : this.insIcon[4];
-      } else if (md == 10) {
-         String l = x + "" + y + z;
-         Random r1 = new Random(Math.abs(l.hashCode() * 100) + 1);
-         int i = r1.nextInt(12345 + side) % 4;
-         return this.insIcon[5 + i];
-      } else {
-         return super.getIcon(ba, x, y, z, side);
-      }
-   }
+   // canCreatureSpawn — use canCreatureSpawn(IBlockState, IBlockAccess, BlockPos, EnumCreatureType) in 1.12.2 if needed
 
-   @SideOnly(Side.CLIENT)
-   public void getSubBlocks(Item par1, CreativeTabs par2CreativeTabs, List par3List) {
-      par3List.add(new ItemStack(par1, 1, 4));
-   }
+   // setBlockBoundsBasedOnState removed — use getBoundingBox(IBlockState, IBlockAccess, BlockPos) in 1.12.2
+   // addCollisionBoxesToList — only override if non-standard bounds; full cube is default
 
-   public int getLightValue(IBlockAccess world, int x, int y, int z) {
-      int meta = world.getBlockMetadata(x, y, z);
-      if (meta != 4 && meta != 5 && meta != 7) {
-         if (meta != 6 && meta != 8) {
-            if (meta == 9) {
-               return 4;
-            } else {
-               return meta == 10 ? 0 : 8;
-            }
-         } else {
-            return 5;
-         }
-      } else {
-         return 12;
-      }
-   }
-
-   public boolean canCreatureSpawn(EnumCreatureType type, IBlockAccess world, int x, int y, int z) {
-      return false;
-   }
-
-   public void setBlockBoundsBasedOnState(IBlockAccess world, int i, int j, int k) {
-      this.setBlockBounds(0.0F, 0.0F, 0.0F, 1.0F, 1.0F, 1.0F);
-      super.setBlockBoundsBasedOnState(world, i, j, k);
-   }
-
-   public void addCollisionBoxesToList(World world, int i, int j, int k, AxisAlignedBB axisalignedbb, List arraylist, Entity par7Entity) {
-      this.setBlockBounds(0.0F, 0.0F, 0.0F, 1.0F, 1.0F, 1.0F);
-      super.addCollisionBoxesToList(world, i, j, k, axisalignedbb, arraylist, par7Entity);
-   }
-
-   public boolean hasTileEntity(int metadata) {
+   @Override
+   public boolean hasTileEntity(IBlockState state) {
+      int metadata = this.getMetaFromState(state);
       return metadata == 0 || metadata == 1 || metadata == 3 || metadata == 8 || metadata == 9 || metadata == 10;
    }
 
-   public TileEntity createTileEntity(World world, int metadata) {
-      if (metadata == 0) {
-         return new TileEldritchAltar();
-      } else if (metadata == 1) {
-         return new TileEldritchObelisk();
-      } else if (metadata == 3) {
-         return new TileEldritchCap();
-      } else if (metadata == 8) {
-         return new TileEldritchLock();
-      } else if (metadata == 9) {
-         return new TileEldritchCrabSpawner();
-      } else {
-         return metadata == 10 ? new TileEldritchTrap() : null;
-      }
+   @Override
+   public TileEntity createTileEntity(World world, IBlockState state) {
+      int metadata = this.getMetaFromState(state);
+      if (metadata == 0) return new TileEldritchAltar();
+      if (metadata == 1) return new TileEldritchObelisk();
+      if (metadata == 3) return new TileEldritchCap();
+      if (metadata == 8) return new TileEldritchLock();
+      if (metadata == 9) return new TileEldritchCrabSpawner();
+      if (metadata == 10) return new TileEldritchTrap();
+      return null;
    }
 
-   public int getRenderType() {
-      return ConfigBlocks.blockEldritchRI;
+   @Override
+   public TileEntity createNewTileEntity(World worldIn, int meta) {
+      return null;
    }
 
-   public boolean renderAsNormalBlock() {
+   // getRenderType() removed — defaults to MODEL in 1.12.2
+   // renderAsNormalBlock() removed in 1.12.2
+
+   @Override
+   public boolean isOpaqueCube(IBlockState state) {
       return false;
    }
 
-   public boolean isOpaqueCube() {
+   @Override
+   public boolean isFullCube(IBlockState state) {
       return false;
    }
 
-   public Item getItemDropped(int md, Random rand, int fortune) {
+   @Override
+   public Item getItemDropped(IBlockState state, Random rand, int fortune) {
+      int md = this.getMetaFromState(state);
       return md == 4 ? Item.getItemFromBlock(this) : (md == 5 ? ConfigItems.itemResource : Item.getItemById(0));
    }
 
-   public int damageDropped(int metadata) {
+   @Override
+   public int damageDropped(IBlockState state) {
+      int metadata = this.getMetaFromState(state);
       return metadata == 2 ? 1 : metadata;
    }
 
-   public int getExpDrop(IBlockAccess world, int metadata, int fortune) {
-      if (metadata != 5 && metadata != 10) {
-         return metadata == 9 ? MathHelper.getRandomIntegerInRange(this.rand, 6, 10) : super.getExpDrop(world, metadata, fortune);
-      } else {
-         return MathHelper.getRandomIntegerInRange(this.rand, 1, 4);
-      }
+   public int getExpDrop(IBlockAccess world, IBlockState state, int fortune) {
+      int metadata = this.getMetaFromState(state);
+      if (metadata == 5 || metadata == 10) return this.rand.nextInt(4) + 1;
+      if (metadata == 9) return this.rand.nextInt(5) + 6;
+      return 0;
    }
 
-   public ArrayList getDrops(World world, int x, int y, int z, int md, int fortune) {
+   @Override
+   public java.util.List<ItemStack> getDrops(IBlockAccess world, BlockPos pos, IBlockState state, int fortune) {
       ArrayList<ItemStack> ret = new ArrayList<>();
+      int md = this.getMetaFromState(state);
       if (md == 5) {
          ret.add(new ItemStack(ConfigItems.itemResource, 1, 9));
          return ret;
       } else {
-         return super.getDrops(world, x, y, z, md, fortune);
+         return super.getDrops(world, pos, state, fortune);
       }
    }
 
-   public void breakBlock(World world, int x, int y, int z, Block block, int meta) {
+   @Override
+   public void breakBlock(World world, BlockPos pos, IBlockState state) {
+      int meta = this.getMetaFromState(state);
+      int x = pos.getX(), y = pos.getY(), z = pos.getZ();
       if (!world.isRemote && meta < 4) {
-         for(int xx = x - 3; xx <= x + 3; ++xx) {
-            for(int yy = y - 2; yy <= y + 2; ++yy) {
-               for(int zz = z - 3; zz <= z + 3; ++zz) {
-                  if (world.getBlock(xx, yy, zz) == this && world.getBlockMetadata(xx, yy, zz) < 4) {
-                     world.setBlockToAir(xx, yy, zz);
+         for (int xx = x - 3; xx <= x + 3; ++xx) {
+            for (int yy = y - 2; yy <= y + 2; ++yy) {
+               for (int zz = z - 3; zz <= z + 3; ++zz) {
+                  BlockPos checkPos = new BlockPos(xx, yy, zz);
+                  IBlockState checkState = world.getBlockState(checkPos);
+                  if (checkState.getBlock() == this && this.getMetaFromState(checkState) < 4) {
+                     world.setBlockToAir(checkPos);
                   }
                }
             }
          }
-
-         world.createExplosion(null, (double)x + (double)0.5F, (double)y + (double)0.5F, (double)z + (double)0.5F, 1.0F, false);
+         world.createExplosion(null, x + 0.5, y + 0.5, z + 0.5, 1.0F, false);
       }
-
-      super.breakBlock(world, x, y, z, block, meta);
+      super.breakBlock(world, pos, state);
    }
 
-   public float getBlockHardness(World world, int x, int y, int z) {
-      int meta = world.getBlockMetadata(x, y, z);
-      if (meta != 4 && meta != 5) {
-         if (meta == 6) {
-            return 4.0F;
-         } else if (meta != 7 && meta != 8) {
-            return meta != 9 && meta != 10 ? super.getBlockHardness(world, x, y, z) : 15.0F;
-         } else {
-            return -1.0F;
-         }
-      } else {
-         return 2.0F;
-      }
+   @Override
+   public float getBlockHardness(IBlockState state, World world, BlockPos pos) {
+      int meta = this.getMetaFromState(state);
+      if (meta == 4 || meta == 5) return 2.0F;
+      if (meta == 6) return 4.0F;
+      if (meta == 7 || meta == 8) return -1.0F;
+      if (meta == 9 || meta == 10) return 15.0F;
+      return super.getBlockHardness(state, world, pos);
    }
 
-   public float getExplosionResistance(Entity par1Entity, World world, int x, int y, int z, double explosionX, double explosionY, double explosionZ) {
-      int meta = world.getBlockMetadata(x, y, z);
-      if (meta != 4 && meta != 5 && meta != 9 && meta != 10) {
-         if (meta == 6) {
-            return 100.0F;
-         } else {
-            return meta != 7 && meta != 8 ? super.getExplosionResistance(par1Entity, world, x, y, z, explosionX, explosionY, explosionZ) : Float.MAX_VALUE;
-         }
-      } else {
-         return 30.0F;
-      }
+   @Override
+   public float getExplosionResistance(World world, BlockPos pos, Entity exploder, Explosion explosion) {
+      IBlockState state = world.getBlockState(pos);
+      int meta = this.getMetaFromState(state);
+      if (meta == 4 || meta == 5 || meta == 9 || meta == 10) return 30.0F;
+      if (meta == 6) return 100.0F;
+      if (meta == 7 || meta == 8) return Float.MAX_VALUE;
+      return super.getExplosionResistance(world, pos, exploder, explosion);
    }
 
-   public boolean onBlockActivated(World world, int x, int y, int z, EntityPlayer player, int side, float par7, float par8, float par9) {
-      int metadata = world.getBlockMetadata(x, y, z);
-      if (metadata == 0 && !world.isRemote && !player.isSneaking() && player.getHeldItem() != null && player.getHeldItem().getItem() instanceof ItemEldritchObject && player.getHeldItem().getItemDamage() == 0) {
-         TileEntity te = world.getTileEntity(x, y, z);
+   @Override
+   public boolean onBlockActivated(World world, BlockPos pos, IBlockState state, EntityPlayer player,
+                                   EnumHand hand, EnumFacing facing, float hitX, float hitY, float hitZ) {
+      int metadata = this.getMetaFromState(state);
+      ItemStack heldItem = player.getHeldItem(hand);
+
+      if (metadata == 0 && !world.isRemote && !player.isSneaking()
+            && !heldItem.isEmpty() && heldItem.getItem() instanceof ItemEldritchObject
+            && heldItem.getItemDamage() == 0) {
+         TileEntity te = world.getTileEntity(pos);
          if (te instanceof TileEldritchAltar) {
-            TileEldritchAltar tile = (TileEldritchAltar)te;
+            TileEldritchAltar tile = (TileEldritchAltar) te;
             if (tile.getEyes() < 4) {
                if (tile.getEyes() >= 2) {
                   tile.setSpawner(true);
-                  tile.setSpawnType((byte)1);
+                  tile.setSpawnType((byte) 1);
                }
-
-               tile.setEyes((byte)(tile.getEyes() + 1));
+               tile.setEyes((byte) (tile.getEyes() + 1));
                tile.checkForMaze();
-               --player.getHeldItem().stackSize;
+               heldItem.shrink(1);
                tile.markDirty();
-               world.markBlockForUpdate(x, y, z);
-               world.playSoundEffect(x, y, z, "thaumcraft:crystal", 0.2F, 1.0F);
+               { net.minecraft.block.state.IBlockState _bs = world.getBlockState(pos); world.notifyBlockUpdate(pos, _bs, _bs, 3); }
+               world.playSound(null, pos,
+                     new net.minecraft.util.SoundEvent(new net.minecraft.util.ResourceLocation("thaumcraft", "crystal")),
+                     net.minecraft.util.SoundCategory.BLOCKS, 0.2F, 1.0F);
             }
          }
       }
 
-      if (metadata == 8 && player.inventory.getCurrentItem() != null && player.inventory.getCurrentItem().getItem() instanceof ItemEldritchObject && player.inventory.getCurrentItem().getItemDamage() == 2) {
-         TileEntity te = world.getTileEntity(x, y, z);
+      ItemStack currentItem = player.inventory.getCurrentItem();
+      if (metadata == 8 && !currentItem.isEmpty()
+            && currentItem.getItem() instanceof ItemEldritchObject
+            && currentItem.getItemDamage() == 2) {
+         TileEntity te = world.getTileEntity(pos);
          if (te instanceof TileEldritchLock && ((TileEldritchLock) te).count < 0) {
-            ((TileEldritchLock)te).count = 0;
-            world.markBlockForUpdate(x, y, z);
+            ((TileEldritchLock) te).count = 0;
+            { net.minecraft.block.state.IBlockState _bs = world.getBlockState(pos); world.notifyBlockUpdate(pos, _bs, _bs, 3); }
             te.markDirty();
-            --player.getHeldItem().stackSize;
-            world.playSoundEffect(x, y, z, "thaumcraft:runicShieldCharge", 1.0F, 1.0F);
+            player.getHeldItem(hand).shrink(1);
+            world.playSound(null, pos,
+                  new net.minecraft.util.SoundEvent(new net.minecraft.util.ResourceLocation("thaumcraft", "runicShieldCharge")),
+                  net.minecraft.util.SoundCategory.BLOCKS, 1.0F, 1.0F);
          }
       }
 
-      return super.onBlockActivated(world, x, y, z, player, side, par7, par8, par9);
+      return super.onBlockActivated(world, pos, state, player, hand, facing, hitX, hitY, hitZ);
    }
 
+   @Override
    @SideOnly(Side.CLIENT)
-   public void randomDisplayTick(World w, int i, int j, int k, Random r) {
-      int md = w.getBlockMetadata(i, j, k);
+   public void randomDisplayTick(IBlockState state, World w, BlockPos pos, Random r) {
+      int md = this.getMetaFromState(state);
+      int i = pos.getX(), j = pos.getY(), k = pos.getZ();
       if (md == 8) {
-         TileEntity te = w.getTileEntity(i, j, k);
+         TileEntity te = w.getTileEntity(pos);
          if (!(te instanceof TileEldritchLock) || ((TileEldritchLock) te).count < 0) {
             return;
          }
-
-         FXSpark ef = new FXSpark(w, (float)i + w.rand.nextFloat(), (float)j + w.rand.nextFloat(), (float)k + w.rand.nextFloat(), 0.5F);
+         FXSpark ef = new FXSpark(w,
+               i + w.rand.nextFloat(), j + w.rand.nextFloat(), k + w.rand.nextFloat(), 0.5F);
          ef.setRBGColorF(0.65F + w.rand.nextFloat() * 0.1F, 1.0F, 1.0F);
          ef.setAlphaF(0.8F);
          ParticleEngine.instance.addEffect(w, ef);
@@ -274,14 +260,20 @@ public class BlockEldritch extends BlockContainer {
          int x = i + r.nextInt(2) - r.nextInt(2);
          int y = j + r.nextInt(2) - r.nextInt(2);
          int z = k + r.nextInt(2) - r.nextInt(2);
-         if (w.isAirBlock(x, y, z)) {
-            Thaumcraft.proxy.blockRunes(w, (float)x + r.nextFloat(), (float)y + r.nextFloat(), (float)z + r.nextFloat(), 0.5F + r.nextFloat() * 0.5F, r.nextFloat() * 0.3F, 0.9F + r.nextFloat() * 0.1F, 16 + r.nextInt(4), 0.0F);
+         if (w.isAirBlock(new BlockPos(x, y, z))) {
+            Thaumcraft.proxy.blockRunes(w,
+                  x + r.nextFloat(), y + r.nextFloat(), z + r.nextFloat(),
+                  0.5F + r.nextFloat() * 0.5F, r.nextFloat() * 0.3F,
+                  0.9F + r.nextFloat() * 0.1F, 16 + r.nextInt(4), 0.0F);
          }
       }
-
    }
 
-   public TileEntity createNewTileEntity(World p_149915_1_, int p_149915_2_) {
-      return null;
+   @Override
+   public net.minecraft.util.EnumBlockRenderType getRenderType(net.minecraft.block.state.IBlockState state) {
+      int meta = state.getValue(META);
+      // Solid blocks (4-6,9,10) use block model; TESR blocks (0-3,7,8) use INVISIBLE
+      if (meta >= 4 && meta <= 6 || meta == 9 || meta == 10) return net.minecraft.util.EnumBlockRenderType.MODEL;
+      return net.minecraft.util.EnumBlockRenderType.INVISIBLE;
    }
 }

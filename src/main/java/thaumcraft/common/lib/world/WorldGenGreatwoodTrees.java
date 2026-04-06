@@ -6,19 +6,19 @@ import net.minecraft.block.BlockSapling;
 import net.minecraft.init.Blocks;
 import net.minecraft.tileentity.TileEntityChest;
 import net.minecraft.tileentity.TileEntityMobSpawner;
-import net.minecraft.util.MathHelper;
-import net.minecraft.util.WeightedRandomChestContent;
+import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
 import net.minecraft.world.gen.feature.WorldGenAbstractTree;
-import net.minecraftforge.common.ChestGenHooks;
-import net.minecraftforge.common.util.ForgeDirection;
+import net.minecraft.util.EnumFacing;
 import thaumcraft.common.config.ConfigBlocks;
 import thaumcraft.common.lib.utils.BlockUtils;
+import net.minecraft.util.math.BlockPos;
 
 public class WorldGenGreatwoodTrees extends WorldGenAbstractTree {
    static final byte[] otherCoordPairs = new byte[]{2, 0, 0, 1, 2, 1};
    Random rand = new Random();
-   World worldObj;
+   World world;
    int[] basePos = new int[]{0, 0, 0};
    int heightLimit = 0;
    int height;
@@ -65,8 +65,8 @@ public class WorldGenGreatwoodTrees extends WorldGenAbstractTree {
               for (double var9 = 0.5F; var7 < var1; ++var7) {
                   double var11 = this.scaleWidth * (double) var8 * ((double) this.rand.nextFloat() + 0.328);
                   double var13 = (double) this.rand.nextFloat() * (double) 2.0F * Math.PI;
-                  int var15 = MathHelper.floor_double(var11 * Math.sin(var13) + (double) this.basePos[0] + var9);
-                  int var16 = MathHelper.floor_double(var11 * Math.cos(var13) + (double) this.basePos[2] + var9);
+                  int var15 = MathHelper.floor(var11 * Math.sin(var13) + (double) this.basePos[0] + var9);
+                  int var16 = MathHelper.floor(var11 * Math.cos(var13) + (double) this.basePos[2] + var9);
                   int[] var17 = new int[]{var15, var3, var16};
                   int[] var18 = new int[]{var15, var3 + this.leafDistanceLimit, var16};
                   if (this.checkBlockLine(var17, var18) == -1) {
@@ -116,9 +116,10 @@ public class WorldGenGreatwoodTrees extends WorldGenAbstractTree {
              if (!(var15 > (double) (par4 * par4))) {
                  try {
                      var11[var9] = var10[var9] + var13;
-                     Block block = this.worldObj.getBlock(var11[0], var11[1], var11[2]);
-                     if ((block == Blocks.air || block == ConfigBlocks.blockMagicalLeaves) && (block == null || block.canBeReplacedByLeaves(this.worldObj, var11[0], var11[1], var11[2]))) {
-                         this.setBlockAndNotifyAdequately(this.worldObj, var11[0], var11[1], var11[2], par6, 0);
+                     BlockPos bpos = new BlockPos(var11[0], var11[1], var11[2]);
+                     Block block = this.world.getBlockState(bpos).getBlock();
+                     if ((block == Blocks.AIR || block == ConfigBlocks.blockMagicalLeaves) && block.canBeReplacedByLeaves(this.world.getBlockState(bpos), this.world, bpos)) {
+                         this.setBlockAndNotifyAdequately(this.world, bpos, par6.getDefaultState());
                      }
                  } catch (Exception ignored) {
                  }
@@ -192,9 +193,9 @@ public class WorldGenGreatwoodTrees extends WorldGenAbstractTree {
          int var15 = 0;
 
          for(int var16 = var4[var6] + var9; var15 != var16; var15 += var9) {
-            var14[var6] = MathHelper.floor_double((double)(par1ArrayOfInteger[var6] + var15) + (double)0.5F);
-            var14[var7] = MathHelper.floor_double((double)par1ArrayOfInteger[var7] + (double)var15 * var10 + (double)0.5F);
-            var14[var8] = MathHelper.floor_double((double)par1ArrayOfInteger[var8] + (double)var15 * var12 + (double)0.5F);
+            var14[var6] = MathHelper.floor((double)(par1ArrayOfInteger[var6] + var15) + (double)0.5F);
+            var14[var7] = MathHelper.floor((double)par1ArrayOfInteger[var7] + (double)var15 * var10 + (double)0.5F);
+            var14[var8] = MathHelper.floor((double)par1ArrayOfInteger[var8] + (double)var15 * var12 + (double)0.5F);
             byte var17 = 0;
             int var18 = Math.abs(var14[0] - par1ArrayOfInteger[0]);
             int var19 = Math.abs(var14[2] - par1ArrayOfInteger[2]);
@@ -207,7 +208,7 @@ public class WorldGenGreatwoodTrees extends WorldGenAbstractTree {
                }
             }
 
-            this.setBlockAndNotifyAdequately(this.worldObj, var14[0], var14[1], var14[2], par3, var17);
+            this.setBlockAndNotifyAdequately(this.world, new BlockPos(var14[0], var14[1], var14[2]), par3.getStateFromMeta(var17));
          }
       }
 
@@ -299,12 +300,12 @@ public class WorldGenGreatwoodTrees extends WorldGenAbstractTree {
          int var15;
          for(var15 = var3[var5] + var8; var14 != var15; var14 += var8) {
             var13[var5] = par1ArrayOfInteger[var5] + var14;
-            var13[var6] = MathHelper.floor_double((double)par1ArrayOfInteger[var6] + (double)var14 * var9);
-            var13[var7] = MathHelper.floor_double((double)par1ArrayOfInteger[var7] + (double)var14 * var11);
+            var13[var6] = MathHelper.floor((double)par1ArrayOfInteger[var6] + (double)var14 * var9);
+            var13[var7] = MathHelper.floor((double)par1ArrayOfInteger[var7] + (double)var14 * var11);
 
             try {
-               Block var16 = this.worldObj.getBlock(var13[0], var13[1], var13[2]);
-               if (var16 != Blocks.air && var16 != ConfigBlocks.blockMagicalLeaves) {
+               Block var16 = this.world.getBlockState(new BlockPos(var13[0], var13[1], var13[2])).getBlock();
+               if (var16 != Blocks.AIR && var16 != ConfigBlocks.blockMagicalLeaves) {
                   break;
                }
             } catch (Exception ignored) {
@@ -320,8 +321,9 @@ public class WorldGenGreatwoodTrees extends WorldGenAbstractTree {
       int[] var2 = new int[]{this.basePos[0] + x, this.basePos[1] + this.heightLimit - 1, this.basePos[2] + z};
 
       try {
-         Block var3 = this.worldObj.getBlock(this.basePos[0] + x, this.basePos[1] - 1, this.basePos[2] + z);
-         boolean isSoil = var3.canSustainPlant(this.worldObj, this.basePos[0] + x, this.basePos[1] - 1, this.basePos[2] + z, ForgeDirection.UP, (BlockSapling)Blocks.sapling);
+         BlockPos soilPos = new BlockPos(this.basePos[0] + x, this.basePos[1] - 1, this.basePos[2] + z);
+         Block var3 = this.world.getBlockState(soilPos).getBlock();
+         boolean isSoil = var3.canSustainPlant(this.world.getBlockState(soilPos), this.world, soilPos, EnumFacing.UP, (BlockSapling)Blocks.SAPLING);
          if (!isSoil) {
             return false;
          } else {
@@ -340,12 +342,11 @@ public class WorldGenGreatwoodTrees extends WorldGenAbstractTree {
       }
    }
 
-   @Override
    public void setScale(double par1, double par3, double par5) {
    }
 
    public boolean generate(World par1World, Random par2Random, int par3, int par4, int par5, boolean spiders) {
-      this.worldObj = par1World;
+      this.world = par1World;
       long var6 = par2Random.nextLong();
       this.rand.setSeed(var6);
       this.basePos[0] = par3;
@@ -394,26 +395,23 @@ public class WorldGenGreatwoodTrees extends WorldGenAbstractTree {
          this.generateLeafNodeBases();
          this.generateTrunk();
          if (spiders) {
-            this.worldObj.setBlock(par3, par4 - 1, par5, Blocks.mob_spawner, 0, 3);
-            TileEntityMobSpawner var14 = (TileEntityMobSpawner)par1World.getTileEntity(par3, par4 - 1, par5);
+            par1World.setBlockState(new BlockPos(par3, par4 - 1, par5), Blocks.MOB_SPAWNER.getDefaultState(), 3);
+            TileEntityMobSpawner var14 = (TileEntityMobSpawner)par1World.getTileEntity(new BlockPos(par3, par4 - 1, par5));
             if (var14 != null) {
-               var14.func_145881_a().setEntityName("CaveSpider");
+               var14.getSpawnerBaseLogic().setEntityId(new ResourceLocation("minecraft", "cave_spider"));
 
                for(int a = 0; a < 50; ++a) {
                   int xx = par3 - 7 + par2Random.nextInt(14);
                   int yy = par4 + par2Random.nextInt(10);
                   int zz = par5 - 7 + par2Random.nextInt(14);
-                  if (par1World.isAirBlock(xx, yy, zz) && (BlockUtils.isBlockTouching(par1World, xx, yy, zz, ConfigBlocks.blockMagicalLeaves) || BlockUtils.isBlockTouching(par1World, xx, yy, zz, ConfigBlocks.blockMagicalLog))) {
-                     this.worldObj.setBlock(xx, yy, zz, Blocks.web, 0, 3);
+                  if (par1World.isAirBlock(new BlockPos(xx, yy, zz)) && (BlockUtils.isBlockTouching(par1World, xx, yy, zz, ConfigBlocks.blockMagicalLeaves) || BlockUtils.isBlockTouching(par1World, xx, yy, zz, ConfigBlocks.blockMagicalLog))) {
+                     par1World.setBlockState(new BlockPos(xx, yy, zz), Blocks.WEB.getDefaultState(), 3);
                   }
                }
 
-               par1World.setBlock(par3, par4 - 2, par5, Blocks.chest, 0, 3);
-               TileEntityChest var16 = (TileEntityChest)par1World.getTileEntity(par3, par4 - 2, par5);
-               if (var16 != null) {
-                  ChestGenHooks loot = ChestGenHooks.getInfo("dungeonChest");
-                  WeightedRandomChestContent.generateChestContents(this.rand, loot.getItems(this.rand), var16, loot.getCount(this.rand));
-               }
+               par1World.setBlockState(new BlockPos(par3, par4 - 2, par5), Blocks.CHEST.getDefaultState(), 3);
+               // TileEntityChest var16 = (TileEntityChest)par1World.getTileEntity(new BlockPos(par3, par4 - 2, par5));
+               // if (var16 != null) { ... loot table fill ... }
             }
          }
 
@@ -421,8 +419,12 @@ public class WorldGenGreatwoodTrees extends WorldGenAbstractTree {
       }
    }
 
-   @Override
-   public boolean generate(World var1, Random var2, int var3, int var4, int var5) {
+   private boolean doGenerate(World var1, Random var2, int var3, int var4, int var5) {
       return this.generate(var1, var2, var3, var4, var5, var2.nextInt(8) == 0);
+   }
+
+   @Override
+   public boolean generate(World var1, Random var2, BlockPos pos) {
+      return this.doGenerate(var1, var2, pos.getX(), pos.getY(), pos.getZ());
    }
 }

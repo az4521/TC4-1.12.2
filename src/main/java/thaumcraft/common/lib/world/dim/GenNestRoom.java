@@ -1,8 +1,9 @@
 package thaumcraft.common.lib.world.dim;
 
 import java.util.Random;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
-import net.minecraftforge.common.util.ForgeDirection;
+import net.minecraft.util.EnumFacing;
 import thaumcraft.common.config.ConfigBlocks;
 import thaumcraft.common.tiles.TileCrystal;
 
@@ -55,10 +56,10 @@ public class GenNestRoom extends GenCommon {
             placeBlock(world, x + a, y + 9, z + b, 21, cell);
             if (random.nextBoolean()) {
                placeBlock(world, x + a, y + 8, z + b, 21, cell);
-            } else if (random.nextBoolean() && world.isAirBlock(x + a, y + 8, z + b)) {
-               world.setBlock(x + a, y + 8, z + b, ConfigBlocks.blockCrystal, 7, 3);
-               TileCrystal te = (TileCrystal)world.getTileEntity(x + a, y + 8, z + b);
-               te.orientation = (short)ForgeDirection.DOWN.ordinal();
+            } else if (random.nextBoolean() && world.isAirBlock(new BlockPos(x + a, y + 8, z + b))) {
+        world.setBlockState(new net.minecraft.util.math.BlockPos(x + a, y + 8, z + b), (ConfigBlocks.blockCrystal).getStateFromMeta(7), 3);
+               TileCrystal te = (TileCrystal)world.getTileEntity(new BlockPos(x + a, y + 8, z + b));
+               te.orientation = (short)EnumFacing.DOWN.ordinal();
             }
          }
       }
@@ -117,10 +118,10 @@ public class GenNestRoom extends GenCommon {
 
       for(int a = -5; a <= 5; ++a) {
          for(int b = -5; b <= 5; ++b) {
-            if (random.nextFloat() < 0.15F && world.isAirBlock(x + 8 + a, y + 2, z + 8 + b)) {
+            if (random.nextFloat() < 0.15F && world.isAirBlock(new BlockPos(x + 8 + a, y + 2, z + 8 + b))) {
                float rr = random.nextFloat();
                int md = rr < 0.15F ? 2 : (rr < 0.4F ? 1 : 0);
-               world.setBlock(x + 8 + a, y + 2, z + 8 + b, random.nextFloat() < 0.2F ? ConfigBlocks.blockLootCrate : ConfigBlocks.blockLootUrn, md, 3);
+        world.setBlockState(new net.minecraft.util.math.BlockPos(x + 8 + a, y + 2, z + 8 + b), (random.nextFloat() < 0.2F ? ConfigBlocks.blockLootCrate : ConfigBlocks.blockLootUrn).getStateFromMeta(md), 3);
             }
          }
       }

@@ -27,7 +27,7 @@ public class TileOwned extends TileThaumcraft {
 
    }
 
-   public void writeToNBT(NBTTagCompound nbttagcompound) {
+   public NBTTagCompound writeToNBT(NBTTagCompound nbttagcompound) {
       super.writeToNBT(nbttagcompound);
       NBTTagList var2 = new NBTTagList();
 
@@ -38,6 +38,7 @@ public class TileOwned extends TileThaumcraft {
        }
 
       nbttagcompound.setTag("access", var2);
+      return nbttagcompound;
    }
 
    public void readCustomNBT(NBTTagCompound nbttagcompound) {

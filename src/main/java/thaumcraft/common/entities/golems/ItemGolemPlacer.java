@@ -1,30 +1,33 @@
 package thaumcraft.common.entities.golems;
 
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 
 import java.util.Arrays;
 import java.util.List;
 import net.minecraft.block.Block;
-import net.minecraft.client.renderer.texture.IIconRegister;
+import thaumcraft.client.renderers.compat.IIconRegister;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagList;
-import net.minecraft.util.Facing;
-import net.minecraft.util.IIcon;
-import net.minecraft.util.MathHelper;
-import net.minecraft.util.StatCollector;
+import net.minecraft.util.EnumActionResult;
+import net.minecraft.util.EnumFacing;
+import net.minecraft.util.EnumHand;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.text.translation.I18n;
 import net.minecraft.world.World;
 import thaumcraft.common.Thaumcraft;
+import net.minecraft.util.math.BlockPos;
 
 public class ItemGolemPlacer extends Item {
-   public IIcon[] iconGolem = new IIcon[8];
-   public IIcon iconAdvanced;
-   public IIcon iconCore;
-   private IIcon iconBlank;
+   public TextureAtlasSprite[] iconGolem = new TextureAtlasSprite[8];
+   public TextureAtlasSprite iconAdvanced;
+   public TextureAtlasSprite iconCore;
+   private TextureAtlasSprite iconBlank;
 
    public ItemGolemPlacer() {
       this.setHasSubtypes(true);
@@ -34,17 +37,17 @@ public class ItemGolemPlacer extends Item {
 
    @SideOnly(Side.CLIENT)
    public void registerIcons(IIconRegister ir) {
-      this.iconGolem[0] = ir.registerIcon("thaumcraft:golem_straw");
-      this.iconGolem[1] = ir.registerIcon("thaumcraft:golem_wood");
-      this.iconGolem[2] = ir.registerIcon("thaumcraft:golem_tallow");
-      this.iconGolem[3] = ir.registerIcon("thaumcraft:golem_clay");
-      this.iconGolem[4] = ir.registerIcon("thaumcraft:golem_flesh");
-      this.iconGolem[5] = ir.registerIcon("thaumcraft:golem_stone");
-      this.iconGolem[6] = ir.registerIcon("thaumcraft:golem_iron");
-      this.iconGolem[7] = ir.registerIcon("thaumcraft:golem_thaumium");
-      this.iconAdvanced = ir.registerIcon("thaumcraft:golem_over_adv");
-      this.iconCore = ir.registerIcon("thaumcraft:golem_over_core");
-      this.iconBlank = ir.registerIcon("thaumcraft:blank");
+      this.iconGolem[0] = ir.registerSprite("thaumcraft:golem_straw");
+      this.iconGolem[1] = ir.registerSprite("thaumcraft:golem_wood");
+      this.iconGolem[2] = ir.registerSprite("thaumcraft:golem_tallow");
+      this.iconGolem[3] = ir.registerSprite("thaumcraft:golem_clay");
+      this.iconGolem[4] = ir.registerSprite("thaumcraft:golem_flesh");
+      this.iconGolem[5] = ir.registerSprite("thaumcraft:golem_stone");
+      this.iconGolem[6] = ir.registerSprite("thaumcraft:golem_iron");
+      this.iconGolem[7] = ir.registerSprite("thaumcraft:golem_thaumium");
+      this.iconAdvanced = ir.registerSprite("thaumcraft:golem_over_adv");
+      this.iconCore = ir.registerSprite("thaumcraft:golem_over_core");
+      this.iconBlank = ir.registerSprite("thaumcraft:blank");
    }
 
    @SideOnly(Side.CLIENT)
@@ -53,17 +56,17 @@ public class ItemGolemPlacer extends Item {
    }
 
    @SideOnly(Side.CLIENT)
-   public IIcon getIconFromDamage(int par1) {
+   public TextureAtlasSprite getIconFromDamage(int par1) {
       return this.iconGolem[par1];
    }
 
-   public IIcon getIcon(ItemStack stack, int pass) {
+   public TextureAtlasSprite getIcon(ItemStack stack, int pass) {
       if (pass == 0) {
-         return super.getIcon(stack, pass);
-      } else if (pass == 1 && stack.hasTagCompound() && stack.stackTagCompound.hasKey("advanced")) {
+         return null;
+      } else if (pass == 1 && stack.hasTagCompound() && stack.getTagCompound().hasKey("advanced")) {
          return this.iconAdvanced;
       } else {
-         return pass == 2 && stack.hasTagCompound() && stack.stackTagCompound.hasKey("core") ? this.iconCore : this.iconBlank;
+         return pass == 2 && stack.hasTagCompound() && stack.getTagCompound().hasKey("core") ? this.iconCore : this.iconBlank;
       }
    }
 
@@ -72,67 +75,67 @@ public class ItemGolemPlacer extends Item {
       return true;
    }
 
-   public String getUnlocalizedName(ItemStack par1ItemStack) {
-      return super.getUnlocalizedName() + "." + par1ItemStack.getItemDamage();
+   public String getTranslationKey(ItemStack par1ItemStack) {
+      return super.getTranslationKey() + "." + par1ItemStack.getItemDamage();
    }
 
-   public void addInformation(ItemStack stack, EntityPlayer par2EntityPlayer, List list, boolean par4) {
+   public void addInformation(ItemStack stack, World worldIn, List<String> list, net.minecraft.client.util.ITooltipFlag flag) {
       if (stack.hasTagCompound()) {
-         if (stack.stackTagCompound.hasKey("core")) {
-            list.add(StatCollector.translateToLocal("item.ItemGolemCore.name") + ": §6" + StatCollector.translateToLocal("item.ItemGolemCore." + stack.stackTagCompound.getByte("core") + ".name"));
+         if (stack.getTagCompound().hasKey("core")) {
+            list.add(I18n.translateToLocal("item.ItemGolemCore.name") + ": §6" + I18n.translateToLocal("item.ItemGolemCore." + stack.getTagCompound().getByte("core") + ".name"));
          }
 
-         if (stack.stackTagCompound.hasKey("advanced")) {
-            list.add(StatCollector.translateToLocal("tc.adv"));
+         if (stack.getTagCompound().hasKey("advanced")) {
+            list.add(I18n.translateToLocal("tc.adv"));
          }
 
-         if (stack.stackTagCompound.hasKey("upgrades")) {
-            byte[] ba = stack.stackTagCompound.getByteArray("upgrades");
+         if (stack.getTagCompound().hasKey("upgrades")) {
+            byte[] ba = stack.getTagCompound().getByteArray("upgrades");
             StringBuilder text = new StringBuilder("§9");
 
             for(byte b : ba) {
                if (b > -1) {
-                  text.append(StatCollector.translateToLocal("item.ItemGolemUpgrade." + b + ".name")).append(" ");
+                  text.append(I18n.translateToLocal("item.ItemGolemUpgrade." + b + ".name")).append(" ");
                }
             }
 
             list.add(text.toString());
          }
 
-         if (stack.stackTagCompound.hasKey("markers")) {
-            NBTTagList tl = stack.stackTagCompound.getTagList("markers", 10);
-            list.add("§5" + tl.tagCount() + " " + StatCollector.translateToLocal("tc.markedloc"));
+         if (stack.getTagCompound().hasKey("markers")) {
+            NBTTagList tl = stack.getTagCompound().getTagList("markers", 10);
+            list.add("§5" + tl.tagCount() + " " + I18n.translateToLocal("tc.markedloc"));
          }
 
-         if (stack.stackTagCompound.hasKey("deco")) {
+         if (stack.getTagCompound().hasKey("deco")) {
             String decoDesc = "§2";
-            String deco = stack.stackTagCompound.getString("deco");
+            String deco = stack.getTagCompound().getString("deco");
             if (deco.contains("H")) {
-               decoDesc = decoDesc + StatCollector.translateToLocal("item.ItemGolemDecoration.0.name") + " ";
+               decoDesc = decoDesc + I18n.translateToLocal("item.ItemGolemDecoration.0.name") + " ";
             }
 
             if (deco.contains("G")) {
-               decoDesc = decoDesc + StatCollector.translateToLocal("item.ItemGolemDecoration.1.name") + " ";
+               decoDesc = decoDesc + I18n.translateToLocal("item.ItemGolemDecoration.1.name") + " ";
             }
 
             if (deco.contains("B")) {
-               decoDesc = decoDesc + StatCollector.translateToLocal("item.ItemGolemDecoration.2.name") + " ";
+               decoDesc = decoDesc + I18n.translateToLocal("item.ItemGolemDecoration.2.name") + " ";
             }
 
             if (deco.contains("F")) {
-               decoDesc = decoDesc + StatCollector.translateToLocal("item.ItemGolemDecoration.3.name") + " ";
+               decoDesc = decoDesc + I18n.translateToLocal("item.ItemGolemDecoration.3.name") + " ";
             }
 
             if (deco.contains("R")) {
-               decoDesc = decoDesc + StatCollector.translateToLocal("item.ItemGolemDecoration.4.name") + " ";
+               decoDesc = decoDesc + I18n.translateToLocal("item.ItemGolemDecoration.4.name") + " ";
             }
 
             if (deco.contains("V")) {
-               decoDesc = decoDesc + StatCollector.translateToLocal("item.ItemGolemDecoration.5.name") + " ";
+               decoDesc = decoDesc + I18n.translateToLocal("item.ItemGolemDecoration.5.name") + " ";
             }
 
             if (deco.contains("P")) {
-               decoDesc = decoDesc + StatCollector.translateToLocal("item.ItemGolemDecoration.6.name") + " ";
+               decoDesc = decoDesc + I18n.translateToLocal("item.ItemGolemDecoration.6.name") + " ";
             }
 
             list.add(decoDesc);
@@ -145,33 +148,36 @@ public class ItemGolemPlacer extends Item {
        return super.getShareTag();
    }
 
-   public boolean doesSneakBypassUse(World world, int x, int y, int z, EntityPlayer player) {
+   public boolean doesSneakBypassUse(ItemStack stack, net.minecraft.world.IBlockAccess world, BlockPos pos, EntityPlayer player) {
       return true;
    }
 
-   public boolean onItemUseFirst(ItemStack stack, EntityPlayer player, World world, int par4, int par5, int par6, int side, float par8, float par9, float par10) {
+   public EnumActionResult onItemUseFirst(EntityPlayer player, World world, BlockPos pos, EnumFacing facing, float par8, float par9, float par10, EnumHand hand) {
+      ItemStack stack = player.getHeldItem(hand);
       if (!world.isRemote && !player.isSneaking()) {
-         Block var11 = world.getBlock(par4, par5, par6);
-         par4 += Facing.offsetsXForSide[side];
-         par5 += Facing.offsetsYForSide[side];
-         par6 += Facing.offsetsZForSide[side];
+         Block var11 = world.getBlockState(pos).getBlock();
+         int par4 = pos.getX() + facing.getXOffset();
+         int par5 = pos.getY() + facing.getYOffset();
+         int par6 = pos.getZ() + facing.getZOffset();
+         int side = facing.getIndex();
          double var12 = 0.0F;
-         if (side == 1 && var11 == Blocks.fence || var11 == Blocks.nether_brick_fence) {
+         if (side == 1 && var11 == Blocks.OAK_FENCE || var11 == Blocks.NETHER_BRICK_FENCE) {
             var12 = 0.5F;
          }
 
          if (this.spawnCreature(world, (double)par4 + (double)0.5F, (double)par5 + var12, (double)par6 + (double)0.5F, side, stack, player) && !player.capabilities.isCreativeMode) {
-            --stack.stackSize;
+            stack.shrink(1);
          }
 
-         return true;
+         return EnumActionResult.SUCCESS;
       } else {
-         return false;
+         return EnumActionResult.PASS;
       }
    }
 
    @SideOnly(Side.CLIENT)
-   public void getSubItems(Item par1, CreativeTabs par2CreativeTabs, List par3List) {
+   @Override
+   public void getSubItems(CreativeTabs par2CreativeTabs, net.minecraft.util.NonNullList<ItemStack> par3List) {
       for(int a = 0; a <= 7; ++a) {
          par3List.add(new ItemStack(this, 1, a));
       }
@@ -179,20 +185,20 @@ public class ItemGolemPlacer extends Item {
    }
 
    public boolean spawnCreature(World par0World, double par2, double par4, double par6, int side, ItemStack stack, EntityPlayer player) {
-      boolean adv = stack.hasTagCompound() && stack.stackTagCompound.hasKey("advanced");
+      boolean adv = stack.hasTagCompound() && stack.getTagCompound().hasKey("advanced");
 
        EntityGolemBase golem = new EntityGolemBase(par0World, EnumGolemType.getType(stack.getItemDamage()), adv);
       if (golem != null) {
          golem.setLocationAndAngles(par2, par4, par6, par0World.rand.nextFloat() * 360.0F, 0.0F);
          golem.playLivingSound();
-         golem.setHomeArea(MathHelper.floor_double(par2), MathHelper.floor_double(par4), MathHelper.floor_double(par6), 32);
-         if (stack.hasTagCompound() && stack.stackTagCompound.hasKey("core")) {
-            golem.setCore(stack.stackTagCompound.getByte("core"));
+         golem.setHomePosAndDistance(new BlockPos(MathHelper.floor(par2), MathHelper.floor(par4), MathHelper.floor(par6)), 32);
+         if (stack.hasTagCompound() && stack.getTagCompound().hasKey("core")) {
+            golem.setCore(stack.getTagCompound().getByte("core"));
          }
 
-         if (stack.hasTagCompound() && stack.stackTagCompound.hasKey("upgrades")) {
+         if (stack.hasTagCompound() && stack.getTagCompound().hasKey("upgrades")) {
             int ul = golem.upgrades.length;
-            golem.upgrades = stack.stackTagCompound.getByteArray("upgrades");
+            golem.upgrades = stack.getTagCompound().getByteArray("upgrades");
             if (ul != golem.upgrades.length) {
                byte[] tt = new byte[ul];
 
@@ -209,15 +215,15 @@ public class ItemGolemPlacer extends Item {
          }
 
          String deco = "";
-         if (stack.hasTagCompound() && stack.stackTagCompound.hasKey("deco")) {
-            deco = stack.stackTagCompound.getString("deco");
+         if (stack.hasTagCompound() && stack.getTagCompound().hasKey("deco")) {
+            deco = stack.getTagCompound().getString("deco");
             golem.decoration = deco;
          }
 
          golem.setup(side);
-         par0World.spawnEntityInWorld(golem);
+         par0World.spawnEntity(golem);
          golem.setGolemDecoration(deco);
-         golem.setOwner(player.getCommandSenderName());
+         golem.setOwner(player.getName());
          golem.setMarkers(ItemGolemBell.getMarkers(stack));
          int a = 0;
 
@@ -228,11 +234,11 @@ public class ItemGolemPlacer extends Item {
 
          if (stack.hasDisplayName()) {
             golem.setCustomNameTag(stack.getDisplayName());
-            golem.func_110163_bv();
+            golem.enablePersistence();
          }
 
-         if (stack.hasTagCompound() && stack.stackTagCompound.hasKey("Inventory")) {
-            NBTTagList nbttaglist2 = stack.stackTagCompound.getTagList("Inventory", 10);
+         if (stack.hasTagCompound() && stack.getTagCompound().hasKey("Inventory")) {
+            NBTTagList nbttaglist2 = stack.getTagCompound().getTagList("Inventory", 10);
             golem.inventory.readFromNBT(nbttaglist2);
          }
       }

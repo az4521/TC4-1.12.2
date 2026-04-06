@@ -1,19 +1,19 @@
 package thaumcraft.common.items.wands;
 
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import java.util.List;
-import net.minecraft.client.renderer.texture.IIconRegister;
+import thaumcraft.client.renderers.compat.IIconRegister;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.IIcon;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import thaumcraft.common.Thaumcraft;
 
 public class ItemWandRod extends Item {
-   public IIcon[] iconWand = new IIcon[8];
-   public IIcon[] iconStaff = new IIcon[8];
-   public IIcon iconPrimalStaff;
+   public TextureAtlasSprite[] iconWand = new TextureAtlasSprite[8];
+   public TextureAtlasSprite[] iconStaff = new TextureAtlasSprite[8];
+   public TextureAtlasSprite iconPrimalStaff;
 
    public ItemWandRod() {
       this.setMaxStackSize(64);
@@ -24,32 +24,33 @@ public class ItemWandRod extends Item {
 
    @SideOnly(Side.CLIENT)
    public void registerIcons(IIconRegister ir) {
-      this.iconWand[0] = ir.registerIcon("thaumcraft:wand_rod_greatwood");
-      this.iconWand[1] = ir.registerIcon("thaumcraft:wand_rod_obsidian");
-      this.iconWand[2] = ir.registerIcon("thaumcraft:wand_rod_silverwood");
-      this.iconWand[3] = ir.registerIcon("thaumcraft:wand_rod_ice");
-      this.iconWand[4] = ir.registerIcon("thaumcraft:wand_rod_quartz");
-      this.iconWand[5] = ir.registerIcon("thaumcraft:wand_rod_reed");
-      this.iconWand[6] = ir.registerIcon("thaumcraft:wand_rod_blaze");
-      this.iconWand[7] = ir.registerIcon("thaumcraft:wand_rod_bone");
-      this.iconStaff[0] = ir.registerIcon("thaumcraft:staff_rod_greatwood");
-      this.iconStaff[1] = ir.registerIcon("thaumcraft:staff_rod_obsidian");
-      this.iconStaff[2] = ir.registerIcon("thaumcraft:staff_rod_silverwood");
-      this.iconStaff[3] = ir.registerIcon("thaumcraft:staff_rod_ice");
-      this.iconStaff[4] = ir.registerIcon("thaumcraft:staff_rod_quartz");
-      this.iconStaff[5] = ir.registerIcon("thaumcraft:staff_rod_reed");
-      this.iconStaff[6] = ir.registerIcon("thaumcraft:staff_rod_blaze");
-      this.iconStaff[7] = ir.registerIcon("thaumcraft:staff_rod_bone");
-      this.iconPrimalStaff = ir.registerIcon("thaumcraft:staff_rod_primal");
+      this.iconWand[0] = ir.registerSprite("thaumcraft:wand_rod_greatwood");
+      this.iconWand[1] = ir.registerSprite("thaumcraft:wand_rod_obsidian");
+      this.iconWand[2] = ir.registerSprite("thaumcraft:wand_rod_silverwood");
+      this.iconWand[3] = ir.registerSprite("thaumcraft:wand_rod_ice");
+      this.iconWand[4] = ir.registerSprite("thaumcraft:wand_rod_quartz");
+      this.iconWand[5] = ir.registerSprite("thaumcraft:wand_rod_reed");
+      this.iconWand[6] = ir.registerSprite("thaumcraft:wand_rod_blaze");
+      this.iconWand[7] = ir.registerSprite("thaumcraft:wand_rod_bone");
+      this.iconStaff[0] = ir.registerSprite("thaumcraft:staff_rod_greatwood");
+      this.iconStaff[1] = ir.registerSprite("thaumcraft:staff_rod_obsidian");
+      this.iconStaff[2] = ir.registerSprite("thaumcraft:staff_rod_silverwood");
+      this.iconStaff[3] = ir.registerSprite("thaumcraft:staff_rod_ice");
+      this.iconStaff[4] = ir.registerSprite("thaumcraft:staff_rod_quartz");
+      this.iconStaff[5] = ir.registerSprite("thaumcraft:staff_rod_reed");
+      this.iconStaff[6] = ir.registerSprite("thaumcraft:staff_rod_blaze");
+      this.iconStaff[7] = ir.registerSprite("thaumcraft:staff_rod_bone");
+      this.iconPrimalStaff = ir.registerSprite("thaumcraft:staff_rod_primal");
    }
 
    @SideOnly(Side.CLIENT)
-   public IIcon getIconFromDamage(int meta) {
+   public TextureAtlasSprite getIconFromDamage(int meta) {
       return meta < 50 ? this.iconWand[meta] : (meta < 100 ? this.iconStaff[meta - 50] : this.iconPrimalStaff);
    }
 
    @SideOnly(Side.CLIENT)
-   public void getSubItems(Item par1, CreativeTabs par2CreativeTabs, List par3List) {
+   @Override
+   public void getSubItems(CreativeTabs par2CreativeTabs, net.minecraft.util.NonNullList<ItemStack> par3List) {
       List<ItemStack> list = (List<ItemStack>) par3List;
       list.add(new ItemStack(this, 1, 0));
       list.add(new ItemStack(this, 1, 1));
@@ -70,7 +71,8 @@ public class ItemWandRod extends Item {
       list.add(new ItemStack(this, 1, 100));
    }
 
-   public String getUnlocalizedName(ItemStack par1ItemStack) {
-      return super.getUnlocalizedName() + "." + par1ItemStack.getItemDamage();
+   @Override
+   public String getTranslationKey(ItemStack par1ItemStack) {
+      return getTranslationKey() + "." + par1ItemStack.getItemDamage();
    }
 }

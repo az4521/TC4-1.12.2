@@ -15,7 +15,8 @@ public class BlockTableItem extends ItemBlock {
       return par1;
    }
 
-   public String getUnlocalizedName(ItemStack par1ItemStack) {
-      return par1ItemStack.getItemDamage() >= 2 && par1ItemStack.getItemDamage() <= 9 ? super.getUnlocalizedName() + ".research" : super.getUnlocalizedName() + "." + par1ItemStack.getItemDamage();
+   @Override
+   public String getTranslationKey(ItemStack par1ItemStack) {
+      return par1ItemStack.getItemDamage() >= 2 && par1ItemStack.getItemDamage() <= 9 ? super.getTranslationKey() + ".research" : super.getTranslationKey() + "." + par1ItemStack.getItemDamage();
    }
 }

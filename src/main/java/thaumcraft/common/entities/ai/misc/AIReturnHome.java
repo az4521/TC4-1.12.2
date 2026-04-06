@@ -2,9 +2,9 @@ package thaumcraft.common.entities.ai.misc;
 
 import net.minecraft.entity.ai.EntityAIBase;
 import net.minecraft.entity.ai.RandomPositionGenerator;
-import net.minecraft.util.ChunkCoordinates;
-import net.minecraft.util.MathHelper;
-import net.minecraft.util.Vec3;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.Vec3d;
 import thaumcraft.common.entities.golems.EntityGolemBase;
 
 public class AIReturnHome extends EntityAIBase {
@@ -25,15 +25,15 @@ public class AIReturnHome extends EntityAIBase {
    }
 
    public boolean shouldExecute() {
-      ChunkCoordinates home = this.theGolem.getHomePosition();
+      BlockPos home = this.theGolem.getHomePosition();
       if (this.pathingDelay > 0) {
          --this.pathingDelay;
       }
 
-      if (this.pathingDelay <= 0 && !(this.theGolem.getDistanceSq((float)home.posX + 0.5F, (float)home.posY + 0.5F, (float)home.posZ + 0.5F) < (double)3.0F)) {
-         this.movePosX = (double)home.posX + (double)0.5F;
-         this.movePosY = (double)home.posY + (double)0.5F;
-         this.movePosZ = (double)home.posZ + (double)0.5F;
+      if (this.pathingDelay <= 0 && !(this.theGolem.getDistanceSq((double)home.getX() + 0.5, (double)home.getY() + 0.5, (double)home.getZ() + 0.5) < (double)3.0F)) {
+         this.movePosX = (double)home.getX() + 0.5;
+         this.movePosY = (double)home.getY() + 0.5;
+         this.movePosZ = (double)home.getZ() + 0.5;
          return true;
       } else {
          return false;
@@ -41,21 +41,21 @@ public class AIReturnHome extends EntityAIBase {
    }
 
    public boolean continueExecuting() {
-      ChunkCoordinates home = this.theGolem.getHomePosition();
-      return this.pathingDelay <= 0 && this.count > 0 && !this.theGolem.getNavigator().noPath() && this.theGolem.getDistanceSq((float)home.posX + 0.5F, (float)home.posY + 0.5F, (float)home.posZ + 0.5F) >= (double)3.0F;
+      BlockPos home = this.theGolem.getHomePosition();
+      return this.pathingDelay <= 0 && this.count > 0 && !this.theGolem.getNavigator().noPath() && this.theGolem.getDistanceSq((double)home.getX() + 0.5, (double)home.getY() + 0.5, (double)home.getZ() + 0.5) >= (double)3.0F;
    }
 
    public void resetTask() {
-       super.resetTask();
+      super.resetTask();
    }
 
    public void updateTask() {
       --this.count;
-      if (this.count == 0 && this.prevX == MathHelper.floor_double(this.theGolem.posX) && this.prevY == MathHelper.floor_double(this.theGolem.posY) && this.prevZ == MathHelper.floor_double(this.theGolem.posZ)) {
-         Vec3 var2 = RandomPositionGenerator.findRandomTarget(this.theGolem, 2, 1);
+      if (this.count == 0 && this.prevX == MathHelper.floor(this.theGolem.posX) && this.prevY == MathHelper.floor(this.theGolem.posY) && this.prevZ == MathHelper.floor(this.theGolem.posZ)) {
+         Vec3d var2 = RandomPositionGenerator.findRandomTarget(this.theGolem, 2, 1);
          if (var2 != null) {
             this.count = 20;
-            boolean path = this.theGolem.getNavigator().tryMoveToXYZ(var2.xCoord + (double)0.5F, var2.yCoord + (double)0.5F, var2.zCoord + (double)0.5F, this.theGolem.getAIMoveSpeed());
+            boolean path = this.theGolem.getNavigator().tryMoveToXYZ(var2.x + 0.5, var2.y + 0.5, var2.z + 0.5, this.theGolem.getAIMoveSpeed());
             if (!path) {
                this.pathingDelay = this.pathingDelayInc;
                if (this.pathingDelayInc < 50) {
@@ -72,9 +72,9 @@ public class AIReturnHome extends EntityAIBase {
 
    public void startExecuting() {
       this.count = 20;
-      this.prevX = MathHelper.floor_double(this.theGolem.posX);
-      this.prevY = MathHelper.floor_double(this.theGolem.posY);
-      this.prevZ = MathHelper.floor_double(this.theGolem.posZ);
+      this.prevX = MathHelper.floor(this.theGolem.posX);
+      this.prevY = MathHelper.floor(this.theGolem.posY);
+      this.prevZ = MathHelper.floor(this.theGolem.posZ);
       boolean path = this.theGolem.getNavigator().tryMoveToXYZ(this.movePosX, this.movePosY, this.movePosZ, this.theGolem.getAIMoveSpeed());
       if (!path) {
          this.pathingDelay = this.pathingDelayInc;
@@ -84,6 +84,5 @@ public class AIReturnHome extends EntityAIBase {
       } else {
          this.pathingDelayInc = 5;
       }
-
    }
 }

@@ -16,10 +16,10 @@ public class ContainerMagicBox extends Container {
       this.box = par2IInventory;
       this.numRows = par2IInventory.getSizeInventory() / 9;
       this.playerInv = par1IInventory;
-      par2IInventory.openInventory();
+      par2IInventory.openInventory(null);
       this.bindBoxInventory(0);
       this.bindPlayerInventory();
-      if (this.box.getWorldObj() != null && this.box.getWorldObj().isRemote) {
+      if (this.box.getWorld() != null && this.box.getWorld().isRemote) {
          TileMagicBox var10000 = this.box;
          TileMagicBox.tc = this;
       }
@@ -56,25 +56,25 @@ public class ContainerMagicBox extends Container {
    }
 
    public boolean canInteractWith(EntityPlayer par1EntityPlayer) {
-      return this.box.isUseableByPlayer(par1EntityPlayer);
+      return this.box.isUsableByPlayer(par1EntityPlayer);
    }
 
    public ItemStack transferStackInSlot(EntityPlayer par1EntityPlayer, int par2) {
-      ItemStack itemstack = null;
+      ItemStack itemstack = ItemStack.EMPTY;
       Slot slot = (Slot)this.inventorySlots.get(par2);
       if (slot != null && slot.getHasStack()) {
          ItemStack itemstack1 = slot.getStack();
          itemstack = itemstack1.copy();
          if (par2 < this.numRows * 9) {
             if (!this.mergeItemStack(itemstack1, this.numRows * 9, this.inventorySlots.size(), true)) {
-               return null;
+               return ItemStack.EMPTY;
             }
          } else if (!this.mergeItemStack(itemstack1, 0, this.numRows * 9, false)) {
-            return null;
+            return ItemStack.EMPTY;
          }
 
-         if (itemstack1.stackSize == 0) {
-            slot.putStack(null);
+         if (itemstack1.isEmpty()) {
+            slot.putStack(ItemStack.EMPTY);
          } else {
             slot.onSlotChanged();
          }
@@ -85,6 +85,6 @@ public class ContainerMagicBox extends Container {
 
    public void onContainerClosed(EntityPlayer par1EntityPlayer) {
       super.onContainerClosed(par1EntityPlayer);
-      this.box.closeInventory();
+      this.box.closeInventory(par1EntityPlayer);
    }
 }

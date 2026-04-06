@@ -1,18 +1,22 @@
 package thaumcraft.client.fx.bolt;
 
-import cpw.mods.fml.client.FMLClientHandler;
+import net.minecraftforge.fml.client.FMLClientHandler;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.particle.EntityFX;
+import net.minecraft.client.particle.Particle;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.world.World;
-import org.lwjgl.opengl.GL11;
+
 import thaumcraft.client.fx.WRVector3;
 import thaumcraft.client.lib.UtilsFX;
+import org.lwjgl.opengl.GL11;
+import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.client.renderer.BufferBuilder;
+import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 
-public class FXLightningBolt extends EntityFX {
+public class FXLightningBolt extends Particle {
    private int type = 0;
    private float width = 0.03F;
    private FXLightningBoltCommon main;
@@ -68,7 +72,7 @@ public class FXLightningBolt extends EntityFX {
    private void setupFromMain() {
       this.particleAge = this.main.particleMaxAge;
       this.setPosition(this.main.start.x, this.main.start.y, this.main.start.z);
-      this.setVelocity(0.0F, 0.0F, 0.0F);
+      this.motionX = this.motionY = this.motionZ = 0.0F;
    }
 
    public void defaultFractal() {
@@ -81,7 +85,7 @@ public class FXLightningBolt extends EntityFX {
 
    public void finalizeBolt() {
       this.main.finalizeBolt();
-      FMLClientHandler.instance().getClient().effectRenderer.addEffect(this);
+      thaumcraft.client.fx.ParticleEngine.instance.addEffect(this.world, this);
    }
 
    public void setType(int type) {
@@ -100,17 +104,18 @@ public class FXLightningBolt extends EntityFX {
    public void onUpdate() {
       this.main.onUpdate();
       if (this.main.particleAge >= this.main.particleMaxAge) {
-         this.setDead();
+         this.setExpired();
       }
 
    }
 
    private static WRVector3 getRelativeViewVector(WRVector3 pos) {
-      EntityPlayer renderentity = FMLClientHandler.instance().getClient().thePlayer;
+      EntityPlayer renderentity = FMLClientHandler.instance().getClient().player;
       return new WRVector3((float)renderentity.posX - pos.x, (float)renderentity.posY - pos.y, (float)renderentity.posZ - pos.z);
    }
 
-   private void renderBolt(Tessellator tessellator, float partialframe, float cosyaw, float cospitch, float sinyaw, float cossinpitch, int pass, float mainalpha) {
+   private void renderBolt(BufferBuilder buffer, float partialframe, float cosyaw, float cospitch, float sinyaw, float cossinpitch, int pass, float mainalpha) {
+      Tessellator tessellator = Tessellator.getInstance();
       WRVector3 playervec = new WRVector3(sinyaw * -cospitch, -cossinpitch / cosyaw, cosyaw * cospitch);
       float boltage = this.main.particleAge >= 0 ? (float)this.main.particleAge / (float)this.main.particleMaxAge : 0.0F;
       if (pass == 0) {
@@ -134,20 +139,28 @@ public class FXLightningBolt extends EntityFX {
             float rx2 = (float)((double)endvec.x - interpPosX);
             float ry2 = (float)((double)endvec.y - interpPosY);
             float rz2 = (float)((double)endvec.z - interpPosZ);
-            tessellator.setColorRGBA_F(this.particleRed, this.particleGreen, this.particleBlue, mainalpha * rendersegment.light);
-            tessellator.addVertexWithUV(rx2 - diff2.x, ry2 - diff2.y, rz2 - diff2.z, 0.5F, 0.0F);
-            tessellator.addVertexWithUV(rx1 - diff1.x, ry1 - diff1.y, rz1 - diff1.z, 0.5F, 0.0F);
-            tessellator.addVertexWithUV(rx1 + diff1.x, ry1 + diff1.y, rz1 + diff1.z, 0.5F, 1.0F);
-            tessellator.addVertexWithUV(rx2 + diff2.x, ry2 + diff2.y, rz2 + diff2.z, 0.5F, 1.0F);
+           
+            buffer.pos(rx2 - diff2.x, ry2 - diff2.y, rz2 - diff2.z).tex(0.5F, 0.0F).color(this.particleRed, this.particleGreen, this.particleBlue, mainalpha * rendersegment.light)
+        .endVertex();
+            buffer.pos(rx1 - diff1.x, ry1 - diff1.y, rz1 - diff1.z).tex(0.5F, 0.0F).color(this.particleRed, this.particleGreen, this.particleBlue, mainalpha * rendersegment.light)
+        .endVertex();
+            buffer.pos(rx1 + diff1.x, ry1 + diff1.y, rz1 + diff1.z).tex(0.5F, 1.0F).color(this.particleRed, this.particleGreen, this.particleBlue, mainalpha * rendersegment.light)
+        .endVertex();
+            buffer.pos(rx2 + diff2.x, ry2 + diff2.y, rz2 + diff2.z).tex(0.5F, 1.0F).color(this.particleRed, this.particleGreen, this.particleBlue, mainalpha * rendersegment.light)
+        .endVertex();
             if (rendersegment.next == null) {
                WRVector3 roundend = rendersegment.endpoint.point.copy().add(rendersegment.diff.copy().normalize().scale(width));
                float rx3 = (float)((double)roundend.x - interpPosX);
                float ry3 = (float)((double)roundend.y - interpPosY);
                float rz3 = (float)((double)roundend.z - interpPosZ);
-               tessellator.addVertexWithUV(rx3 - diff2.x, ry3 - diff2.y, rz3 - diff2.z, 0.0F, 0.0F);
-               tessellator.addVertexWithUV(rx2 - diff2.x, ry2 - diff2.y, rz2 - diff2.z, 0.5F, 0.0F);
-               tessellator.addVertexWithUV(rx2 + diff2.x, ry2 + diff2.y, rz2 + diff2.z, 0.5F, 1.0F);
-               tessellator.addVertexWithUV(rx3 + diff2.x, ry3 + diff2.y, rz3 + diff2.z, 0.0F, 1.0F);
+               buffer.pos(rx3 - diff2.x, ry3 - diff2.y, rz3 - diff2.z).tex(0.0F, 0.0F).color(this.particleRed, this.particleGreen, this.particleBlue, mainalpha * rendersegment.light)
+        .endVertex();
+               buffer.pos(rx2 - diff2.x, ry2 - diff2.y, rz2 - diff2.z).tex(0.5F, 0.0F).color(this.particleRed, this.particleGreen, this.particleBlue, mainalpha * rendersegment.light)
+        .endVertex();
+               buffer.pos(rx2 + diff2.x, ry2 + diff2.y, rz2 + diff2.z).tex(0.5F, 1.0F).color(this.particleRed, this.particleGreen, this.particleBlue, mainalpha * rendersegment.light)
+        .endVertex();
+               buffer.pos(rx3 + diff2.x, ry3 + diff2.y, rz3 + diff2.z).tex(0.0F, 1.0F).color(this.particleRed, this.particleGreen, this.particleBlue, mainalpha * rendersegment.light)
+        .endVertex();
             }
 
             if (rendersegment.prev == null) {
@@ -155,28 +168,32 @@ public class FXLightningBolt extends EntityFX {
                float rx3 = (float)((double)roundend.x - interpPosX);
                float ry3 = (float)((double)roundend.y - interpPosY);
                float rz3 = (float)((double)roundend.z - interpPosZ);
-               tessellator.addVertexWithUV(rx1 - diff1.x, ry1 - diff1.y, rz1 - diff1.z, 0.5F, 0.0F);
-               tessellator.addVertexWithUV(rx3 - diff1.x, ry3 - diff1.y, rz3 - diff1.z, 0.0F, 0.0F);
-               tessellator.addVertexWithUV(rx3 + diff1.x, ry3 + diff1.y, rz3 + diff1.z, 0.0F, 1.0F);
-               tessellator.addVertexWithUV(rx1 + diff1.x, ry1 + diff1.y, rz1 + diff1.z, 0.5F, 1.0F);
+               buffer.pos(rx1 - diff1.x, ry1 - diff1.y, rz1 - diff1.z).tex(0.5F, 0.0F).color(this.particleRed, this.particleGreen, this.particleBlue, mainalpha * rendersegment.light)
+        .endVertex();
+               buffer.pos(rx3 - diff1.x, ry3 - diff1.y, rz3 - diff1.z).tex(0.0F, 0.0F).color(this.particleRed, this.particleGreen, this.particleBlue, mainalpha * rendersegment.light)
+        .endVertex();
+               buffer.pos(rx3 + diff1.x, ry3 + diff1.y, rz3 + diff1.z).tex(0.0F, 1.0F).color(this.particleRed, this.particleGreen, this.particleBlue, mainalpha * rendersegment.light)
+        .endVertex();
+               buffer.pos(rx1 + diff1.x, ry1 + diff1.y, rz1 + diff1.z).tex(0.5F, 1.0F).color(this.particleRed, this.particleGreen, this.particleBlue, mainalpha * rendersegment.light)
+        .endVertex();
             }
          }
       }
 
    }
 
-   public void renderParticle(Tessellator tessellator, float partialframe, float cosyaw, float cospitch, float sinyaw, float sinsinpitch, float cossinpitch) {
-      EntityPlayer renderentity = FMLClientHandler.instance().getClient().thePlayer;
+   public void renderParticle(BufferBuilder buffer, Entity entityIn, float partialframe, float cosyaw, float cospitch, float sinyaw, float sinsinpitch, float cossinpitch) {
+      Tessellator tessellator = Tessellator.getInstance();
+      EntityPlayer renderentity = FMLClientHandler.instance().getClient().player;
       int visibleDistance = 100;
       if (!FMLClientHandler.instance().getClient().gameSettings.fancyGraphics) {
          visibleDistance = 50;
       }
 
       if (!(renderentity.getDistance(this.posX, this.posY, this.posZ) > (double)visibleDistance)) {
-         tessellator.draw();
-         GL11.glPushMatrix();
-         GL11.glDepthMask(false);
-         GL11.glEnable(GL11.GL_BLEND);
+         GlStateManager.pushMatrix();
+         GlStateManager.depthMask(false);
+         GlStateManager.enableBlend();
          this.particleRed = this.particleGreen = this.particleBlue = 1.0F;
          float ma = 1.0F;
          switch (this.type) {
@@ -184,50 +201,49 @@ public class FXLightningBolt extends EntityFX {
                this.particleRed = 0.6F;
                this.particleGreen = 0.3F;
                this.particleBlue = 0.6F;
-               GL11.glBlendFunc(770, 1);
+               GlStateManager.blendFunc(770, 1);
                break;
             case 1:
                this.particleRed = 0.6F;
                this.particleGreen = 0.6F;
                this.particleBlue = 0.1F;
-               GL11.glBlendFunc(770, 1);
+               GlStateManager.blendFunc(770, 1);
                break;
             case 2:
                this.particleRed = 0.1F;
                this.particleGreen = 0.1F;
                this.particleBlue = 0.6F;
-               GL11.glBlendFunc(770, 1);
+               GlStateManager.blendFunc(770, 1);
                break;
             case 3:
                this.particleRed = 0.1F;
                this.particleGreen = 1.0F;
                this.particleBlue = 0.1F;
-               GL11.glBlendFunc(770, 1);
+               GlStateManager.blendFunc(770, 1);
                break;
             case 4:
                this.particleRed = 0.6F;
                this.particleGreen = 0.1F;
                this.particleBlue = 0.1F;
-               GL11.glBlendFunc(770, 1);
+               GlStateManager.blendFunc(770, 1);
                break;
             case 5:
                this.particleRed = 0.6F;
                this.particleGreen = 0.2F;
                this.particleBlue = 0.6F;
-               GL11.glBlendFunc(770, 771);
+               GlStateManager.blendFunc(770, 771);
                break;
             case 6:
                this.particleRed = 0.75F;
                this.particleGreen = 1.0F;
                this.particleBlue = 1.0F;
                ma = 0.2F;
-               GL11.glBlendFunc(770, 771);
+               GlStateManager.blendFunc(770, 771);
          }
 
          UtilsFX.bindTexture("textures/misc/p_large.png");
-         tessellator.startDrawingQuads();
-         tessellator.setBrightness(15728880);
-         this.renderBolt(tessellator, partialframe, cosyaw, cospitch, sinyaw, cossinpitch, 0, ma);
+         buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX_COLOR);
+         this.renderBolt(buffer, partialframe, cosyaw, cospitch, sinyaw, cossinpitch, 0, ma);
          tessellator.draw();
          switch (this.type) {
             case 0:
@@ -259,26 +275,24 @@ public class FXLightningBolt extends EntityFX {
                this.particleRed = 0.0F;
                this.particleGreen = 0.0F;
                this.particleBlue = 0.0F;
-               GL11.glBlendFunc(770, 771);
+               GlStateManager.blendFunc(770, 771);
                break;
             case 6:
                this.particleRed = 0.75F;
                this.particleGreen = 1.0F;
                this.particleBlue = 1.0F;
                ma = 0.2F;
-               GL11.glBlendFunc(770, 771);
+               GlStateManager.blendFunc(770, 771);
          }
 
          UtilsFX.bindTexture("textures/misc/p_small.png");
-         tessellator.startDrawingQuads();
-         tessellator.setBrightness(15728880);
-         this.renderBolt(tessellator, partialframe, cosyaw, cospitch, sinyaw, cossinpitch, 1, ma);
+         buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX_COLOR); 
+        
+         this.renderBolt(buffer, partialframe, cosyaw, cospitch, sinyaw, cossinpitch, 1, ma);
          tessellator.draw();
-         GL11.glDisable(GL11.GL_BLEND);
-         GL11.glDepthMask(true);
-         GL11.glPopMatrix();
-         Minecraft.getMinecraft().renderEngine.bindTexture(UtilsFX.getParticleTexture());
-         tessellator.startDrawingQuads();
+         GlStateManager.disableBlend();
+         GlStateManager.depthMask(true);
+         GlStateManager.popMatrix();
       }
    }
 

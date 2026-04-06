@@ -49,21 +49,21 @@ public class ContainerResearchTable extends Container {
    }
 
    public ItemStack transferStackInSlot(EntityPlayer par1EntityPlayer, int slot) {
-      ItemStack stack = null;
+      ItemStack stack = ItemStack.EMPTY;
       Slot slotObject = (Slot)this.inventorySlots.get(slot);
       if (slotObject != null && slotObject.getHasStack()) {
          ItemStack stackInSlot = slotObject.getStack();
          stack = stackInSlot.copy();
          if (slot < 2) {
             if (!this.mergeItemStack(stackInSlot, 2, this.inventorySlots.size(), true)) {
-               return null;
+               return ItemStack.EMPTY;
             }
          } else if (!this.mergeItemStack(stackInSlot, 0, 2, false)) {
-            return null;
+            return ItemStack.EMPTY;
          }
 
-         if (stackInSlot.stackSize == 0) {
-            slotObject.putStack(null);
+         if (stackInSlot.isEmpty()) {
+            slotObject.putStack(ItemStack.EMPTY);
          } else {
             slotObject.onSlotChanged();
          }
@@ -80,19 +80,19 @@ public class ContainerResearchTable extends Container {
       }
 
       if (par1ItemStack.isStackable()) {
-         while(par1ItemStack.stackSize > 0 && (!par4 && var6 < par3 || par4 && var6 >= par2)) {
+         while(par1ItemStack.getCount() > 0 && (!par4 && var6 < par3 || par4 && var6 >= par2)) {
             Slot var7 = (Slot)this.inventorySlots.get(var6);
             ItemStack var8 = var7.getStack();
-            if (var8 != null && var7.isItemValid(par1ItemStack) && var8.getItem() == par1ItemStack.getItem() && (!par1ItemStack.getHasSubtypes() || par1ItemStack.getItemDamage() == var8.getItemDamage()) && ItemStack.areItemStackTagsEqual(par1ItemStack, var8)) {
-               int var9 = var8.stackSize + par1ItemStack.stackSize;
+            if (!var8.isEmpty() && var7.isItemValid(par1ItemStack) && var8.getItem() == par1ItemStack.getItem() && (!par1ItemStack.getHasSubtypes() || par1ItemStack.getItemDamage() == var8.getItemDamage()) && ItemStack.areItemStackTagsEqual(par1ItemStack, var8)) {
+               int var9 = var8.getCount() + par1ItemStack.getCount();
                if (var9 <= par1ItemStack.getMaxStackSize()) {
-                  par1ItemStack.stackSize = 0;
-                  var8.stackSize = var9;
+                  par1ItemStack.setCount(0);
+                  var8.setCount(var9);
                   var7.onSlotChanged();
                   var5 = true;
-               } else if (var8.stackSize < par1ItemStack.getMaxStackSize()) {
-                  par1ItemStack.stackSize -= par1ItemStack.getMaxStackSize() - var8.stackSize;
-                  var8.stackSize = par1ItemStack.getMaxStackSize();
+               } else if (var8.getCount() < par1ItemStack.getMaxStackSize()) {
+                  par1ItemStack.shrink(par1ItemStack.getMaxStackSize() - var8.getCount());
+                  var8.setCount(par1ItemStack.getMaxStackSize());
                   var7.onSlotChanged();
                   var5 = true;
                }
@@ -106,7 +106,7 @@ public class ContainerResearchTable extends Container {
          }
       }
 
-      if (par1ItemStack.stackSize > 0) {
+      if (par1ItemStack.getCount() > 0) {
          if (par4) {
             var6 = par3 - 1;
          } else {
@@ -116,10 +116,10 @@ public class ContainerResearchTable extends Container {
          while(!par4 && var6 < par3 || par4 && var6 >= par2) {
             Slot var7 = (Slot)this.inventorySlots.get(var6);
             ItemStack var8 = var7.getStack();
-            if (var8 == null && var7.isItemValid(par1ItemStack)) {
+            if (var8.isEmpty() && var7.isItemValid(par1ItemStack)) {
                var7.putStack(par1ItemStack.copy());
                var7.onSlotChanged();
-               par1ItemStack.stackSize = 0;
+               par1ItemStack.setCount(0);
                var5 = true;
                break;
             }
@@ -136,6 +136,6 @@ public class ContainerResearchTable extends Container {
    }
 
    public boolean canInteractWith(EntityPlayer player) {
-      return this.tileEntity.isUseableByPlayer(player);
+      return this.tileEntity.isUsableByPlayer(player);
    }
 }

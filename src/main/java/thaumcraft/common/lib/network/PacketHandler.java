@@ -1,8 +1,8 @@
 package thaumcraft.common.lib.network;
 
-import cpw.mods.fml.common.network.NetworkRegistry;
-import cpw.mods.fml.common.network.simpleimpl.SimpleNetworkWrapper;
-import cpw.mods.fml.relauncher.Side;
+import net.minecraftforge.fml.common.network.NetworkRegistry;
+import net.minecraftforge.fml.common.network.simpleimpl.SimpleNetworkWrapper;
+import net.minecraftforge.fml.relauncher.Side;
 import thaumcraft.common.lib.network.fx.PacketFXBeamPulse;
 import thaumcraft.common.lib.network.fx.PacketFXBeamPulseGolemBoss;
 import thaumcraft.common.lib.network.fx.PacketFXBlockArc;

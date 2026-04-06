@@ -6,11 +6,12 @@ import net.minecraft.entity.Entity;
 import net.minecraft.util.ResourceLocation;
 import thaumcraft.common.entities.monster.EntityTaintPig;
 
+import net.minecraft.client.renderer.entity.RenderManager;
 public class RenderTaintPig extends RenderLiving {
    private static final ResourceLocation rl = new ResourceLocation("thaumcraft", "textures/models/pig.png");
 
-   public RenderTaintPig(ModelBase par1ModelBase, float par3) {
-      super(par1ModelBase, par3);
+   public RenderTaintPig(RenderManager renderManager, ModelBase par1ModelBase, float par3) {
+      super(renderManager, par1ModelBase, par3);
    }
 
    protected ResourceLocation getEntityTexture(Entity entity) {

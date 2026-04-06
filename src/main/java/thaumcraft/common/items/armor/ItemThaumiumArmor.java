@@ -1,26 +1,29 @@
 package thaumcraft.common.items.armor;
 
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
-import net.minecraft.client.renderer.texture.IIconRegister;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
+import thaumcraft.client.renderers.compat.IIconRegister;
 import net.minecraft.entity.Entity;
-import net.minecraft.item.EnumRarity;
 import net.minecraft.item.ItemArmor;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.IIcon;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import thaumcraft.api.IRepairable;
 import thaumcraft.api.IRunicArmor;
 import thaumcraft.common.Thaumcraft;
 import thaumcraft.common.config.ConfigItems;
 
 public class ItemThaumiumArmor extends ItemArmor implements IRepairable, IRunicArmor {
-   public IIcon iconHelm;
-   public IIcon iconChest;
-   public IIcon iconLegs;
-   public IIcon iconBoots;
+   public TextureAtlasSprite iconHelm;
+   public TextureAtlasSprite iconChest;
+   public TextureAtlasSprite iconLegs;
+   public TextureAtlasSprite iconBoots;
+
+   private static net.minecraft.inventory.EntityEquipmentSlot slotFromIndex(int k) {
+      switch(k) { case 0: return net.minecraft.inventory.EntityEquipmentSlot.HEAD; case 1: return net.minecraft.inventory.EntityEquipmentSlot.CHEST; case 2: return net.minecraft.inventory.EntityEquipmentSlot.LEGS; default: return net.minecraft.inventory.EntityEquipmentSlot.FEET; }
+   }
 
    public ItemThaumiumArmor(ItemArmor.ArmorMaterial enumarmormaterial, int j, int k) {
-      super(enumarmormaterial, j, k);
+      super(enumarmormaterial, j, slotFromIndex(k));
       this.setCreativeTab(Thaumcraft.tabTC);
    }
 
@@ -30,15 +33,15 @@ public class ItemThaumiumArmor extends ItemArmor implements IRepairable, IRunicA
 
    @SideOnly(Side.CLIENT)
    public void registerIcons(IIconRegister ir) {
-      this.iconHelm = ir.registerIcon("thaumcraft:thaumiumhelm");
-      this.iconChest = ir.registerIcon("thaumcraft:thaumiumchest");
-      this.iconLegs = ir.registerIcon("thaumcraft:thaumiumlegs");
-      this.iconBoots = ir.registerIcon("thaumcraft:thaumiumboots");
+      this.iconHelm = ir.registerSprite("thaumcraft:thaumiumhelm");
+      this.iconChest = ir.registerSprite("thaumcraft:thaumiumchest");
+      this.iconLegs = ir.registerSprite("thaumcraft:thaumiumlegs");
+      this.iconBoots = ir.registerSprite("thaumcraft:thaumiumboots");
    }
 
    @SideOnly(Side.CLIENT)
-   public IIcon getIconFromDamage(int par1) {
-      return this.armorType == 0 ? this.iconHelm : (this.armorType == 1 ? this.iconChest : (this.armorType == 2 ? this.iconLegs : this.iconBoots));
+   public TextureAtlasSprite getIconFromDamage(int par1) {
+      return this.armorType == net.minecraft.inventory.EntityEquipmentSlot.HEAD ? this.iconHelm : (this.armorType == net.minecraft.inventory.EntityEquipmentSlot.CHEST ? this.iconChest : (this.armorType == net.minecraft.inventory.EntityEquipmentSlot.LEGS ? this.iconLegs : this.iconBoots));
    }
 
    public String getArmorTexture(ItemStack stack, Entity entity, int slot, String type) {
@@ -49,8 +52,8 @@ public class ItemThaumiumArmor extends ItemArmor implements IRepairable, IRunicA
       }
    }
 
-   public EnumRarity getRarity(ItemStack itemstack) {
-      return EnumRarity.uncommon;
+   public net.minecraft.item.EnumRarity getRarity(ItemStack itemstack) {
+      return net.minecraft.item.EnumRarity.UNCOMMON;
    }
 
    public boolean getIsRepairable(ItemStack par1ItemStack, ItemStack par2ItemStack) {

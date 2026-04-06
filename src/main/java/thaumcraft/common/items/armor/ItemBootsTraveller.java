@@ -1,35 +1,38 @@
 package thaumcraft.common.items.armor;
 
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
-import net.minecraft.client.renderer.texture.IIconRegister;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
+import thaumcraft.client.renderers.compat.IIconRegister;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.item.EnumRarity;
 import net.minecraft.item.ItemArmor;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.IIcon;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.world.World;
 import thaumcraft.api.IRepairable;
 import thaumcraft.api.IRunicArmor;
 import thaumcraft.common.Thaumcraft;
 
 public class ItemBootsTraveller extends ItemArmor implements IRepairable, IRunicArmor {
-   public IIcon icon;
+   public TextureAtlasSprite icon;
+
+   private static net.minecraft.inventory.EntityEquipmentSlot slotFromIndex(int k) {
+      switch(k) { case 0: return net.minecraft.inventory.EntityEquipmentSlot.HEAD; case 1: return net.minecraft.inventory.EntityEquipmentSlot.CHEST; case 2: return net.minecraft.inventory.EntityEquipmentSlot.LEGS; default: return net.minecraft.inventory.EntityEquipmentSlot.FEET; }
+   }
 
    public ItemBootsTraveller(ItemArmor.ArmorMaterial enumarmormaterial, int j, int k) {
-      super(enumarmormaterial, j, k);
+      super(enumarmormaterial, j, slotFromIndex(k));
       this.setMaxDamage(350);
       this.setCreativeTab(Thaumcraft.tabTC);
    }
 
    @SideOnly(Side.CLIENT)
    public void registerIcons(IIconRegister ir) {
-      this.icon = ir.registerIcon("thaumcraft:bootstraveler");
+      this.icon = ir.registerSprite("thaumcraft:bootstraveler");
    }
 
    @SideOnly(Side.CLIENT)
-   public IIcon getIconFromDamage(int par1) {
+   public TextureAtlasSprite getIconFromDamage(int par1) {
       return this.icon;
    }
 
@@ -37,8 +40,8 @@ public class ItemBootsTraveller extends ItemArmor implements IRepairable, IRunic
       return "thaumcraft:textures/models/bootstraveler.png";
    }
 
-   public EnumRarity getRarity(ItemStack itemstack) {
-      return EnumRarity.rare;
+   public net.minecraft.item.EnumRarity getRarity(ItemStack itemstack) {
+      return net.minecraft.item.EnumRarity.RARE;
    }
 
    public int getRunicCharge(ItemStack itemstack) {
@@ -47,7 +50,7 @@ public class ItemBootsTraveller extends ItemArmor implements IRepairable, IRunic
 
    public void onArmorTick(World world, EntityPlayer player, ItemStack itemStack) {
       if (!player.capabilities.isFlying && player.moveForward > 0.0F) {
-         if (player.worldObj.isRemote && !player.isSneaking()) {
+         if (player.world.isRemote && !player.isSneaking()) {
             if (!Thaumcraft.instance.entityEventHandler.prevStep.containsKey(player.getEntityId())) {
                Thaumcraft.instance.entityEventHandler.prevStep.put(player.getEntityId(), player.stepHeight);
             }
@@ -61,7 +64,7 @@ public class ItemBootsTraveller extends ItemArmor implements IRepairable, IRunic
                bonus /= 4.0F;
             }
 
-            player.moveFlying(0.0F, 1.0F, bonus);
+            player.moveRelative(0.0F, 0.0F, 1.0F, bonus);
          } else if (Hover.getHover(player.getEntityId())) {
             player.jumpMovementFactor = 0.03F;
          } else {

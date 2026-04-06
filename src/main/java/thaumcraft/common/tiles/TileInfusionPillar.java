@@ -1,9 +1,9 @@
 package thaumcraft.common.tiles;
 
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.util.AxisAlignedBB;
+import net.minecraft.util.math.AxisAlignedBB;
 import thaumcraft.api.TileThaumcraft;
 
 public class TileInfusionPillar extends TileThaumcraft {
@@ -15,7 +15,7 @@ public class TileInfusionPillar extends TileThaumcraft {
 
    @SideOnly(Side.CLIENT)
    public AxisAlignedBB getRenderBoundingBox() {
-      return AxisAlignedBB.getBoundingBox(this.xCoord - 1, this.yCoord - 1, this.zCoord - 1, this.xCoord + 1, this.yCoord + 2, this.zCoord + 1);
+      return new AxisAlignedBB(this.getPos().getX() - 1, this.getPos().getY() - 1, this.getPos().getZ() - 1, this.getPos().getX() + 1, this.getPos().getY() + 2, this.getPos().getZ() + 1);
    }
 
    public void readCustomNBT(NBTTagCompound nbttagcompound) {

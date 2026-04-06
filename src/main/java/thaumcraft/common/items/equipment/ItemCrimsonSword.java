@@ -1,9 +1,9 @@
 package thaumcraft.common.items.equipment;
 
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import java.util.List;
-import net.minecraft.client.renderer.texture.IIconRegister;
+import thaumcraft.client.renderers.compat.IIconRegister;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
@@ -14,9 +14,9 @@ import net.minecraft.item.ItemSword;
 import net.minecraft.potion.Potion;
 import net.minecraft.potion.PotionEffect;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.util.EnumChatFormatting;
-import net.minecraft.util.IIcon;
-import net.minecraft.util.StatCollector;
+import net.minecraft.util.text.TextFormatting;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.util.text.translation.I18n;
 import net.minecraft.world.World;
 import net.minecraftforge.common.util.EnumHelper;
 import thaumcraft.api.IRepairable;
@@ -26,7 +26,7 @@ import thaumcraft.common.config.ConfigItems;
 
 public class ItemCrimsonSword extends ItemSword implements IRepairable, IWarpingGear {
    public static Item.ToolMaterial toolMatCrimsonVoid = EnumHelper.addToolMaterial("CVOID", 4, 200, 8.0F, 3.5F, 20);
-   public IIcon icon;
+   public TextureAtlasSprite icon;
 
    public ItemCrimsonSword() {
       super(toolMatCrimsonVoid);
@@ -35,24 +35,24 @@ public class ItemCrimsonSword extends ItemSword implements IRepairable, IWarping
 
    @SideOnly(Side.CLIENT)
    public void registerIcons(IIconRegister ir) {
-      this.icon = ir.registerIcon("thaumcraft:crimson_blade");
+      this.icon = ir.registerSprite("thaumcraft:crimson_blade");
    }
 
    @SideOnly(Side.CLIENT)
-   public IIcon getIconFromDamage(int par1) {
+   public TextureAtlasSprite getIconFromDamage(int par1) {
       return this.icon;
    }
 
    public EnumRarity getRarity(ItemStack itemstack) {
-      return EnumRarity.rare;
+      return EnumRarity.RARE;
    }
 
    public boolean getIsRepairable(ItemStack par1ItemStack, ItemStack par2ItemStack) {
       return par2ItemStack.isItemEqual(new ItemStack(ConfigItems.itemResource, 1, 15)) || super.getIsRepairable(par1ItemStack, par2ItemStack);
    }
 
-   public void onUpdate(ItemStack stack, World world, Entity entity, int p_77663_4_, boolean p_77663_5_) {
-      super.onUpdate(stack, world, entity, p_77663_4_, p_77663_5_);
+   public void onUpdate(ItemStack stack, World world, Entity entity, int itemSlot, boolean isSelected) {
+      super.onUpdate(stack, world, entity, itemSlot, isSelected);
       if (stack.isItemDamaged() && entity != null && entity.ticksExisted % 20 == 0 && entity instanceof EntityLivingBase) {
          stack.damageItem(-1, (EntityLivingBase)entity);
       }
@@ -60,10 +60,10 @@ public class ItemCrimsonSword extends ItemSword implements IRepairable, IWarping
    }
 
    public boolean hitEntity(ItemStack is, EntityLivingBase target, EntityLivingBase hitter) {
-      if (!target.worldObj.isRemote && (!(target instanceof EntityPlayer) || !(hitter instanceof EntityPlayer) || MinecraftServer.getServer().isPVPEnabled())) {
+      if (!target.world.isRemote && (!(target instanceof EntityPlayer) || !(hitter instanceof EntityPlayer) || (target.world.getMinecraftServer() != null && target.world.getMinecraftServer().isPVPEnabled()))) {
          try {
-            target.addPotionEffect(new PotionEffect(Potion.weakness.getId(), 60));
-            target.addPotionEffect(new PotionEffect(Potion.hunger.getId(), 120));
+            target.addPotionEffect(new PotionEffect(net.minecraft.init.MobEffects.WEAKNESS, 60));
+            target.addPotionEffect(new PotionEffect(net.minecraft.init.MobEffects.HUNGER, 120));
          } catch (Exception ignored) {
          }
       }
@@ -75,8 +75,8 @@ public class ItemCrimsonSword extends ItemSword implements IRepairable, IWarping
       return 2;
    }
 
-   public void addInformation(ItemStack stack, EntityPlayer player, List list, boolean par4) {
-      list.add(EnumChatFormatting.GOLD + StatCollector.translateToLocal("enchantment.special.sapgreat"));
-      super.addInformation(stack, player, list, par4);
+   public void addInformation(ItemStack stack, @javax.annotation.Nullable net.minecraft.world.World worldIn, List list, net.minecraft.client.util.ITooltipFlag flagIn) {
+      list.add(TextFormatting.GOLD + I18n.translateToLocal("enchantment.special.sapgreat"));
+      super.addInformation(stack, worldIn, list, flagIn);
    }
 }

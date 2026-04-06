@@ -1,19 +1,18 @@
 package thaumcraft.common.items.equipment;
 
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 
 import java.util.List;
 import java.util.Objects;
 
-import net.minecraft.client.renderer.texture.IIconRegister;
+import thaumcraft.client.renderers.compat.IIconRegister;
 import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.IEntityMultiPart;
 import net.minecraft.entity.SharedMonsterAttributes;
-import net.minecraft.entity.boss.EntityDragonPart;
+import net.minecraft.entity.MultiPartEntityPart;
 import net.minecraft.entity.passive.EntityTameable;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
@@ -21,13 +20,10 @@ import net.minecraft.item.EnumRarity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemSword;
-import net.minecraft.potion.Potion;
-import net.minecraft.stats.AchievementList;
-import net.minecraft.stats.StatList;
 import net.minecraft.util.DamageSource;
-import net.minecraft.util.IIcon;
-import net.minecraft.util.MathHelper;
-import net.minecraft.util.Vec3;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.Vec3d;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.entity.player.AttackEntityEvent;
 import thaumcraft.api.IRepairable;
@@ -37,7 +33,7 @@ import thaumcraft.common.entities.golems.EntityGolemBase;
 import thaumcraft.common.lib.utils.Utils;
 
 public class ItemElementalSword extends ItemSword implements IRepairable {
-    public IIcon icon;
+    public TextureAtlasSprite icon;
 
     public ItemElementalSword(Item.ToolMaterial enumtoolmaterial) {
         super(enumtoolmaterial);
@@ -46,16 +42,16 @@ public class ItemElementalSword extends ItemSword implements IRepairable {
 
     @SideOnly(Side.CLIENT)
     public void registerIcons(IIconRegister ir) {
-        this.icon = ir.registerIcon("thaumcraft:elementalsword");
+        this.icon = ir.registerSprite("thaumcraft:elementalsword");
     }
 
     @SideOnly(Side.CLIENT)
-    public IIcon getIconFromDamage(int par1) {
+    public TextureAtlasSprite getIconFromDamage(int par1) {
         return this.icon;
     }
 
     public EnumRarity getRarity(ItemStack itemstack) {
-        return EnumRarity.rare;
+        return EnumRarity.RARE;
     }
 
     public boolean getIsRepairable(ItemStack par1ItemStack, ItemStack par2ItemStack) {
@@ -79,40 +75,40 @@ public class ItemElementalSword extends ItemSword implements IRepairable {
             Utils.resetFloatCounter((EntityPlayerMP) player);
         }
 
-        List targets = player.worldObj.getEntitiesWithinAABBExcludingEntity(player, player.boundingBox.expand(2.5F, 2.5F, 2.5F));
+        List targets = player.world.getEntitiesWithinAABBExcludingEntity(player, player.getEntityBoundingBox().expand(2.5F, 2.5F, 2.5F));
         if (!targets.isEmpty()) {
             for (Object target : targets) {
                 Entity entity = (Entity) target;
-                if (!(entity instanceof EntityPlayer) && !entity.isDead && (player.ridingEntity == null || player.ridingEntity != entity)) {
-                    Vec3 p = Vec3.createVectorHelper(player.posX, player.posY, player.posZ);
-                    Vec3 t = Vec3.createVectorHelper(entity.posX, entity.posY, entity.posZ);
+                if (!(entity instanceof EntityPlayer) && !entity.isDead && (player.getRidingEntity() == null || player.getRidingEntity() != entity)) {
+                    Vec3d p = new Vec3d(player.posX, player.posY, player.posZ);
+                    Vec3d t = new Vec3d(entity.posX, entity.posY, entity.posZ);
                     double distance = p.distanceTo(t) + 0.1;
-                    Vec3 r = Vec3.createVectorHelper(t.xCoord - p.xCoord, t.yCoord - p.yCoord, t.zCoord - p.zCoord);
-                    entity.motionX += r.xCoord / (double) 2.5F / distance;
-                    entity.motionY += r.yCoord / (double) 2.5F / distance;
-                    entity.motionZ += r.zCoord / (double) 2.5F / distance;
+                    Vec3d r = new Vec3d(t.x - p.x, t.y - p.y, t.z - p.z);
+                    entity.motionX += r.x / (double) 2.5F / distance;
+                    entity.motionY += r.y / (double) 2.5F / distance;
+                    entity.motionZ += r.z / (double) 2.5F / distance;
                 }
             }
         }
 
-        if (player.worldObj.isRemote) {
-            int miny = (int) (player.boundingBox.minY - (double) 2.0F);
+        if (player.world.isRemote) {
+            int miny = (int) (player.getEntityBoundingBox().minY - (double) 2.0F);
             if (player.onGround) {
-                miny = MathHelper.floor_double(player.boundingBox.minY);
+                miny = MathHelper.floor(player.getEntityBoundingBox().minY);
             }
 
             for (int a = 0; a < 5; ++a) {
-                Thaumcraft.proxy.smokeSpiral(player.worldObj, player.posX, player.boundingBox.minY + (double) (player.height / 2.0F), player.posZ, 1.5F, player.worldObj.rand.nextInt(360), miny, 14540253);
+                Thaumcraft.proxy.smokeSpiral(player.world, player.posX, player.getEntityBoundingBox().minY + (double) (player.height / 2.0F), player.posZ, 1.5F, player.world.rand.nextInt(360), miny, 14540253);
             }
 
             if (player.onGround) {
-                float r1 = player.worldObj.rand.nextFloat() * 360.0F;
+                float r1 = player.world.rand.nextFloat() * 360.0F;
                 float mx = -MathHelper.sin(r1 / 180.0F * (float) Math.PI) / 5.0F;
                 float mz = MathHelper.cos(r1 / 180.0F * (float) Math.PI) / 5.0F;
-                player.worldObj.spawnParticle("smoke", player.posX, player.boundingBox.minY + (double) 0.1F, player.posZ, mx, 0.0F, mz);
+                player.world.spawnParticle(net.minecraft.util.EnumParticleTypes.SMOKE_NORMAL, player.posX, player.getEntityBoundingBox().minY + (double) 0.1F, player.posZ, mx, 0.0F, mz);
             }
         } else if (ticks % 20 == 0) {
-            player.worldObj.playSoundAtEntity(player, "thaumcraft:wind", 0.5F, 0.9F + player.worldObj.rand.nextFloat() * 0.2F);
+            { net.minecraft.util.SoundEvent _snd = net.minecraft.util.SoundEvent.REGISTRY.getObject(new net.minecraft.util.ResourceLocation("thaumcraft:wind")); if (_snd != null) player.world.playSound(null, player.posX, player.posY, player.posZ, _snd, net.minecraft.util.SoundCategory.NEUTRAL, 0.5F, 0.9F + player.world.rand.nextFloat() * 0.2F); };
         }
 
         if (ticks % 20 == 0) {
@@ -123,13 +119,13 @@ public class ItemElementalSword extends ItemSword implements IRepairable {
 
     public boolean onLeftClickEntity(ItemStack stack, EntityPlayer player, Entity entity) {
         if (entity.isEntityAlive()) {
-            List<Entity> targets = (List<Entity>) player.worldObj.getEntitiesWithinAABBExcludingEntity(player, entity.boundingBox.expand(1.2, 1.1, 1.2));
+            List<Entity> targets = (List<Entity>) player.world.getEntitiesWithinAABBExcludingEntity(player, entity.getEntityBoundingBox().expand(1.2, 1.1, 1.2));
             int count = 0;
             if (targets.size() > 1) {
                 for (Entity target : targets) {
                     if (!target.isDead
-                            && (!(target instanceof EntityGolemBase) || !Objects.equals(((EntityGolemBase) target).getOwnerName(), player.getCommandSenderName()))
-                            && (!(target instanceof EntityTameable) || !Objects.equals(((EntityTameable) target).func_152113_b(), player.getCommandSenderName()))
+                            && (!(target instanceof EntityGolemBase) || !Objects.equals(((EntityGolemBase) target).getOwnerName(), player.getName()))
+                            && (!(target instanceof EntityTameable) || !Objects.equals(((EntityTameable) target).getOwnerId(), player.getUniqueID()))
                             && target instanceof EntityLiving
                             && target.getEntityId() != entity.getEntityId()) {
                         if (target.isEntityAlive()) {
@@ -139,8 +135,8 @@ public class ItemElementalSword extends ItemSword implements IRepairable {
                     }
                 }
 
-                if (count > 0 && !player.worldObj.isRemote) {
-                    player.worldObj.playSoundAtEntity(entity, "thaumcraft:swing", 1.0F, 0.9F + player.worldObj.rand.nextFloat() * 0.2F);
+                if (count > 0 && !player.world.isRemote) {
+                    { net.minecraft.util.SoundEvent _snd = net.minecraft.util.SoundEvent.REGISTRY.getObject(new net.minecraft.util.ResourceLocation("thaumcraft:swing")); if (_snd != null) player.world.playSound(null, entity.posX, entity.posY, entity.posZ, _snd, net.minecraft.util.SoundCategory.NEUTRAL, 1.0F, 0.9F + player.world.rand.nextFloat() * 0.2F); };
                 }
             }
         }
@@ -150,13 +146,13 @@ public class ItemElementalSword extends ItemSword implements IRepairable {
 
     public void attackTargetEntityWithCurrentItem(Entity par1Entity, EntityPlayer player) {
         if (!MinecraftForge.EVENT_BUS.post(new AttackEntityEvent(player, par1Entity))) {
-            if (par1Entity.canAttackWithItem() && !par1Entity.hitByEntity(player)) {
-                float f = (float) player.getEntityAttribute(SharedMonsterAttributes.attackDamage).getAttributeValue();
+            if (!par1Entity.hitByEntity(player)) {
+                float f = (float) player.getEntityAttribute(SharedMonsterAttributes.ATTACK_DAMAGE).getAttributeValue();
                 int i = 0;
                 float f1 = 0.0F;
                 if (par1Entity instanceof EntityLivingBase) {
-                    f1 = EnchantmentHelper.getEnchantmentModifierLiving(player, (EntityLivingBase) par1Entity);
-                    i += EnchantmentHelper.getKnockbackModifier(player, (EntityLivingBase) par1Entity);
+                    f1 = EnchantmentHelper.getModifierForCreature(player.getHeldItemMainhand(), par1Entity instanceof net.minecraft.entity.EntityLivingBase ? ((net.minecraft.entity.EntityLivingBase) par1Entity).getCreatureAttribute() : net.minecraft.entity.EnumCreatureAttribute.UNDEFINED);
+                    i += EnchantmentHelper.getKnockbackModifier(player);
                 }
 
                 if (player.isSprinting()) {
@@ -164,7 +160,7 @@ public class ItemElementalSword extends ItemSword implements IRepairable {
                 }
 
                 if (f > 0.0F || f1 > 0.0F) {
-                    boolean flag = player.fallDistance > 0.0F && !player.onGround && !player.isOnLadder() && !player.isInWater() && !player.isPotionActive(Potion.blindness) && player.ridingEntity == null && par1Entity instanceof EntityLivingBase;
+                    boolean flag = player.fallDistance > 0.0F && !player.onGround && !player.isOnLadder() && !player.isInWater() && !player.isPotionActive(net.minecraft.init.MobEffects.BLINDNESS) && player.getRidingEntity() == null && par1Entity instanceof EntityLivingBase;
                     if (flag && f > 0.0F) {
                         f *= 1.5F;
                     }
@@ -194,34 +190,29 @@ public class ItemElementalSword extends ItemSword implements IRepairable {
                             player.onEnchantmentCritical(par1Entity);
                         }
 
-                        if (f >= 18.0F) {
-                            player.triggerAchievement(AchievementList.overkill);
-                        }
-
-                        player.setLastAttacker(par1Entity);
                         if (par1Entity instanceof EntityLivingBase) {
-                            EnchantmentHelper.func_151384_a((EntityLivingBase) par1Entity, player);
+                            EnchantmentHelper.applyThornEnchantments((EntityLivingBase) par1Entity, player);
                         }
                     }
 
-                    ItemStack itemstack = player.getCurrentEquippedItem();
+                    ItemStack itemstack = player.getHeldItemMainhand();
                     Object object = par1Entity;
-                    if (par1Entity instanceof EntityDragonPart) {
-                        IEntityMultiPart ientitymultipart = ((EntityDragonPart) par1Entity).entityDragonObj;
-                        if (ientitymultipart instanceof EntityLivingBase) {
-                            object = ientitymultipart;
+                    if (par1Entity instanceof MultiPartEntityPart) {
+                        net.minecraft.entity.IEntityMultiPart multipartParent = ((MultiPartEntityPart) par1Entity).parent;
+                        if (multipartParent instanceof EntityLivingBase) {
+                            object = (EntityLivingBase) multipartParent;
                         }
                     }
 
                     if (itemstack != null && object instanceof EntityLivingBase) {
                         itemstack.hitEntity((EntityLivingBase) object, player);
-                        if (itemstack.stackSize <= 0) {
-                            player.destroyCurrentEquippedItem();
+                        if (itemstack.isEmpty()) {
+                            player.setHeldItem(net.minecraft.util.EnumHand.MAIN_HAND, net.minecraft.item.ItemStack.EMPTY);
                         }
                     }
 
                     if (par1Entity instanceof EntityLivingBase) {
-                        player.addStat(StatList.damageDealtStat, Math.round(f * 10.0F));
+                        player.addStat(net.minecraft.stats.StatList.DAMAGE_DEALT, Math.round(f * 10.0F));
                         if (j > 0 && flag2) {
                             par1Entity.setFire(j * 4);
                         } else if (flag1) {

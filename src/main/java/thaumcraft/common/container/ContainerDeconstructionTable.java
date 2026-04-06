@@ -1,14 +1,15 @@
 package thaumcraft.common.container;
 
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.inventory.Container;
-import net.minecraft.inventory.ICrafting;
+import net.minecraft.inventory.IContainerListener;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.math.BlockPos;
 import thaumcraft.api.aspects.AspectList;
 import thaumcraft.common.Thaumcraft;
 import thaumcraft.common.lib.crafting.ThaumcraftCraftingManager;
@@ -37,18 +38,19 @@ public class ContainerDeconstructionTable extends Container {
 
    }
 
-   public void addCraftingToCrafters(ICrafting par1ICrafting) {
-      super.addCraftingToCrafters(par1ICrafting);
-      par1ICrafting.sendProgressBarUpdate(this, 0, this.table.breaktime);
+   public void addListener(IContainerListener listener) {
+      super.addListener(listener);
+      listener.sendWindowProperty(this, 0, this.table.breaktime);
    }
 
    public boolean enchantItem(EntityPlayer p, int button) {
       if (button == 1 && this.table.aspect != null) {
-         Thaumcraft.proxy.playerKnowledge.addAspectPool(p.getCommandSenderName(), this.table.aspect, (short)1);
+         Thaumcraft.proxy.playerKnowledge.addAspectPool(p.getName(), this.table.aspect, (short)1);
          ResearchManager.scheduleSave(p);
-         PacketHandler.INSTANCE.sendTo(new PacketAspectPool(this.table.aspect.getTag(), (short) 1, Thaumcraft.proxy.playerKnowledge.getAspectPoolFor(p.getCommandSenderName(), this.table.aspect)), (EntityPlayerMP)p);
+         PacketHandler.INSTANCE.sendTo(new PacketAspectPool(this.table.aspect.getTag(), (short) 1, Thaumcraft.proxy.playerKnowledge.getAspectPoolFor(p.getName(), this.table.aspect)), (EntityPlayerMP)p);
          this.table.aspect = null;
-         this.table.getWorldObj().markBlockForUpdate(this.table.xCoord, this.table.yCoord, this.table.zCoord);
+         BlockPos pos = this.table.getPos();
+         this.table.getWorld().notifyBlockUpdate(pos, this.table.getWorld().getBlockState(pos), this.table.getWorld().getBlockState(pos), 3);
       }
 
       return false;
@@ -57,12 +59,11 @@ public class ContainerDeconstructionTable extends Container {
    public void detectAndSendChanges() {
       super.detectAndSendChanges();
 
-       for (Object crafter : this.crafters) {
-           ICrafting icrafting = (ICrafting) crafter;
-           if (this.lastBreakTime != this.table.breaktime) {
-               icrafting.sendProgressBarUpdate(this, 0, this.table.breaktime);
-           }
-       }
+      for (IContainerListener listener : this.listeners) {
+         if (this.lastBreakTime != this.table.breaktime) {
+            listener.sendWindowProperty(this, 0, this.table.breaktime);
+         }
+      }
 
       this.lastBreakTime = this.table.breaktime;
    }
@@ -76,11 +77,11 @@ public class ContainerDeconstructionTable extends Container {
    }
 
    public boolean canInteractWith(EntityPlayer par1EntityPlayer) {
-      return this.table.isUseableByPlayer(par1EntityPlayer);
+      return this.table.isUsableByPlayer(par1EntityPlayer);
    }
 
    public ItemStack transferStackInSlot(EntityPlayer par1EntityPlayer, int par2) {
-      ItemStack itemstack = null;
+      ItemStack itemstack = ItemStack.EMPTY;
       Slot slot = (Slot)this.inventorySlots.get(par2);
       if (slot != null && slot.getHasStack()) {
          ItemStack itemstack1 = slot.getStack();
@@ -90,30 +91,30 @@ public class ContainerDeconstructionTable extends Container {
             al = ThaumcraftCraftingManager.getBonusTags(itemstack1, al);
             if (al != null && al.size() > 0) {
                if (!this.mergeItemStack(itemstack1, 0, 1, false)) {
-                  return null;
+                  return ItemStack.EMPTY;
                }
             } else if (par2 >= 1 && par2 < 28) {
                if (!this.mergeItemStack(itemstack1, 28, 37, false)) {
-                  return null;
+                  return ItemStack.EMPTY;
                }
             } else if (par2 >= 28 && par2 < 37 && !this.mergeItemStack(itemstack1, 1, 28, false)) {
-               return null;
+               return ItemStack.EMPTY;
             }
          } else if (!this.mergeItemStack(itemstack1, 1, 37, false)) {
-            return null;
+            return ItemStack.EMPTY;
          }
 
-         if (itemstack1.stackSize == 0) {
-            slot.putStack(null);
+         if (itemstack1.isEmpty()) {
+            slot.putStack(ItemStack.EMPTY);
          } else {
             slot.onSlotChanged();
          }
 
-         if (itemstack1.stackSize == itemstack.stackSize) {
-            return null;
+         if (itemstack1.getCount() == itemstack.getCount()) {
+            return ItemStack.EMPTY;
          }
 
-         slot.onPickupFromSlot(par1EntityPlayer, itemstack1);
+         slot.onTake(par1EntityPlayer, itemstack1);
       }
 
       return itemstack;

@@ -2,6 +2,7 @@ package thaumcraft.common.lib.enchantment;
 
 import net.minecraft.enchantment.Enchantment;
 import net.minecraft.enchantment.EnumEnchantmentType;
+import net.minecraft.inventory.EntityEquipmentSlot;
 import net.minecraft.item.ItemArmor;
 import net.minecraft.item.ItemBook;
 import net.minecraft.item.ItemStack;
@@ -9,7 +10,7 @@ import thaumcraft.common.items.armor.ItemHoverHarness;
 
 public class EnchantmentHaste extends Enchantment {
    public EnchantmentHaste(int par1, int par2) {
-      super(par1, par2, EnumEnchantmentType.armor);
+      super(Enchantment.Rarity.RARE, EnumEnchantmentType.ARMOR, new EntityEquipmentSlot[]{EntityEquipmentSlot.HEAD, EntityEquipmentSlot.CHEST, EntityEquipmentSlot.LEGS, EntityEquipmentSlot.FEET});
       this.setName("haste");
    }
 
@@ -26,7 +27,7 @@ public class EnchantmentHaste extends Enchantment {
    }
 
    public boolean canApply(ItemStack is) {
-      return is != null && (is.getItem() instanceof ItemArmor && (((ItemArmor)is.getItem()).armorType == 3 || is.getItem() instanceof ItemHoverHarness) || is.getItem() instanceof ItemBook);
+      return is != null && (is.getItem() instanceof ItemArmor && (((ItemArmor)is.getItem()).armorType == EntityEquipmentSlot.HEAD || is.getItem() instanceof ItemHoverHarness) || is.getItem() instanceof ItemBook);
    }
 
    public boolean canApplyAtEnchantingTable(ItemStack stack) {

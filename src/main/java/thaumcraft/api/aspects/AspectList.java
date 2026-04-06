@@ -9,7 +9,7 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
-import net.minecraft.util.StatCollector;
+import net.minecraft.util.text.translation.I18n;
 import thaumcraft.api.ThaumcraftApiHelper;
 import thaumcraft.common.Thaumcraft;
 
@@ -39,10 +39,10 @@ public class AspectList implements Serializable {
     public static void addAspectDescriptionToList(AspectList aspects, EntityPlayer player, List<String> aspectDescriptions) {
        if (aspects != null && !aspects.aspects.isEmpty()) {
           for(Aspect tag : aspects.getAspectsSorted()) {
-             if (Thaumcraft.proxy.playerKnowledge.hasDiscoveredAspect(player.getCommandSenderName(), tag)) {
+             if (player != null && Thaumcraft.proxy.playerKnowledge.hasDiscoveredAspect(player.getName(), tag)) {
                 aspectDescriptions.add(tag.getName() + " x " + aspects.getAmount(tag));
              } else {
-                aspectDescriptions.add(StatCollector.translateToLocal("tc.aspect.unknown"));
+                aspectDescriptions.add(I18n.translateToLocal("tc.aspect.unknown"));
              }
           }
        }

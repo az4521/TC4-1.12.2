@@ -1,11 +1,11 @@
 package thaumcraft.client.gui;
 
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.entity.player.InventoryPlayer;
-import net.minecraft.util.MathHelper;
-import org.lwjgl.opengl.GL11;
+import net.minecraft.util.math.MathHelper;
+
 import thaumcraft.api.aspects.Aspect;
 import thaumcraft.api.aspects.AspectList;
 import thaumcraft.client.lib.UtilsFX;
@@ -15,6 +15,7 @@ import thaumcraft.common.lib.crafting.ThaumcraftCraftingManager;
 import thaumcraft.common.tiles.TileArcaneWorkbench;
 
 import java.util.ArrayList;
+import net.minecraft.client.renderer.GlStateManager;
 
 @SideOnly(Side.CLIENT)
 public class GuiArcaneWorkbench extends GuiContainer {
@@ -37,14 +38,14 @@ public class GuiArcaneWorkbench extends GuiContainer {
     @Override
     protected void drawGuiContainerBackgroundLayer(float par1, int par2, int par3) {
         UtilsFX.bindTexture("textures/gui/gui_arcaneworkbench.png");
-        GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
-        GL11.glEnable(GL11.GL_BLEND);
+        GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
+        GlStateManager.enableBlend();
         int var5 = (this.width - this.xSize) / 2;
         int var6 = (this.height - this.ySize) / 2;
         this.drawTexturedModalRect(var5, var6, 0, 0, this.xSize, this.ySize);
-        GL11.glDisable(GL11.GL_BLEND);
+        GlStateManager.disableBlend();
         ItemWandCasting wand = null;
-        if (this.tileEntity.getStackInSlot(10) != null && this.tileEntity.getStackInSlot(10).getItem() instanceof ItemWandCasting) {
+        if (!this.tileEntity.getStackInSlot(10).isEmpty() && this.tileEntity.getStackInSlot(10).getItem() instanceof ItemWandCasting) {
             wand = (ItemWandCasting) this.tileEntity.getStackInSlot(10).getItem();
         }
 
@@ -75,31 +76,29 @@ public class GuiArcaneWorkbench extends GuiContainer {
         }
 
         if (wand != null && cost != null && !wand.consumeAllVisCrafting(this.tileEntity.getStackInSlot(10), this.ip.player, cost, false)) {
-            GL11.glPushMatrix();
+            GlStateManager.pushMatrix();
             float var40 = 0.33F;
-            GL11.glColor4f(var40, var40, var40, 0.66F);
-            itemRender.renderWithColor = false;
-            GL11.glEnable(2896);
-            GL11.glEnable(2884);
-            GL11.glEnable(GL11.GL_BLEND);
-            itemRender.renderItemAndEffectIntoGUI(this.mc.fontRenderer, this.mc.renderEngine,
+            GlStateManager.color(var40, var40, var40, 0.66F);
+            GlStateManager.enableLighting();
+            GlStateManager.enableCull();
+            GlStateManager.enableBlend();
+            itemRender.renderItemAndEffectIntoGUI(
                     ThaumcraftCraftingManager.findMatchingArcaneRecipe(this.tileEntity, this.ip.player),
                     var5 + 160, var6 + 64);
-            itemRender.renderItemOverlayIntoGUI(this.mc.fontRenderer, this.mc.renderEngine,
+            itemRender.renderItemOverlayIntoGUI(this.mc.fontRenderer,
                     ThaumcraftCraftingManager.findMatchingArcaneRecipe(this.tileEntity, this.ip.player),
-                    var5 + 160, var6 + 64);
-            itemRender.renderWithColor = true;
-            GL11.glDisable(GL11.GL_BLEND);
-            GL11.glDisable(2896);
-            GL11.glPopMatrix();
-            GL11.glPushMatrix();
-            GL11.glTranslatef((float) (var5 + 168), (float) (var6 + 46), 0.0F);
-            GL11.glScalef(0.5F, 0.5F, 0.0F);
+                    var5 + 160, var6 + 64, null);
+            GlStateManager.disableBlend();
+            GlStateManager.disableLighting();
+            GlStateManager.popMatrix();
+            GlStateManager.pushMatrix();
+            GlStateManager.translate((float) (var5 + 168), (float) (var6 + 46), 0.0F);
+            GlStateManager.scale(0.5F, 0.5F, 0.0F);
             String text = "Insufficient vis";
-            int ll = this.fontRendererObj.getStringWidth(text) / 2;
-            this.fontRendererObj.drawString(text, -ll, 0, 15625838);
-            GL11.glScalef(1.0F, 1.0F, 1.0F);
-            GL11.glPopMatrix();
+            int ll = this.fontRenderer.getStringWidth(text) / 2;
+            this.fontRenderer.drawString(text, -ll, 0, 15625838);
+            GlStateManager.scale(1.0F, 1.0F, 1.0F);
+            GlStateManager.popMatrix();
         }
 
     }

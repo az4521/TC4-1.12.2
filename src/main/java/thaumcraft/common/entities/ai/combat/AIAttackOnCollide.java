@@ -3,18 +3,18 @@ package thaumcraft.common.entities.ai.combat;
 import net.minecraft.entity.EntityCreature;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.ai.EntityAIBase;
-import net.minecraft.pathfinding.PathEntity;
+import net.minecraft.pathfinding.Path;
 import net.minecraft.pathfinding.PathPoint;
-import net.minecraft.util.MathHelper;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
 
 public class AIAttackOnCollide extends EntityAIBase {
-   World worldObj;
+   World world;
    EntityCreature attacker;
    int attackTick;
    double speedTowardsTarget;
    boolean longMemory;
-   PathEntity entityPathEntity;
+   Path entityPathEntity;
    Class<?> classTarget;
    private int delayCounter;
    private double targetX;
@@ -29,7 +29,7 @@ public class AIAttackOnCollide extends EntityAIBase {
 
    public AIAttackOnCollide(EntityCreature attacker, double speedTowardsTarget, boolean longMemory) {
       this.attacker = attacker;
-      this.worldObj = attacker.worldObj;
+      this.world = attacker.world;
       this.speedTowardsTarget = speedTowardsTarget;
       this.longMemory = longMemory;
       this.setMutexBits(3);
@@ -59,9 +59,8 @@ public class AIAttackOnCollide extends EntityAIBase {
               && (
                       !this.longMemory
                               ? !this.attacker.getNavigator().noPath()
-                              : this.attacker.isWithinHomeDistance(
-                                      MathHelper.floor_double(entitylivingbase.posX),
-                              MathHelper.floor_double(entitylivingbase.posY), MathHelper.floor_double(entitylivingbase.posZ))
+                              : this.attacker.isWithinHomeDistanceFromPosition(
+                                      new net.minecraft.util.math.BlockPos(entitylivingbase))
       ));
    }
 
@@ -71,13 +70,13 @@ public class AIAttackOnCollide extends EntityAIBase {
    }
 
    public void resetTask() {
-      this.attacker.getNavigator().clearPathEntity();
+      this.attacker.getNavigator().clearPath();
    }
 
    public void updateTask() {
       EntityLivingBase entitylivingbase = this.attacker.getAttackTarget();
       this.attacker.getLookHelper().setLookPositionWithEntity(entitylivingbase, 30.0F, 30.0F);
-      double d0 = this.attacker.getDistanceSq(entitylivingbase.posX, entitylivingbase.boundingBox.minY, entitylivingbase.posZ);
+      double d0 = this.attacker.getDistanceSq(entitylivingbase.posX, entitylivingbase.getEntityBoundingBox().minY, entitylivingbase.posZ);
       double d1 = this.attacker.width * 2.0F * this.attacker.width * 2.0F + entitylivingbase.width;
       --this.delayCounter;
       if (this.attackTick > 0) {
@@ -86,12 +85,12 @@ public class AIAttackOnCollide extends EntityAIBase {
 
       if ((this.longMemory || this.attacker.getEntitySenses().canSee(entitylivingbase)) && this.delayCounter <= 0 && (this.targetX == (double)0.0F && this.targetY == (double)0.0F && this.targetZ == (double)0.0F || entitylivingbase.getDistanceSq(this.targetX, this.targetY, this.targetZ) >= (double)1.0F || this.attacker.getRNG().nextFloat() < 0.05F)) {
          this.targetX = entitylivingbase.posX;
-         this.targetY = entitylivingbase.boundingBox.minY;
+         this.targetY = entitylivingbase.getEntityBoundingBox().minY;
          this.targetZ = entitylivingbase.posZ;
          this.delayCounter = this.failedPathFindingPenalty + 4 + this.attacker.getRNG().nextInt(7);
          if (this.attacker.getNavigator().getPath() != null) {
             PathPoint finalPathPoint = this.attacker.getNavigator().getPath().getFinalPathPoint();
-            if (finalPathPoint != null && entitylivingbase.getDistanceSq(finalPathPoint.xCoord, finalPathPoint.yCoord, finalPathPoint.zCoord) < (double)1.0F) {
+            if (finalPathPoint != null && entitylivingbase.getDistanceSq(finalPathPoint.x, finalPathPoint.y, finalPathPoint.z) < (double)1.0F) {
                this.failedPathFindingPenalty = 0;
             } else {
                this.failedPathFindingPenalty += 10;
@@ -113,8 +112,8 @@ public class AIAttackOnCollide extends EntityAIBase {
 
       if (d0 <= d1 && this.attackTick <= 0) {
          this.attackTick = 10;
-         if (this.attacker.getHeldItem() != null) {
-            this.attacker.swingItem();
+         if (!this.attacker.getHeldItemMainhand().isEmpty()) {
+            this.attacker.swingArm(net.minecraft.util.EnumHand.MAIN_HAND);
          }
 
          this.attacker.attackEntityAsMob(entitylivingbase);

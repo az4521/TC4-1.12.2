@@ -11,12 +11,12 @@ public class BeforePickEventListeners {
     public static final PickWarpEventListenerBefore THAUMIC_FORTRESS_MASK_DISCOUNT = new PickWarpEventListenerBefore(0) {
         @Override
         public void beforePickEvent(PickWarpEventContext e, EntityPlayer player) {
-            ItemStack helm = player.inventory.armorInventory[3];
+            ItemStack helm = player.inventory.armorInventory.get(3);
             if (helm != null
                     && helm.getItem() instanceof ItemFortressArmor
-                    && helm.hasTagCompound() && helm.stackTagCompound.hasKey("mask")
-                    && helm.stackTagCompound.getInteger("mask") == 0) {
-                e.warp -=  2 + player.worldObj.rand.nextInt(4);
+                    && helm.hasTagCompound() && helm.getTagCompound().hasKey("mask")
+                    && helm.getTagCompound().getInteger("mask") == 0) {
+                e.warp -=  2 + player.world.rand.nextInt(4);
             }
         }
     };
@@ -25,7 +25,7 @@ public class BeforePickEventListeners {
         public void beforePickEvent(PickWarpEventContext e, EntityPlayer player) {
             e.warp = Math.min(100, (e.warp + e.warp + e.warpCounter) / 3);
             e.warpCounter = (int)((double)e.warpCounter - Math.max(5.0F, Math.sqrt(e.warpCounter) * (double)2.0F));
-            Thaumcraft.proxy.getPlayerKnowledge().setWarpCounter(player.getCommandSenderName(), e.warpCounter);
+            Thaumcraft.proxy.getPlayerKnowledge().setWarpCounter(player.getName(), e.warpCounter);
         }
     };
 }

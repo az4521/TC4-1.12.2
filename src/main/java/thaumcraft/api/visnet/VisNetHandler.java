@@ -5,14 +5,15 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import net.minecraft.block.Block;
-import net.minecraft.util.MathHelper;
-import net.minecraft.util.MovingObjectPosition;
-import net.minecraft.util.Vec3;
+import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.RayTraceResult;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import thaumcraft.api.ThaumcraftApi;
 import thaumcraft.api.WorldCoordinates;
 import thaumcraft.api.aspects.Aspect;
 import thaumcraft.common.lib.utils.Utils;
+import net.minecraft.util.math.BlockPos;
 
 public class VisNetHandler {
 
@@ -35,7 +36,7 @@ public class VisNetHandler {
 		int drainedAmount = 0;
 
 		WorldCoordinates drainer = new WorldCoordinates(x, y, z,
-				world.provider.dimensionId);
+				world.provider.getDimension());
 		if (!nearbyNodes.containsKey(drainer)) {
 			calculateNearbyNodes(world, x, y, z);
 		}
@@ -53,7 +54,7 @@ public class VisNetHandler {
 				amount -= a;
 				if (a > 0) {
 					int color = Aspect.getPrimalAspects().indexOf(aspect);
-					generateVisEffect(world.provider.dimensionId, x, y, z, node.xCoord, node.yCoord, node.zCoord, color);
+					generateVisEffect(world.provider.getDimension(), x, y, z, node.getPos().getX(), node.getPos().getY(), node.getPos().getZ(), color);
 				}
 				if (amount <= 0) {
 					break;
@@ -72,12 +73,12 @@ public class VisNetHandler {
 
 	public static void addSource(World world, TileVisNode vs) {
 		HashMap<WorldCoordinates, WeakReference<TileVisNode>> sourcelist = sources
-				.get(world.provider.dimensionId);
+				.get(world.provider.getDimension());
 		if (sourcelist == null) {
 			sourcelist = new HashMap<>();
 		}
 		sourcelist.put(vs.getLocation(), new WeakReference<>(vs));
-		sources.put(world.provider.dimensionId, sourcelist);
+		sources.put(world.provider.getDimension(), sourcelist);
 		nearbyNodes.clear();
 	}
 
@@ -96,7 +97,7 @@ public class VisNetHandler {
 		WeakReference<TileVisNode> ref = new WeakReference<>(vn);
 
 		HashMap<WorldCoordinates, WeakReference<TileVisNode>> sourcelist = sources
-				.get(world.provider.dimensionId);
+				.get(world.provider.getDimension());
 		if (sourcelist == null) {
 			sourcelist = new HashMap<>();
 			return null;
@@ -155,7 +156,7 @@ public class VisNetHandler {
 			TileVisNode child = childWR.get();
 
 			if (child != null && !child.equals(target) && !child.equals(parent)) {
-				float r2 = inRange(child.getWorldObj(), child.getLocation(),
+				float r2 = inRange(child.getWorld(), child.getLocation(),
 						target.getLocation(), target.getRange());
 				if (r2 > 0) {
 					in.add(new Object[] { child, r2 });
@@ -178,7 +179,7 @@ public class VisNetHandler {
 	private static void calculateNearbyNodes(World world, int x, int y, int z) {
 
 		HashMap<WorldCoordinates, WeakReference<TileVisNode>> sourcelist = sources
-				.get(world.provider.dimensionId);
+				.get(world.provider.getDimension());
 		if (sourcelist == null) {
 			sourcelist = new HashMap<>();
 			return;
@@ -186,7 +187,7 @@ public class VisNetHandler {
 
 		ArrayList<WeakReference<TileVisNode>> cn = new ArrayList<>();
 		WorldCoordinates drainer = new WorldCoordinates(x, y, z,
-				world.provider.dimensionId);
+				world.provider.getDimension());
 
 		ArrayList<Object[]> nearby = new ArrayList<>();
 
@@ -217,7 +218,7 @@ public class VisNetHandler {
 				TileVisNode n = child.get();
 				if (n != null && !n.equals(source)) {
 					
-					float r2 = inRange(n.getWorldObj(), n.getLocation(),
+					float r2 = inRange(n.getWorld(), n.getLocation(),
 							drainer, n.getRange());
 					if (r2 > 0 && r2 < range) {
 						range = r2;
@@ -239,7 +240,7 @@ public class VisNetHandler {
 		for (WeakReference<TileVisNode> child : source.getChildren()) {
 			TileVisNode n = child.get();
 			
-			if (n != null && n.getWorldObj()!=null && isChunkLoaded(n.getWorldObj(), n.xCoord, n.zCoord)) {
+			if (n != null && n.getWorld()!=null && n.getWorld().isBlockLoaded(n.getPos())) {
 				list.add(child);
 				list = getAllChildren(n,list);
 			}
@@ -251,158 +252,14 @@ public class VisNetHandler {
         return Utils.isChunkLoaded(world, x, z);
 	}
 
-	 public static boolean canNodeBeSeen(TileVisNode source,TileVisNode target)
-	 {
-		 World world = source.getWorldObj();
-		 Vec3 sourceAt = Vec3.createVectorHelper((double) source.xCoord + 0.5D, (double) source.yCoord + 0.5D, (double) source.zCoord + 0.5D);
-		 Vec3 targetAt = Vec3.createVectorHelper((double) target.xCoord + 0.5D, (double) target.yCoord + 0.5D, (double) target.zCoord + 0.5D);
-		 if (Double.isNaN(sourceAt.xCoord) || Double.isNaN(sourceAt.yCoord) || Double.isNaN(sourceAt.zCoord)) return true;
-		 if (Double.isNaN(targetAt.xCoord) || Double.isNaN(targetAt.yCoord) || Double.isNaN(targetAt.zCoord)) return true;
-		 int sourceAtX = MathHelper.floor_double(sourceAt.xCoord);
-		 int sourceAtY = MathHelper.floor_double(sourceAt.yCoord);
-		 int sourceAtZ = MathHelper.floor_double(sourceAt.zCoord);
-		 int targetAtX = MathHelper.floor_double(targetAt.xCoord);
-		 int targetAtY = MathHelper.floor_double(targetAt.yCoord);
-		 int targetAtZ = MathHelper.floor_double(targetAt.zCoord);
-		 int maxStep = source.getRange() * 5; // mathematician please help. likely not * 5...
-
-		 while (maxStep-- >= 0) {
-			 if (
-					 Double.isNaN(sourceAt.xCoord)
-							 || Double.isNaN(sourceAt.yCoord)
-							 || Double.isNaN(sourceAt.zCoord)) {
-				 return true;
-			 }
-
-			 if (
-					 sourceAtX != targetAtX
-							 || sourceAtY != targetAtY
-							 || sourceAtZ != targetAtZ
-			 ) {
-				 boolean xDiff = targetAtX != sourceAtX;
-				 boolean yDIff = targetAtY != sourceAtY;
-				 boolean zDiff = targetAtZ != sourceAtZ;
-				 //why 999?
-				 double x0 = 999.0D;
-				 double y0 = 999.0D;
-				 double z0 = 999.0D;
-				 if (targetAtX > sourceAtX) {
-					 x0 = (double) sourceAtX + 1.0D;
-				 } else if (targetAtX < sourceAtX) {
-					 x0 = (double) sourceAtX + 0.0D;
-				 }
-
-				 if (targetAtY > sourceAtY) {
-					 y0 = (double) sourceAtY + 1.0D;
-				 } else if (targetAtY < sourceAtY) {
-					 y0 = (double) sourceAtY + 0.0D;
-				 }
-
-				 if (targetAtZ > sourceAtZ) {
-					 z0 = (double) sourceAtZ + 1.0D;
-				 } else if (targetAtZ < sourceAtZ) {
-					 z0 = (double) sourceAtZ + 0.0D;
-				 }
-
-				 double xpercent = 999.0D;
-				 double ypercent = 999.0D;
-				 double zpercent = 999.0D;
-				 double dx = targetAt.xCoord - sourceAt.xCoord;
-				 double dy = targetAt.yCoord - sourceAt.yCoord;
-				 double dz = targetAt.zCoord - sourceAt.zCoord;
-				 if (xDiff) {
-					 xpercent = (x0 - sourceAt.xCoord) / dx;
-				 }
-
-				 if (yDIff) {
-					 ypercent = (y0 - sourceAt.yCoord) / dy;
-				 }
-
-				 if (zDiff) {
-					 //targetAtZ < sourceAtZ -> z0 = sourceAtZ -> zpercent == 0
-					 //targetAtZ > sourceAtZ -> z0 = sourceAtZ + 1 -> zpercent = 1/dz
-					 //targetAtZ == sourceAtZ -> zpercent == 999
-					 zpercent = (z0 - sourceAt.zCoord) / dz;
-				 }
-
-				 byte checkType;
-				 //i should call this part MENTAL ILLNESS
-				 double minPercent = Math.min(xpercent,Math.min(ypercent,zpercent));
-				 if (minPercent == xpercent) {
-					 // x changes next
-					 if (targetAtX > sourceAtX) {
-						 checkType = 4;
-					 } else {
-						 checkType = 5;
-					 }
-
-					 sourceAt.xCoord = x0;
-					 sourceAt.yCoord += dy * xpercent;
-					 sourceAt.zCoord += dz * xpercent;
-				 } else if (minPercent == ypercent) {
-					 // y changes next
-					 if (targetAtY > sourceAtY) {
-						 checkType = 0;
-					 } else {
-						 checkType = 1;
-					 }
-
-					 sourceAt.xCoord += dx * ypercent;
-					 sourceAt.yCoord = y0;
-					 sourceAt.zCoord += dz * ypercent;
-				 } else {//minPercent == zpercent
-					 // z changes next
-					 if (targetAtZ > sourceAtZ) {
-						 checkType = 2;
-					 } else {
-						 checkType = 3;
-					 }
-
-					 sourceAt.xCoord += dx * zpercent;
-					 sourceAt.yCoord += dy * zpercent;
-					 sourceAt.zCoord = z0;
-				 }
-
-				 sourceAtX = MathHelper.floor_double(sourceAt.xCoord);
-				 if (checkType == 5) {
-					 --sourceAtX;
-				 }
-
-				 sourceAtY = MathHelper.floor_double(sourceAt.yCoord);
-				 if (checkType == 1) {
-					 --sourceAtY;
-				 }
-
-				 sourceAtZ = MathHelper.floor_double(sourceAt.zCoord);
-				 if (checkType == 3) {
-					 --sourceAtZ;
-				 }
-
-				 if (sourceAtX == target.xCoord
-						 && sourceAtY == target.yCoord
-						 && sourceAtZ == target.zCoord)
-					 return true;
-
-				 Block block = world.getBlock(sourceAtX, sourceAtY, sourceAtZ);
-				 int meta = world.getBlockMetadata(sourceAtX, sourceAtY, sourceAtZ);
-				 if (block.canCollideCheck(meta, false)) {
-					 if (block.getCollisionBoundingBoxFromPool(world, sourceAtX, sourceAtY, sourceAtZ) != null) {
-						 MovingObjectPosition movingobjectposition1 = block.collisionRayTrace(world, sourceAtX, sourceAtY, sourceAtZ, sourceAt, targetAt);
-						 if (movingobjectposition1 != null && movingobjectposition1.typeOfHit != MovingObjectPosition.MovingObjectType.MISS) {
-							 return false;
-						 }
-					 }
-				 }
-			 }
-		 }
-		 return true;
-//		 MovingObjectPosition mop = ThaumcraftApiHelper.rayTraceIgnoringSource(source.getWorldObj(),
-//				 Vec3.createVectorHelper(source.xCoord+.5, source.yCoord+.5,source.zCoord+.5),
-//				 Vec3.createVectorHelper(target.xCoord+.5, target.yCoord+.5,target.zCoord+.5),
-//				 false, true, false);
-//		 return  mop == null || (mop.typeOfHit==MovingObjectType.BLOCK &&
-//				 mop.blockX==target.xCoord && mop.blockY==target.yCoord && mop.blockZ==target.zCoord);
+	 public static boolean canNodeBeSeen(TileVisNode source, TileVisNode target) {
+		 World world = source.getWorld();
+		 Vec3d sourceAt = new Vec3d(source.getPos().getX() + 0.5D, source.getPos().getY() + 0.5D, source.getPos().getZ() + 0.5D);
+		 Vec3d targetAt = new Vec3d(target.getPos().getX() + 0.5D, target.getPos().getY() + 0.5D, target.getPos().getZ() + 0.5D);
+		 RayTraceResult _mop = world.rayTraceBlocks(sourceAt, targetAt, false, true, false);
+		 return _mop == null || (_mop.typeOfHit == RayTraceResult.Type.BLOCK && _mop.getBlockPos().equals(target.getPos()));
 	 }
+
 
 	// public static HashMap<WorldCoordinates,WeakReference<TileVisNode>>
 	// noderef = new HashMap<WorldCoordinates,WeakReference<TileVisNode>>();
@@ -415,7 +272,7 @@ public class VisNetHandler {
 	// for (int sx = x - radius; sx <= x + radius; sx++) {
 	// for (int sy = y - radius; sy <= y + radius; sy++) {
 	// for (int sz = z - radius; sz <= z + radius; sz++) {
-	// wc = new WorldCoordinates(sx,sy,sz,world.provider.dimensionId);
+	// wc = new WorldCoordinates(sx,sy,sz,world.provider.getDimension());
 	// if (noderef.containsKey(wc)) {
 	// float d = wc.getDistanceSquared(x, y, z);
 	// if (d<radius*radius && noderef.get(wc).get()!=null &&

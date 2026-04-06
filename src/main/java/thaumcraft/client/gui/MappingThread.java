@@ -53,8 +53,8 @@ public class MappingThread implements Runnable {
             try {
                 Item i = Item.getItemById(id);
                 if (i != null) {
-                    List<ItemStack> q = new ArrayList<>();
-                    i.getSubItems(i, i.getCreativeTab(), q);
+                    net.minecraft.util.NonNullList<ItemStack> q = net.minecraft.util.NonNullList.create();
+                    i.getSubItems(i.getCreativeTab(), q);
                     if (!q.isEmpty()) {
                         for (ItemStack stack : q) {
                             GuiResearchRecipe.putToCache(ScanManager.generateItemHash(i, stack.getItemDamage()), stack.copy());

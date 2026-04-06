@@ -15,7 +15,8 @@ public class BlockCosmeticSolidItem extends ItemBlock {
       return par1;
    }
 
-   public String getUnlocalizedName(ItemStack par1ItemStack) {
-      return super.getUnlocalizedName() + "." + par1ItemStack.getItemDamage();
+   @Override
+   public String getTranslationKey(ItemStack stack) {
+      return super.getTranslationKey(stack) + "." + stack.getItemDamage();
    }
 }

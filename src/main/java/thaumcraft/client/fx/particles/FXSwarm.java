@@ -1,23 +1,29 @@
 package thaumcraft.client.fx.particles;
 
-import cpw.mods.fml.client.FMLClientHandler;
+import net.minecraftforge.fml.client.FMLClientHandler;
 import java.util.ArrayList;
-import net.minecraft.client.particle.EntityFX;
-import net.minecraft.client.renderer.Tessellator;
+import net.minecraft.client.particle.Particle;
+
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.util.MathHelper;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
-import org.lwjgl.opengl.GL11;
-import thaumcraft.common.config.ConfigBlocks;
 
-public class FXSwarm extends EntityFX {
+import thaumcraft.common.config.ConfigBlocks;
+import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.client.renderer.BufferBuilder;
+
+import net.minecraft.util.math.BlockPos;
+
+public class FXSwarm extends Particle {
    private Entity target;
    private float turnSpeed;
    private float speed;
    int deathtimer;
    private static ArrayList<Long> buzzcount = new ArrayList<>();
    public int particle;
+   private float rotationYaw;
+   private float rotationPitch;
 
    public FXSwarm(World par1World, double x, double y, double z, Entity target, float r, float g, float b) {
       super(par1World, x, y, z, 0.0F, 0.0F, 0.0F);
@@ -35,8 +41,8 @@ public class FXSwarm extends EntityFX {
       this.motionY = (this.rand.nextFloat() - this.rand.nextFloat()) * f3;
       this.motionZ = (this.rand.nextFloat() - this.rand.nextFloat()) * f3;
       this.particleGravity = 0.1F;
-      this.noClip = false;
-      EntityLivingBase renderentity = FMLClientHandler.instance().getClient().renderViewEntity;
+      this.canCollide = true;
+      EntityLivingBase renderentity = (EntityLivingBase)FMLClientHandler.instance().getClient().getRenderViewEntity();
       int visibleDistance = 64;
       if (!FMLClientHandler.instance().getClient().gameSettings.fancyGraphics) {
          visibleDistance = 32;
@@ -55,9 +61,9 @@ public class FXSwarm extends EntityFX {
       this.particleGravity = pg;
    }
 
-   public void renderParticle(Tessellator tessellator, float f, float f1, float f2, float f3, float f4, float f5) {
+   public void renderParticle(BufferBuilder buffer, Entity entityIn, float f, float f1, float f2, float f3, float f4, float f5) {
       float bob = MathHelper.sin((float)this.particleAge / 3.0F) * 0.25F + 1.0F;
-      GL11.glColor4f(1.0F, 1.0F, 1.0F, 0.75F);
+      GlStateManager.color(1.0F, 1.0F, 1.0F, 0.75F);
       int part = 7 + this.particleAge % 8;
       float var8 = (float)part / 16.0F;
       float var9 = var8 + 0.0624375F;
@@ -69,17 +75,18 @@ public class FXSwarm extends EntityFX {
       float var15 = (float)(this.prevPosZ + (this.posZ - this.prevPosZ) * (double)f - interpPosZ);
       float var16 = 1.0F;
       float trans = (50.0F - (float)this.deathtimer) / 50.0F;
-      tessellator.setBrightness(240);
       if (this.target instanceof EntityLivingBase && ((EntityLivingBase)this.target).hurtTime <= 0) {
-         tessellator.setColorRGBA_F(this.particleRed * var16, this.particleGreen * var16, this.particleBlue * var16, trans);
       } else {
-         tessellator.setColorRGBA_F(this.particleRed * var16, this.particleGreen * var16 / 2.0F, this.particleBlue * var16 / 2.0F, trans);
       }
 
-      tessellator.addVertexWithUV(var13 - f1 * var12 - f4 * var12, var14 - f2 * var12, var15 - f3 * var12 - f5 * var12, var9, var11);
-      tessellator.addVertexWithUV(var13 - f1 * var12 + f4 * var12, var14 + f2 * var12, var15 - f3 * var12 + f5 * var12, var9, var10);
-      tessellator.addVertexWithUV(var13 + f1 * var12 + f4 * var12, var14 + f2 * var12, var15 + f3 * var12 + f5 * var12, var8, var10);
-      tessellator.addVertexWithUV(var13 + f1 * var12 - f4 * var12, var14 - f2 * var12, var15 + f3 * var12 - f5 * var12, var8, var11);
+      buffer.pos(var13 - f1 * var12 - f4 * var12, var14 - f2 * var12, var15 - f3 * var12 - f5 * var12).tex(var9, var11).color(this.particleRed, this.particleGreen, this.particleBlue, trans)
+        .endVertex();
+      buffer.pos(var13 - f1 * var12 + f4 * var12, var14 + f2 * var12, var15 - f3 * var12 + f5 * var12).tex(var9, var10).color(this.particleRed, this.particleGreen, this.particleBlue, trans)
+        .endVertex();
+      buffer.pos(var13 + f1 * var12 + f4 * var12, var14 + f2 * var12, var15 + f3 * var12 + f5 * var12).tex(var8, var10).color(this.particleRed, this.particleGreen, this.particleBlue, trans)
+        .endVertex();
+      buffer.pos(var13 + f1 * var12 - f4 * var12, var14 - f2 * var12, var15 + f3 * var12 - f5 * var12).tex(var8, var11).color(this.particleRed, this.particleGreen, this.particleBlue, trans)
+        .endVertex();
    }
 
    public int getFXLayer() {
@@ -95,14 +102,14 @@ public class FXSwarm extends EntityFX {
          ++this.deathtimer;
          this.motionY -= this.particleGravity / 2.0F;
          if (this.deathtimer > 50) {
-            this.setDead();
+            this.setExpired();
          }
       } else {
          this.motionY += this.particleGravity;
       }
 
       this.pushOutOfBlocks(this.posX, this.posY, this.posZ);
-      this.moveEntity(this.motionX, this.motionY, this.motionZ);
+      this.move(this.motionX, this.motionY, this.motionZ);
       this.motionX *= 0.985;
       this.motionY *= 0.985;
       this.motionZ *= 0.985;
@@ -112,7 +119,8 @@ public class FXSwarm extends EntityFX {
             hurt = ((EntityLivingBase)this.target).hurtTime > 0;
          }
 
-         if (this.getDistanceSqToEntity(this.target) > (double)this.target.width && !hurt) {
+         double dx = this.posX - this.target.posX, dy = this.posY - this.target.posY, dz = this.posZ - this.target.posZ;
+         if ((dx*dx + dy*dy + dz*dz) > (double)this.target.width && !hurt) {
             this.faceEntity(this.target, this.turnSpeed / 2.0F + (float)this.rand.nextInt((int)(this.turnSpeed / 2.0F)), this.turnSpeed / 2.0F + (float)this.rand.nextInt((int)(this.turnSpeed / 2.0F)));
          } else {
             this.faceEntity(this.target, -(this.turnSpeed / 2.0F + (float)this.rand.nextInt((int)(this.turnSpeed / 2.0F))), -(this.turnSpeed / 2.0F + (float)this.rand.nextInt((int)(this.turnSpeed / 2.0F))));
@@ -124,8 +132,9 @@ public class FXSwarm extends EntityFX {
          this.setHeading(this.motionX, this.motionY, this.motionZ, this.speed, 15.0F);
       }
 
-      if (buzzcount.size() < 3 && this.rand.nextInt(50) == 0 && this.worldObj.getClosestPlayerToEntity(this, 8.0F) != null) {
-         this.worldObj.playSound(this.posX, this.posY, this.posZ, "thaumcraft:fly", 0.03F, 0.5F + this.rand.nextFloat() * 0.4F, false);
+      if (buzzcount.size() < 3 && this.rand.nextInt(50) == 0 && this.world.getClosestPlayer(this.posX, this.posY, this.posZ, 8.0, null) != null) {
+         net.minecraft.util.SoundEvent _snd = net.minecraft.util.SoundEvent.REGISTRY.getObject(new net.minecraft.util.ResourceLocation("thaumcraft:fly"));
+         if (_snd != null) this.world.playSound(null, new BlockPos(this.posX, this.posY, this.posZ), _snd, net.minecraft.util.SoundCategory.NEUTRAL, 0.03F, 0.5F + this.rand.nextFloat() * 0.4F);
          buzzcount.add(System.nanoTime() + 1500000L);
       }
 
@@ -138,8 +147,8 @@ public class FXSwarm extends EntityFX {
    public void faceEntity(Entity par1Entity, float par2, float par3) {
       double d0 = par1Entity.posX - this.posX;
       double d1 = par1Entity.posZ - this.posZ;
-      double d2 = (par1Entity.boundingBox.minY + par1Entity.boundingBox.maxY) / (double)2.0F - (this.boundingBox.minY + this.boundingBox.maxY) / (double)2.0F;
-      double d3 = MathHelper.sqrt_double(d0 * d0 + d1 * d1);
+      double d2 = (par1Entity.getEntityBoundingBox().minY + par1Entity.getEntityBoundingBox().maxY) / (double)2.0F - (this.getBoundingBox().minY + this.getBoundingBox().maxY) / (double)2.0F;
+      double d3 = MathHelper.sqrt(d0 * d0 + d1 * d1);
       float f2 = (float)(Math.atan2(d1, d0) * (double)180.0F / Math.PI) - 90.0F;
       float f3 = (float)(-(Math.atan2(d2, d3) * (double)180.0F / Math.PI));
       this.rotationPitch = this.updateRotation(this.rotationPitch, f3, par3);
@@ -147,7 +156,7 @@ public class FXSwarm extends EntityFX {
    }
 
    private float updateRotation(float par1, float par2, float par3) {
-      float f3 = MathHelper.wrapAngleTo180_float(par2 - par1);
+      float f3 = MathHelper.wrapDegrees(par2 - par1);
       if (f3 > par3) {
          f3 = par3;
       }
@@ -160,7 +169,7 @@ public class FXSwarm extends EntityFX {
    }
 
    public void setHeading(double par1, double par3, double par5, float par7, float par8) {
-      float f2 = MathHelper.sqrt_double(par1 * par1 + par3 * par3 + par5 * par5);
+      float f2 = MathHelper.sqrt(par1 * par1 + par3 * par3 + par5 * par5);
       par1 /= f2;
       par3 /= f2;
       par5 /= f2;
@@ -176,19 +185,19 @@ public class FXSwarm extends EntityFX {
    }
 
    protected boolean pushOutOfBlocks(double par1, double par3, double par5) {
-      int var7 = MathHelper.floor_double(par1);
-      int var8 = MathHelper.floor_double(par3);
-      int var9 = MathHelper.floor_double(par5);
+      int var7 = MathHelper.floor(par1);
+      int var8 = MathHelper.floor(par3);
+      int var9 = MathHelper.floor(par5);
       double var10 = par1 - (double)var7;
       double var12 = par3 - (double)var8;
       double var14 = par5 - (double)var9;
-      if (this.worldObj.getBlock(var7, var8, var9) != ConfigBlocks.blockTaintFibres && !this.worldObj.isAirBlock(var7, var8, var9) && !this.worldObj.isAnyLiquid(this.boundingBox)) {
-         boolean var16 = !this.worldObj.isBlockNormalCubeDefault(var7 - 1, var8, var9, true);
-         boolean var17 = !this.worldObj.isBlockNormalCubeDefault(var7 + 1, var8, var9, true);
-         boolean var18 = !this.worldObj.isBlockNormalCubeDefault(var7, var8 - 1, var9, true);
-         boolean var19 = !this.worldObj.isBlockNormalCubeDefault(var7, var8 + 1, var9, true);
-         boolean var20 = !this.worldObj.isBlockNormalCubeDefault(var7, var8, var9 - 1, true);
-         boolean var21 = !this.worldObj.isBlockNormalCubeDefault(var7, var8, var9 + 1, true);
+      if (this.world.getBlockState(new BlockPos(var7, var8, var9)).getBlock() != ConfigBlocks.blockTaintFibres && !this.world.isAirBlock(new BlockPos(var7, var8, var9)) ) {
+         boolean var16 = !this.world.getBlockState(new BlockPos(var7-1,var8,var9)).getMaterial().blocksMovement();
+         boolean var17 = !this.world.getBlockState(new BlockPos(var7+1,var8,var9)).getMaterial().blocksMovement();
+         boolean var18 = !this.world.getBlockState(new BlockPos(var7,var8-1,var9)).getMaterial().blocksMovement();
+         boolean var19 = !this.world.getBlockState(new BlockPos(var7,var8+1,var9)).getMaterial().blocksMovement();
+         boolean var20 = !this.world.getBlockState(new BlockPos(var7,var8,var9-1)).getMaterial().blocksMovement();
+         boolean var21 = !this.world.getBlockState(new BlockPos(var7,var8,var9+1)).getMaterial().blocksMovement();
          byte var22 = -1;
          double var23 = 9999.0F;
          if (var16 && var10 < var23) {

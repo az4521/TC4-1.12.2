@@ -1,7 +1,7 @@
 package thaumcraft.common.lib.potions;
 
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.potion.Potion;
@@ -12,8 +12,8 @@ public class PotionBlurredVision extends Potion {
    private int statusIconIndex = -1;
    static final ResourceLocation rl = new ResourceLocation("thaumcraft", "textures/misc/potions.png");
 
-   public PotionBlurredVision(int par1, boolean par2, int par3) {
-      super(par1, par2, par3);
+   public PotionBlurredVision(boolean par2, int par3) {
+      super(par2, par3);
       this.setIconIndex(0, 0);
    }
 

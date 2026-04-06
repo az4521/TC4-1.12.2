@@ -1,26 +1,30 @@
 package thaumcraft.client.renderers.models.gear;
 
 import java.awt.Color;
+import org.lwjgl.opengl.GL11;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.ModelBase;
 import net.minecraft.client.model.ModelRenderer;
 import net.minecraft.client.renderer.ItemRenderer;
 import net.minecraft.client.renderer.OpenGlHelper;
-import net.minecraft.client.renderer.RenderBlocks;
+import thaumcraft.client.renderers.compat.RenderBlocks;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.entity.RenderManager;
 import net.minecraft.client.renderer.texture.TextureMap;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.IIcon;
-import net.minecraft.util.MathHelper;
-import org.lwjgl.opengl.GL11;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.util.math.MathHelper;
+
 import thaumcraft.client.lib.UtilsFX;
 import thaumcraft.client.renderers.block.BlockRenderer;
 import thaumcraft.common.Thaumcraft;
 import thaumcraft.common.items.wands.ItemWandCasting;
+import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.client.renderer.BufferBuilder;
+import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 
 public class ModelWand extends ModelBase {
    ModelRenderer Rod;
@@ -59,19 +63,19 @@ public class ModelWand extends ModelBase {
    }
 
    public void render(ItemStack wandStack) {
-      if (RenderManager.instance.renderEngine != null) {
+      if (Minecraft.getMinecraft().getTextureManager() != null) {
          ItemWandCasting wand = (ItemWandCasting)wandStack.getItem();
          ItemStack focusStack = wand.getFocusItem(wandStack);
-         EntityPlayer player = Minecraft.getMinecraft().thePlayer;
+         EntityPlayer player = Minecraft.getMinecraft().player;
          boolean staff = wand.isStaff(wandStack);
          boolean runes = wand.hasRunes(wandStack);
-         Minecraft.getMinecraft().renderEngine.bindTexture(wand.getRod(wandStack).getTexture());
-         GL11.glPushMatrix();
+         Minecraft.getMinecraft().getTextureManager().bindTexture(wand.getRod(wandStack).getTexture());
+         GlStateManager.pushMatrix();
          if (staff) {
-            GL11.glTranslated(0.0F, 0.2, 0.0F);
+            GlStateManager.translate(0.0F, 0.2, 0.0F);
          }
 
-         GL11.glPushMatrix();
+         GlStateManager.pushMatrix();
          if (wand.getRod(wandStack).isGlowing()) {
             int j = (int)(200.0F + MathHelper.sin((float)player.ticksExisted) * 5.0F + 5.0F);
             int k = j % 65536;
@@ -80,92 +84,91 @@ public class ModelWand extends ModelBase {
          }
 
          if (staff) {
-            GL11.glTranslated(0.0F, -0.1, 0.0F);
-            GL11.glScaled(1.2, 2.0F, 1.2);
+            GlStateManager.translate(0.0F, -0.1, 0.0F);
+            GlStateManager.scale(1.2, 2.0F, 1.2);
          }
 
          this.Rod.render(0.0625F);
          if (wand.getRod(wandStack).isGlowing()) {
-            int i = player.getBrightnessForRender(0.0F);
+            int i = player.getBrightnessForRender();
             int j = i % 65536;
             int k = i / 65536;
             OpenGlHelper.setLightmapTextureCoords(OpenGlHelper.lightmapTexUnit, (float) j, (float) k);
          }
 
-         GL11.glPopMatrix();
-         Minecraft.getMinecraft().renderEngine.bindTexture(wand.getCap(wandStack).getTexture());
-         GL11.glPushMatrix();
+         GlStateManager.popMatrix();
+         Minecraft.getMinecraft().getTextureManager().bindTexture(wand.getCap(wandStack).getTexture());
+         GlStateManager.pushMatrix();
          if (staff) {
-            GL11.glScaled(1.3, 1.1, 1.3);
+            GlStateManager.scale(1.3, 1.1, 1.3);
          } else {
-            GL11.glScaled(1.2, 1.0F, 1.2);
+            GlStateManager.scale(1.2, 1.0F, 1.2);
          }
 
          if (wand.isSceptre(wandStack)) {
-            GL11.glPushMatrix();
-            GL11.glScaled(1.3, 1.3, 1.3);
+            GlStateManager.pushMatrix();
+            GlStateManager.scale(1.3, 1.3, 1.3);
             this.Cap.render(0.0625F);
-            GL11.glPopMatrix();
-            GL11.glPushMatrix();
-            GL11.glTranslated(0.0F, 0.3, 0.0F);
-            GL11.glScaled(1.0F, 0.66, 1.0F);
+            GlStateManager.popMatrix();
+            GlStateManager.pushMatrix();
+            GlStateManager.translate(0.0F, 0.3, 0.0F);
+            GlStateManager.scale(1.0F, 0.66, 1.0F);
             this.Cap.render(0.0625F);
-            GL11.glPopMatrix();
+            GlStateManager.popMatrix();
          } else {
             this.Cap.render(0.0625F);
          }
 
          if (staff) {
-            GL11.glTranslated(0.0F, 0.225, 0.0F);
-            GL11.glPushMatrix();
-            GL11.glScaled(1.0F, 0.66, 1.0F);
+            GlStateManager.translate(0.0F, 0.225, 0.0F);
+            GlStateManager.pushMatrix();
+            GlStateManager.scale(1.0F, 0.66, 1.0F);
             this.Cap.render(0.0625F);
-            GL11.glPopMatrix();
-            GL11.glTranslated(0.0F, 0.65, 0.0F);
+            GlStateManager.popMatrix();
+            GlStateManager.translate(0.0F, 0.65, 0.0F);
          }
 
          this.CapBottom.render(0.0625F);
-         GL11.glPopMatrix();
+         GlStateManager.popMatrix();
          if (wand.getFocus(wandStack) != null) {
             if (wand.getFocus(wandStack).getOrnament(focusStack) != null) {
-               GL11.glPushMatrix();
-               GL11.glRotatef(180.0F, 1.0F, 0.0F, 0.0F);
-               Tessellator tessellator = Tessellator.instance;
-               IIcon icon = wand.getFocus(wandStack).getOrnament(focusStack);
+               GlStateManager.pushMatrix();
+               GlStateManager.rotate(180.0F, 1.0F, 0.0F, 0.0F);
+               Tessellator tessellator = Tessellator.getInstance();
+               BufferBuilder buffer = tessellator.getBuffer();
+               TextureAtlasSprite icon = wand.getFocus(wandStack).getOrnament(focusStack);
                float f1 = icon.getMaxU();
                float f2 = icon.getMinV();
                float f3 = icon.getMinU();
                float f4 = icon.getMaxV();
-               RenderManager.instance.renderEngine.bindTexture(TextureMap.locationItemsTexture);
-               GL11.glPushMatrix();
-               GL11.glTranslatef(-0.25F, -0.1F, 0.0275F);
-               GL11.glScaled(0.5F, 0.5F, 0.5F);
-               ItemRenderer.renderItemIn2D(tessellator, f1, f2, f3, f4, icon.getIconWidth(), icon.getIconHeight(), 0.1F);
-               GL11.glPopMatrix();
-               GL11.glPushMatrix();
-               GL11.glRotatef(90.0F, 0.0F, 1.0F, 0.0F);
-               GL11.glTranslatef(-0.25F, -0.1F, 0.0275F);
-               GL11.glScaled(0.5F, 0.5F, 0.5F);
-               ItemRenderer.renderItemIn2D(tessellator, f1, f2, f3, f4, icon.getIconWidth(), icon.getIconHeight(), 0.1F);
-               GL11.glPopMatrix();
-               GL11.glPopMatrix();
+               Minecraft.getMinecraft().getTextureManager().bindTexture(TextureMap.LOCATION_BLOCKS_TEXTURE);
+               GlStateManager.pushMatrix();
+               GlStateManager.translate(-0.25F, -0.1F, 0.0275F);
+               GlStateManager.scale(0.5F, 0.5F, 0.5F);
+               GlStateManager.popMatrix();
+               GlStateManager.pushMatrix();
+               GlStateManager.rotate(90.0F, 0.0F, 1.0F, 0.0F);
+               GlStateManager.translate(-0.25F, -0.1F, 0.0275F);
+               GlStateManager.scale(0.5F, 0.5F, 0.5F);
+               GlStateManager.popMatrix();
+               GlStateManager.popMatrix();
             }
 
             float alpha = 0.95F;
             if (wand.getFocus(wandStack).getFocusDepthLayerIcon(focusStack) != null) {
-               GL11.glPushMatrix();
+               GlStateManager.pushMatrix();
                if (staff) {
-                  GL11.glTranslatef(0.0F, -0.15F, 0.0F);
-                  GL11.glScaled(0.165, 0.1765, 0.165);
+                  GlStateManager.translate(0.0F, -0.15F, 0.0F);
+                  GlStateManager.scale(0.165, 0.1765, 0.165);
                } else {
-                  GL11.glTranslatef(0.0F, -0.09F, 0.0F);
-                  GL11.glScaled(0.16, 0.16, 0.16);
+                  GlStateManager.translate(0.0F, -0.09F, 0.0F);
+                  GlStateManager.scale(0.16, 0.16, 0.16);
                }
 
-               Minecraft.getMinecraft().renderEngine.bindTexture(TextureMap.locationItemsTexture);
-               this.renderBlocks.setRenderBoundsFromBlock(Blocks.stone);
+               Minecraft.getMinecraft().getTextureManager().bindTexture(TextureMap.LOCATION_BLOCKS_TEXTURE);
+               this.renderBlocks.setRenderBoundsFromBlock(Blocks.STONE);
                BlockRenderer.drawFaces(this.renderBlocks, null, wand.getFocus(wandStack).getFocusDepthLayerIcon(focusStack), false);
-               GL11.glPopMatrix();
+               GlStateManager.popMatrix();
                alpha = 0.6F;
             }
 
@@ -175,53 +178,53 @@ public class ModelWand extends ModelBase {
                UtilsFX.bindTexture("textures/models/wand.png");
             }
 
-            GL11.glPushMatrix();
+            GlStateManager.pushMatrix();
             if (staff) {
-               GL11.glTranslatef(0.0F, -0.0475F, 0.0F);
-               GL11.glScaled(0.525, 0.5525, 0.525);
+               GlStateManager.translate(0.0F, -0.0475F, 0.0F);
+               GlStateManager.scale(0.525, 0.5525, 0.525);
             } else {
-               GL11.glScaled(0.5F, 0.5F, 0.5F);
+               GlStateManager.scale(0.5F, 0.5F, 0.5F);
             }
 
             Color c = new Color(wand.getFocus(wandStack).getFocusColor(focusStack));
-            GL11.glColor4f((float)c.getRed() / 255.0F, (float)c.getGreen() / 255.0F, (float)c.getBlue() / 255.0F, alpha);
+            GlStateManager.color((float)c.getRed() / 255.0F, (float)c.getGreen() / 255.0F, (float)c.getBlue() / 255.0F, alpha);
             int j = (int)(195.0F + MathHelper.sin((float)player.ticksExisted / 3.0F) * 10.0F + 10.0F);
             int k = j % 65536;
             int l = j / 65536;
             OpenGlHelper.setLightmapTextureCoords(OpenGlHelper.lightmapTexUnit, (float) k, (float) l);
             this.Focus.render(0.0625F);
-            GL11.glPopMatrix();
+            GlStateManager.popMatrix();
          }
 
          if (wand.isSceptre(wandStack)) {
-            GL11.glPushMatrix();
+            GlStateManager.pushMatrix();
             int j = 200;
             int k = j % 65536;
             int l = j / 65536;
             OpenGlHelper.setLightmapTextureCoords(OpenGlHelper.lightmapTexUnit, (float) k, (float) l);
-            GL11.glBlendFunc(770, 1);
+            GlStateManager.blendFunc(770, 1);
 
             for(int rot = 0; rot < 10; ++rot) {
-               GL11.glPushMatrix();
-               GL11.glRotated(36 * rot + player.ticksExisted, 0.0F, 1.0F, 0.0F);
+               GlStateManager.pushMatrix();
+               GlStateManager.rotate(36 * rot + player.ticksExisted, 0.0F, 1.0F, 0.0F);
                this.drawRune(0.16, -0.01F, -0.125F, rot, player);
-               GL11.glPopMatrix();
+               GlStateManager.popMatrix();
             }
 
-            GL11.glBlendFunc(770, 771);
-            GL11.glPopMatrix();
+            GlStateManager.blendFunc(770, 771);
+            GlStateManager.popMatrix();
          }
 
          if (runes) {
-            GL11.glPushMatrix();
+            GlStateManager.pushMatrix();
             int j = 200;
             int k = j % 65536;
             int l = j / 65536;
             OpenGlHelper.setLightmapTextureCoords(OpenGlHelper.lightmapTexUnit, (float) k, (float) l);
-            GL11.glBlendFunc(770, 1);
+            GlStateManager.blendFunc(770, 1);
 
             for(int rot = 0; rot < 4; ++rot) {
-               GL11.glRotated(90.0F, 0.0F, 1.0F, 0.0F);
+               GlStateManager.rotate(90.0F, 0.0F, 1.0F, 0.0F);
 
                for(int a = 0; a < 14; ++a) {
                   int rune = (a + rot * 3) % 16;
@@ -229,36 +232,41 @@ public class ModelWand extends ModelBase {
                }
             }
 
-            GL11.glBlendFunc(770, 771);
-            GL11.glPopMatrix();
+            GlStateManager.blendFunc(770, 771);
+            GlStateManager.popMatrix();
          }
 
-         GL11.glPopMatrix();
+         GlStateManager.popMatrix();
       }
    }
 
    private void drawRune(double x, double y, double z, int rune, EntityPlayer player) {
-      GL11.glPushMatrix();
+      GlStateManager.pushMatrix();
       UtilsFX.bindTexture("textures/misc/script.png");
       float r = MathHelper.sin((float)(player.ticksExisted + rune * 5) / 5.0F) * 0.1F + 0.88F;
       float g = MathHelper.sin((float)(player.ticksExisted + rune * 5) / 7.0F) * 0.1F + 0.63F;
       float alpha = MathHelper.sin((float)(player.ticksExisted + rune * 5) / 10.0F) * 0.2F;
-      GL11.glColor4f(r, g, 0.2F, alpha + 0.6F);
-      GL11.glRotated(90.0F, 0.0F, 0.0F, 1.0F);
-      GL11.glTranslated(x, y, z);
-      Tessellator tessellator = Tessellator.instance;
+      GlStateManager.color(r, g, 0.2F, alpha + 0.6F);
+      GlStateManager.rotate(90.0F, 0.0F, 0.0F, 1.0F);
+      GlStateManager.translate(x, y, z);
+      Tessellator tessellator = Tessellator.getInstance();
+      BufferBuilder buffer = tessellator.getBuffer();
       float var8 = 0.0625F * (float)rune;
       float var9 = var8 + 0.0625F;
       float var10 = 0.0F;
       float var11 = 1.0F;
-      tessellator.startDrawingQuads();
-      tessellator.setColorRGBA_F(r, g, 0.2F, alpha + 0.6F);
-      tessellator.addVertexWithUV(-0.06 - (double)(alpha / 40.0F), 0.06 + (double)(alpha / 40.0F), 0.0F, var9, var11);
-      tessellator.addVertexWithUV(0.06 + (double)(alpha / 40.0F), 0.06 + (double)(alpha / 40.0F), 0.0F, var9, var10);
-      tessellator.addVertexWithUV(0.06 + (double)(alpha / 40.0F), -0.06 - (double)(alpha / 40.0F), 0.0F, var8, var10);
-      tessellator.addVertexWithUV(-0.06 - (double)(alpha / 40.0F), -0.06 - (double)(alpha / 40.0F), 0.0F, var8, var11);
+      buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX_COLOR); 
+     
+      buffer.pos(-0.06 - (double)(alpha / 40.0F), 0.06 + (double)(alpha / 40.0F), 0.0F).tex(var9, var11).color(r, g, 0.2F, alpha + 0.6F)
+        .endVertex();
+      buffer.pos(0.06 + (double)(alpha / 40.0F), 0.06 + (double)(alpha / 40.0F), 0.0F).tex(var9, var10).color(r, g, 0.2F, alpha + 0.6F)
+        .endVertex();
+      buffer.pos(0.06 + (double)(alpha / 40.0F), -0.06 - (double)(alpha / 40.0F), 0.0F).tex(var8, var10).color(r, g, 0.2F, alpha + 0.6F)
+        .endVertex();
+      buffer.pos(-0.06 - (double)(alpha / 40.0F), -0.06 - (double)(alpha / 40.0F), 0.0F).tex(var8, var11).color(r, g, 0.2F, alpha + 0.6F)
+        .endVertex();
       tessellator.draw();
-      GL11.glPopMatrix();
+      GlStateManager.popMatrix();
    }
 
    private void setRotation(ModelRenderer model, float x, float y, float z) {

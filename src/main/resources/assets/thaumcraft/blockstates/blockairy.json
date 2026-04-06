@@ -1,0 +1,52 @@
+{
+  "variants": {
+    "meta=0": {
+      "model": "thaumcraft:blockairy"
+    },
+    "meta=1": {
+      "model": "thaumcraft:blockairy"
+    },
+    "meta=2": {
+      "model": "thaumcraft:blockairy"
+    },
+    "meta=3": {
+      "model": "thaumcraft:blockairy"
+    },
+    "meta=4": {
+      "model": "thaumcraft:blockairy"
+    },
+    "meta=5": {
+      "model": "thaumcraft:blockairy"
+    },
+    "meta=6": {
+      "model": "thaumcraft:blockairy"
+    },
+    "meta=7": {
+      "model": "thaumcraft:blockairy"
+    },
+    "meta=8": {
+      "model": "thaumcraft:blockairy"
+    },
+    "meta=9": {
+      "model": "thaumcraft:blockairy"
+    },
+    "meta=10": {
+      "model": "thaumcraft:blockairy"
+    },
+    "meta=11": {
+      "model": "thaumcraft:blockairy"
+    },
+    "meta=12": {
+      "model": "thaumcraft:blockairy"
+    },
+    "meta=13": {
+      "model": "thaumcraft:blockairy"
+    },
+    "meta=14": {
+      "model": "thaumcraft:blockairy"
+    },
+    "meta=15": {
+      "model": "thaumcraft:blockairy"
+    }
+  }
+}

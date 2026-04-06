@@ -2,8 +2,9 @@ package thaumcraft.common.lib.world.dim;
 
 import java.util.Random;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
-import net.minecraftforge.common.util.ForgeDirection;
+import net.minecraft.util.EnumFacing;
 import thaumcraft.common.tiles.TileEldritchLock;
 
 public class GenBossRoom extends GenCommon {
@@ -38,35 +39,35 @@ public class GenBossRoom extends GenCommon {
          for(int b = 0; b < 7; ++b) {
             int xx = 0;
             int zz = 0;
-            ForgeDirection dir = ForgeDirection.UNKNOWN;
+            EnumFacing dir = EnumFacing.UP;
             if (cell.north) {
                xx = x + 5 + a;
                zz = z + 3;
-               dir = ForgeDirection.NORTH;
+               dir = EnumFacing.NORTH;
             }
 
             if (cell.south) {
                xx = x + 5 + a;
                zz = z + 13;
-               dir = ForgeDirection.SOUTH;
+               dir = EnumFacing.SOUTH;
             }
 
             if (cell.east) {
                xx = x + 13;
                zz = z + 5 + a;
-               dir = ForgeDirection.EAST;
+               dir = EnumFacing.EAST;
             }
 
             if (cell.west) {
                xx = x + 3;
                zz = z + 5 + a;
-               dir = ForgeDirection.WEST;
+               dir = EnumFacing.WEST;
             }
 
             switch (PAT_DOORWAY[a][b]) {
                case 1:
                   placeBlock(world, xx, y + 2 + b, zz, 16, cell);
-                  TileEntity t = world.getTileEntity(xx, y + 2 + b, zz);
+                  TileEntity t = world.getTileEntity(new BlockPos(xx, y + 2 + b, zz));
                   if (t instanceof TileEldritchLock) {
                      ((TileEldritchLock)t).setFacing((byte)dir.ordinal());
                   }

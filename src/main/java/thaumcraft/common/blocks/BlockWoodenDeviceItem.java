@@ -1,17 +1,18 @@
 package thaumcraft.common.blocks;
 
 import net.minecraft.block.Block;
-import net.minecraft.block.BlockPistonBase;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
 import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.MathHelper;
+import net.minecraft.util.EnumActionResult;
+import net.minecraft.util.EnumFacing;
+import net.minecraft.util.EnumHand;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
-import net.minecraftforge.common.util.ForgeDirection;
 import thaumcraft.api.aspects.Aspect;
-import thaumcraft.common.config.ConfigBlocks;
 import thaumcraft.common.tiles.TileArcaneBore;
 import thaumcraft.common.tiles.TileArcaneBoreBase;
 import thaumcraft.common.tiles.TileBanner;
@@ -28,119 +29,91 @@ public class BlockWoodenDeviceItem extends ItemBlock {
       return par1;
    }
 
-   public String getUnlocalizedName(ItemStack stack) {
-      return stack.hasTagCompound() && stack.stackTagCompound.hasKey("color") ? super.getUnlocalizedName() + "." + stack.getItemDamage() + "." + stack.stackTagCompound.getByte("color") : super.getUnlocalizedName() + "." + stack.getItemDamage();
+   public String getTranslationKey(ItemStack stack) {
+      return stack.hasTagCompound() && stack.getTagCompound().hasKey("color")
+         ? super.getTranslationKey() + "." + stack.getItemDamage() + "." + stack.getTagCompound().getByte("color")
+         : super.getTranslationKey() + "." + stack.getItemDamage();
    }
 
-   public boolean placeBlockAt(ItemStack stack, EntityPlayer player, World world, int x, int y, int z, int side, float hitX, float hitY, float hitZ, int metadata) {
-      boolean ret = super.placeBlockAt(stack, player, world, x, y, z, side, hitX, hitY, hitZ, metadata);
-      if (ret) {
+   @Override
+   public EnumActionResult onItemUse(EntityPlayer player, World world, BlockPos pos, EnumHand hand, EnumFacing facing, float hitX, float hitY, float hitZ) {
+      ItemStack stack = player.getHeldItem(hand);
+      int metadata = stack.getMetadata();
+      EnumActionResult ret = super.onItemUse(player, world, pos, hand, facing, hitX, hitY, hitZ);
+      if (ret == EnumActionResult.SUCCESS) {
+         BlockPos placed = pos.offset(facing);
+         int x = placed.getX(), y = placed.getY(), z = placed.getZ();
+
          if (metadata == 0) {
-            TileEntity tile = world.getTileEntity(x, y, z);
+            TileEntity tile = world.getTileEntity(placed);
             if (tile instanceof TileBellows) {
-               ForgeDirection dir = ForgeDirection.getOrientation(side).getOpposite();
+               EnumFacing dir = facing.getOpposite();
                ((TileBellows)tile).orientation = (byte)dir.ordinal();
-               int xx = x + dir.offsetX;
-               int yy = y + dir.offsetY;
-               int zz = z + dir.offsetZ;
-               Block bi = world.getBlock(xx, yy, zz);
-               if (bi == Blocks.furnace || bi == Blocks.lit_furnace) {
+               BlockPos neighbor = placed.offset(dir);
+               Block bi = world.getBlockState(neighbor).getBlock();
+               if (bi == Blocks.FURNACE || bi == Blocks.LIT_FURNACE) {
                   ((TileBellows)tile).onVanillaFurnace = true;
                }
-
                tile.markDirty();
-               world.markBlockForUpdate(x, y, x);
+               { net.minecraft.block.state.IBlockState _bs = world.getBlockState(placed); world.notifyBlockUpdate(placed, _bs, _bs, 3); }
             }
          }
 
          if (metadata == 4) {
-            TileArcaneBoreBase tile = (TileArcaneBoreBase)world.getTileEntity(x, y, z);
+            TileEntity tile = world.getTileEntity(placed);
             if (tile instanceof TileArcaneBoreBase) {
-               int var6 = MathHelper.floor_double((double)(player.rotationYaw * 4.0F / 360.0F) + (double)0.5F) & 3;
+               int var6 = MathHelper.floor((double)(player.rotationYaw * 4.0F / 360.0F) + 0.5D) & 3;
                switch (var6) {
-                  case 0:
-                     tile.orientation = ForgeDirection.getOrientation(2);
-                     break;
-                  case 1:
-                     tile.orientation = ForgeDirection.getOrientation(5);
-                     break;
-                  case 2:
-                     tile.orientation = ForgeDirection.getOrientation(3);
-                     break;
-                  case 3:
-                     tile.orientation = ForgeDirection.getOrientation(4);
+                  case 0: ((TileArcaneBoreBase)tile).orientation = EnumFacing.NORTH; break;
+                  case 1: ((TileArcaneBoreBase)tile).orientation = EnumFacing.EAST;  break;
+                  case 2: ((TileArcaneBoreBase)tile).orientation = EnumFacing.SOUTH; break;
+                  case 3: ((TileArcaneBoreBase)tile).orientation = EnumFacing.WEST;  break;
                }
-
                tile.markDirty();
-               world.markBlockForUpdate(x, y, x);
+               { net.minecraft.block.state.IBlockState _bs = world.getBlockState(placed); world.notifyBlockUpdate(placed, _bs, _bs, 3); }
             }
          }
 
          if (metadata == 5) {
-            TileArcaneBore tile = (TileArcaneBore)world.getTileEntity(x, y, z);
+            TileEntity tile = world.getTileEntity(placed);
             if (tile instanceof TileArcaneBore) {
-               tile.baseOrientation = ForgeDirection.getOrientation(side);
-               int var6 = BlockPistonBase.determineOrientation(world, x, y, z, player);
-               tile.orientation = ForgeDirection.getOrientation(var6);
-               world.markBlockForUpdate(x, y, x);
+               ((TileArcaneBore)tile).baseOrientation = facing;
+               int var6 = MathHelper.floor((double)(player.rotationYaw * 4.0F / 360.0F) + 0.5D) & 3;
+               EnumFacing[] dirs = { EnumFacing.NORTH, EnumFacing.EAST, EnumFacing.SOUTH, EnumFacing.WEST };
+               ((TileArcaneBore)tile).orientation = dirs[var6];
+               { net.minecraft.block.state.IBlockState _bs = world.getBlockState(placed); world.notifyBlockUpdate(placed, _bs, _bs, 3); }
                tile.markDirty();
             }
          }
 
          if (metadata == 8) {
-            TileBanner tile = (TileBanner)world.getTileEntity(x, y, z);
-            if (tile != null) {
-               if (side <= 1) {
-                  int i = MathHelper.floor_double((double)((player.rotationYaw + 180.0F) * 16.0F / 360.0F) + (double)0.5F) & 15;
-                  tile.setFacing((byte)i);
+            TileEntity tile = world.getTileEntity(placed);
+            if (tile instanceof TileBanner) {
+               TileBanner banner = (TileBanner)tile;
+               if (facing == EnumFacing.UP || facing == EnumFacing.DOWN) {
+                  int i = MathHelper.floor((double)((player.rotationYaw + 180.0F) * 16.0F / 360.0F) + 0.5D) & 15;
+                  banner.setFacing((byte)i);
                } else {
-                  tile.setWall(true);
+                  banner.setWall(true);
                   int i = 0;
-                  if (side == 2) {
-                     i = 8;
-                  }
-
-                  if (side == 4) {
-                     i = 4;
-                  }
-
-                  if (side == 5) {
-                     i = 12;
-                  }
-
-                  tile.setFacing((byte)i);
+                  if (facing == EnumFacing.NORTH) i = 8;
+                  if (facing == EnumFacing.WEST)  i = 4;
+                  if (facing == EnumFacing.SOUTH) i = 12;
+                  banner.setFacing((byte)i);
                }
-
                if (stack.hasTagCompound()) {
-                  if (stack.stackTagCompound.getString("aspect") != null) {
-                     tile.setAspect(Aspect.getAspect(stack.stackTagCompound.getString("aspect")));
+                  if (stack.getTagCompound().getString("aspect") != null) {
+                     banner.setAspect(Aspect.getAspect(stack.getTagCompound().getString("aspect")));
                   }
-
-                  if (stack.stackTagCompound.hasKey("color")) {
-                     tile.setColor(stack.stackTagCompound.getByte("color"));
+                  if (stack.getTagCompound().hasKey("color")) {
+                     banner.setColor(stack.getTagCompound().getByte("color"));
                   }
                }
-
-               tile.markDirty();
-               world.markBlockForUpdate(x, y, z);
+               banner.markDirty();
+               { net.minecraft.block.state.IBlockState _bs = world.getBlockState(placed); world.notifyBlockUpdate(placed, _bs, _bs, 3); }
             }
          }
       }
-
       return ret;
-   }
-
-   public boolean func_150936_a(World world, int x, int y, int z, int side, EntityPlayer par6EntityPlayer, ItemStack par7ItemStack) {
-      if (par7ItemStack.getItemDamage() == 5) {
-         if (side > 1) {
-            return false;
-         }
-
-         if (world.getBlock(x, y, z) != ConfigBlocks.blockWoodenDevice && world.getBlockMetadata(x, y, z) != 4) {
-            return false;
-         }
-      }
-
-      return super.func_150936_a(world, x, y, z, side, par6EntityPlayer, par7ItemStack);
    }
 }

@@ -1,0 +1,22 @@
+{
+  "forge_marker": 1,
+  "variants": {
+    "normal": { "model": "forge:fluid", "custom": { "fluid": "fluxgoo" } },
+    "level=0": { "model": "forge:fluid", "custom": { "fluid": "fluxgoo" } },
+    "level=1": { "model": "forge:fluid", "custom": { "fluid": "fluxgoo" } },
+    "level=2": { "model": "forge:fluid", "custom": { "fluid": "fluxgoo" } },
+    "level=3": { "model": "forge:fluid", "custom": { "fluid": "fluxgoo" } },
+    "level=4": { "model": "forge:fluid", "custom": { "fluid": "fluxgoo" } },
+    "level=5": { "model": "forge:fluid", "custom": { "fluid": "fluxgoo" } },
+    "level=6": { "model": "forge:fluid", "custom": { "fluid": "fluxgoo" } },
+    "level=7": { "model": "forge:fluid", "custom": { "fluid": "fluxgoo" } },
+    "level=8": { "model": "forge:fluid", "custom": { "fluid": "fluxgoo" } },
+    "level=9": { "model": "forge:fluid", "custom": { "fluid": "fluxgoo" } },
+    "level=10": { "model": "forge:fluid", "custom": { "fluid": "fluxgoo" } },
+    "level=11": { "model": "forge:fluid", "custom": { "fluid": "fluxgoo" } },
+    "level=12": { "model": "forge:fluid", "custom": { "fluid": "fluxgoo" } },
+    "level=13": { "model": "forge:fluid", "custom": { "fluid": "fluxgoo" } },
+    "level=14": { "model": "forge:fluid", "custom": { "fluid": "fluxgoo" } },
+    "level=15": { "model": "forge:fluid", "custom": { "fluid": "fluxgoo" } }
+  }
+}

@@ -4,6 +4,7 @@ import tc4tweak.ClientUtils;
 import tc4tweak.ConfigurationHandler;
 import org.lwjgl.opengl.GL11;
 import thaumcraft.client.gui.GuiResearchBrowser;
+import net.minecraft.client.renderer.GlStateManager;
 
 public class DrawResearchBrowserBorders {
     // I'm actually amazed to see it's not the same...
@@ -16,7 +17,7 @@ public class DrawResearchBrowserBorders {
     public static void drawResearchBrowserBorders(GuiResearchBrowser gui, int x, int y, int u, int v, int width, int height) {
         // enable depth test to write into depth buffer to update depth value
         int oldDepthFunc = GL11.glGetInteger(GL11.GL_DEPTH_FUNC);
-        GL11.glEnable(GL11.GL_DEPTH_TEST);
+        GlStateManager.enableDepth();
         GL11.glDepthFunc(GL11.GL_ALWAYS);
         for (int[] paramX : PARAMS) {
             for (int[] paramY : PARAMS) {
@@ -28,7 +29,7 @@ public class DrawResearchBrowserBorders {
                         BACKGROUND_ZLEVEL);
             }
         }
-        GL11.glDisable(GL11.GL_DEPTH_TEST);
+        GlStateManager.disableDepth();
         GL11.glDepthFunc(oldDepthFunc);
 
         guiX = x;
@@ -40,7 +41,7 @@ public class DrawResearchBrowserBorders {
         double x1 = x / scale, y1 = y / scale,
                 u1 = u / scale, v1 = v / scale,
                 w1 = ConfigurationHandler.INSTANCE.getBrowserWidth() / scale / 2 - BORDER_WIDTH / scale, h1 = ConfigurationHandler.INSTANCE.getBrowserHeight() / scale / 2 - BORDER_HEIGHT / scale;
-        GL11.glScalef(scale, scale, 1.0f);
+        GlStateManager.scale(scale, scale, 1.0f);
         ClientUtils.drawRectTextured(x1, x1 + w1, y1, y1 + h1, u1, u1 + w1, v1, v1 + h1, BACKGROUND_ZLEVEL);
     }
 }

@@ -105,12 +105,12 @@ public class ContainerGolem extends ContainerGhostSlots {
          ((EntityGolemBase) this.mobInv.ent).setColors(button - slots, c);
       }
 
-      this.mobInv.ent.worldObj.playSoundEffect(this.mobInv.ent.posX, this.mobInv.ent.posY, this.mobInv.ent.posZ, "random.click", 0.2F, 0.8F);
+      this.mobInv.ent.world.playSound(null, this.mobInv.ent.posX, this.mobInv.ent.posY, this.mobInv.ent.posZ, net.minecraft.init.SoundEvents.UI_BUTTON_CLICK, net.minecraft.util.SoundCategory.NEUTRAL, 0.2F, 0.8F);
       return true;
    }
 
    public ItemStack transferStackInSlot(EntityPlayer par1EntityPlayer, int slot) {
-      ItemStack stack = null;
+      ItemStack stack = ItemStack.EMPTY;
       Slot slotObject = (Slot)this.inventorySlots.get(slot);
       int slots = this.mobInv.slotCount;
       if (slotObject != null && slotObject.getHasStack()) {
@@ -118,14 +118,14 @@ public class ContainerGolem extends ContainerGhostSlots {
          stack = stackInSlot.copy();
          if (slot < slots) {
             if (!this.mergeItemStack(stackInSlot, slots, this.inventorySlots.size(), true)) {
-               return null;
+               return ItemStack.EMPTY;
             }
          } else if (!this.mergeItemStack(stackInSlot, 0, slots, false)) {
-            return null;
+            return ItemStack.EMPTY;
          }
 
-         if (stackInSlot.stackSize == 0) {
-            slotObject.putStack(null);
+         if (stackInSlot.isEmpty()) {
+            slotObject.putStack(ItemStack.EMPTY);
          } else {
             slotObject.onSlotChanged();
          }

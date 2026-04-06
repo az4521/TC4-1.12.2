@@ -1,17 +1,17 @@
 package thaumcraft.common.tiles;
 
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.server.MinecraftServer;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.world.World;
 import net.minecraftforge.common.DimensionManager;
-import net.minecraftforge.common.util.ForgeDirection;
+import net.minecraft.util.EnumFacing;
 import thaumcraft.api.TileThaumcraft;
 import thaumcraft.api.aspects.Aspect;
 import thaumcraft.api.aspects.AspectList;
 import thaumcraft.api.aspects.IAspectSource;
 import thaumcraft.common.lib.events.EssentiaHandler;
 import thaumcraft.common.lib.utils.Utils;
+import net.minecraft.util.math.BlockPos;
 
 public class TileMirrorEssentia extends TileThaumcraft implements IAspectSource {
    public boolean linked = false;
@@ -19,12 +19,12 @@ public class TileMirrorEssentia extends TileThaumcraft implements IAspectSource 
    public int linkY;
    public int linkZ;
    public int linkDim;
-   public ForgeDirection linkedFacing;
+   public EnumFacing linkedFacing;
    int count;
    int inc;
 
    public TileMirrorEssentia() {
-      this.linkedFacing = ForgeDirection.UNKNOWN;
+      this.linkedFacing = null;
       this.count = 0;
       this.inc = 40;
    }
@@ -47,25 +47,27 @@ public class TileMirrorEssentia extends TileThaumcraft implements IAspectSource 
 
    public void restoreLink() {
       if (this.isDestinationValid()) {
-         World targetWorld = MinecraftServer.getServer().worldServerForDimension(this.linkDim);
+         World targetWorld = DimensionManager.getWorld(this.linkDim);
          if (targetWorld == null) {
             return;
          }
 
-         TileEntity te = targetWorld.getTileEntity(this.linkX, this.linkY, this.linkZ);
+         TileEntity te = targetWorld.getTileEntity(new BlockPos(this.linkX, this.linkY, this.linkZ));
          if (te instanceof TileMirrorEssentia) {
             TileMirrorEssentia tm = (TileMirrorEssentia)te;
             tm.linked = true;
-            tm.linkX = this.xCoord;
-            tm.linkY = this.yCoord;
-            tm.linkZ = this.zCoord;
-            tm.linkDim = this.worldObj.provider.dimensionId;
-            targetWorld.markBlockForUpdate(tm.xCoord, tm.yCoord, tm.zCoord);
-            this.linkedFacing = ForgeDirection.getOrientation(targetWorld.getBlockMetadata(this.linkX, this.linkY, this.linkZ));
+            tm.linkX = this.getPos().getX();
+            tm.linkY = this.getPos().getY();
+            tm.linkZ = this.getPos().getZ();
+            tm.linkDim = this.world.provider.getDimension();
+            { net.minecraft.block.state.IBlockState _bs = targetWorld.getBlockState(tm.getPos()); targetWorld.notifyBlockUpdate(tm.getPos(), _bs, _bs, 3); }
+            this.linkedFacing = EnumFacing.byIndex(
+        targetWorld.getBlockState(new BlockPos(this.linkX, this.linkY, this.linkZ)).getBlock()
+            .getMetaFromState(targetWorld.getBlockState(new BlockPos(this.linkX, this.linkY, this.linkZ))));
             this.linked = true;
             this.markDirty();
             tm.markDirty();
-            this.worldObj.markBlockForUpdate(this.xCoord, this.yCoord, this.zCoord);
+            { net.minecraft.block.state.IBlockState _bs = this.world.getBlockState(this.pos); this.world.notifyBlockUpdate(this.pos, _bs, _bs, 3); }
          }
       }
 
@@ -75,14 +77,14 @@ public class TileMirrorEssentia extends TileThaumcraft implements IAspectSource 
       World targetWorld = DimensionManager.getWorld(this.linkDim);
       if (targetWorld != null) {
          if (Utils.isChunkLoaded(targetWorld, this.linkX, this.linkZ)) {
-            TileEntity te = targetWorld.getTileEntity(this.linkX, this.linkY, this.linkZ);
+            TileEntity te = targetWorld.getTileEntity(new BlockPos(this.linkX, this.linkY, this.linkZ));
             if (te instanceof TileMirrorEssentia) {
                TileMirrorEssentia tm = (TileMirrorEssentia)te;
                tm.linked = false;
-               tm.linkedFacing = ForgeDirection.UNKNOWN;
+               tm.linkedFacing = null;
                this.markDirty();
                tm.markDirty();
-               targetWorld.markBlockForUpdate(this.linkX, this.linkY, this.linkZ);
+               { BlockPos _lp = new BlockPos(this.linkX, this.linkY, this.linkZ); net.minecraft.block.state.IBlockState _bs = targetWorld.getBlockState(_lp); targetWorld.notifyBlockUpdate(_lp, _bs, _bs, 3); }
             }
 
          }
@@ -97,26 +99,26 @@ public class TileMirrorEssentia extends TileThaumcraft implements IAspectSource 
          if (targetWorld == null) {
             return false;
          } else {
-            TileEntity te = targetWorld.getTileEntity(this.linkX, this.linkY, this.linkZ);
+            TileEntity te = targetWorld.getTileEntity(new BlockPos(this.linkX, this.linkY, this.linkZ));
             if (te instanceof TileMirrorEssentia) {
                TileMirrorEssentia tm = (TileMirrorEssentia)te;
                if (!tm.linked) {
                   this.linked = false;
                   this.markDirty();
-                  this.worldObj.markBlockForUpdate(this.xCoord, this.yCoord, this.zCoord);
+                  { net.minecraft.block.state.IBlockState _bs = this.world.getBlockState(this.pos); this.world.notifyBlockUpdate(this.pos, _bs, _bs, 3); }
                   return false;
-               } else if (tm.linkX == this.xCoord && tm.linkY == this.yCoord && tm.linkZ == this.zCoord && tm.linkDim == this.worldObj.provider.dimensionId) {
+               } else if (tm.linkX == this.getPos().getX() && tm.linkY == this.getPos().getY() && tm.linkZ == this.getPos().getZ() && tm.linkDim == this.world.provider.getDimension()) {
                   return true;
                } else {
                   this.linked = false;
                   this.markDirty();
-                  this.worldObj.markBlockForUpdate(this.xCoord, this.yCoord, this.zCoord);
+                  { net.minecraft.block.state.IBlockState _bs = this.world.getBlockState(this.pos); this.world.notifyBlockUpdate(this.pos, _bs, _bs, 3); }
                   return false;
                }
             } else {
                this.linked = false;
                this.markDirty();
-               this.worldObj.markBlockForUpdate(this.xCoord, this.yCoord, this.zCoord);
+               { net.minecraft.block.state.IBlockState _bs = this.world.getBlockState(this.pos); this.world.notifyBlockUpdate(this.pos, _bs, _bs, 3); }
                return false;
             }
          }
@@ -131,13 +133,13 @@ public class TileMirrorEssentia extends TileThaumcraft implements IAspectSource 
          if (targetWorld == null) {
             return false;
          } else {
-            TileEntity te = targetWorld.getTileEntity(this.linkX, this.linkY, this.linkZ);
+            TileEntity te = targetWorld.getTileEntity(new BlockPos(this.linkX, this.linkY, this.linkZ));
             if (te instanceof TileMirrorEssentia) {
                TileMirrorEssentia tm = (TileMirrorEssentia)te;
                if (!tm.linked) {
                   return false;
                } else {
-                  return tm.linkX == this.xCoord && tm.linkY == this.yCoord && tm.linkZ == this.zCoord && tm.linkDim == this.worldObj.provider.dimensionId;
+                  return tm.linkX == this.getPos().getX() && tm.linkY == this.getPos().getY() && tm.linkZ == this.getPos().getZ() && tm.linkDim == this.world.provider.getDimension();
                }
             } else {
                return false;
@@ -151,14 +153,14 @@ public class TileMirrorEssentia extends TileThaumcraft implements IAspectSource 
       if (targetWorld == null) {
          return false;
       } else {
-         TileEntity te = targetWorld.getTileEntity(this.linkX, this.linkY, this.linkZ);
+         TileEntity te = targetWorld.getTileEntity(new BlockPos(this.linkX, this.linkY, this.linkZ));
          if (te instanceof TileMirrorEssentia) {
             TileMirrorEssentia tm = (TileMirrorEssentia)te;
             return !tm.isLinkValid();
          } else {
             this.linked = false;
             this.markDirty();
-            this.worldObj.markBlockForUpdate(this.xCoord, this.yCoord, this.zCoord);
+            { net.minecraft.block.state.IBlockState _bs = this.world.getBlockState(this.pos); this.world.notifyBlockUpdate(this.pos, _bs, _bs, 3); }
             return false;
          }
       }
@@ -182,11 +184,13 @@ public class TileMirrorEssentia extends TileThaumcraft implements IAspectSource 
    public boolean takeFromContainer(Aspect tag, int amount) {
       if (this.isLinkValid() && amount <= 1) {
          World targetWorld = DimensionManager.getWorld(this.linkDim);
-         if (this.linkedFacing == ForgeDirection.UNKNOWN && targetWorld != null) {
-            this.linkedFacing = ForgeDirection.getOrientation(targetWorld.getBlockMetadata(this.linkX, this.linkY, this.linkZ) % 6);
+         if (this.linkedFacing == null && targetWorld != null) {
+            this.linkedFacing = EnumFacing.byIndex(
+        targetWorld.getBlockState(new BlockPos(this.linkX, this.linkY, this.linkZ)).getBlock()
+            .getMetaFromState(targetWorld.getBlockState(new BlockPos(this.linkX, this.linkY, this.linkZ))) % 6);
          }
 
-         TileEntity te = targetWorld.getTileEntity(this.linkX, this.linkY, this.linkZ);
+         TileEntity te = targetWorld.getTileEntity(new BlockPos(this.linkX, this.linkY, this.linkZ));
          return te instanceof TileMirrorEssentia && EssentiaHandler.drainEssentia(te, tag, this.linkedFacing, 8, true);
       } else {
          return false;
@@ -209,12 +213,8 @@ public class TileMirrorEssentia extends TileThaumcraft implements IAspectSource 
       return 0;
    }
 
-   public boolean canUpdate() {
-       return super.canUpdate();
-   }
-
    public void updateEntity() {
-      if (!this.worldObj.isRemote && this.count++ % this.inc == 0) {
+      if (!this.world.isRemote && this.count++ % this.inc == 0) {
          if (!this.isLinkValidSimple()) {
             if (this.inc < 600) {
                this.inc += 20;

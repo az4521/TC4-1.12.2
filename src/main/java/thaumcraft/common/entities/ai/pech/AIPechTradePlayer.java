@@ -26,7 +26,7 @@ public class AIPechTradePlayer extends EntityAIBase {
    }
 
    public void startExecuting() {
-      this.villager.getNavigator().clearPathEntity();
+      this.villager.getNavigator().clearPath();
    }
 
    public void resetTask() {

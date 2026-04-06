@@ -1,21 +1,19 @@
 package thaumcraft.common.items.armor;
 
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import java.util.List;
 import net.minecraft.client.model.ModelBiped;
-import net.minecraft.client.renderer.texture.IIconRegister;
+import thaumcraft.client.renderers.compat.IIconRegister;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.item.EnumAction;
-import net.minecraft.item.EnumRarity;
 import net.minecraft.item.ItemArmor;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.DamageSource;
-import net.minecraft.util.EnumChatFormatting;
-import net.minecraft.util.IIcon;
-import net.minecraft.util.StatCollector;
+import net.minecraft.util.text.TextFormatting;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.util.text.translation.I18n;
 import net.minecraftforge.common.ISpecialArmor;
 import thaumcraft.api.IGoggles;
 import thaumcraft.api.IRepairable;
@@ -26,33 +24,37 @@ import thaumcraft.common.Thaumcraft;
 import thaumcraft.common.config.ConfigItems;
 
 public class ItemFortressArmor extends ItemArmor implements IRepairable, IRunicArmor, ISpecialArmor, IGoggles, IRevealer {
-   public IIcon iconHelm;
-   public IIcon iconChest;
-   public IIcon iconLegs;
+   public TextureAtlasSprite iconHelm;
+   public TextureAtlasSprite iconChest;
+   public TextureAtlasSprite iconLegs;
    ModelBiped model1 = null;
    ModelBiped model2 = null;
    ModelBiped model = null;
 
+   private static net.minecraft.inventory.EntityEquipmentSlot slotFromIndex(int k) {
+      switch(k) { case 0: return net.minecraft.inventory.EntityEquipmentSlot.HEAD; case 1: return net.minecraft.inventory.EntityEquipmentSlot.CHEST; case 2: return net.minecraft.inventory.EntityEquipmentSlot.LEGS; default: return net.minecraft.inventory.EntityEquipmentSlot.FEET; }
+   }
+
    public ItemFortressArmor(ItemArmor.ArmorMaterial enumarmormaterial, int j, int k) {
-      super(enumarmormaterial, j, k);
+      super(enumarmormaterial, j, slotFromIndex(k));
       this.setCreativeTab(Thaumcraft.tabTC);
    }
 
    @SideOnly(Side.CLIENT)
    public void registerIcons(IIconRegister ir) {
-      this.iconHelm = ir.registerIcon("thaumcraft:thaumiumfortresshelm");
-      this.iconChest = ir.registerIcon("thaumcraft:thaumiumfortresschest");
-      this.iconLegs = ir.registerIcon("thaumcraft:thaumiumfortresslegs");
+      this.iconHelm = ir.registerSprite("thaumcraft:thaumiumfortresshelm");
+      this.iconChest = ir.registerSprite("thaumcraft:thaumiumfortresschest");
+      this.iconLegs = ir.registerSprite("thaumcraft:thaumiumfortresslegs");
    }
 
    @SideOnly(Side.CLIENT)
-   public IIcon getIconFromDamage(int par1) {
-      return this.armorType == 0 ? this.iconHelm : (this.armorType == 1 ? this.iconChest : this.iconLegs);
+   public TextureAtlasSprite getIconFromDamage(int par1) {
+      return this.armorType == net.minecraft.inventory.EntityEquipmentSlot.HEAD ? this.iconHelm : (this.armorType == net.minecraft.inventory.EntityEquipmentSlot.CHEST ? this.iconChest : this.iconLegs);
    }
 
    @SideOnly(Side.CLIENT)
-   public ModelBiped getArmorModel(EntityLivingBase entityLiving, ItemStack itemStack, int armorSlot) {
-      int type = ((ItemArmor)itemStack.getItem()).armorType;
+   public net.minecraft.client.model.ModelBiped getArmorModel(EntityLivingBase entityLiving, ItemStack itemStack, net.minecraft.inventory.EntityEquipmentSlot armorSlot, net.minecraft.client.model.ModelBiped _default) {
+      net.minecraft.inventory.EntityEquipmentSlot type = ((ItemArmor)itemStack.getItem()).armorType;
       if (this.model1 == null) {
          this.model1 = new ModelFortressArmor(1.0F);
       }
@@ -61,31 +63,30 @@ public class ItemFortressArmor extends ItemArmor implements IRepairable, IRunicA
          this.model2 = new ModelFortressArmor(0.5F);
       }
 
-      if (type != 1 && type != 3) {
+      if (type != net.minecraft.inventory.EntityEquipmentSlot.CHEST && type != net.minecraft.inventory.EntityEquipmentSlot.LEGS) {
          this.model = this.model2;
       } else {
          this.model = this.model1;
       }
 
       if (this.model != null) {
-         this.model.bipedHead.showModel = armorSlot == 0;
-         this.model.bipedHeadwear.showModel = armorSlot == 0;
-         this.model.bipedBody.showModel = armorSlot == 1 || armorSlot == 2;
-         this.model.bipedRightArm.showModel = armorSlot == 1;
-         this.model.bipedLeftArm.showModel = armorSlot == 1;
-         this.model.bipedRightLeg.showModel = armorSlot == 2;
-         this.model.bipedLeftLeg.showModel = armorSlot == 2;
+         this.model.bipedHead.showModel = armorSlot == net.minecraft.inventory.EntityEquipmentSlot.HEAD;
+         this.model.bipedHeadwear.showModel = armorSlot == net.minecraft.inventory.EntityEquipmentSlot.HEAD;
+         this.model.bipedBody.showModel = armorSlot == net.minecraft.inventory.EntityEquipmentSlot.CHEST || armorSlot == net.minecraft.inventory.EntityEquipmentSlot.LEGS;
+         this.model.bipedRightArm.showModel = armorSlot == net.minecraft.inventory.EntityEquipmentSlot.CHEST;
+         this.model.bipedLeftArm.showModel = armorSlot == net.minecraft.inventory.EntityEquipmentSlot.CHEST;
+         this.model.bipedRightLeg.showModel = armorSlot == net.minecraft.inventory.EntityEquipmentSlot.LEGS;
+         this.model.bipedLeftLeg.showModel = armorSlot == net.minecraft.inventory.EntityEquipmentSlot.LEGS;
          this.model.isSneak = entityLiving.isSneaking();
          this.model.isRiding = entityLiving.isRiding();
          this.model.isChild = entityLiving.isChild();
-         this.model.aimedBow = false;
-         this.model.heldItemRight = entityLiving.getHeldItem() != null ? 1 : 0;
-         if (entityLiving instanceof EntityPlayer && ((EntityPlayer)entityLiving).getItemInUseDuration() > 0) {
-            EnumAction enumaction = ((EntityPlayer)entityLiving).getItemInUse().getItemUseAction();
-            if (enumaction == EnumAction.block) {
-               this.model.heldItemRight = 3;
-            } else if (enumaction == EnumAction.bow) {
-               this.model.aimedBow = true;
+         this.model.rightArmPose = !entityLiving.getHeldItemMainhand().isEmpty() ? net.minecraft.client.model.ModelBiped.ArmPose.ITEM : net.minecraft.client.model.ModelBiped.ArmPose.EMPTY;
+         if (entityLiving instanceof EntityPlayer && ((EntityPlayer)entityLiving).isHandActive()) {
+            net.minecraft.item.EnumAction enumaction = ((EntityPlayer)entityLiving).getActiveItemStack().getItemUseAction();
+            if (enumaction == net.minecraft.item.EnumAction.BLOCK) {
+               this.model.rightArmPose = net.minecraft.client.model.ModelBiped.ArmPose.BLOCK;
+            } else if (enumaction == net.minecraft.item.EnumAction.BOW) {
+               this.model.rightArmPose = net.minecraft.client.model.ModelBiped.ArmPose.BOW_AND_ARROW;
             }
          }
       }
@@ -97,20 +98,20 @@ public class ItemFortressArmor extends ItemArmor implements IRepairable, IRunicA
       return "thaumcraft:textures/models/fortress_armor.png";
    }
 
-   public EnumRarity getRarity(ItemStack itemstack) {
-      return EnumRarity.rare;
+   public net.minecraft.item.EnumRarity getRarity(ItemStack itemstack) {
+      return net.minecraft.item.EnumRarity.RARE;
    }
 
-   public void addInformation(ItemStack stack, EntityPlayer player, List list, boolean par4) {
-      if (stack.hasTagCompound() && stack.stackTagCompound.hasKey("goggles")) {
-         list.add(EnumChatFormatting.DARK_PURPLE + StatCollector.translateToLocal("item.ItemGoggles.name"));
+   public void addInformation(ItemStack stack, @javax.annotation.Nullable net.minecraft.world.World worldIn, List list, net.minecraft.client.util.ITooltipFlag flagIn) {
+      if (stack.hasTagCompound() && stack.getTagCompound().hasKey("goggles")) {
+         list.add(TextFormatting.DARK_PURPLE + I18n.translateToLocal("item.ItemGoggles.name"));
       }
 
-      if (stack.hasTagCompound() && stack.stackTagCompound.hasKey("mask")) {
-         list.add(EnumChatFormatting.GOLD + StatCollector.translateToLocal("item.HelmetFortress.mask." + stack.stackTagCompound.getInteger("mask")));
+      if (stack.hasTagCompound() && stack.getTagCompound().hasKey("mask")) {
+         list.add(TextFormatting.GOLD + I18n.translateToLocal("item.HelmetFortress.mask." + stack.getTagCompound().getInteger("mask")));
       }
 
-      super.addInformation(stack, player, list, par4);
+      super.addInformation(stack, worldIn, list, flagIn);
    }
 
    public boolean getIsRepairable(ItemStack par1ItemStack, ItemStack par2ItemStack) {
@@ -141,10 +142,10 @@ public class ItemFortressArmor extends ItemArmor implements IRepairable, IRunicA
          double set = 0.875F;
 
          for(int a = 1; a < 4; ++a) {
-            ItemStack piece = ((EntityPlayer)player).inventory.armorInventory[a];
-            if (piece != null && piece.getItem() instanceof ItemFortressArmor) {
+            ItemStack piece = ((EntityPlayer)player).inventory.armorInventory.get(a);
+            if (!piece.isEmpty() && piece.getItem() instanceof ItemFortressArmor) {
                set += 0.125F;
-               if (piece.hasTagCompound() && piece.stackTagCompound.hasKey("mask")) {
+               if (piece.hasTagCompound() && piece.getTagCompound().hasKey("mask")) {
                   set += 0.05;
                }
             }
@@ -161,17 +162,17 @@ public class ItemFortressArmor extends ItemArmor implements IRepairable, IRunicA
    }
 
    public void damageArmor(EntityLivingBase entity, ItemStack stack, DamageSource source, int damage, int slot) {
-      if (source != DamageSource.fall) {
+      if (source != DamageSource.FALL) {
          stack.damageItem(damage, entity);
       }
 
    }
 
    public boolean showNodes(ItemStack itemstack, EntityLivingBase player) {
-      return itemstack.hasTagCompound() && itemstack.stackTagCompound.hasKey("goggles");
+      return itemstack.hasTagCompound() && itemstack.getTagCompound().hasKey("goggles");
    }
 
    public boolean showIngamePopups(ItemStack itemstack, EntityLivingBase player) {
-      return itemstack.hasTagCompound() && itemstack.stackTagCompound.hasKey("goggles");
+      return itemstack.hasTagCompound() && itemstack.getTagCompound().hasKey("goggles");
    }
 }

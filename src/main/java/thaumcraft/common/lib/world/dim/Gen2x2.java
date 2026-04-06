@@ -2,7 +2,7 @@ package thaumcraft.common.lib.world.dim;
 
 import java.util.Random;
 import net.minecraft.world.World;
-import net.minecraftforge.common.util.ForgeDirection;
+import net.minecraft.util.EnumFacing;
 
 public class Gen2x2 extends GenCommon {
    static void generateUpperLeft(World world, Random random, int cx, int cz, int y, Cell cell) {
@@ -51,13 +51,13 @@ public class Gen2x2 extends GenCommon {
       }
 
       for(int g = 4; g <= 15; ++g) {
-         placeBlock(world, x + g, y + 2, z + 4, 10, ForgeDirection.NORTH, cell);
-         placeBlock(world, x + g, y + 10, z + 4, 11, ForgeDirection.NORTH, cell);
+         placeBlock(world, x + g, y + 2, z + 4, 10, EnumFacing.NORTH, cell);
+         placeBlock(world, x + g, y + 10, z + 4, 11, EnumFacing.NORTH, cell);
       }
 
       for(int g = 4; g <= 15; ++g) {
-         placeBlock(world, x + 4, y + 2, z + g, 10, ForgeDirection.WEST, cell);
-         placeBlock(world, x + 4, y + 10, z + g, 11, ForgeDirection.WEST, cell);
+         placeBlock(world, x + 4, y + 2, z + g, 10, EnumFacing.WEST, cell);
+         placeBlock(world, x + 4, y + 10, z + g, 11, EnumFacing.WEST, cell);
       }
 
       GenCommon.generateConnections(world, random, cx, cz, y, cell, 3, true);
@@ -109,13 +109,13 @@ public class Gen2x2 extends GenCommon {
       }
 
       for(int g = 0; g <= 11; ++g) {
-         placeBlock(world, x + g, y + 2, z + 4, 10, ForgeDirection.NORTH, cell);
-         placeBlock(world, x + g, y + 10, z + 4, 11, ForgeDirection.NORTH, cell);
+         placeBlock(world, x + g, y + 2, z + 4, 10, EnumFacing.NORTH, cell);
+         placeBlock(world, x + g, y + 10, z + 4, 11, EnumFacing.NORTH, cell);
       }
 
       for(int g = 4; g <= 15; ++g) {
-         placeBlock(world, x + 12, y + 2, z + g, 10, ForgeDirection.EAST, cell);
-         placeBlock(world, x + 12, y + 10, z + g, 11, ForgeDirection.EAST, cell);
+         placeBlock(world, x + 12, y + 2, z + g, 10, EnumFacing.EAST, cell);
+         placeBlock(world, x + 12, y + 10, z + g, 11, EnumFacing.EAST, cell);
       }
 
       GenCommon.generateConnections(world, random, cx, cz, y, cell, 3, true);
@@ -167,13 +167,13 @@ public class Gen2x2 extends GenCommon {
       }
 
       for(int g = 4; g <= 15; ++g) {
-         placeBlock(world, x + g, y + 2, z + 12, 10, ForgeDirection.SOUTH, cell);
-         placeBlock(world, x + g, y + 10, z + 12, 11, ForgeDirection.SOUTH, cell);
+         placeBlock(world, x + g, y + 2, z + 12, 10, EnumFacing.SOUTH, cell);
+         placeBlock(world, x + g, y + 10, z + 12, 11, EnumFacing.SOUTH, cell);
       }
 
       for(int g = 0; g <= 11; ++g) {
-         placeBlock(world, x + 4, y + 2, z + g, 10, ForgeDirection.WEST, cell);
-         placeBlock(world, x + 4, y + 10, z + g, 11, ForgeDirection.WEST, cell);
+         placeBlock(world, x + 4, y + 2, z + g, 10, EnumFacing.WEST, cell);
+         placeBlock(world, x + 4, y + 10, z + g, 11, EnumFacing.WEST, cell);
       }
 
       GenCommon.generateConnections(world, random, cx, cz, y, cell, 3, true);
@@ -225,13 +225,13 @@ public class Gen2x2 extends GenCommon {
       }
 
       for(int g = 0; g <= 11; ++g) {
-         placeBlock(world, x + g, y + 2, z + 12, 10, ForgeDirection.SOUTH, cell);
-         placeBlock(world, x + g, y + 10, z + 12, 11, ForgeDirection.SOUTH, cell);
+         placeBlock(world, x + g, y + 2, z + 12, 10, EnumFacing.SOUTH, cell);
+         placeBlock(world, x + g, y + 10, z + 12, 11, EnumFacing.SOUTH, cell);
       }
 
       for(int g = 0; g <= 12; ++g) {
-         placeBlock(world, x + 12, y + 2, z + g, 10, ForgeDirection.EAST, cell);
-         placeBlock(world, x + 12, y + 10, z + g, 11, ForgeDirection.EAST, cell);
+         placeBlock(world, x + 12, y + 2, z + g, 10, EnumFacing.EAST, cell);
+         placeBlock(world, x + 12, y + 10, z + g, 11, EnumFacing.EAST, cell);
       }
 
       GenCommon.generateConnections(world, random, cx, cz, y, cell, 3, true);

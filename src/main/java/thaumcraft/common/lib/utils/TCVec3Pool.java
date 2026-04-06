@@ -1,14 +1,14 @@
 package thaumcraft.common.lib.utils;
 
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import java.util.ArrayList;
 import java.util.List;
 
 public class TCVec3Pool {
    private final int truncateArrayResetThreshold;
    private final int minimumSize;
-   private final List<TCVec3> vec3Cache = new ArrayList<>();
+   private final List<TCVec3d> vec3Cache = new ArrayList<>();
    private int nextFreeSpace = 0;
    private int maximumSizeSinceLastTruncation = 0;
    private int resetCount = 0;
@@ -18,13 +18,13 @@ public class TCVec3Pool {
       this.minimumSize = par2;
    }
 
-   public TCVec3 getVecFromPool(double par1, double par3, double par5) {
+   public TCVec3d getVecFromPool(double par1, double par3, double par5) {
       if (this.skipCache()) {
-         return new TCVec3(this, par1, par3, par5);
+         return new TCVec3d(this, par1, par3, par5);
       } else {
-         TCVec3 var7;
+         TCVec3d var7;
          if (this.nextFreeSpace >= this.vec3Cache.size()) {
-            var7 = new TCVec3(this, par1, par3, par5);
+            var7 = new TCVec3d(this, par1, par3, par5);
             this.vec3Cache.add(var7);
          } else {
             var7 = this.vec3Cache.get(this.nextFreeSpace);

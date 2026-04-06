@@ -5,9 +5,10 @@ import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.ai.EntityAIBase;
 import net.minecraft.entity.passive.EntityTameable;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.pathfinding.PathEntity;
+import net.minecraft.pathfinding.Path;
 import net.minecraft.pathfinding.PathPoint;
-import net.minecraft.util.MathHelper;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.MathHelper;
 import thaumcraft.common.entities.golems.EntityGolemBase;
 
 public abstract class AITarget extends EntityAIBase {
@@ -17,7 +18,7 @@ public abstract class AITarget extends EntityAIBase {
    private boolean nearbyOnly;
    private int targetSearchStatus;
    private int targetSearchDelay;
-   private int field_75298_g;
+   private int targetUnseenTicks;
 
    public AITarget(EntityCreature par1EntityLiving, float par2, boolean par3) {
       this(par1EntityLiving, par2, par3, false);
@@ -26,7 +27,7 @@ public abstract class AITarget extends EntityAIBase {
    public AITarget(EntityCreature par1EntityLiving, float par2, boolean par3, boolean par4) {
       this.targetSearchStatus = 0;
       this.targetSearchDelay = 0;
-      this.field_75298_g = 0;
+      this.targetUnseenTicks = 0;
       this.taskOwner = par1EntityLiving;
       this.targetDistance = par2;
       this.shouldCheckSight = par3;
@@ -39,13 +40,13 @@ public abstract class AITarget extends EntityAIBase {
          return false;
       } else if (!var1.isEntityAlive()) {
          return false;
-      } else if (this.taskOwner.getDistanceSqToEntity(var1) > (double)(this.targetDistance * this.targetDistance)) {
+      } else if (this.taskOwner.getDistanceSq(var1) > (double)(this.targetDistance * this.targetDistance)) {
          return false;
       } else {
          if (this.shouldCheckSight) {
             if (this.taskOwner.getEntitySenses().canSee(var1)) {
-               this.field_75298_g = 0;
-            } else return ++this.field_75298_g <= 60;
+               this.targetUnseenTicks = 0;
+            } else return ++this.targetUnseenTicks <= 60;
          }
 
          return true;
@@ -55,7 +56,7 @@ public abstract class AITarget extends EntityAIBase {
    public void startExecuting() {
       this.targetSearchStatus = 0;
       this.targetSearchDelay = 0;
-      this.field_75298_g = 0;
+      this.targetUnseenTicks = 0;
    }
 
    public void resetTask() {
@@ -85,12 +86,12 @@ public abstract class AITarget extends EntityAIBase {
                return false;
             }
 
-            if (par1EntityLiving instanceof EntityPlayer && par1EntityLiving.getCommandSenderName().equals(((EntityGolemBase)this.taskOwner).getOwnerName())) {
+            if (par1EntityLiving instanceof EntityPlayer && par1EntityLiving.getName().equals(((EntityGolemBase)this.taskOwner).getOwnerName())) {
                return false;
             }
          }
 
-         if (!this.taskOwner.isWithinHomeDistance(MathHelper.floor_double(par1EntityLiving.posX), MathHelper.floor_double(par1EntityLiving.posY), MathHelper.floor_double(par1EntityLiving.posZ))) {
+         if (!this.taskOwner.isWithinHomeDistanceFromPosition(new BlockPos(MathHelper.floor(par1EntityLiving.posX), MathHelper.floor(par1EntityLiving.posY), MathHelper.floor(par1EntityLiving.posZ)))) {
             return false;
          } else if (this.shouldCheckSight && !this.taskOwner.getEntitySenses().canSee(par1EntityLiving)) {
             return false;
@@ -114,7 +115,7 @@ public abstract class AITarget extends EntityAIBase {
 
    private boolean canEasilyReach(EntityLivingBase par1EntityLiving) {
       this.targetSearchDelay = 10 + this.taskOwner.getRNG().nextInt(5);
-      PathEntity var2 = this.taskOwner.getNavigator().getPathToEntityLiving(par1EntityLiving);
+      Path var2 = this.taskOwner.getNavigator().getPathToEntityLiving(par1EntityLiving);
       if (var2 == null) {
          return false;
       } else {
@@ -122,8 +123,8 @@ public abstract class AITarget extends EntityAIBase {
          if (var3 == null) {
             return false;
          } else {
-            int var4 = var3.xCoord - MathHelper.floor_double(par1EntityLiving.posX);
-            int var5 = var3.zCoord - MathHelper.floor_double(par1EntityLiving.posZ);
+            int var4 = var3.x - MathHelper.floor(par1EntityLiving.posX);
+            int var5 = var3.z - MathHelper.floor(par1EntityLiving.posZ);
             return (double)(var4 * var4 + var5 * var5) <= (double)2.25F;
          }
       }

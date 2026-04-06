@@ -1,47 +1,51 @@
 package thaumcraft.client.renderers.tile;
 
-import cpw.mods.fml.client.FMLClientHandler;
+import net.minecraftforge.fml.client.FMLClientHandler;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.tileentity.TileEntitySpecialRenderer;
 import net.minecraft.tileentity.TileEntity;
-import org.lwjgl.opengl.GL11;
+
 import thaumcraft.client.lib.UtilsFX;
 import thaumcraft.client.renderers.models.ModelBoreBase;
 import thaumcraft.common.tiles.TileArcaneBoreBase;
+import net.minecraft.client.renderer.GlStateManager;
 
-public class TileArcaneBoreBaseRenderer extends TileEntitySpecialRenderer {
+public class TileArcaneBoreBaseRenderer extends TileEntitySpecialRenderer<TileEntity> {
    private ModelBoreBase model = new ModelBoreBase();
 
    public void renderEntityAt(TileArcaneBoreBase bore, double x, double y, double z, float fq) {
       if (bore == null){return;}
       Minecraft mc = FMLClientHandler.instance().getClient();
       UtilsFX.bindTexture("textures/models/Bore.png");
-      GL11.glPushMatrix();
-      GL11.glTranslatef((float)x + 0.5F, (float)y, (float)z + 0.5F);
-      GL11.glPushMatrix();
+      GlStateManager.pushMatrix();
+      GlStateManager.translate((float)x + 0.5F, (float)y, (float)z + 0.5F);
+      GlStateManager.pushMatrix();
       this.model.render();
-      GL11.glPopMatrix();
-      GL11.glPushMatrix();
+      GlStateManager.popMatrix();
+      GlStateManager.pushMatrix();
       switch (bore.orientation.ordinal()) {
          case 2:
-            GL11.glRotatef(90.0F, 0.0F, 1.0F, 0.0F);
+            GlStateManager.rotate(90.0F, 0.0F, 1.0F, 0.0F);
             break;
          case 3:
-            GL11.glRotatef(270.0F, 0.0F, 1.0F, 0.0F);
+            GlStateManager.rotate(270.0F, 0.0F, 1.0F, 0.0F);
             break;
          case 4:
-            GL11.glRotatef(180.0F, 0.0F, 1.0F, 0.0F);
+            GlStateManager.rotate(180.0F, 0.0F, 1.0F, 0.0F);
             break;
          case 5:
-            GL11.glRotatef(0.0F, 0.0F, 1.0F, 0.0F);
+            GlStateManager.rotate(0.0F, 0.0F, 1.0F, 0.0F);
       }
 
       this.model.renderNozzle();
-      GL11.glPopMatrix();
-      GL11.glPopMatrix();
+      GlStateManager.popMatrix();
+      GlStateManager.popMatrix();
    }
 
-   public void renderTileEntityAt(TileEntity tileentity, double d, double d1, double d2, float f) {
+   @Override
+
+
+   public void render(TileEntity tileentity, double d, double d1, double d2, float f, int destroyStage, float alpha) {
       if (! (tileentity instanceof TileArcaneBoreBase)) {return;}
       this.renderEntityAt((TileArcaneBoreBase)tileentity, d, d1, d2, f);
    }

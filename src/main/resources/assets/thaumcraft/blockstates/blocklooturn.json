@@ -1,0 +1,52 @@
+{
+  "variants": {
+    "meta=0": {
+      "model": "thaumcraft:blocklooturn"
+    },
+    "meta=1": {
+      "model": "thaumcraft:blocklooturn"
+    },
+    "meta=2": {
+      "model": "thaumcraft:blocklooturn"
+    },
+    "meta=3": {
+      "model": "thaumcraft:blocklooturn"
+    },
+    "meta=4": {
+      "model": "thaumcraft:blocklooturn"
+    },
+    "meta=5": {
+      "model": "thaumcraft:blocklooturn"
+    },
+    "meta=6": {
+      "model": "thaumcraft:blocklooturn"
+    },
+    "meta=7": {
+      "model": "thaumcraft:blocklooturn"
+    },
+    "meta=8": {
+      "model": "thaumcraft:blocklooturn"
+    },
+    "meta=9": {
+      "model": "thaumcraft:blocklooturn"
+    },
+    "meta=10": {
+      "model": "thaumcraft:blocklooturn"
+    },
+    "meta=11": {
+      "model": "thaumcraft:blocklooturn"
+    },
+    "meta=12": {
+      "model": "thaumcraft:blocklooturn"
+    },
+    "meta=13": {
+      "model": "thaumcraft:blocklooturn"
+    },
+    "meta=14": {
+      "model": "thaumcraft:blocklooturn"
+    },
+    "meta=15": {
+      "model": "thaumcraft:blocklooturn"
+    }
+  }
+}

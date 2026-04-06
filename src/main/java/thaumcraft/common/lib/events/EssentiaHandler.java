@@ -1,13 +1,13 @@
 package thaumcraft.common.lib.events;
 
-import cpw.mods.fml.common.network.NetworkRegistry;
-import cpw.mods.fml.common.network.simpleimpl.SimpleNetworkWrapper;
+import net.minecraftforge.fml.common.network.NetworkRegistry;
+import net.minecraftforge.fml.common.network.simpleimpl.SimpleNetworkWrapper;
 import java.util.ArrayList;
 import java.util.HashMap;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.ChunkCoordinates;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
-import net.minecraftforge.common.util.ForgeDirection;
+import net.minecraft.util.EnumFacing;
 import thaumcraft.api.WorldCoordinates;
 import thaumcraft.api.aspects.Aspect;
 import thaumcraft.api.aspects.IAspectSource;
@@ -21,18 +21,19 @@ public class EssentiaHandler {
    private static HashMap<WorldCoordinates,Long> sourcesDelay = new HashMap<>();
    public static HashMap<String,EssentiaHandler.EssentiaSourceFX> sourceFX = new HashMap<>();
 
-   public static boolean drainEssentia(TileEntity tile, Aspect aspect, ForgeDirection direction, int range) {
+   public static boolean drainEssentia(TileEntity tile, Aspect aspect, EnumFacing direction, int range) {
       return drainEssentia(tile, aspect, direction, range, false);
    }
 
-   public static boolean drainEssentia(TileEntity tile, Aspect aspect, ForgeDirection direction, int range, boolean ignoreMirror) {
-      WorldCoordinates tileLoc = new WorldCoordinates(tile.xCoord, tile.yCoord, tile.zCoord, tile.getWorldObj().provider.dimensionId);
+   public static boolean drainEssentia(TileEntity tile, Aspect aspect, EnumFacing direction, int range, boolean ignoreMirror) {
+      BlockPos tilePos = tile.getPos();
+      WorldCoordinates tileLoc = new WorldCoordinates(tilePos.getX(), tilePos.getY(), tilePos.getZ(), tile.getWorld().provider.getDimension());
       if (!sources.containsKey(tileLoc)) {
-         getSources(tile.getWorldObj(), tileLoc, direction, range);
+         getSources(tile.getWorld(), tileLoc, direction, range);
          return sources.containsKey(tileLoc) && drainEssentia(tile, aspect, direction, range);
       } else {
          for(WorldCoordinates source : sources.get(tileLoc)) {
-            TileEntity sourceTile = tile.getWorldObj().getTileEntity(source.x, source.y, source.z);
+            TileEntity sourceTile = tile.getWorld().getTileEntity(new BlockPos(source.x, source.y, source.z));
             if (!(sourceTile instanceof IAspectSource)) {
                break;
             }
@@ -41,11 +42,11 @@ public class EssentiaHandler {
                IAspectSource as = (IAspectSource)sourceTile;
                if (as.takeFromContainer(aspect, 1)) {
                   SimpleNetworkWrapper var10000 = PacketHandler.INSTANCE;
-                  PacketFXEssentiaSource var10001 = new PacketFXEssentiaSource(tile.xCoord, tile.yCoord, tile.zCoord, (byte)(tile.xCoord - source.x), (byte)(tile.yCoord - source.y), (byte)(tile.zCoord - source.z), aspect.getColor());
-                  double var10005 = tile.xCoord;
-                  double var10006 = tile.yCoord;
-                  double var10007 = tile.zCoord;
-                  var10000.sendToAllAround(var10001, new NetworkRegistry.TargetPoint(tile.getWorldObj().provider.dimensionId, var10005, var10006, var10007, 32.0F));
+                  PacketFXEssentiaSource var10001 = new PacketFXEssentiaSource(tilePos.getX(), tilePos.getY(), tilePos.getZ(), (byte)(tilePos.getX() - source.x), (byte)(tilePos.getY() - source.y), (byte)(tilePos.getZ() - source.z), aspect.getColor());
+                  double var10005 = tilePos.getX();
+                  double var10006 = tilePos.getY();
+                  double var10007 = tilePos.getZ();
+                  var10000.sendToAllAround(var10001, new NetworkRegistry.TargetPoint(tile.getWorld().provider.getDimension(), var10005, var10006, var10007, 32.0F));
                   return true;
                }
             }
@@ -57,14 +58,15 @@ public class EssentiaHandler {
       }
    }
 
-   public static boolean findEssentia(TileEntity tile, Aspect aspect, ForgeDirection direction, int range) {
-      WorldCoordinates tileLoc = new WorldCoordinates(tile.xCoord, tile.yCoord, tile.zCoord, tile.getWorldObj().provider.dimensionId);
+   public static boolean findEssentia(TileEntity tile, Aspect aspect, EnumFacing direction, int range) {
+      BlockPos tilePos = tile.getPos();
+      WorldCoordinates tileLoc = new WorldCoordinates(tilePos.getX(), tilePos.getY(), tilePos.getZ(), tile.getWorld().provider.getDimension());
       if (!sources.containsKey(tileLoc)) {
-         getSources(tile.getWorldObj(), tileLoc, direction, range);
+         getSources(tile.getWorld(), tileLoc, direction, range);
          return sources.containsKey(tileLoc) && findEssentia(tile, aspect, direction, range);
       } else {
          for(WorldCoordinates source : sources.get(tileLoc)) {
-            TileEntity sourceTile = tile.getWorldObj().getTileEntity(source.x, source.y, source.z);
+            TileEntity sourceTile = tile.getWorld().getTileEntity(new BlockPos(source.x, source.y, source.z));
             if (!(sourceTile instanceof IAspectSource)) {
                break;
             }
@@ -81,7 +83,7 @@ public class EssentiaHandler {
       }
    }
 
-   private static void getSources(World world, WorldCoordinates tileLoc, ForgeDirection direction, int range) {
+   private static void getSources(World world, WorldCoordinates tileLoc, EnumFacing direction, int range) {
       if (sourcesDelay.containsKey(tileLoc)) {
          long d = sourcesDelay.get(tileLoc);
          if (d > System.currentTimeMillis()) {
@@ -91,12 +93,12 @@ public class EssentiaHandler {
          sourcesDelay.remove(tileLoc);
       }
 
-      TileEntity sourceTile = world.getTileEntity(tileLoc.x, tileLoc.y, tileLoc.z);
+      TileEntity sourceTile = world.getTileEntity(new BlockPos(tileLoc.x, tileLoc.y, tileLoc.z));
       ArrayList<WorldCoordinates> sourceList = new ArrayList<>();
       int start = 0;
-      if (direction == ForgeDirection.UNKNOWN) {
+      if (direction == null) {
          start = -range;
-         direction = ForgeDirection.UP;
+         direction = EnumFacing.UP;
       }
 
       int xx = 0;
@@ -110,23 +112,24 @@ public class EssentiaHandler {
                   xx = tileLoc.x;
                   yy = tileLoc.y;
                   zz = tileLoc.z;
-                  if (direction.offsetY != 0) {
+                  if (direction.getYOffset() != 0) {
                      xx += aa;
-                     yy += cc * direction.offsetY;
+                     yy += cc * direction.getYOffset();
                      zz += bb;
-                  } else if (direction.offsetX == 0) {
+                  } else if (direction.getXOffset() == 0) {
                      xx += aa;
                      yy += bb;
-                     zz += cc * direction.offsetZ;
+                     zz += cc * direction.getZOffset();
                   } else {
-                     xx += cc * direction.offsetX;
+                     xx += cc * direction.getXOffset();
                      yy += aa;
                      zz += bb;
                   }
 
-                  TileEntity te = world.getTileEntity(xx, yy, zz);
-                  if (te instanceof IAspectSource && (!(sourceTile instanceof TileMirrorEssentia) || !(te instanceof TileMirrorEssentia) || sourceTile.xCoord != ((TileMirrorEssentia) te).linkX || sourceTile.yCoord != ((TileMirrorEssentia) te).linkY || sourceTile.zCoord != ((TileMirrorEssentia) te).linkZ || sourceTile.getWorldObj().provider.dimensionId != ((TileMirrorEssentia) te).linkDim)) {
-                     sourceList.add(new WorldCoordinates(xx, yy, zz, world.provider.dimensionId));
+                  TileEntity te = world.getTileEntity(new BlockPos(xx, yy, zz));
+                  BlockPos sourceTilePos = sourceTile != null ? sourceTile.getPos() : null;
+                  if (te instanceof IAspectSource && (!(sourceTile instanceof TileMirrorEssentia) || !(te instanceof TileMirrorEssentia) || sourceTilePos.getX() != ((TileMirrorEssentia) te).linkX || sourceTilePos.getY() != ((TileMirrorEssentia) te).linkY || sourceTilePos.getZ() != ((TileMirrorEssentia) te).linkZ || sourceTile.getWorld().provider.getDimension() != ((TileMirrorEssentia) te).linkDim)) {
+                     sourceList.add(new WorldCoordinates(xx, yy, zz, world.provider.getDimension()));
                   }
                }
             }
@@ -142,16 +145,17 @@ public class EssentiaHandler {
    }
 
    public static void refreshSources(TileEntity tile) {
-      sources.remove(new WorldCoordinates(tile.xCoord, tile.yCoord, tile.zCoord, tile.getWorldObj().provider.dimensionId));
+      BlockPos p = tile.getPos();
+      sources.remove(new WorldCoordinates(p.getX(), p.getY(), p.getZ(), tile.getWorld().provider.getDimension()));
    }
 
    public static class EssentiaSourceFX {
-      public ChunkCoordinates start;
-      public ChunkCoordinates end;
+      public BlockPos start;
+      public BlockPos end;
       public int ticks;
       public int color;
 
-      public EssentiaSourceFX(ChunkCoordinates start, ChunkCoordinates end, int ticks, int color) {
+      public EssentiaSourceFX(BlockPos start, BlockPos end, int ticks, int color) {
          this.start = start;
          this.end = end;
          this.ticks = ticks;

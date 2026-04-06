@@ -5,10 +5,10 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.ai.EntityAIBase;
 import net.minecraft.entity.ai.RandomPositionGenerator;
 import net.minecraft.entity.monster.EntityCreeper;
-import net.minecraft.pathfinding.PathEntity;
+import net.minecraft.pathfinding.Path;
 import net.minecraft.pathfinding.PathNavigate;
-import net.minecraft.util.MathHelper;
-import net.minecraft.util.Vec3;
+import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.Vec3d;
 import thaumcraft.common.entities.golems.EntityGolemBase;
 
 public class AIAvoidCreeperSwell extends EntityAIBase {
@@ -17,9 +17,9 @@ public class AIAvoidCreeperSwell extends EntityAIBase {
    private float nearSpeed;
    private Entity closestLivingEntity;
    private float distanceFromEntity;
-   private PathEntity entityPathEntity;
+   private Path entityPathEntity;
    private PathNavigate entityPathNavigate;
-   Vec3 targetBlock;
+   Vec3d targetBlock;
 
    public AIAvoidCreeperSwell(EntityGolemBase par1EntityCreature) {
       this.theGolem = par1EntityCreature;
@@ -34,7 +34,7 @@ public class AIAvoidCreeperSwell extends EntityAIBase {
          this.nearSpeed = this.theGolem.getAIMoveSpeed() * 1.25F;
       }
 
-      List<Entity> var1 = (List<Entity>)this.theGolem.worldObj.getEntitiesWithinAABB(EntityCreeper.class, this.theGolem.boundingBox.expand(this.distanceFromEntity, 3.0F, this.distanceFromEntity));
+      List<Entity> var1 = (List<Entity>)(List<?>)this.theGolem.world.getEntitiesWithinAABB(EntityCreeper.class, this.theGolem.getEntityBoundingBox().expand(this.distanceFromEntity, 3.0F, this.distanceFromEntity));
       if (var1.isEmpty()) {
          return false;
       } else if (((EntityCreeper)var1.get(0)).getCreeperState() != 1) {
@@ -44,15 +44,15 @@ public class AIAvoidCreeperSwell extends EntityAIBase {
          if (!this.theGolem.getEntitySenses().canSee(this.closestLivingEntity)) {
             return false;
          } else {
-            Vec3 var2 = RandomPositionGenerator.findRandomTargetBlockAwayFrom(this.theGolem, 16, 7, Vec3.createVectorHelper(this.closestLivingEntity.posX, this.closestLivingEntity.posY, this.closestLivingEntity.posZ));
+            Vec3d var2 = RandomPositionGenerator.findRandomTargetBlockAwayFrom(this.theGolem, 16, 7, new Vec3d(this.closestLivingEntity.posX, this.closestLivingEntity.posY, this.closestLivingEntity.posZ));
             if (var2 == null) {
                return false;
-            } else if (this.closestLivingEntity.getDistanceSq(var2.xCoord, var2.yCoord, var2.zCoord) < this.closestLivingEntity.getDistanceSqToEntity(this.theGolem)) {
+            } else if (this.closestLivingEntity.getDistanceSq(var2.x, var2.y, var2.z) < this.closestLivingEntity.getDistanceSq(this.theGolem)) {
                return false;
             } else {
-               this.entityPathEntity = this.entityPathNavigate.getPathToXYZ(var2.xCoord, var2.yCoord, var2.zCoord);
+               this.entityPathEntity = this.entityPathNavigate.getPathToXYZ(var2.x, var2.y, var2.z);
                this.targetBlock = var2;
-               return this.entityPathEntity != null && this.entityPathEntity.isDestinationSame(var2);
+               return this.entityPathEntity != null;
             }
          }
       }
@@ -63,9 +63,9 @@ public class AIAvoidCreeperSwell extends EntityAIBase {
    }
 
    public void startExecuting() {
-      double var1 = this.targetBlock.xCoord + (double)0.5F - this.theGolem.posX;
-      double var3 = this.targetBlock.zCoord + (double)0.5F - this.theGolem.posZ;
-      float var5 = MathHelper.sqrt_double(var1 * var1 + var3 * var3);
+      double var1 = this.targetBlock.x + (double)0.5F - this.theGolem.posX;
+      double var3 = this.targetBlock.z + (double)0.5F - this.theGolem.posZ;
+      float var5 = MathHelper.sqrt(var1 * var1 + var3 * var3);
       EntityGolemBase golem = this.theGolem;
       golem.motionX += var1 / (double)var5 * (double)1.0F * (double)0.8F + this.theGolem.motionX * (double)0.2F;
       golem.motionZ += var3 / (double)var5 * (double)1.0F * (double)0.8F + this.theGolem.motionZ * (double)0.2F;
@@ -78,7 +78,7 @@ public class AIAvoidCreeperSwell extends EntityAIBase {
    }
 
    public void updateTask() {
-      if (this.theGolem.getDistanceSqToEntity(this.closestLivingEntity) < (double)49.0F) {
+      if (this.theGolem.getDistanceSq(this.closestLivingEntity) < (double)49.0F) {
          this.theGolem.getNavigator().setSpeed(this.nearSpeed);
       } else {
          this.theGolem.getNavigator().setSpeed(this.farSpeed);

@@ -1,7 +1,7 @@
 package thaumcraft.common.items.wands.foci;
 
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -9,20 +9,21 @@ import java.util.HashMap;
 import java.util.List;
 import net.minecraft.block.Block;
 import net.minecraft.block.material.Material;
-import net.minecraft.client.renderer.texture.IIconRegister;
+import net.minecraft.block.state.IBlockState;
+import thaumcraft.client.renderers.compat.IIconRegister;
+import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.init.Blocks;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.MovingObjectPosition;
+import net.minecraft.util.EnumFacing;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.Vec3;
-import net.minecraft.util.MovingObjectPosition.MovingObjectType;
+import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.GameType;
 import net.minecraft.world.World;
-import net.minecraft.world.WorldSettings;
-import net.minecraft.world.WorldSettings.GameType;
 import net.minecraftforge.common.ForgeHooks;
-import net.minecraftforge.common.util.ForgeDirection;
 import net.minecraftforge.event.ForgeEventFactory;
 import net.minecraftforge.event.world.BlockEvent;
 import thaumcraft.api.aspects.Aspect;
@@ -50,7 +51,7 @@ public class ItemFocusExcavation extends ItemFocusBasic {
 
    @SideOnly(Side.CLIENT)
    public void registerIcons(IIconRegister ir) {
-      this.icon = ir.registerIcon("thaumcraft:focus_excavation");
+      this.icon = ir.registerSprite("thaumcraft:focus_excavation");
    }
 
    public String getSortingHelper(ItemStack itemstack) {
@@ -85,19 +86,19 @@ public class ItemFocusExcavation extends ItemFocusBasic {
       return true;
    }
 
-   public ItemStack onFocusRightClick(ItemStack itemstack, World world, EntityPlayer p, MovingObjectPosition mop) {
-      p.setItemInUse(itemstack, Integer.MAX_VALUE);
+   public ItemStack onFocusRightClick(ItemStack itemstack, World world, EntityPlayer p, RayTraceResult mop) {
+      p.setActiveHand(p.getActiveHand());
       return itemstack;
    }
 
    public void onUsingFocusTick(ItemStack stack, EntityPlayer p, int count) {
       ItemWandCasting wand = (ItemWandCasting)stack.getItem();
       if (!wand.consumeAllVis(stack, p, this.getVisCost(stack), false, false)) {
-         p.stopUsingItem();
+         p.stopActiveHand();
       } else {
-         String pp = "R" + p.getCommandSenderName();
-         if (!p.worldObj.isRemote) {
-            pp = "S" + p.getCommandSenderName();
+         String pp = "R" + p.getName();
+         if (!p.world.isRemote) {
+            pp = "S" + p.getName();
          }
 
           soundDelay.putIfAbsent(pp, 0L);
@@ -110,61 +111,65 @@ public class ItemFocusExcavation extends ItemFocusBasic {
 
           lastZ.putIfAbsent(pp, 0);
 
-         MovingObjectPosition mop = BlockUtils.getTargetBlock(p.worldObj, p, false);
-         Vec3 v = p.getLookVec();
-         double tx = p.posX + v.xCoord * (double)10.0F;
-         double ty = p.posY + v.yCoord * (double)10.0F;
-         double tz = p.posZ + v.zCoord * (double)10.0F;
+         RayTraceResult mop = BlockUtils.getTargetBlock(p.world, p, false);
+         Vec3d v = p.getLookVec();
+         double tx = p.posX + v.x * (double)10.0F;
+         double ty = p.posY + v.y * (double)10.0F;
+         double tz = p.posZ + v.z * (double)10.0F;
          int impact = 0;
          if (mop != null) {
-            tx = mop.hitVec.xCoord;
-            ty = mop.hitVec.yCoord;
-            tz = mop.hitVec.zCoord;
+            tx = mop.hitVec.x;
+            ty = mop.hitVec.y;
+            tz = mop.hitVec.z;
             impact = 5;
-            if (!p.worldObj.isRemote && (Long)soundDelay.get(pp) < System.currentTimeMillis()) {
-               p.worldObj.playSoundEffect(tx, ty, tz, "thaumcraft:rumble", 0.3F, 1.0F);
+            if (!p.world.isRemote && (Long)soundDelay.get(pp) < System.currentTimeMillis()) {
+               { net.minecraft.util.SoundEvent _snd = net.minecraft.util.SoundEvent.REGISTRY.getObject(new net.minecraft.util.ResourceLocation("thaumcraft:rumble")); if (_snd != null) p.world.playSound(null, tx, ty, tz, _snd, net.minecraft.util.SoundCategory.NEUTRAL, 0.3F, 1.0F); }
                soundDelay.put(pp, System.currentTimeMillis() + 1200L);
             }
          } else {
             soundDelay.put(pp, 0L);
          }
 
-         if (p.worldObj.isRemote) {
-            beam.put(pp, Thaumcraft.proxy.beamCont(p.worldObj, p, tx, ty, tz, 2, 65382, false, impact > 0 ? 2.0F : 0.0F, beam.get(pp), impact));
+         if (p.world.isRemote) {
+            beam.put(pp, Thaumcraft.proxy.beamCont(p.world, p, tx, ty, tz, 2, 65382, false, impact > 0 ? 2.0F : 0.0F, beam.get(pp), impact));
          }
 
-         if (mop != null && mop.typeOfHit == MovingObjectType.BLOCK && p.worldObj.canMineBlock(p, mop.blockX, mop.blockY, mop.blockZ)) {
-            Block bi = p.worldObj.getBlock(mop.blockX, mop.blockY, mop.blockZ);
-            int md = p.worldObj.getBlockMetadata(mop.blockX, mop.blockY, mop.blockZ);
-            float hardness = bi.getBlockHardness(p.worldObj, mop.blockX, mop.blockY, mop.blockZ);
+         if (mop != null && mop.typeOfHit == RayTraceResult.Type.BLOCK && p.world.isBlockModifiable(p, mop.getBlockPos())) {
+            BlockPos mopPos = mop.getBlockPos();
+            World world = p.world;
+            Block bi = world.getBlockState(mopPos).getBlock();
+            IBlockState biState = world.getBlockState(mopPos);
+            int md = biState.getBlock().getMetaFromState(biState);
+            float hardness = bi.getBlockHardness(biState, world, mopPos);
             if (hardness >= 0.0F) {
                int pot = wand.getFocusPotency(stack);
                float speed = 0.05F + (float)pot * 0.1F;
-               if (bi.getMaterial() == Material.rock || bi.getMaterial() == Material.grass || bi.getMaterial() == Material.ground || bi.getMaterial() == Material.sand) {
+               Material mat = biState.getMaterial();
+               if (mat == Material.ROCK || mat == Material.GRASS || mat == Material.GROUND || mat == Material.SAND) {
                   speed = 0.25F + (float)pot * 0.25F;
                }
 
-               if (bi == Blocks.obsidian) {
+               if (bi == Blocks.OBSIDIAN) {
                   speed *= 3.0F;
                }
 
-               if ((Integer)lastX.get(pp) == mop.blockX && (Integer)lastY.get(pp) == mop.blockY && (Integer)lastZ.get(pp) == mop.blockZ) {
+               if ((Integer)lastX.get(pp) == mopPos.getX() && (Integer)lastY.get(pp) == mopPos.getY() && (Integer)lastZ.get(pp) == mopPos.getZ()) {
                   float bc = (Float)breakcount.get(pp);
-                  if (p.worldObj.isRemote && bc > 0.0F && bi != Blocks.air) {
+                  if (p.world.isRemote && bc > 0.0F && bi != Blocks.AIR) {
                      int progress = (int)(bc / hardness * 9.0F);
-                     Thaumcraft.proxy.excavateFX(mop.blockX, mop.blockY, mop.blockZ, p, Block.getIdFromBlock(bi), md, progress);
+                     Thaumcraft.proxy.excavateFX(mopPos.getX(), mopPos.getY(), mopPos.getZ(), p, Block.getIdFromBlock(bi), md, progress);
                   }
 
-                  if (p.worldObj.isRemote) {
+                  if (p.world.isRemote) {
                      if (bc >= hardness) {
                         breakcount.put(pp, 0.0F);
                      } else {
                         breakcount.put(pp, bc + speed);
                      }
                   } else if (bc >= hardness && wand.consumeAllVis(stack, p, this.getVisCost(stack), true, false)) {
-                     if (this.excavate(p.worldObj, stack, p, bi, md, mop.blockX, mop.blockY, mop.blockZ)) {
+                     if (this.excavate(p.world, stack, p, bi, md, mopPos.getX(), mopPos.getY(), mopPos.getZ())) {
                         for(int a = 0; a < wand.getFocusEnlarge(stack); ++a) {
-                           if (wand.consumeAllVis(stack, p, this.getVisCost(stack), false, false) && this.breakNeighbour(p, mop.blockX, mop.blockY, mop.blockZ, bi, md, stack)) {
+                           if (wand.consumeAllVis(stack, p, this.getVisCost(stack), false, false) && this.breakNeighbour(p, mopPos.getX(), mopPos.getY(), mopPos.getZ(), bi, md, stack)) {
                               wand.consumeAllVis(stack, p, this.getVisCost(stack), true, false);
                            }
                         }
@@ -178,9 +183,9 @@ public class ItemFocusExcavation extends ItemFocusBasic {
                      breakcount.put(pp, bc + speed);
                   }
                } else {
-                  lastX.put(pp, mop.blockX);
-                  lastY.put(pp, mop.blockY);
-                  lastZ.put(pp, mop.blockZ);
+                  lastX.put(pp, mopPos.getX());
+                  lastY.put(pp, mopPos.getY());
+                  lastZ.put(pp, mopPos.getZ());
                   breakcount.put(pp, 0.0F);
                }
             }
@@ -195,7 +200,7 @@ public class ItemFocusExcavation extends ItemFocusBasic {
    }
 
    private boolean excavate(World world, ItemStack stack, EntityPlayer player, Block block, int md, int x, int y, int z) {
-      WorldSettings.GameType gt = GameType.SURVIVAL;
+      GameType gt = GameType.SURVIVAL;
       if (player.capabilities.allowEdit) {
          if (player.capabilities.isCreativeMode) {
             gt = GameType.CREATIVE;
@@ -204,42 +209,46 @@ public class ItemFocusExcavation extends ItemFocusBasic {
          gt = GameType.ADVENTURE;
       }
 
-      BlockEvent.BreakEvent event = ForgeHooks.onBlockBreakEvent(world, gt, (EntityPlayerMP)player, x, y, z);
-      if (event.isCanceled()) {
+      BlockPos pos = new BlockPos(x, y, z);
+      int breakResult = ForgeHooks.onBlockBreakEvent(world, gt, (EntityPlayerMP)player, pos);
+      if (breakResult == -1) {
          return false;
       } else {
          ItemWandCasting wand = (ItemWandCasting)stack.getItem();
          int fortune = wand.getFocusTreasure(stack);
          boolean silk = this.isUpgradedWith(wand.getFocusItem(stack), FocusUpgradeType.silktouch);
-         if (silk && block.canSilkHarvest(player.worldObj, player, x, y, z, md)) {
+         IBlockState state = world.getBlockState(pos);
+         if (silk && block.canSilkHarvest(world, pos, state, player)) {
             ArrayList<ItemStack> items = new ArrayList<>();
             ItemStack itemstack = BlockUtils.createStackedBlock(block, md);
             if (itemstack != null) {
                items.add(itemstack);
             }
 
-            ForgeEventFactory.fireBlockHarvesting(items, world, block, x, y, z, md, 0, 1.0F, true, player);
+            ForgeEventFactory.fireBlockHarvesting(items, world, pos, state, 0, 1.0F, true, player);
 
             for(ItemStack is : items) {
                BlockUtils.dropBlockAsItem(world, x, y, z, is, block);
             }
          } else {
             BlockUtils.dropBlockAsItemWithChance(world, block, x, y, z, md, 1.0F, fortune, player);
-            block.dropXpOnBlockBreak(world, x, y, z, block.getExpDrop(world, md, fortune));
+            block.dropXpOnBlockBreak(world, pos, block.getExpDrop(state, world, pos, fortune));
          }
 
-         world.setBlockToAir(x, y, z);
-         world.playAuxSFX(2001, x, y, z, Block.getIdFromBlock(block) + (md << 12));
+         world.setBlockToAir(pos);
+         world.playEvent(2001, pos, Block.getIdFromBlock(block) + (md << 12));
          return true;
       }
    }
 
    boolean breakNeighbour(EntityPlayer p, int x, int y, int z, Block block, int md, ItemStack stack) {
-      List<ForgeDirection> directions = Arrays.asList(ForgeDirection.DOWN, ForgeDirection.UP, ForgeDirection.NORTH, ForgeDirection.SOUTH, ForgeDirection.EAST, ForgeDirection.WEST);
-      Collections.shuffle(directions, p.worldObj.rand);
+      List<EnumFacing> directions = Arrays.asList(EnumFacing.DOWN, EnumFacing.UP, EnumFacing.NORTH, EnumFacing.SOUTH, EnumFacing.EAST, EnumFacing.WEST);
+      Collections.shuffle(directions, p.world.rand);
 
-      for(ForgeDirection dir : directions) {
-         if (p.worldObj.getBlock(x + dir.offsetX, y + dir.offsetY, z + dir.offsetZ) == block && p.worldObj.getBlockMetadata(x + dir.offsetX, y + dir.offsetY, z + dir.offsetZ) == md && this.excavate(p.worldObj, stack, p, block, md, x + dir.offsetX, y + dir.offsetY, z + dir.offsetZ)) {
+      for(EnumFacing dir : directions) {
+         BlockPos nPos = new BlockPos(x + dir.getXOffset(), y + dir.getYOffset(), z + dir.getZOffset());
+         IBlockState nState = p.world.getBlockState(nPos);
+         if (nState.getBlock() == block && nState.getBlock().getMetaFromState(nState) == md && this.excavate(p.world, stack, p, block, md, nPos.getX(), nPos.getY(), nPos.getZ())) {
             return true;
          }
       }
@@ -247,10 +256,11 @@ public class ItemFocusExcavation extends ItemFocusBasic {
       return false;
    }
 
-   public void onPlayerStoppedUsing(ItemStack stack, World world, EntityPlayer p, int count) {
-      String pp = "R" + p.getCommandSenderName();
-      if (!p.worldObj.isRemote) {
-         pp = "S" + p.getCommandSenderName();
+   public void onPlayerStoppedUsing(ItemStack stack, World world, EntityLivingBase living, int count) {
+      EntityPlayer p = (EntityPlayer) living;
+      String pp = "R" + p.getName();
+      if (!p.world.isRemote) {
+         pp = "S" + p.getName();
       }
 
        soundDelay.putIfAbsent(pp, 0L);

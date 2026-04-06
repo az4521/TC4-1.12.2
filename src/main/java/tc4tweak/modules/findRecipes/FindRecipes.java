@@ -24,7 +24,7 @@ public class FindRecipes {
         if (r != null)
             return r;
         r = ((List<?>) ThaumcraftApi.getCraftingRecipes()).parallelStream()
-                .filter(o -> o instanceof IArcaneRecipe && ((IArcaneRecipe) o).matches(inv, player.worldObj, player))
+                .filter(o -> o instanceof IArcaneRecipe && ((IArcaneRecipe) o).matches(inv, player.world, player))
                 .map(o -> (IArcaneRecipe) o)
                 .findFirst()
                 .orElse(null);
@@ -33,11 +33,12 @@ public class FindRecipes {
         return r;
     }
 
-    public static ItemStack getNormalCraftingRecipeOutput(CraftingManager inst, InventoryCrafting ic, World world) {
+    public static ItemStack getNormalCraftingRecipeOutput(InventoryCrafting ic, World world) {
         // only check synced config if in remote world
         if (ConfigurationHandler.INSTANCE.isCheckWorkbenchRecipes()
                 && (!world.isRemote || NetworkedConfiguration.isCheckWorkbenchRecipes())) {
-            return inst.findMatchingRecipe(ic, world);
+            net.minecraft.item.crafting.IRecipe recipe = CraftingManager.findMatchingRecipe(ic, world);
+            return recipe != null ? recipe.getCraftingResult(ic) : null;
         } else {
             return null;
         }

@@ -25,7 +25,7 @@ public class AIDartAttack extends EntityAIBase {
          this.theGolem.setAttackTarget(null);
          return false;
       } else {
-         double ra = this.theGolem.getDistanceSq(var1.posX, var1.boundingBox.minY, var1.posZ);
+         double ra = this.theGolem.getDistanceSq(var1.posX, var1.getEntityBoundingBox().minY, var1.posZ);
          if (ra < (double)9.0F) {
             return false;
          } else {
@@ -45,7 +45,7 @@ public class AIDartAttack extends EntityAIBase {
    }
 
    public void updateTask() {
-      double var1 = this.theGolem.getDistanceSq(this.attackTarget.posX, this.attackTarget.boundingBox.minY, this.attackTarget.posZ);
+      double var1 = this.theGolem.getDistanceSq(this.attackTarget.posX, this.attackTarget.getEntityBoundingBox().minY, this.attackTarget.posZ);
       boolean var3 = this.theGolem.getEntitySenses().canSee(this.attackTarget);
       this.theGolem.getNavigator().tryMoveToEntityLiving(this.attackTarget, this.theGolem.getAIMoveSpeed());
       if (var3) {

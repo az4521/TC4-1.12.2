@@ -1,11 +1,11 @@
 package thaumcraft.common.lib.network.playerdata;
 
-import cpw.mods.fml.common.network.ByteBufUtils;
-import cpw.mods.fml.common.network.simpleimpl.IMessage;
-import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
-import cpw.mods.fml.common.network.simpleimpl.MessageContext;
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
+import net.minecraftforge.fml.common.network.ByteBufUtils;
+import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
+import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
+import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import io.netty.buffer.ByteBuf;
 import java.util.ArrayList;
 import net.minecraft.client.Minecraft;
@@ -44,15 +44,17 @@ public class PacketSyncScannedPhenomena implements IMessage, IMessageHandler<Pac
    }
 
    public PacketSyncScannedPhenomena(EntityPlayer player) {
-      this.data = Thaumcraft.proxy.getScannedPhenomena().get(player.getCommandSenderName());
+      this.data = Thaumcraft.proxy.getScannedPhenomena().get(player.getName());
    }
 
    @SideOnly(Side.CLIENT)
    public IMessage onMessage(PacketSyncScannedPhenomena message, MessageContext ctx) {
+      Minecraft.getMinecraft().addScheduledTask(() -> {
       for(String key : message.data) {
-         Thaumcraft.proxy.getResearchManager().completeScannedPhenomena(Minecraft.getMinecraft().thePlayer, key);
+         Thaumcraft.proxy.getResearchManager().completeScannedPhenomena(Minecraft.getMinecraft().player, key);
       }
 
+            });
       return null;
    }
 }

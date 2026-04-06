@@ -1,6 +1,6 @@
 package thaumcraft.common.tiles;
 
-import cpw.mods.fml.common.network.NetworkRegistry;
+import net.minecraftforge.fml.common.network.NetworkRegistry;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.DamageSource;
@@ -8,25 +8,23 @@ import thaumcraft.common.Thaumcraft;
 import thaumcraft.common.lib.network.PacketHandler;
 import thaumcraft.common.lib.network.fx.PacketFXBlockZap;
 
-public class TileEldritchTrap extends TileEntity {
+public class TileEldritchTrap extends TileEntity implements net.minecraft.util.ITickable {
    int count = 20;
 
-   public boolean canUpdate() {
-       return super.canUpdate();
-   }
+   @Override
+   public void update() { updateEntity(); }
 
    public void updateEntity() {
-      super.updateEntity();
-      if (!this.worldObj.isRemote && this.count-- <= 0) {
-         this.count = 10 + this.worldObj.rand.nextInt(25);
-         EntityPlayer p = this.worldObj.getClosestPlayer((double)this.xCoord + (double)0.5F, (double)this.yCoord + (double)0.5F, (double)this.zCoord + (double)0.5F, 3.0F);
+            if (!this.world.isRemote && this.count-- <= 0) {
+         this.count = 10 + this.world.rand.nextInt(25);
+         EntityPlayer p = this.world.getClosestPlayer((double)this.getPos().getX() + (double)0.5F, (double)this.getPos().getY() + (double)0.5F, (double)this.getPos().getZ() + (double)0.5F, 3.0F, false);
          if (p != null) {
-            p.attackEntityFrom(DamageSource.magic, 2.0F);
-            if (this.worldObj.rand.nextBoolean()) {
-               Thaumcraft.addWarpToPlayer(p, 1 + this.worldObj.rand.nextInt(2), true);
+            p.attackEntityFrom(DamageSource.MAGIC, 2.0F);
+            if (this.world.rand.nextBoolean()) {
+               Thaumcraft.addWarpToPlayer(p, 1 + this.world.rand.nextInt(2), true);
             }
 
-            PacketHandler.INSTANCE.sendToAllAround(new PacketFXBlockZap((float)this.xCoord + 0.5F, (float)this.yCoord + 0.5F, (float)this.zCoord + 0.5F, (float)p.posX, (float)p.boundingBox.minY + p.eyeHeight, (float)p.posZ), new NetworkRegistry.TargetPoint(this.worldObj.provider.dimensionId, this.xCoord, this.yCoord, this.zCoord, 32.0F));
+            PacketHandler.INSTANCE.sendToAllAround(new PacketFXBlockZap((float)this.getPos().getX() + 0.5F, (float)this.getPos().getY() + 0.5F, (float)this.getPos().getZ() + 0.5F, (float)p.posX, (float)p.getEntityBoundingBox().minY + p.eyeHeight, (float)p.posZ), new NetworkRegistry.TargetPoint(this.world.provider.getDimension(), this.getPos().getX(), this.getPos().getY(), this.getPos().getZ(), 32.0F));
          }
       }
 

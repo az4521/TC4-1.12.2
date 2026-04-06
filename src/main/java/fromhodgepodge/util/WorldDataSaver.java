@@ -88,6 +88,6 @@ public class WorldDataSaver implements IThreadedFileIO {
         } else {
             pendingData.put(file, wrapped);
         }
-        ThreadedFileIOBase.threadedIOInstance.queueIO(this);
+        net.minecraft.world.storage.ThreadedFileIOBase.getThreadedIOInstance().queueIO(this);
     }
 }

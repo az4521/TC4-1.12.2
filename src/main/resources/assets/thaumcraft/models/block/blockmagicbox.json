@@ -1,0 +1,40 @@
+{
+  "textures": {
+    "all": "thaumcraft:blocks/brainbox",
+    "particle": "thaumcraft:blocks/brainbox"
+  },
+  "elements": [
+    {
+      "from": [
+        3,
+        3,
+        3
+      ],
+      "to": [
+        13,
+        13,
+        13
+      ],
+      "faces": {
+        "north": {
+          "texture": "#all"
+        },
+        "south": {
+          "texture": "#all"
+        },
+        "west": {
+          "texture": "#all"
+        },
+        "east": {
+          "texture": "#all"
+        },
+        "down": {
+          "texture": "#all"
+        },
+        "up": {
+          "texture": "#all"
+        }
+      }
+    }
+  ]
+}

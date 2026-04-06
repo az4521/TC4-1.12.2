@@ -1,0 +1,52 @@
+{
+  "variants": {
+    "meta=0": {
+      "model": "thaumcraft:blocklootcrate"
+    },
+    "meta=1": {
+      "model": "thaumcraft:blocklootcrate"
+    },
+    "meta=2": {
+      "model": "thaumcraft:blocklootcrate"
+    },
+    "meta=3": {
+      "model": "thaumcraft:blocklootcrate"
+    },
+    "meta=4": {
+      "model": "thaumcraft:blocklootcrate"
+    },
+    "meta=5": {
+      "model": "thaumcraft:blocklootcrate"
+    },
+    "meta=6": {
+      "model": "thaumcraft:blocklootcrate"
+    },
+    "meta=7": {
+      "model": "thaumcraft:blocklootcrate"
+    },
+    "meta=8": {
+      "model": "thaumcraft:blocklootcrate"
+    },
+    "meta=9": {
+      "model": "thaumcraft:blocklootcrate"
+    },
+    "meta=10": {
+      "model": "thaumcraft:blocklootcrate"
+    },
+    "meta=11": {
+      "model": "thaumcraft:blocklootcrate"
+    },
+    "meta=12": {
+      "model": "thaumcraft:blocklootcrate"
+    },
+    "meta=13": {
+      "model": "thaumcraft:blocklootcrate"
+    },
+    "meta=14": {
+      "model": "thaumcraft:blocklootcrate"
+    },
+    "meta=15": {
+      "model": "thaumcraft:blocklootcrate"
+    }
+  }
+}

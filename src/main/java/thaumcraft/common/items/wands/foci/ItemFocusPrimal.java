@@ -1,13 +1,13 @@
 package thaumcraft.common.items.wands.foci;
 
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import java.util.Random;
-import net.minecraft.client.renderer.texture.IIconRegister;
+import thaumcraft.client.renderers.compat.IIconRegister;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.IIcon;
-import net.minecraft.util.MovingObjectPosition;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.World;
 import thaumcraft.api.aspects.Aspect;
@@ -19,7 +19,7 @@ import thaumcraft.common.entities.projectile.EntityPrimalOrb;
 import thaumcraft.common.items.wands.ItemWandCasting;
 
 public class ItemFocusPrimal extends ItemFocusBasic {
-   IIcon depthIcon = null;
+   TextureAtlasSprite depthIcon = null;
    public static FocusUpgradeType seeker;
 
    public ItemFocusPrimal() {
@@ -32,11 +32,11 @@ public class ItemFocusPrimal extends ItemFocusBasic {
 
    @SideOnly(Side.CLIENT)
    public void registerIcons(IIconRegister ir) {
-      this.icon = ir.registerIcon("thaumcraft:focus_primal");
-      this.depthIcon = ir.registerIcon("thaumcraft:focus_primal_depth");
+      this.icon = ir.registerSprite("thaumcraft:focus_primal");
+      this.depthIcon = ir.registerSprite("thaumcraft:focus_primal_depth");
    }
 
-   public IIcon getFocusDepthLayerIcon(ItemStack itemstack) {
+   public TextureAtlasSprite getFocusDepthLayerIcon(ItemStack itemstack) {
       return this.depthIcon;
    }
 
@@ -44,15 +44,15 @@ public class ItemFocusPrimal extends ItemFocusBasic {
       return 500;
    }
 
-   public ItemStack onFocusRightClick(ItemStack itemstack, World world, EntityPlayer p, MovingObjectPosition mob) {
+   public ItemStack onFocusRightClick(ItemStack itemstack, World world, EntityPlayer p, RayTraceResult mob) {
       ItemWandCasting wand = (ItemWandCasting)itemstack.getItem();
       EntityPrimalOrb shard = new EntityPrimalOrb(world, p, this.isUpgradedWith(wand.getFocusItem(itemstack), seeker));
       if (!world.isRemote && wand.consumeAllVis(itemstack, p, this.getVisCost(itemstack), true, false)) {
-         world.spawnEntityInWorld(shard);
-         world.playSoundAtEntity(shard, "thaumcraft:ice", 0.3F, 0.8F + world.rand.nextFloat() * 0.1F);
+         world.spawnEntity(shard);
+         { net.minecraft.util.SoundEvent _snd = net.minecraft.util.SoundEvent.REGISTRY.getObject(new net.minecraft.util.ResourceLocation("thaumcraft:ice")); if (_snd != null) world.playSound(null, shard.posX, shard.posY, shard.posZ, _snd, net.minecraft.util.SoundCategory.NEUTRAL, 0.3F, 0.8F + world.rand.nextFloat() * 0.1F); };
       }
 
-      p.swingItem();
+      p.swingArm(net.minecraft.util.EnumHand.MAIN_HAND);
       return itemstack;
    }
 

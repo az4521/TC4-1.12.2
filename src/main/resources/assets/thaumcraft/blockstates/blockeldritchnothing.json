@@ -1,0 +1,52 @@
+{
+  "variants": {
+    "meta=0": {
+      "model": "thaumcraft:blockeldritchnothing"
+    },
+    "meta=1": {
+      "model": "thaumcraft:blockeldritchnothing"
+    },
+    "meta=2": {
+      "model": "thaumcraft:blockeldritchnothing"
+    },
+    "meta=3": {
+      "model": "thaumcraft:blockeldritchnothing"
+    },
+    "meta=4": {
+      "model": "thaumcraft:blockeldritchnothing"
+    },
+    "meta=5": {
+      "model": "thaumcraft:blockeldritchnothing"
+    },
+    "meta=6": {
+      "model": "thaumcraft:blockeldritchnothing"
+    },
+    "meta=7": {
+      "model": "thaumcraft:blockeldritchnothing"
+    },
+    "meta=8": {
+      "model": "thaumcraft:blockeldritchnothing"
+    },
+    "meta=9": {
+      "model": "thaumcraft:blockeldritchnothing"
+    },
+    "meta=10": {
+      "model": "thaumcraft:blockeldritchnothing"
+    },
+    "meta=11": {
+      "model": "thaumcraft:blockeldritchnothing"
+    },
+    "meta=12": {
+      "model": "thaumcraft:blockeldritchnothing"
+    },
+    "meta=13": {
+      "model": "thaumcraft:blockeldritchnothing"
+    },
+    "meta=14": {
+      "model": "thaumcraft:blockeldritchnothing"
+    },
+    "meta=15": {
+      "model": "thaumcraft:blockeldritchnothing"
+    }
+  }
+}

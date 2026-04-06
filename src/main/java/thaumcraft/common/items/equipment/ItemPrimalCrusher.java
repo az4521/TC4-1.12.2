@@ -2,12 +2,12 @@ package thaumcraft.common.items.equipment;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import java.util.Set;
 import net.minecraft.block.Block;
-import net.minecraft.block.material.Material;
-import net.minecraft.client.renderer.texture.IIconRegister;
+import net.minecraft.block.state.IBlockState;
+import thaumcraft.client.renderers.compat.IIconRegister;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
@@ -16,9 +16,10 @@ import net.minecraft.item.EnumRarity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemTool;
-import net.minecraft.util.IIcon;
-import net.minecraft.util.MovingObjectPosition;
-import net.minecraft.util.MovingObjectPosition.MovingObjectType;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.util.EnumFacing;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.world.World;
 import net.minecraftforge.common.ForgeHooks;
 import net.minecraftforge.common.util.EnumHelper;
@@ -31,21 +32,27 @@ import thaumcraft.common.lib.utils.BlockUtils;
 
 public class ItemPrimalCrusher extends ItemTool implements IRepairable, IWarpingGear {
    public static Item.ToolMaterial material = EnumHelper.addToolMaterial("PRIMALVOID", 5, 500, 8.0F, 4.0F, 20);
-   private static final Set isEffective;
-   public IIcon icon;
-   int side = 0;
+   private static final Set<Block> isEffective;
+   public TextureAtlasSprite icon;
+   EnumFacing side = EnumFacing.DOWN;
 
    public ItemPrimalCrusher(Item.ToolMaterial enumtoolmaterial) {
-      super(3.5F, enumtoolmaterial, isEffective);
+      super(3.5F, -2.8F, enumtoolmaterial, isEffective);
       this.setCreativeTab(Thaumcraft.tabTC);
    }
 
-   public boolean func_150897_b(Block p_150897_1_) {
-      return p_150897_1_.getMaterial() != Material.wood && p_150897_1_.getMaterial() != Material.leaves && p_150897_1_.getMaterial() != Material.plants;
+   public boolean canHarvestBlock(IBlockState state) {
+      return state.getMaterial() != net.minecraft.block.material.Material.WOOD
+          && state.getMaterial() != net.minecraft.block.material.Material.LEAVES
+          && state.getMaterial() != net.minecraft.block.material.Material.PLANTS;
    }
 
-   public float func_150893_a(ItemStack p_150893_1_, Block p_150893_2_) {
-      return p_150893_2_.getMaterial() != Material.iron && p_150893_2_.getMaterial() != Material.anvil && p_150893_2_.getMaterial() != Material.rock ? super.func_150893_a(p_150893_1_, p_150893_2_) : this.efficiencyOnProperMaterial;
+   public float getDestroySpeed(ItemStack stack, IBlockState state) {
+      return state.getMaterial() != net.minecraft.block.material.Material.IRON
+          && state.getMaterial() != net.minecraft.block.material.Material.ANVIL
+          && state.getMaterial() != net.minecraft.block.material.Material.ROCK
+          ? super.getDestroySpeed(stack, state)
+          : this.efficiency;
    }
 
    public Set getToolClasses(ItemStack stack) {
@@ -54,16 +61,16 @@ public class ItemPrimalCrusher extends ItemTool implements IRepairable, IWarping
 
    @SideOnly(Side.CLIENT)
    public void registerIcons(IIconRegister ir) {
-      this.icon = ir.registerIcon("thaumcraft:primal_crusher");
+      this.icon = ir.registerSprite("thaumcraft:primal_crusher");
    }
 
    @SideOnly(Side.CLIENT)
-   public IIcon getIconFromDamage(int par1) {
+   public TextureAtlasSprite getIconFromDamage(int par1) {
       return this.icon;
    }
 
    public EnumRarity getRarity(ItemStack itemstack) {
-      return EnumRarity.epic;
+      return EnumRarity.EPIC;
    }
 
    public boolean getIsRepairable(ItemStack par1ItemStack, ItemStack par2ItemStack) {
@@ -71,7 +78,7 @@ public class ItemPrimalCrusher extends ItemTool implements IRepairable, IWarping
    }
 
    private boolean isEffectiveAgainst(Block block) {
-      for(Object b : isEffective) {
+      for(Block b : isEffective) {
          if (b == block) {
             return true;
          }
@@ -80,31 +87,32 @@ public class ItemPrimalCrusher extends ItemTool implements IRepairable, IWarping
       return false;
    }
 
-   public boolean onBlockStartBreak(ItemStack itemstack, int X, int Y, int Z, EntityPlayer player) {
-      MovingObjectPosition movingobjectposition = BlockUtils.getTargetBlock(player.worldObj, player, true);
-      if (movingobjectposition != null && movingobjectposition.typeOfHit == MovingObjectType.BLOCK) {
+   public boolean onBlockStartBreak(ItemStack itemstack, BlockPos pos, EntityPlayer player) {
+      RayTraceResult movingobjectposition = BlockUtils.getTargetBlock(player.world, player, true);
+      if (movingobjectposition != null && movingobjectposition.typeOfHit == RayTraceResult.Type.BLOCK) {
          this.side = movingobjectposition.sideHit;
       }
 
-      return super.onBlockStartBreak(itemstack, X, Y, Z, player);
+      return super.onBlockStartBreak(itemstack, pos, player);
    }
 
-   public boolean onBlockDestroyed(ItemStack stack, World world, Block bi, int x, int y, int z, EntityLivingBase ent) {
+   public boolean onBlockDestroyed(ItemStack stack, World world, IBlockState biState, BlockPos pos, EntityLivingBase ent) {
+      int x = pos.getX(), y = pos.getY(), z = pos.getZ();
+      Block bi = biState.getBlock();
       if (ent.isSneaking()) {
-         return super.onBlockDestroyed(stack, world, bi, x, y, z, ent);
+         return super.onBlockDestroyed(stack, world, biState, pos, ent);
       } else {
-         if (!ent.worldObj.isRemote) {
-            int md = world.getBlockMetadata(x, y, z);
-            if (ForgeHooks.isToolEffective(stack, bi, md) || this.isEffectiveAgainst(bi)) {
+         if (!ent.world.isRemote) {
+            if (ForgeHooks.isToolEffective(world, pos, stack) || this.isEffectiveAgainst(bi)) {
                for(int aa = -1; aa <= 1; ++aa) {
                   for(int bb = -1; bb <= 1; ++bb) {
                      int xx = 0;
                      int yy = 0;
                      int zz = 0;
-                     if (this.side <= 1) {
+                     if (this.side.getIndex() <= 1) {
                         xx = aa;
                         zz = bb;
-                     } else if (this.side <= 3) {
+                     } else if (this.side.getIndex() <= 3) {
                         xx = aa;
                         yy = bb;
                      } else {
@@ -112,10 +120,11 @@ public class ItemPrimalCrusher extends ItemTool implements IRepairable, IWarping
                         yy = bb;
                      }
 
-                     if (!(ent instanceof EntityPlayer) || world.canMineBlock((EntityPlayer)ent, x + xx, y + yy, z + zz)) {
-                        Block bl = world.getBlock(x + xx, y + yy, z + zz);
-                        md = world.getBlockMetadata(x + xx, y + yy, z + zz);
-                        if (bl.getBlockHardness(world, x + xx, y + yy, z + zz) >= 0.0F && (ForgeHooks.isToolEffective(stack, bl, md) || this.isEffectiveAgainst(bl))) {
+                     BlockPos nPos = new BlockPos(x + xx, y + yy, z + zz);
+                     if (!(ent instanceof EntityPlayer) || world.isBlockModifiable((EntityPlayer)ent, nPos)) {
+                        IBlockState blState = world.getBlockState(nPos);
+                        Block bl = blState.getBlock();
+                        if (blState.getBlockHardness(world, nPos) >= 0.0F && (ForgeHooks.isToolEffective(world, nPos, stack) || this.isEffectiveAgainst(bl))) {
                            stack.damageItem(1, ent);
                            BlockUtils.harvestBlock(world, (EntityPlayer)ent, x + xx, y + yy, z + zz, true, 2);
                         }
@@ -137,8 +146,8 @@ public class ItemPrimalCrusher extends ItemTool implements IRepairable, IWarping
       return 2;
    }
 
-   public void onUpdate(ItemStack stack, World world, Entity entity, int p_77663_4_, boolean p_77663_5_) {
-      super.onUpdate(stack, world, entity, p_77663_4_, p_77663_5_);
+   public void onUpdate(ItemStack stack, World world, Entity entity, int itemSlot, boolean isSelected) {
+      super.onUpdate(stack, world, entity, itemSlot, isSelected);
       if (stack.isItemDamaged() && entity != null && entity.ticksExisted % 20 == 0 && entity instanceof EntityLivingBase) {
          stack.damageItem(-1, (EntityLivingBase)entity);
       }
@@ -146,6 +155,6 @@ public class ItemPrimalCrusher extends ItemTool implements IRepairable, IWarping
    }
 
    static {
-      isEffective = Sets.newHashSet(Blocks.cobblestone, Blocks.double_stone_slab, Blocks.stone_slab, Blocks.stone, Blocks.sandstone, Blocks.mossy_cobblestone, Blocks.iron_ore, Blocks.iron_block, Blocks.coal_ore, Blocks.gold_block, Blocks.gold_ore, Blocks.diamond_ore, Blocks.diamond_block, Blocks.ice, Blocks.netherrack, Blocks.lapis_ore, Blocks.lapis_block, Blocks.redstone_ore, Blocks.lit_redstone_ore, Blocks.rail, Blocks.detector_rail, Blocks.golden_rail, Blocks.activator_rail, Blocks.grass, Blocks.dirt, Blocks.sand, Blocks.gravel, Blocks.snow_layer, Blocks.snow, Blocks.clay, Blocks.farmland, Blocks.soul_sand, Blocks.mycelium, ConfigBlocks.blockTaint, ConfigBlocks.blockTaintFibres, Blocks.obsidian);
+      isEffective = Sets.newHashSet(Blocks.COBBLESTONE, Blocks.DOUBLE_STONE_SLAB, Blocks.STONE_SLAB, Blocks.STONE, Blocks.SANDSTONE, Blocks.MOSSY_COBBLESTONE, Blocks.IRON_ORE, Blocks.IRON_BLOCK, Blocks.COAL_ORE, Blocks.GOLD_BLOCK, Blocks.GOLD_ORE, Blocks.DIAMOND_ORE, Blocks.DIAMOND_BLOCK, Blocks.ICE, Blocks.NETHERRACK, Blocks.LAPIS_ORE, Blocks.LAPIS_BLOCK, Blocks.REDSTONE_ORE, Blocks.LIT_REDSTONE_ORE, Blocks.RAIL, Blocks.DETECTOR_RAIL, Blocks.GOLDEN_RAIL, Blocks.ACTIVATOR_RAIL, Blocks.GRASS, Blocks.DIRT, Blocks.SAND, Blocks.GRAVEL, Blocks.SNOW_LAYER, Blocks.SNOW, Blocks.CLAY, Blocks.FARMLAND, Blocks.SOUL_SAND, Blocks.MYCELIUM, ConfigBlocks.blockTaint, ConfigBlocks.blockTaintFibres, Blocks.OBSIDIAN);
    }
 }

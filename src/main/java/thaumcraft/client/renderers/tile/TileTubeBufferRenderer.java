@@ -1,51 +1,45 @@
 package thaumcraft.client.renderers.tile;
 
 import net.minecraft.client.renderer.tileentity.TileEntitySpecialRenderer;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraftforge.common.util.ForgeDirection;
-import org.lwjgl.opengl.GL11;
+import net.minecraft.util.EnumFacing;
+
 import thaumcraft.api.ThaumcraftApiHelper;
 import thaumcraft.client.lib.UtilsFX;
 import thaumcraft.client.renderers.models.ModelTubeValve;
 import thaumcraft.common.tiles.TileTubeBuffer;
+import net.minecraft.client.renderer.GlStateManager;
 
-public class TileTubeBufferRenderer extends TileEntitySpecialRenderer {
+public class TileTubeBufferRenderer extends TileEntitySpecialRenderer<TileTubeBuffer> {
    private ModelTubeValve model = new ModelTubeValve();
 
-   public void renderEntityAt(TileTubeBuffer buffer, double x, double y, double z, float fq) {
+   @Override
+   public void render(TileTubeBuffer buffer, double x, double y, double z, float partialTicks, int destroyStage, float alpha) {
+      if (buffer == null || buffer.getWorld() == null) return;
+      // Render base tube connections first
+      TileTubeRenderer.renderTubeBase(buffer, x, y, z);
+      // Render choke indicators
       UtilsFX.bindTexture("textures/models/valve.png");
-      if (buffer.getWorldObj() != null) {
-         for(ForgeDirection dir : ForgeDirection.VALID_DIRECTIONS) {
-            if (buffer.chokedSides[dir.ordinal()] != 0 && buffer.openSides[dir.ordinal()] && ThaumcraftApiHelper.getConnectableTile(buffer.getWorldObj(), buffer.xCoord, buffer.yCoord, buffer.zCoord, dir) != null) {
-               GL11.glPushMatrix();
-               GL11.glTranslated(x + (double)0.5F, y + (double)0.5F, z + (double)0.5F);
-               if (dir.getOpposite().offsetY == 0) {
-                  GL11.glRotatef(90.0F, 0.0F, 1.0F, 0.0F);
-               } else {
-                  GL11.glRotatef(90.0F, -1.0F, 0.0F, 0.0F);
-                  GL11.glRotatef(90.0F, (float)dir.getOpposite().offsetY, 0.0F, 0.0F);
-               }
-
-               GL11.glRotatef(90.0F, (float)dir.getOpposite().offsetX, (float)dir.getOpposite().offsetY, (float)dir.getOpposite().offsetZ);
-               GL11.glPushMatrix();
-               if (buffer.chokedSides[dir.ordinal()] == 2) {
-                  GL11.glColor3f(1.0F, 0.3F, 0.3F);
-               } else {
-                  GL11.glColor3f(0.3F, 0.3F, 1.0F);
-               }
-
-               GL11.glScaled(1.2, 1.0F, 1.2);
-               GL11.glTranslated(0.0F, -0.5F, 0.0F);
-               this.model.render();
-               GL11.glPopMatrix();
-               GL11.glPopMatrix();
+      for (EnumFacing dir : EnumFacing.values()) {
+         if (buffer.chokedSides[dir.ordinal()] != 0 && buffer.openSides[dir.ordinal()] && ThaumcraftApiHelper.getConnectableTile(buffer.getWorld(), buffer.getPos().getX(), buffer.getPos().getY(), buffer.getPos().getZ(), dir) != null) {
+            GlStateManager.pushMatrix();
+            GlStateManager.translate(x + 0.5, y + 0.5, z + 0.5);
+            if (dir.getOpposite().getYOffset() == 0) {
+               GlStateManager.rotate(90.0F, 0.0F, 1.0F, 0.0F);
+            } else {
+               GlStateManager.rotate(90.0F, -1.0F, 0.0F, 0.0F);
+               GlStateManager.rotate(90.0F, (float)dir.getOpposite().getYOffset(), 0.0F, 0.0F);
             }
+            GlStateManager.rotate(90.0F, (float)dir.getOpposite().getXOffset(), (float)dir.getOpposite().getYOffset(), (float)dir.getOpposite().getZOffset());
+            if (buffer.chokedSides[dir.ordinal()] == 2) {
+               GlStateManager.color(1.0F, 0.3F, 0.3F);
+            } else {
+               GlStateManager.color(0.3F, 0.3F, 1.0F);
+            }
+            GlStateManager.scale(1.2, 1.0F, 1.2);
+            GlStateManager.translate(0.0F, -0.5F, 0.0F);
+            this.model.render();
+            GlStateManager.popMatrix();
          }
       }
-
-   }
-
-   public void renderTileEntityAt(TileEntity tileentity, double d, double d1, double d2, float f) {
-      this.renderEntityAt((TileTubeBuffer)tileentity, d, d1, d2, f);
    }
 }

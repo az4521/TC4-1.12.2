@@ -1,21 +1,27 @@
 package thaumcraft.client.gui;
 
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.lwjgl.opengl.GL11;
+
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.texture.TextureMap;
 import net.minecraft.entity.player.InventoryPlayer;
-import net.minecraft.util.IIcon;
-import net.minecraft.util.StatCollector;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.util.text.translation.I18n;
 import net.minecraftforge.fluids.FluidStack;
-import org.lwjgl.opengl.GL11;
+
 import thaumcraft.client.lib.UtilsFX;
 import thaumcraft.common.container.ContainerSpa;
 import thaumcraft.common.tiles.TileSpa;
+import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.client.renderer.BufferBuilder;
+import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 
 @SideOnly(Side.CLIENT)
 public class GuiSpa extends GuiContainer {
@@ -42,7 +48,7 @@ public class GuiSpa extends GuiContainer {
          if (fluid != null) {
             list.add(fluid.getFluid().getLocalizedName(fluid));
             list.add(fluid.amount + " mb");
-            this.drawHoveringText(list, par1, par2, this.fontRendererObj);
+            this.drawHoveringText(list, par1, par2, this.fontRenderer);
          }
       }
 
@@ -51,23 +57,23 @@ public class GuiSpa extends GuiContainer {
       if (mposx >= 0 && mposy >= 0 && mposx < 10 && mposy < 10) {
          List list = new ArrayList<>();
          if (this.spa.getMix()) {
-            list.add(StatCollector.translateToLocal("text.spa.mix.true"));
+            list.add(I18n.translateToLocal("text.spa.mix.true"));
          } else {
-            list.add(StatCollector.translateToLocal("text.spa.mix.false"));
+            list.add(I18n.translateToLocal("text.spa.mix.false"));
          }
 
-         this.drawHoveringText(list, par1, par2, this.fontRendererObj);
+         this.drawHoveringText(list, par1, par2, this.fontRenderer);
       }
 
    }
 
    protected void drawGuiContainerBackgroundLayer(float par1, int par2, int par3) {
-      GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+      GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
       UtilsFX.bindTexture("textures/gui/gui_spa.png");
       int k = (this.width - this.xSize) / 2;
       int l = (this.height - this.ySize) / 2;
-      GL11.glEnable(GL11.GL_BLEND);
-      GL11.glBlendFunc(770, 771);
+      GlStateManager.enableBlend();
+      GlStateManager.blendFunc(770, 771);
       this.drawTexturedModalRect(k, l, 0, 0, this.xSize, this.ySize);
       if (this.spa.getMix()) {
          this.drawTexturedModalRect(k + 89, l + 35, 208, 16, 8, 8);
@@ -78,13 +84,13 @@ public class GuiSpa extends GuiContainer {
       if (this.spa.tank.getFluidAmount() > 0) {
          FluidStack fluid = this.spa.tank.getFluid();
          if (fluid != null) {
-            IIcon icon = fluid.getFluid().getIcon();
+            net.minecraft.client.renderer.texture.TextureAtlasSprite icon = net.minecraft.client.Minecraft.getMinecraft().getTextureMapBlocks().getAtlasSprite(fluid.getFluid().getStill().toString());
             if (icon != null) {
                float bar = (float)this.spa.tank.getFluidAmount() / (float)this.spa.tank.getCapacity();
-               GL11.glPushMatrix();
-               GL11.glTranslatef((float)(this.guiLeft + 107), (float)(this.guiTop + 15), 0.0F);
+               GlStateManager.pushMatrix();
+               GlStateManager.translate((float)(this.guiLeft + 107), (float)(this.guiTop + 15), 0.0F);
                renderFluid(icon);
-               GL11.glPopMatrix();
+               GlStateManager.popMatrix();
                UtilsFX.bindTexture("textures/gui/gui_spa.png");
                this.drawTexturedModalRect(k + 107, l + 15, 107, 15, 10, (int)(48.0F - 48.0F * bar));
             }
@@ -92,32 +98,37 @@ public class GuiSpa extends GuiContainer {
       }
 
       this.drawTexturedModalRect(k + 106, l + 11, 232, 0, 10, 55);
-      GL11.glDisable(GL11.GL_BLEND);
+      GlStateManager.disableBlend();
    }
 
-   public static void renderFluid(IIcon icon) {
-      Minecraft.getMinecraft().renderEngine.bindTexture(TextureMap.locationBlocksTexture);
-      Tessellator tessellator = Tessellator.instance;
+   public static void renderFluid(TextureAtlasSprite icon) {
+      Minecraft.getMinecraft().renderEngine.bindTexture(net.minecraft.client.renderer.texture.TextureMap.LOCATION_BLOCKS_TEXTURE);
+      Tessellator tessellator = Tessellator.getInstance();
+      BufferBuilder buffer = tessellator.getBuffer();
       float f1 = icon.getMaxU();
       float f2 = icon.getMinV();
       float f3 = icon.getMinU();
       float f4 = icon.getMaxV();
-      GL11.glScalef(8.0F, 8.0F, 8.0F);
+      GlStateManager.scale(8.0F, 8.0F, 8.0F);
 
       for(int a = 0; a < 6; ++a) {
-         tessellator.startDrawingQuads();
-         tessellator.setColorRGBA_F(1.0F, 1.0F, 1.0F, 1.0F);
-         tessellator.setNormal(0.0F, 0.0F, 1.0F);
-         tessellator.addVertexWithUV(0.0F, 1 + a, 0.0F, f1, f4);
-         tessellator.addVertexWithUV(1.0F, 1 + a, 0.0F, f3, f4);
-         tessellator.addVertexWithUV(1.0F, a, 0.0F, f3, f2);
-         tessellator.addVertexWithUV(0.0F, a, 0.0F, f1, f2);
+         buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX_COLOR); 
+        
+        
+         buffer.pos(0.0F, 1 + a, 0.0F).tex(f1, f4).color(1.0f, 1.0f, 1.0f, 1.0f)
+        .endVertex();
+         buffer.pos(1.0F, 1 + a, 0.0F).tex(f3, f4).color(1.0f, 1.0f, 1.0f, 1.0f)
+        .endVertex();
+         buffer.pos(1.0F, a, 0.0F).tex(f3, f2).color(1.0f, 1.0f, 1.0f, 1.0f)
+        .endVertex();
+         buffer.pos(0.0F, a, 0.0F).tex(f1, f2).color(1.0f, 1.0f, 1.0f, 1.0f)
+        .endVertex();
          tessellator.draw();
       }
 
    }
 
-   protected void mouseClicked(int mx, int my, int par3) {
+   protected void mouseClicked(int mx, int my, int par3) throws java.io.IOException {
       super.mouseClicked(mx, my, par3);
       int gx = (this.width - this.xSize) / 2;
       int gy = (this.height - this.ySize) / 2;
@@ -130,6 +141,6 @@ public class GuiSpa extends GuiContainer {
    }
 
    private void playButtonClick() {
-      this.mc.renderViewEntity.worldObj.playSound(this.mc.renderViewEntity.posX, this.mc.renderViewEntity.posY, this.mc.renderViewEntity.posZ, "thaumcraft:cameraclack", 0.4F, 1.0F, false);
+      { net.minecraft.entity.Entity _rve = this.mc.getRenderViewEntity(); if (_rve != null) { net.minecraft.util.SoundEvent _snd = net.minecraft.util.SoundEvent.REGISTRY.getObject(new net.minecraft.util.ResourceLocation("thaumcraft:cameraclack")); if (_snd != null) _rve.world.playSound(null, new net.minecraft.util.math.BlockPos(_rve.posX, _rve.posY, _rve.posZ), _snd, net.minecraft.util.SoundCategory.PLAYERS, 0.4F, 1.0F); } }
    }
 }

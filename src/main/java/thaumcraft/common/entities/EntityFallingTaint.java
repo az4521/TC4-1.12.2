@@ -1,19 +1,21 @@
 package thaumcraft.common.entities;
 
-import cpw.mods.fml.common.registry.IEntityAdditionalSpawnData;
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
+import net.minecraftforge.fml.common.registry.IEntityAdditionalSpawnData;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.block.Block;
 import net.minecraft.crash.CrashReportCategory;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.MoverType;
 import net.minecraft.init.Blocks;
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.util.MathHelper;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
 import thaumcraft.common.Thaumcraft;
 import thaumcraft.common.blocks.BlockTaint;
 import thaumcraft.common.config.ConfigBlocks;
+import net.minecraft.util.math.BlockPos;
 
 public class EntityFallingTaint extends Entity implements IEntityAdditionalSpawnData {
    public Block block;
@@ -35,7 +37,6 @@ public class EntityFallingTaint extends Entity implements IEntityAdditionalSpawn
       this.metadata = par9;
       this.preventEntitySpawning = true;
       this.setSize(0.98F, 0.98F);
-      this.yOffset = this.height / 2.0F;
       this.setPosition(par2, par4, par6);
       this.motionX = 0.0F;
       this.motionY = 0.0F;
@@ -74,42 +75,42 @@ public class EntityFallingTaint extends Entity implements IEntityAdditionalSpawn
    }
 
    public void onUpdate() {
-      if (this.block != null && this.block != Blocks.air) {
+      if (this.block != null && this.block != Blocks.AIR) {
          this.prevPosX = this.posX;
          this.prevPosY = this.posY;
          this.prevPosZ = this.posZ;
          ++this.fallTime;
          this.motionY -= 0.04F;
-         this.moveEntity(this.motionX, this.motionY, this.motionZ);
+         this.move(MoverType.SELF, this.motionX, this.motionY, this.motionZ);
          this.motionX *= 0.98F;
          this.motionY *= 0.98F;
          this.motionZ *= 0.98F;
-         if (!this.worldObj.isRemote) {
-            int i = MathHelper.floor_double(this.posX);
-            int j = MathHelper.floor_double(this.posY);
-            int k = MathHelper.floor_double(this.posZ);
+         if (!this.world.isRemote) {
+            int i = MathHelper.floor(this.posX);
+            int j = MathHelper.floor(this.posY);
+            int k = MathHelper.floor(this.posZ);
             if (this.fallTime == 1) {
-               if (this.worldObj.getBlock(this.oldX, this.oldY, this.oldZ) != this.block) {
+               if (this.world.getBlockState(new BlockPos(this.oldX, this.oldY, this.oldZ)).getBlock() != this.block) {
                   this.setDead();
                   return;
                }
 
-               this.worldObj.setBlockToAir(this.oldX, this.oldY, this.oldZ);
+               this.world.setBlockToAir(new BlockPos(this.oldX, this.oldY, this.oldZ));
             }
 
-            if (!this.onGround && (this.worldObj.getBlock(i, j - 1, k) != ConfigBlocks.blockFluxGoo || this.worldObj.getBlockMetadata(i, j - 1, k) < 4)) {
-               if (this.fallTime > 100 && !this.worldObj.isRemote && (j < 1 || j > 256) || this.fallTime > 600) {
+            if (!this.onGround && this.world.getBlockState(new net.minecraft.util.math.BlockPos(i, j - 1, k)).getBlock() != ConfigBlocks.blockFluxGoo) {
+               if (this.fallTime > 100 && !this.world.isRemote && (j < 1 || j > 256) || this.fallTime > 600) {
                   this.setDead();
                }
             } else {
                this.motionX *= 0.7F;
                this.motionZ *= 0.7F;
                this.motionY *= -0.5F;
-               if (this.worldObj.getBlock(i, j, k) != Blocks.piston && this.worldObj.getBlock(i, j, k) != Blocks.piston_extension && this.worldObj.getBlock(i, j, k) != Blocks.piston_head) {
-                  this.worldObj.playSoundAtEntity(this, "thaumcraft:gore", 0.5F, ((this.rand.nextFloat() - this.rand.nextFloat()) * 0.2F + 1.0F) * 0.8F);
+               if (this.world.getBlockState(new BlockPos(i, j, k)).getBlock() != Blocks.PISTON && this.world.getBlockState(new BlockPos(i, j, k)).getBlock() != Blocks.PISTON_EXTENSION && this.world.getBlockState(new BlockPos(i, j, k)).getBlock() != Blocks.PISTON_HEAD) {
+                  // { net.minecraft.util.SoundEvent _snd = net.minecraft.util.SoundEvent.REGISTRY.getObject(new net.minecraft.util.ResourceLocation("thaumcraft:gore")); if (_snd != null) this.world.playSound(null, this.posX, this.posY, this.posZ, _snd, net.minecraft.util.SoundCategory.NEUTRAL, 0.5F, ((this.rand.nextFloat() - this.rand.nextFloat()) * 0.2F + 1.0F) * 0.8F); };
                   this.setDead();
-                  if (this.canPlace(i, j, k) && !BlockTaint.canFallBelow(this.worldObj, i, j - 1, k) && this.worldObj.setBlock(i, j, k, this.block, this.metadata, 3) && this.block instanceof BlockTaint) {
-                     ((BlockTaint)this.block).onFinishFalling(this.worldObj, i, j, k, this.metadata);
+                  if (this.canPlace(i, j, k) && !BlockTaint.canFallBelow(this.world, i, j - 1, k) && this.world.setBlockState(new net.minecraft.util.math.BlockPos(i, j, k), this.block.getStateFromMeta(this.metadata), 3) && this.block instanceof BlockTaint) {
+                     ((BlockTaint)this.block).onFinishFalling(this.world, i, j, k, this.metadata);
                   }
                }
             }
@@ -125,7 +126,9 @@ public class EntityFallingTaint extends Entity implements IEntityAdditionalSpawn
    }
 
    private boolean canPlace(int i, int j, int k) {
-      return this.worldObj.getBlock(i, j, k) == ConfigBlocks.blockTaintFibres || this.worldObj.getBlock(i, j, k) == ConfigBlocks.blockFluxGoo || this.worldObj.canPlaceEntityOnSide(this.block, i, j, k, true, 1, null, null);
+      net.minecraft.util.math.BlockPos pos = new net.minecraft.util.math.BlockPos(i, j, k);
+      net.minecraft.block.state.IBlockState state = this.world.getBlockState(pos);
+      return state.getBlock() == ConfigBlocks.blockTaintFibres || state.getBlock() == ConfigBlocks.blockFluxGoo || state.getMaterial().isReplaceable();
    }
 
    protected void fall(float par1) {
@@ -158,7 +161,7 @@ public class EntityFallingTaint extends Entity implements IEntityAdditionalSpawn
       }
 
       if (this.block == null) {
-         this.block = Blocks.sand;
+         this.block = Blocks.SAND;
       }
 
    }
@@ -176,7 +179,7 @@ public class EntityFallingTaint extends Entity implements IEntityAdditionalSpawn
 
    @SideOnly(Side.CLIENT)
    public World getWorld() {
-      return this.worldObj;
+      return this.world;
    }
 
    @SideOnly(Side.CLIENT)

@@ -1,14 +1,14 @@
 package thaumcraft.common.items.wands;
 
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
 
 import net.minecraft.block.Block;
-import net.minecraft.client.renderer.texture.IIconRegister;
+import thaumcraft.client.renderers.compat.IIconRegister;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
@@ -26,13 +26,13 @@ import net.minecraft.nbt.NBTTagInt;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.nbt.NBTTagString;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.EnumChatFormatting;
-import net.minecraft.util.IIcon;
-import net.minecraft.util.MovingObjectPosition;
-import net.minecraft.util.StatCollector;
-import net.minecraft.util.MovingObjectPosition.MovingObjectType;
+import net.minecraft.util.text.TextFormatting;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.util.math.RayTraceResult;
+import net.minecraft.util.text.translation.I18n;
+import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.world.World;
-import net.minecraftforge.common.util.ForgeDirection;
+import net.minecraft.util.EnumFacing;
 import thaumcraft.api.IArchitect;
 import thaumcraft.api.aspects.Aspect;
 import thaumcraft.api.aspects.AspectList;
@@ -49,9 +49,10 @@ import thaumcraft.common.config.Config;
 import thaumcraft.common.config.ConfigBlocks;
 import thaumcraft.common.config.ConfigItems;
 import thaumcraft.common.tiles.TileOwned;
+import net.minecraft.util.math.BlockPos;
 
 public class ItemWandCasting extends Item implements IArchitect {
-    private IIcon icon;
+    private TextureAtlasSprite icon;
     DecimalFormat myFormatter = new DecimalFormat("#######.##");
     public ItemFocusBasic.WandFocusAnimation animation = null;
 
@@ -68,11 +69,11 @@ public class ItemWandCasting extends Item implements IArchitect {
 
     @SideOnly(Side.CLIENT)
     public void registerIcons(IIconRegister par1IconRegister) {
-        this.icon = par1IconRegister.registerIcon("thaumcraft:blank");
+        this.icon = par1IconRegister.registerSprite("thaumcraft:blank");
     }
 
     @SideOnly(Side.CLIENT)
-    public IIcon getIcon(ItemStack stack, int pass) {
+    public TextureAtlasSprite getIcon(ItemStack stack, int pass) {
         return this.icon;
     }
 
@@ -86,11 +87,12 @@ public class ItemWandCasting extends Item implements IArchitect {
     }
 
     public EnumRarity getRarity(ItemStack itemstack) {
-        return EnumRarity.uncommon;
+        return EnumRarity.UNCOMMON;
     }
 
     @SideOnly(Side.CLIENT)
-    public void getSubItems(Item par1, CreativeTabs par2CreativeTabs, List par3List) {
+    @Override
+   public void getSubItems(CreativeTabs par2CreativeTabs, net.minecraft.util.NonNullList<ItemStack> par3List) {
         ItemStack w1 = new ItemStack(this, 1, 0);
         ItemStack w2 = new ItemStack(this, 1, 9);
         ItemStack w3 = new ItemStack(this, 1, 54);
@@ -117,19 +119,21 @@ public class ItemWandCasting extends Item implements IArchitect {
     }
 
     public String getItemStackDisplayName(ItemStack is) {
-        String name = StatCollector.translateToLocal("item.Wand.name");
-        name = name.replace("%CAP", StatCollector.translateToLocal("item.Wand." + this.getCap(is).getTag() + ".cap"));
+        String name = I18n.translateToLocal("item.Wand.name");
+        name = name.replace("%CAP", I18n.translateToLocal("item.Wand." + this.getCap(is).getTag() + ".cap"));
         String rod = this.getRod(is).getTag();
         if (rod.contains("_staff")) {
             rod = rod.substring(0, this.getRod(is).getTag().indexOf("_staff"));
         }
 
-        name = name.replace("%ROD", StatCollector.translateToLocal("item.Wand." + rod + ".rod"));
-        name = name.replace("%OBJ", this.isStaff(is) ? StatCollector.translateToLocal("item.Wand.staff.obj") : (this.isSceptre(is) ? StatCollector.translateToLocal("item.Wand.sceptre.obj") : StatCollector.translateToLocal("item.Wand.wand.obj")));
+        name = name.replace("%ROD", I18n.translateToLocal("item.Wand." + rod + ".rod"));
+        name = name.replace("%OBJ", this.isStaff(is) ? I18n.translateToLocal("item.Wand.staff.obj") : (this.isSceptre(is) ? I18n.translateToLocal("item.Wand.sceptre.obj") : I18n.translateToLocal("item.Wand.wand.obj")));
         return name;
     }
 
-    public void addInformation(ItemStack stack, EntityPlayer player, List list, boolean par4) {
+    @Override
+    public void addInformation(ItemStack stack, @javax.annotation.Nullable net.minecraft.world.World world, List list, net.minecraft.client.util.ITooltipFlag flag) {
+        EntityPlayer player = net.minecraft.client.Minecraft.getMinecraft().player;
         int pos = list.size();
         String tt2 = "";
         if (stack.hasTagCompound()) {
@@ -138,8 +142,8 @@ public class ItemWandCasting extends Item implements IArchitect {
             int num = 0;
 
             for (Aspect aspect : Aspect.getPrimalAspects()) {
-                if (stack.stackTagCompound.hasKey(aspect.getTag())) {
-                    String amount = this.myFormatter.format((float) stack.stackTagCompound.getInteger(aspect.getTag()) / 100.0F);
+                if (stack.getTagCompound().hasKey(aspect.getTag())) {
+                    String amount = this.myFormatter.format((float) stack.getTagCompound().getInteger(aspect.getTag()) / 100.0F);
                     float mod = this.getConsumptionModifier(stack, player, aspect, false);
                     String consumption = this.myFormatter.format(mod * 100.0F);
                     ++num;
@@ -149,12 +153,12 @@ public class ItemWandCasting extends Item implements IArchitect {
                     if (focus != null) {
                         int amt = ((ItemFocusBasic) focus.getItem()).getVisCost(focus).getAmount(aspect);
                         if (amt > 0) {
-                            text = "§r, " + this.myFormatter.format((float) amt * mod / 100.0F) + " " + StatCollector.translateToLocal(((ItemFocusBasic) focus.getItem()).isVisCostPerTick(focus) ? "item.Focus.cost2" : "item.Focus.cost1");
+                            text = "§r, " + this.myFormatter.format((float) amt * mod / 100.0F) + " " + I18n.translateToLocal(((ItemFocusBasic) focus.getItem()).isVisCostPerTick(focus) ? "item.Focus.cost2" : "item.Focus.cost1");
                         }
                     }
 
                     if (Thaumcraft.proxy.isShiftKeyDown()) {
-                        list.add(" §" + aspect.getChatcolor() + aspect.getName() + "§r x " + amount + ", §o(" + consumption + "% " + StatCollector.translateToLocal("tc.vis.cost") + ")" + text);
+                        list.add(" §" + aspect.getChatcolor() + aspect.getName() + "§r x " + amount + ", §o(" + consumption + "% " + I18n.translateToLocal("tc.vis.cost") + ")" + text);
                     } else {
                         if (tt.length() > 0) {
                             tt.append(" | ");
@@ -168,15 +172,15 @@ public class ItemWandCasting extends Item implements IArchitect {
             if (!Thaumcraft.proxy.isShiftKeyDown() && num > 0) {
                 list.add(tt.toString());
                 tot /= num;
-                tt2 = " (" + tot + "% " + StatCollector.translateToLocal("tc.vis.costavg") + ")";
+                tt2 = " (" + tot + "% " + I18n.translateToLocal("tc.vis.costavg") + ")";
             }
         }
 
-        list.add(pos, EnumChatFormatting.GOLD + StatCollector.translateToLocal("item.capacity.text") + " " + this.getMaxVis(stack) / 100 + "§r" + tt2);
+        list.add(pos, TextFormatting.GOLD + I18n.translateToLocal("item.capacity.text") + " " + this.getMaxVis(stack) / 100 + "§r" + tt2);
         if (this.getFocus(stack) != null) {
-            list.add(EnumChatFormatting.BOLD + "" + EnumChatFormatting.ITALIC + EnumChatFormatting.GREEN + this.getFocus(stack).getItemStackDisplayName(this.getFocusItem(stack)));
+            list.add(TextFormatting.BOLD + "" + TextFormatting.ITALIC + TextFormatting.GREEN + this.getFocus(stack).getItemStackDisplayName(this.getFocusItem(stack)));
             if (Thaumcraft.proxy.isShiftKeyDown()) {
-                this.getFocus(stack).addFocusInformation(this.getFocusItem(stack), player, list, par4);
+                this.getFocus(stack).addFocusInformation(this.getFocusItem(stack), list, flag);
             }
         }
 
@@ -186,8 +190,8 @@ public class ItemWandCasting extends Item implements IArchitect {
         AspectList out = new AspectList();
 
         for (Aspect aspect : Aspect.getPrimalAspects()) {
-            if (is.hasTagCompound() && is.stackTagCompound.hasKey(aspect.getTag())) {
-                out.merge(aspect, is.stackTagCompound.getInteger(aspect.getTag()));
+            if (is.hasTagCompound() && is.getTagCompound().hasKey(aspect.getTag())) {
+                out.merge(aspect, is.getTagCompound().getInteger(aspect.getTag()));
             } else {
                 out.merge(aspect, 0);
             }
@@ -218,8 +222,8 @@ public class ItemWandCasting extends Item implements IArchitect {
 
     public int getVis(ItemStack is, Aspect aspect) {
         int out = 0;
-        if (is != null && aspect != null && is.hasTagCompound() && is.stackTagCompound.hasKey(aspect.getTag())) {
-            out = is.stackTagCompound.getInteger(aspect.getTag());
+        if (is != null && aspect != null && is.hasTagCompound() && is.getTagCompound().hasKey(aspect.getTag())) {
+            out = is.getTagCompound().getInteger(aspect.getTag());
         }
 
         return out;
@@ -316,7 +320,7 @@ public class ItemWandCasting extends Item implements IArchitect {
                 }
             }
 
-            if (doit && !player.worldObj.isRemote) {
+            if (doit && !player.world.isRemote) {
                 for (Aspect aspect : nl.getAspects()) {
                     this.storeVis(is, aspect, this.getVis(is, aspect) - nl.getAmount(aspect));
                 }
@@ -366,47 +370,52 @@ public class ItemWandCasting extends Item implements IArchitect {
 
     }
 
-    public boolean onItemUseFirst(ItemStack itemstack, EntityPlayer player, World world, int x, int y, int z, int side, float hitX, float hitY, float hitZ) {
-        Block bi = world.getBlock(x, y, z);
-        int md = world.getBlockMetadata(x, y, z);
+    @Override
+    public net.minecraft.util.EnumActionResult onItemUseFirst(EntityPlayer player, World world, BlockPos blockPos, EnumFacing facing, float hitX, float hitY, float hitZ, net.minecraft.util.EnumHand hand) {
+        ItemStack itemstack = player.getHeldItem(hand);
+        int x = blockPos.getX(), y = blockPos.getY(), z = blockPos.getZ();
+        int side = facing.ordinal();
+        Block bi = world.getBlockState(blockPos).getBlock();
+        int md = world.getBlockState(blockPos).getBlock().getMetaFromState(world.getBlockState(blockPos));
         boolean result = false;
-        ForgeDirection direction = ForgeDirection.getOrientation(side);
+        EnumFacing direction = facing;
         if (bi instanceof IWandable) {
             int ret = ((IWandable) bi).onWandRightClick(world, itemstack, player, x, y, z, side, md);
             if (ret >= 0) {
-                return ret == 1;
+                return ret == 1 ? net.minecraft.util.EnumActionResult.SUCCESS : net.minecraft.util.EnumActionResult.FAIL;
             }
         }
 
-        TileEntity tile = world.getTileEntity(x, y, z);
+        TileEntity tile = world.getTileEntity(new BlockPos(x, y, z));
         if (tile instanceof IWandable) {
             int ret = ((IWandable) tile).onWandRightClick(world, itemstack, player, x, y, z, side, md);
             if (ret >= 0) {
-                return ret == 1;
+                return ret == 1 ? net.minecraft.util.EnumActionResult.SUCCESS : net.minecraft.util.EnumActionResult.FAIL;
             }
         }
 
         if (WandTriggerRegistry.hasTrigger(bi, md)) {
-            return WandTriggerRegistry.performTrigger(world, itemstack, player, x, y, z, side, bi, md);
+            return WandTriggerRegistry.performTrigger(world, itemstack, player, x, y, z, side, bi, md)
+                    ? net.minecraft.util.EnumActionResult.SUCCESS : net.minecraft.util.EnumActionResult.PASS;
         } else {
-            if ((bi == ConfigBlocks.blockWoodenDevice && md == 2 || bi == ConfigBlocks.blockCosmeticOpaque && md == 2) && (!Config.wardedStone || tile instanceof TileOwned && player.getCommandSenderName().equals(((TileOwned) tile).owner))) {
+            if ((bi == ConfigBlocks.blockWoodenDevice && md == 2 || bi == ConfigBlocks.blockCosmeticOpaque && md == 2) && (!Config.wardedStone || tile instanceof TileOwned && player.getName().equals(((TileOwned) tile).owner))) {
                 if (!world.isRemote) {
                     ((TileOwned) tile).safeToRemove = true;
-                    world.spawnEntityInWorld(new EntityItem(world, (double) x + (double) 0.5F, (double) y + (double) 0.5F, (double) z + (double) 0.5F, new ItemStack(bi, 1, md)));
-                    world.playAuxSFX(2001, x, y, z, Block.getIdFromBlock(bi) + (md << 12));
-                    world.setBlockToAir(x, y, z);
+                    world.spawnEntity(new EntityItem(world, (double) x + (double) 0.5F, (double) y + (double) 0.5F, (double) z + (double) 0.5F, new ItemStack(bi, 1, md)));
+                    world.playEvent(2001, new BlockPos(x, y, z), Block.getStateId(bi.getDefaultState()));
+                    world.setBlockToAir(new BlockPos(x, y, z));
                 } else {
-                    player.swingItem();
+                    player.swingArm(net.minecraft.util.EnumHand.MAIN_HAND);
                 }
             }
 
-            if (bi == ConfigBlocks.blockArcaneDoor && (!Config.wardedStone || tile instanceof TileOwned && player.getCommandSenderName().equals(((TileOwned) tile).owner))) {
+            if (bi == ConfigBlocks.blockArcaneDoor && (!Config.wardedStone || tile instanceof TileOwned && player.getName().equals(((TileOwned) tile).owner))) {
                 if (!world.isRemote) {
                     ((TileOwned) tile).safeToRemove = true;
                     if ((md & 8) == 0) {
-                        tile = world.getTileEntity(x, y + 1, z);
+                        tile = world.getTileEntity(new BlockPos(x, y + 1, z));
                     } else {
-                        tile = world.getTileEntity(x, y - 1, z);
+                        tile = world.getTileEntity(new BlockPos(x, y - 1, z));
                     }
 
                     if (tile instanceof TileOwned) {
@@ -414,27 +423,50 @@ public class ItemWandCasting extends Item implements IArchitect {
                     }
 
                     if (Config.wardedStone || !Config.wardedStone && (md & 8) == 0) {
-                        world.spawnEntityInWorld(new EntityItem(world, (double) x + (double) 0.5F, (double) y + (double) 0.5F, (double) z + (double) 0.5F, new ItemStack(ConfigItems.itemArcaneDoor)));
+                        world.spawnEntity(new EntityItem(world, (double) x + (double) 0.5F, (double) y + (double) 0.5F, (double) z + (double) 0.5F, new ItemStack(ConfigItems.itemArcaneDoor)));
                     }
 
-                    world.playAuxSFX(2001, x, y, z, Block.getIdFromBlock(bi) + (md << 12));
-                    world.setBlockToAir(x, y, z);
+                    world.playEvent(2001, new BlockPos(x, y, z), Block.getStateId(bi.getDefaultState()));
+                    world.setBlockToAir(new BlockPos(x, y, z));
                 } else {
-                    player.swingItem();
+                    player.swingArm(net.minecraft.util.EnumHand.MAIN_HAND);
                 }
             }
 
-            return result;
+            return result ? net.minecraft.util.EnumActionResult.SUCCESS : net.minecraft.util.EnumActionResult.PASS;
         }
+    }
+
+    @Override
+    public net.minecraft.util.EnumActionResult onItemUse(EntityPlayer player, World world, BlockPos blockPos, net.minecraft.util.EnumHand hand, EnumFacing facing, float hitX, float hitY, float hitZ) {
+        ItemStack itemstack = player.getHeldItem(hand);
+        TileEntity tile = world.getTileEntity(blockPos);
+        if (tile instanceof IWandable) {
+            ItemStack result = ((IWandable) tile).onWandRightClick(world, itemstack, player);
+            if (result != null) {
+                player.setActiveHand(hand);
+                // Don't swing arm - return PASS to suppress animation but setActiveHand already started the action
+                return net.minecraft.util.EnumActionResult.PASS;
+            }
+        }
+        Block bi = world.getBlockState(blockPos).getBlock();
+        if (bi instanceof IWandable) {
+            ItemStack result = ((IWandable) bi).onWandRightClick(world, itemstack, player);
+            if (result != null) {
+                player.setActiveHand(hand);
+                return net.minecraft.util.EnumActionResult.PASS;
+            }
+        }
+        return net.minecraft.util.EnumActionResult.PASS;
     }
 
     public ItemFocusBasic getFocus(ItemStack stack) {
         if (stack == null) {
             return null;
         }
-        if (stack.hasTagCompound() && stack.stackTagCompound.hasKey("focus")) {
-            NBTTagCompound nbt = stack.stackTagCompound.getCompoundTag("focus");
-            return (ItemFocusBasic) ItemStack.loadItemStackFromNBT(nbt).getItem();
+        if (stack.hasTagCompound() && stack.getTagCompound().hasKey("focus")) {
+            NBTTagCompound nbt = stack.getTagCompound().getCompoundTag("focus");
+            return (ItemFocusBasic) new ItemStack(nbt).getItem();
         } else {
             return null;
         }
@@ -444,9 +476,9 @@ public class ItemWandCasting extends Item implements IArchitect {
         if (stack == null) {
             return null;
         }
-        if (stack.hasTagCompound() && stack.stackTagCompound.hasKey("focus")) {
-            NBTTagCompound nbt = stack.stackTagCompound.getCompoundTag("focus");
-            return ItemStack.loadItemStackFromNBT(nbt);
+        if (stack.hasTagCompound() && stack.getTagCompound().hasKey("focus")) {
+            NBTTagCompound nbt = stack.getTagCompound().getCompoundTag("focus");
+            return new ItemStack(nbt);
         } else {
             return null;
         }
@@ -454,7 +486,7 @@ public class ItemWandCasting extends Item implements IArchitect {
 
     public void setFocus(ItemStack stack, ItemStack focus) {
         if (focus == null) {
-            stack.stackTagCompound.removeTag("focus");
+            stack.getTagCompound().removeTag("focus");
         } else {
             stack.setTagInfo("focus", focus.writeToNBT(new NBTTagCompound()));
         }
@@ -462,7 +494,7 @@ public class ItemWandCasting extends Item implements IArchitect {
     }
 
     public WandRod getRod(ItemStack stack) {
-        return stack.hasTagCompound() && stack.stackTagCompound.hasKey("rod") ? WandRod.rods.get(stack.stackTagCompound.getString("rod")) : ConfigItems.WAND_ROD_WOOD;
+        return stack.hasTagCompound() && stack.getTagCompound().hasKey("rod") ? WandRod.rods.get(stack.getTagCompound().getString("rod")) : ConfigItems.WAND_ROD_WOOD;
     }
 
     public boolean isStaff(ItemStack stack) {
@@ -471,7 +503,7 @@ public class ItemWandCasting extends Item implements IArchitect {
     }
 
     public boolean isSceptre(ItemStack stack) {
-        return stack.hasTagCompound() && stack.stackTagCompound.hasKey("sceptre");
+        return stack.hasTagCompound() && stack.getTagCompound().hasKey("sceptre");
     }
 
     public boolean hasRunes(ItemStack stack) {
@@ -484,86 +516,68 @@ public class ItemWandCasting extends Item implements IArchitect {
         if (rod instanceof StaffRod) {
             NBTTagList tags = new NBTTagList();
             NBTTagCompound tag = new NBTTagCompound();
-            tag.setString("AttributeName", SharedMonsterAttributes.attackDamage.getAttributeUnlocalizedName());
-            AttributeModifier am = new AttributeModifier(field_111210_e, "Weapon modifier", 6.0F, 0);
+            tag.setString("AttributeName", SharedMonsterAttributes.ATTACK_DAMAGE.getName());
+            AttributeModifier am = new AttributeModifier(java.util.UUID.fromString("CB3F55D3-645C-4F38-A497-9C13A33DB5CF"), "Weapon modifier", 6.0F, 0);
             tag.setString("Name", am.getName());
             tag.setDouble("Amount", am.getAmount());
             tag.setInteger("Operation", am.getOperation());
             tag.setLong("UUIDMost", am.getID().getMostSignificantBits());
             tag.setLong("UUIDLeast", am.getID().getLeastSignificantBits());
             tags.appendTag(tag);
-            stack.stackTagCompound.setTag("AttributeModifiers", tags);
+            stack.getTagCompound().setTag("AttributeModifiers", tags);
         }
 
     }
 
     public WandCap getCap(ItemStack stack) {
-        return stack.hasTagCompound() && stack.stackTagCompound.hasKey("cap") ? WandCap.caps.get(stack.stackTagCompound.getString("cap")) : ConfigItems.WAND_CAP_IRON;
+        return stack.hasTagCompound() && stack.getTagCompound().hasKey("cap") ? WandCap.caps.get(stack.getTagCompound().getString("cap")) : ConfigItems.WAND_CAP_IRON;
     }
 
     public void setCap(ItemStack stack, WandCap cap) {
         stack.setTagInfo("cap", new NBTTagString(cap.getTag()));
     }
 
-    public ItemStack onItemRightClick(ItemStack itemstack, World world, EntityPlayer player) {
-        MovingObjectPosition movingobjectposition = this.getMovingObjectPositionFromPlayer(world, player, true);
-        if (movingobjectposition != null && movingobjectposition.typeOfHit == MovingObjectType.BLOCK) {
-            int i = movingobjectposition.blockX;
-            int j = movingobjectposition.blockY;
-            int k = movingobjectposition.blockZ;
-            Block bi = world.getBlock(i, j, k);
-            world.getBlockMetadata(i, j, k);
-            if (bi instanceof IWandable) {
-                ItemStack is = ((IWandable) bi).onWandRightClick(world, itemstack, player);
-                if (is != null) {
-                    return is;
-                }
-            }
-
-            TileEntity tile = world.getTileEntity(i, j, k);
-            if (tile instanceof IWandable) {
-                ItemStack is = ((IWandable) tile).onWandRightClick(world, itemstack, player);
-                if (is != null) {
-                    return is;
-                }
-            }
-        }
+    @Override
+    public net.minecraft.util.ActionResult<ItemStack> onItemRightClick(World world, EntityPlayer player, net.minecraft.util.EnumHand hand) {
+        ItemStack itemstack = player.getHeldItem(hand);
+        // IWandable block/tile interactions are handled in onItemUse - don't duplicate here
+        RayTraceResult movingobjectposition = this.rayTrace(world, player, true);
 
         ItemFocusBasic focus = this.getFocus(itemstack);
         if (focus != null && !WandManager.isOnCooldown(player)) {
             WandManager.setCooldown(player, focus.getActivationCooldown(this.getFocusItem(itemstack)));
             ItemStack ret = focus.onFocusRightClick(itemstack, world, player, movingobjectposition);
             if (ret != null) {
-                return ret;
+                return new net.minecraft.util.ActionResult<>(net.minecraft.util.EnumActionResult.SUCCESS, ret);
             }
         }
 
-        return super.onItemRightClick(itemstack, world, player);
+        return super.onItemRightClick(world, player, hand);
     }
 
     public void setObjectInUse(ItemStack stack, int x, int y, int z) {
-        if (stack.stackTagCompound == null) {
-            stack.stackTagCompound = new NBTTagCompound();
+        if (stack.getTagCompound() == null) {
+            stack.setTagCompound(new NBTTagCompound());
         }
 
-        stack.stackTagCompound.setInteger("IIUX", x);
-        stack.stackTagCompound.setInteger("IIUY", y);
-        stack.stackTagCompound.setInteger("IIUZ", z);
+        stack.getTagCompound().setInteger("IIUX", x);
+        stack.getTagCompound().setInteger("IIUY", y);
+        stack.getTagCompound().setInteger("IIUZ", z);
     }
 
     public void clearObjectInUse(ItemStack stack) {
-        if (stack.stackTagCompound == null) {
-            stack.stackTagCompound = new NBTTagCompound();
+        if (stack.getTagCompound() == null) {
+            stack.setTagCompound(new NBTTagCompound());
         }
 
-        stack.stackTagCompound.removeTag("IIUX");
-        stack.stackTagCompound.removeTag("IIUY");
-        stack.stackTagCompound.removeTag("IIUZ");
+        stack.getTagCompound().removeTag("IIUX");
+        stack.getTagCompound().removeTag("IIUY");
+        stack.getTagCompound().removeTag("IIUZ");
     }
 
     public IWandable getObjectInUse(ItemStack stack, World world) {
-        if (stack.hasTagCompound() && stack.stackTagCompound.hasKey("IIUX")) {
-            TileEntity te = world.getTileEntity(stack.stackTagCompound.getInteger("IIUX"), stack.stackTagCompound.getInteger("IIUY"), stack.stackTagCompound.getInteger("IIUZ"));
+        if (stack.hasTagCompound() && stack.getTagCompound().hasKey("IIUX")) {
+            TileEntity te = world.getTileEntity(new net.minecraft.util.math.BlockPos(stack.getTagCompound().getInteger("IIUX"), stack.getTagCompound().getInteger("IIUY"), stack.getTagCompound().getInteger("IIUZ")));
             if (te instanceof IWandable) {
                 return (IWandable) te;
             }
@@ -572,8 +586,11 @@ public class ItemWandCasting extends Item implements IArchitect {
         return null;
     }
 
-    public void onUsingTick(ItemStack stack, EntityPlayer player, int count) {
-        IWandable tv = this.getObjectInUse(stack, player.worldObj);
+    @Override
+    public void onUsingTick(ItemStack stack, net.minecraft.entity.EntityLivingBase livingBase, int count) {
+        if (!(livingBase instanceof EntityPlayer)) return;
+        EntityPlayer player = (EntityPlayer) livingBase;
+        IWandable tv = this.getObjectInUse(stack, player.world);
         if (tv != null) {
             this.animation = ItemFocusBasic.WandFocusAnimation.WAVE;
             tv.onUsingWandTick(stack, player, count);
@@ -587,8 +604,11 @@ public class ItemWandCasting extends Item implements IArchitect {
 
     }
 
-    public void onPlayerStoppedUsing(ItemStack stack, World world, EntityPlayer player, int count) {
-        IWandable tv = this.getObjectInUse(stack, player.worldObj);
+    @Override
+    public void onPlayerStoppedUsing(ItemStack stack, World world, net.minecraft.entity.EntityLivingBase livingBase, int count) {
+        if (!(livingBase instanceof EntityPlayer)) return;
+        EntityPlayer player = (EntityPlayer) livingBase;
+        IWandable tv = this.getObjectInUse(stack, player.world);
         if (tv != null) {
             tv.onWandStoppedUsing(stack, world, player, count);
             this.animation = null;
@@ -603,7 +623,7 @@ public class ItemWandCasting extends Item implements IArchitect {
     }
 
     public EnumAction getItemUseAction(ItemStack par1ItemStack) {
-        return EnumAction.bow;
+        return EnumAction.BOW;
     }
 
     public int getMaxItemUseDuration(ItemStack itemstack) {
@@ -630,22 +650,22 @@ public class ItemWandCasting extends Item implements IArchitect {
         }
     }
 
-    public boolean canHarvestBlock(Block par1Block, ItemStack itemstack) {
+    public boolean canHarvestBlock(net.minecraft.block.state.IBlockState state, ItemStack itemstack) {
         ItemFocusBasic focus = this.getFocus(itemstack);
-        return focus != null && this.getFocusItem(itemstack).getItem().canHarvestBlock(par1Block, itemstack);
+        return focus != null && this.getFocusItem(itemstack).getItem().canHarvestBlock(state, itemstack);
     }
 
-    public float func_150893_a(ItemStack itemstack, Block block) {
+    public float getDestroySpeed(ItemStack itemstack, net.minecraft.block.state.IBlockState state) {
         ItemFocusBasic focus = this.getFocus(itemstack);
-        return focus != null ? this.getFocusItem(itemstack).getItem().func_150893_a(itemstack, null) : super.func_150893_a(itemstack, block);
+        return focus != null ? this.getFocusItem(itemstack).getItem().getDestroySpeed(itemstack, state) : super.getDestroySpeed(itemstack, state);
     }
 
-    public ArrayList getArchitectBlocks(ItemStack stack, World world, int x, int y, int z, int side, EntityPlayer player) {
+    public ArrayList getArchitectBlocks(ItemStack stack, World world, int x, int y, int z, net.minecraft.util.EnumFacing side, EntityPlayer player) {
         ItemFocusBasic focus = this.getFocus(stack);
         return focus instanceof IArchitect && focus.isUpgradedWith(this.getFocusItem(stack), FocusUpgradeType.architect) ? ((IArchitect) focus).getArchitectBlocks(stack, world, x, y, z, side, player) : null;
     }
 
-    public boolean showAxis(ItemStack stack, World world, EntityPlayer player, int side, IArchitect.EnumAxis axis) {
+    public boolean showAxis(ItemStack stack, World world, EntityPlayer player, net.minecraft.util.EnumFacing side, IArchitect.EnumAxis axis) {
         ItemFocusBasic focus = this.getFocus(stack);
         return focus instanceof IArchitect && focus.isUpgradedWith(this.getFocusItem(stack), FocusUpgradeType.architect) && ((IArchitect) focus).showAxis(stack, world, player, side, axis);
     }

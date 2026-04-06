@@ -4,8 +4,9 @@ import net.minecraft.client.model.ModelBase;
 import net.minecraft.client.model.ModelRenderer;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
-import org.lwjgl.opengl.GL11;
+
 import thaumcraft.common.entities.golems.EntityGolemBase;
+import net.minecraft.client.renderer.GlStateManager;
 
 public class ModelGolemAccessories extends ModelBase {
    public ModelRenderer golemHeadFez;
@@ -82,17 +83,17 @@ public class ModelGolemAccessories extends ModelBase {
    public void render(Entity par1Entity, float par2, float par3, float par4, float par5, float par6, float par7) {
       EntityGolemBase en = (EntityGolemBase)par1Entity;
       this.setRotationAngles(par2, par3, par4, par5, par6, par7, en);
-      GL11.glPushMatrix();
-      GL11.glScaled(0.4, 0.4, 0.4);
+      GlStateManager.pushMatrix();
+      GlStateManager.scale(0.4, 0.4, 0.4);
       String deco = en.getGolemDecoration();
       if (deco != null && deco.contains("R")) {
          this.golemDartgun.render(par7);
       }
 
-      GL11.glPushMatrix();
+      GlStateManager.pushMatrix();
       if (deco != null && deco.contains("F")) {
          if (en.advanced) {
-            GL11.glTranslatef(0.0F, -0.01F, 0.0F);
+            GlStateManager.translate(0.0F, -0.01F, 0.0F);
          }
 
          this.golemHeadFez.render(par7);
@@ -100,19 +101,19 @@ public class ModelGolemAccessories extends ModelBase {
 
       if (deco != null && deco.contains("H")) {
          if (en.advanced) {
-            GL11.glTranslatef(0.0F, -0.01F, 0.0F);
+            GlStateManager.translate(0.0F, -0.01F, 0.0F);
          }
 
          this.golemHeadHat.render(par7);
          this.golemHeadHatRim.render(par7);
       }
 
-      GL11.glPopMatrix();
+      GlStateManager.popMatrix();
       if (deco != null && deco.contains("B")) {
-         GL11.glEnable(GL11.GL_BLEND);
-         GL11.glBlendFunc(770, 771);
+         GlStateManager.enableBlend();
+         GlStateManager.blendFunc(770, 771);
          this.golemBowtie.render(par7);
-         GL11.glDisable(GL11.GL_BLEND);
+         GlStateManager.disableBlend();
       }
 
       if (deco != null && deco.contains("P")) {
@@ -135,21 +136,21 @@ public class ModelGolemAccessories extends ModelBase {
 
       if (en.advanced) {
          this.golemHeadBrain.render(par7);
-         GL11.glPushMatrix();
-         GL11.glEnable(GL11.GL_BLEND);
-         GL11.glBlendFunc(770, 771);
+         GlStateManager.pushMatrix();
+         GlStateManager.enableBlend();
+         GlStateManager.blendFunc(770, 771);
          this.golemHeadJar.render(par7);
-         GL11.glDisable(GL11.GL_BLEND);
-         GL11.glPopMatrix();
+         GlStateManager.disableBlend();
+         GlStateManager.popMatrix();
          if (en.getCore() >= 0) {
-            GL11.glPushMatrix();
-            GL11.glScaled(1.01, 1.0F, 1.01);
+            GlStateManager.pushMatrix();
+            GlStateManager.scale(1.01, 1.0F, 1.01);
             this.golemEvilHead.render(par7);
-            GL11.glPopMatrix();
+            GlStateManager.popMatrix();
          }
       }
 
-      GL11.glPopMatrix();
+      GlStateManager.popMatrix();
    }
 
    public void setRotationAngles(float par1, float par2, float par3, float par4, float par5, float par6, EntityGolemBase en) {
@@ -189,29 +190,29 @@ public class ModelGolemAccessories extends ModelBase {
       EntityGolemBase var5 = (EntityGolemBase)par1EntityLiving;
       int var6 = var5.getActionTimer();
       if (var6 > 0) {
-         this.golemDartgun.rotateAngleX = -2.0F + 1.5F * this.func_78172_a((float)var6 - par4, 10.0F);
-         this.golemMace.rotateAngleX = -2.0F + 1.5F * this.func_78172_a((float)var6 - par4, 10.0F);
+         this.golemDartgun.rotateAngleX = -2.0F + 1.5F * this.triangleWave((float)var6 - par4, 10.0F);
+         this.golemMace.rotateAngleX = -2.0F + 1.5F * this.triangleWave((float)var6 - par4, 10.0F);
       } else if (var5.leftArm <= 0 && var5.rightArm <= 0) {
          if (var5.getCarriedForDisplay() != null) {
             this.golemDartgun.rotateAngleX = -1.0F;
             this.golemMace.rotateAngleX = -1.0F;
          } else {
-            this.golemDartgun.rotateAngleX = (-0.2F - 1.5F * this.func_78172_a(par2, 13.0F)) * par3;
-            this.golemMace.rotateAngleX = (-0.2F + 1.5F * this.func_78172_a(par2, 13.0F)) * par3;
+            this.golemDartgun.rotateAngleX = (-0.2F - 1.5F * this.triangleWave(par2, 13.0F)) * par3;
+            this.golemMace.rotateAngleX = (-0.2F + 1.5F * this.triangleWave(par2, 13.0F)) * par3;
          }
       } else {
          if (var5.leftArm > 0) {
-            this.golemDartgun.rotateAngleX = -2.0F + 1.5F * this.func_78172_a((float)var5.leftArm - par4, 10.0F);
+            this.golemDartgun.rotateAngleX = -2.0F + 1.5F * this.triangleWave((float)var5.leftArm - par4, 10.0F);
          }
 
          if (var5.rightArm > 0) {
-            this.golemMace.rotateAngleX = -2.0F + 1.5F * this.func_78172_a((float)var5.rightArm - par4, 10.0F);
+            this.golemMace.rotateAngleX = -2.0F + 1.5F * this.triangleWave((float)var5.rightArm - par4, 10.0F);
          }
       }
 
    }
 
-   private float func_78172_a(float par1, float par2) {
+   private float triangleWave(float par1, float par2) {
       return (Math.abs(par1 % par2 - par2 * 0.5F) - par2 * 0.25F) / (par2 * 0.25F);
    }
 }

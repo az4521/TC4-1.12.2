@@ -1,18 +1,21 @@
 package thaumcraft.common.entities;
 
-import cpw.mods.fml.common.registry.IEntityAdditionalSpawnData;
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
+import net.minecraftforge.fml.common.registry.IEntityAdditionalSpawnData;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import io.netty.buffer.ByteBuf;
 import java.util.List;
 import net.minecraft.block.Block;
 import net.minecraft.block.material.Material;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.MoverType;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.init.SoundEvents;
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.util.AxisAlignedBB;
 import net.minecraft.util.DamageSource;
-import net.minecraft.util.MathHelper;
+import net.minecraft.util.math.AxisAlignedBB;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
 import thaumcraft.api.aspects.Aspect;
 import thaumcraft.common.items.wands.ItemWandCasting;
@@ -28,15 +31,13 @@ public class EntityAspectOrb extends Entity implements IEntityAdditionalSpawnDat
    private EntityPlayer closestPlayer;
 
    public boolean isInRangeToRenderDist(double par1) {
-      double d1 = 0.5F;
-      d1 *= (double)64.0F * this.renderDistanceWeight;
+      double d1 = 64.0;
       return par1 < d1 * d1;
    }
 
    public EntityAspectOrb(World par1World, double par2, double par4, double par6, Aspect aspect, int par8) {
       super(par1World);
       this.setSize(0.125F, 0.125F);
-      this.yOffset = this.height / 2.0F;
       this.setPosition(par2, par4, par6);
       this.rotationYaw = (float)(Math.random() * (double)360.0F);
       this.motionX = (float)(Math.random() * (double)0.2F - (double)0.1F) * 2.0F;
@@ -53,16 +54,15 @@ public class EntityAspectOrb extends Entity implements IEntityAdditionalSpawnDat
    public EntityAspectOrb(World par1World) {
       super(par1World);
       this.setSize(0.125F, 0.125F);
-      this.yOffset = this.height / 2.0F;
    }
 
    protected void entityInit() {
    }
 
    @SideOnly(Side.CLIENT)
-   public int getBrightnessForRender(float par1) {
+   public int getBrightnessForRender() {
       float f1 = 0.5F;
-      int i = super.getBrightnessForRender(par1);
+      int i = super.getBrightnessForRender();
       int j = i & 255;
       int k = i >> 16 & 255;
       j += (int)(f1 * 15.0F * 16.0F);
@@ -83,22 +83,23 @@ public class EntityAspectOrb extends Entity implements IEntityAdditionalSpawnDat
       this.prevPosY = this.posY;
       this.prevPosZ = this.posZ;
       this.motionY -= 0.03F;
-      if (this.worldObj.getBlock(MathHelper.floor_double(this.posX), MathHelper.floor_double(this.posY), MathHelper.floor_double(this.posZ)).getMaterial() == Material.lava) {
+      BlockPos bp = new BlockPos(MathHelper.floor(this.posX), MathHelper.floor(this.posY), MathHelper.floor(this.posZ));
+      if (this.world.getBlockState(bp).getMaterial() == Material.LAVA) {
          this.motionY = 0.2F;
          this.motionX = (this.rand.nextFloat() - this.rand.nextFloat()) * 0.2F;
          this.motionZ = (this.rand.nextFloat() - this.rand.nextFloat()) * 0.2F;
-         this.playSound("random.fizz", 0.4F, 2.0F + this.rand.nextFloat() * 0.4F);
+         this.playSound(SoundEvents.BLOCK_LAVA_EXTINGUISH, 0.4F, 2.0F + this.rand.nextFloat() * 0.4F);
       }
 
-      this.func_145771_j(this.posX, (this.boundingBox.minY + this.boundingBox.maxY) / (double)2.0F, this.posZ);
+      this.pushOutOfBlocks(this.posX, (this.getEntityBoundingBox().minY + this.getEntityBoundingBox().maxY) / 2.0, this.posZ);
       double d0 = 8.0F;
       if (this.ticksExisted % 5 == 0 && this.closestPlayer == null) {
-         List<Entity> targets = this.worldObj.getEntitiesWithinAABB(EntityPlayer.class, AxisAlignedBB.getBoundingBox(this.posX, this.posY, this.posZ, this.posX, this.posY, this.posZ).expand(d0, d0, d0));
+         List<Entity> targets = this.world.getEntitiesWithinAABB(EntityPlayer.class, new AxisAlignedBB(this.posX, this.posY, this.posZ, this.posX, this.posY, this.posZ).grow(d0, d0, d0));
          if (!targets.isEmpty()) {
             double distance = Double.MAX_VALUE;
 
             for(Entity t : targets) {
-               double d = t.getDistanceSqToEntity(this);
+               double d = t.getDistanceSq(this);
                if (d < distance && InventoryUtils.isWandInHotbarWithRoom(this.getAspect(), this.aspectValue, (EntityPlayer)t) >= 0) {
                   distance = d;
                   this.closestPlayer = (EntityPlayer)t;
@@ -121,13 +122,15 @@ public class EntityAspectOrb extends Entity implements IEntityAdditionalSpawnDat
          }
       }
 
-      this.moveEntity(this.motionX, this.motionY, this.motionZ);
+      this.move(MoverType.SELF, this.motionX, this.motionY, this.motionZ);
       float f = 0.98F;
       if (this.onGround) {
-         f = 0.58800006F;
-         Block i = this.worldObj.getBlock(MathHelper.floor_double(this.posX), MathHelper.floor_double(this.boundingBox.minY) - 1, MathHelper.floor_double(this.posZ));
-         if (!i.isAir(this.worldObj, MathHelper.floor_double(this.posX), MathHelper.floor_double(this.boundingBox.minY) - 1, MathHelper.floor_double(this.posZ))) {
-            f = i.slipperiness * 0.98F;
+         BlockPos groundPos = new BlockPos(MathHelper.floor(this.posX), MathHelper.floor(this.getEntityBoundingBox().minY) - 1, MathHelper.floor(this.posZ));
+         Block groundBlock = this.world.getBlockState(groundPos).getBlock();
+         if (!this.world.isAirBlock(groundPos)) {
+            f = groundBlock.slipperiness * 0.98F;
+         } else {
+            f = 0.58800006F;
          }
       }
 
@@ -146,18 +149,17 @@ public class EntityAspectOrb extends Entity implements IEntityAdditionalSpawnDat
    }
 
    public boolean handleWaterMovement() {
-      return this.worldObj.handleMaterialAcceleration(this.boundingBox, Material.water, this);
+      return this.world.handleMaterialAcceleration(this.getEntityBoundingBox(), Material.WATER, this);
    }
 
    protected void dealFireDamage(int par1) {
-      this.attackEntityFrom(DamageSource.inFire, (float)par1);
+      this.attackEntityFrom(DamageSource.IN_FIRE, (float)par1);
    }
 
    public boolean attackEntityFrom(DamageSource par1DamageSource, float par2) {
-      if (this.isEntityInvulnerable()) {
+      if (this.isEntityInvulnerable(par1DamageSource)) {
          return false;
       } else {
-         this.setBeenAttacked();
          this.orbHealth = (int)((float)this.orbHealth - par2);
          if (this.orbHealth <= 0) {
             this.setDead();
@@ -182,13 +184,13 @@ public class EntityAspectOrb extends Entity implements IEntityAdditionalSpawnDat
    }
 
    public void onCollideWithPlayer(EntityPlayer par1EntityPlayer) {
-      if (!this.worldObj.isRemote) {
+      if (!this.world.isRemote) {
          int slot = InventoryUtils.isWandInHotbarWithRoom(this.getAspect(), this.aspectValue, par1EntityPlayer);
          if (this.orbCooldown == 0 && par1EntityPlayer.xpCooldown == 0 && this.getAspect().isPrimal() && slot >= 0) {
-            ItemWandCasting wand = (ItemWandCasting)par1EntityPlayer.inventory.mainInventory[slot].getItem();
-            wand.addVis(par1EntityPlayer.inventory.mainInventory[slot], this.getAspect(), this.aspectValue, true);
+            ItemWandCasting wand = (ItemWandCasting)par1EntityPlayer.inventory.mainInventory.get(slot).getItem();
+            wand.addVis(par1EntityPlayer.inventory.mainInventory.get(slot), this.getAspect(), this.aspectValue, true);
             par1EntityPlayer.xpCooldown = 2;
-            this.playSound("random.orb", 0.1F, 0.5F * ((this.rand.nextFloat() - this.rand.nextFloat()) * 0.7F + 1.8F));
+            this.playSound(SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP, 0.1F, 0.5F * ((this.rand.nextFloat() - this.rand.nextFloat()) * 0.7F + 1.8F));
             this.setDead();
          }
       }

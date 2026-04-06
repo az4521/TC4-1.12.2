@@ -1,10 +1,11 @@
 package thaumcraft.common.blocks;
 
 import net.minecraft.block.Block;
-import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.item.EnumRarity;
 import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
+import net.minecraft.world.World;
 
 import java.util.List;
 
@@ -22,16 +23,17 @@ public class BlockLootItem extends ItemBlock {
    public EnumRarity getRarity(ItemStack stack) {
       switch (stack.getItemDamage()) {
          case 1:
-            return EnumRarity.uncommon;
+            return EnumRarity.UNCOMMON;
          case 2:
-            return EnumRarity.rare;
+            return EnumRarity.RARE;
          default:
-            return EnumRarity.common;
+            return EnumRarity.COMMON;
       }
    }
 
-   public void addInformation(ItemStack stack, EntityPlayer player, List list, boolean par4) {
-      super.addInformation(stack, player, list, par4);
+   @Override
+   public void addInformation(ItemStack stack, World world, List<String> list, ITooltipFlag flag) {
+      super.addInformation(stack, world, list, flag);
       list.add(this.getRarity(stack).rarityName);
    }
 }

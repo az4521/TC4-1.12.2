@@ -3,19 +3,22 @@ package thaumcraft.common.entities.ai.interact;
 import com.mojang.authlib.GameProfile;
 import java.util.Iterator;
 
-import net.minecraft.block.Block;
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.ai.EntityAIBase;
 import net.minecraft.init.Blocks;
 import net.minecraft.inventory.IInventory;
-import net.minecraft.server.management.ItemInWorldManager;
+import net.minecraft.item.ItemStack;
+import net.minecraft.server.management.PlayerInteractionManager;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.ChunkCoordinates;
-import net.minecraft.util.MathHelper;
+import net.minecraft.util.EnumActionResult;
+import net.minecraft.util.EnumFacing;
+import net.minecraft.util.EnumHand;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
 import net.minecraftforge.common.util.FakePlayer;
 import net.minecraftforge.common.util.FakePlayerFactory;
-import net.minecraftforge.common.util.ForgeDirection;
 import thaumcraft.common.entities.golems.EntityGolemBase;
 import thaumcraft.common.entities.golems.GolemHelper;
 import thaumcraft.common.entities.golems.Marker;
@@ -28,24 +31,22 @@ public class AIUseItem extends EntityAIBase {
    private float movementSpeed;
    private float distance;
    private World theWorld;
-   private Block block;
-   private int blockMd;
+   private IBlockState blockState;
    FakePlayer player;
    private int count;
    private int color;
-   ItemInWorldManager im;
+   PlayerInteractionManager im;
    int nextTick;
 
    public AIUseItem(EntityGolemBase par1EntityCreature) {
-      this.block = Blocks.air;
-      this.blockMd = 0;
+      this.blockState = Blocks.AIR.getDefaultState();
       this.count = 0;
       this.color = -1;
       this.nextTick = 0;
       this.theGolem = par1EntityCreature;
-      this.theWorld = par1EntityCreature.worldObj;
+      this.theWorld = par1EntityCreature.world;
       this.setMutexBits(3);
-      this.distance = (float)MathHelper.ceiling_float_int(this.theGolem.getRange() / 3.0F);
+      this.distance = (float)MathHelper.ceil(this.theGolem.getRange() / 3.0F);
       if (this.theWorld instanceof WorldServer) {
          this.player = FakePlayerFactory.get((WorldServer)this.theWorld, new GameProfile(null, "FakeThaumcraftGolem"));
       }
@@ -59,12 +60,12 @@ public class AIUseItem extends EntityAIBase {
 
    public boolean shouldExecute() {
       boolean ignoreItem = false;
-      ChunkCoordinates home = this.theGolem.getHomePosition();
-      ForgeDirection facing = ForgeDirection.getOrientation(this.theGolem.homeFacing);
-      int cX = home.posX - facing.offsetX;
-      int cY = home.posY - facing.offsetY;
-      int cZ = home.posZ - facing.offsetZ;
-      TileEntity tile = this.theGolem.worldObj.getTileEntity(cX, cY, cZ);
+      BlockPos home = this.theGolem.getHomePosition();
+      EnumFacing facing = EnumFacing.byIndex(this.theGolem.homeFacing);
+      int cX = home.getX() - facing.getXOffset();
+      int cY = home.getY() - facing.getYOffset();
+      int cZ = home.getZ() - facing.getZOffset();
+      TileEntity tile = this.theGolem.world.getTileEntity(new BlockPos(cX, cY, cZ));
       if (!(tile instanceof IInventory)) {
          ignoreItem = true;
       }
@@ -74,7 +75,7 @@ public class AIUseItem extends EntityAIBase {
          d = 1;
       }
 
-      if ((this.theGolem.itemCarried != null || ignoreItem) && this.theGolem.ticksExisted >= this.nextTick && this.theGolem.getNavigator().noPath()) {
+      if ((!this.theGolem.itemCarried.isEmpty() || ignoreItem) && this.theGolem.ticksExisted >= this.nextTick && this.theGolem.getNavigator().noPath()) {
          this.nextTick = this.theGolem.ticksExisted + d * 3;
          return this.findSomething();
       } else {
@@ -83,7 +84,7 @@ public class AIUseItem extends EntityAIBase {
    }
 
    public boolean continueExecuting() {
-      return this.theWorld.getBlock(this.xx, this.yy, this.zz) == this.block && this.theWorld.getBlockMetadata(this.xx, this.yy, this.zz) == this.blockMd && this.count-- > 0 && !this.theGolem.getNavigator().noPath();
+      return this.theWorld.getBlockState(new BlockPos(this.xx, this.yy, this.zz)) == this.blockState && this.count-- > 0 && !this.theGolem.getNavigator().noPath();
    }
 
    public void updateTask() {
@@ -97,7 +98,7 @@ public class AIUseItem extends EntityAIBase {
 
    public void resetTask() {
       this.count = 0;
-      this.theGolem.getNavigator().clearPathEntity();
+      this.theGolem.getNavigator().clearPath();
    }
 
    public void startExecuting() {
@@ -106,61 +107,63 @@ public class AIUseItem extends EntityAIBase {
    }
 
    void click() {
-      ChunkCoordinates home = this.theGolem.getHomePosition();
+      BlockPos home = this.theGolem.getHomePosition();
       boolean ignoreItem = false;
-      ForgeDirection facing = ForgeDirection.getOrientation(this.theGolem.homeFacing);
-      int cX = home.posX - facing.offsetX;
-      int cY = home.posY - facing.offsetY;
-      int cZ = home.posZ - facing.offsetZ;
-      TileEntity tile = this.theGolem.worldObj.getTileEntity(cX, cY, cZ);
+      EnumFacing facing = EnumFacing.byIndex(this.theGolem.homeFacing);
+      int cX = home.getX() - facing.getXOffset();
+      int cY = home.getY() - facing.getYOffset();
+      int cZ = home.getZ() - facing.getZOffset();
+      TileEntity tile = this.theGolem.world.getTileEntity(new BlockPos(cX, cY, cZ));
       if (!(tile instanceof IInventory)) {
          ignoreItem = true;
       }
 
       this.player.setPositionAndRotation(this.theGolem.posX, this.theGolem.posY, this.theGolem.posZ, this.theGolem.rotationYaw, this.theGolem.rotationPitch);
-      this.player.setCurrentItemOrArmor(0, this.theGolem.itemCarried);
+      this.player.setHeldItem(EnumHand.MAIN_HAND, this.theGolem.itemCarried);
       this.player.setSneaking(this.theGolem.getToggles()[2]);
-      Iterator i$ = GolemHelper.getMarkedSides(this.theGolem, this.xx, this.yy, this.zz, this.theGolem.worldObj.provider.dimensionId, (byte)this.color).iterator();
+      Iterator i$ = GolemHelper.getMarkedSides(this.theGolem, this.xx, this.yy, this.zz, this.theGolem.world.provider.getDimension(), (byte)this.color).iterator();
       if (i$.hasNext()) {
          Integer side = (Integer)i$.next();
          int x = 0;
          int y = 0;
          int z = 0;
-         if (this.theGolem.worldObj.isAirBlock(this.xx, this.yy, this.zz)) {
-            x = ForgeDirection.getOrientation(side).getOpposite().offsetX;
-            y = ForgeDirection.getOrientation(side).getOpposite().offsetY;
-            z = ForgeDirection.getOrientation(side).getOpposite().offsetZ;
+         if (this.theGolem.world.isAirBlock(new BlockPos(this.xx, this.yy, this.zz))) {
+            x = EnumFacing.byIndex(side).getOpposite().getXOffset();
+            y = EnumFacing.byIndex(side).getOpposite().getYOffset();
+            z = EnumFacing.byIndex(side).getOpposite().getZOffset();
          }
 
          if (this.im == null) {
-            this.im = new ItemInWorldManager(this.theGolem.worldObj);
+            this.im = new PlayerInteractionManager(this.theGolem.world);
          }
 
-         if (this.theGolem.itemCarried == null && !ignoreItem) {
+         if (this.theGolem.itemCarried.isEmpty() && !ignoreItem) {
             this.resetTask();
          } else {
             try {
+               BlockPos targetPos = new BlockPos(this.xx + x, this.yy + y, this.zz + z);
+               EnumFacing targetFacing = EnumFacing.byIndex(side);
                if (this.theGolem.getToggles()[1]) {
                   this.theGolem.startLeftArmTimer();
-                  this.im.onBlockClicked(this.xx + x, this.yy + y, this.zz + z, side);
-               } else if (this.im.activateBlockOrUseItem(this.player, this.theGolem.worldObj, this.theGolem.itemCarried, this.xx + x, this.yy + y, this.zz + z, side, 0.5F, 0.5F, 0.5F)) {
+                  this.im.onBlockClicked(targetPos, targetFacing);
+               } else if (this.im.processRightClickBlock(this.player, this.theGolem.world, this.theGolem.itemCarried, EnumHand.MAIN_HAND, targetPos, targetFacing, 0.5F, 0.5F, 0.5F) == EnumActionResult.SUCCESS) {
                   this.theGolem.startRightArmTimer();
                }
 
-               this.theGolem.itemCarried = this.player.getCurrentEquippedItem();
-               if (this.theGolem.itemCarried.stackSize <= 0) {
-                  this.theGolem.itemCarried = null;
+               this.theGolem.itemCarried = this.player.getHeldItemMainhand();
+               if (this.theGolem.itemCarried.isEmpty()) {
+                  this.theGolem.itemCarried = ItemStack.EMPTY;
                }
 
-               for(int a = 1; a < this.player.inventory.mainInventory.length; ++a) {
-                  if (this.player.inventory.getStackInSlot(a) != null) {
-                     if (this.theGolem.itemCarried == null) {
+               for(int a = 1; a < this.player.inventory.mainInventory.size(); ++a) {
+                  if (!this.player.inventory.getStackInSlot(a).isEmpty()) {
+                     if (this.theGolem.itemCarried.isEmpty()) {
                         this.theGolem.itemCarried = this.player.inventory.getStackInSlot(a).copy();
                      } else {
-                        this.player.dropPlayerItemWithRandomChoice(this.player.inventory.getStackInSlot(a), false);
+                        this.player.dropItem(this.player.inventory.getStackInSlot(a), false);
                      }
 
-                     this.player.inventory.setInventorySlotContents(a, null);
+                     this.player.inventory.setInventorySlotContents(a, ItemStack.EMPTY);
                   }
                }
 
@@ -176,15 +179,14 @@ public class AIUseItem extends EntityAIBase {
    boolean findSomething() {
       for(byte col : this.theGolem.getColorsMatching(this.theGolem.itemCarried)) {
          for(Marker marker : this.theGolem.getMarkers()) {
-            if ((marker.color == col || col == -1) && (!this.theGolem.getToggles()[0] || this.theGolem.worldObj.isAirBlock(marker.x, marker.y, marker.z)) && (this.theGolem.getToggles()[0] || !this.theGolem.worldObj.isAirBlock(marker.x, marker.y, marker.z))) {
-               ForgeDirection opp = ForgeDirection.getOrientation(marker.side);
-               if (this.theGolem.worldObj.isAirBlock(marker.x + opp.offsetX, marker.y + opp.offsetY, marker.z + opp.offsetZ)) {
+            if ((marker.color == col || col == -1) && (!this.theGolem.getToggles()[0] || this.theGolem.world.isAirBlock(new BlockPos(marker.x, marker.y, marker.z))) && (this.theGolem.getToggles()[0] || !this.theGolem.world.isAirBlock(new BlockPos(marker.x, marker.y, marker.z)))) {
+               EnumFacing opp = EnumFacing.byIndex(marker.side);
+               if (this.theGolem.world.isAirBlock(new BlockPos(marker.x + opp.getXOffset(), marker.y + opp.getYOffset(), marker.z + opp.getZOffset()))) {
                   this.color = col;
                   this.xx = marker.x;
                   this.yy = marker.y;
                   this.zz = marker.z;
-                  this.block = this.theWorld.getBlock(this.xx, this.yy, this.zz);
-                  this.blockMd = this.theWorld.getBlockMetadata(this.xx, this.yy, this.zz);
+                  this.blockState = this.theWorld.getBlockState(new BlockPos(this.xx, this.yy, this.zz));
                   return true;
                }
             }

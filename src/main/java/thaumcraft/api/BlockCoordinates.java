@@ -27,9 +27,9 @@ public class BlockCoordinates implements Comparable<BlockCoordinates>
     
     public BlockCoordinates(TileEntity tile)
     {
-        this.x = tile.xCoord;
-        this.y = tile.yCoord;
-        this.z = tile.zCoord;
+        this.x = tile.getPos().getX();
+        this.y = tile.getPos().getY();
+        this.z = tile.getPos().getZ();
     }
 
     public BlockCoordinates(BlockCoordinates par1ChunkCoordinates)
@@ -84,7 +84,7 @@ public class BlockCoordinates implements Comparable<BlockCoordinates>
     }
 
     /**
-     * Return the squared distance between this coordinates and the ChunkCoordinates given as argument.
+     * Return the squared distance between this coordinates and the BlockPos given as argument.
      */
     public float getDistanceSquaredToWorldCoordinates(BlockCoordinates par1ChunkCoordinates)
     {

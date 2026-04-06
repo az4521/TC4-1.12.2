@@ -1,17 +1,18 @@
 package thaumcraft.client.gui;
 
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import java.awt.Color;
 import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.InventoryPlayer;
-import net.minecraft.util.MathHelper;
-import org.lwjgl.opengl.GL11;
+import net.minecraft.util.math.MathHelper;
+
 import thaumcraft.api.aspects.Aspect;
 import thaumcraft.client.lib.UtilsFX;
 import thaumcraft.common.container.ContainerThaumatorium;
 import thaumcraft.common.tiles.TileThaumatorium;
+import net.minecraft.client.renderer.GlStateManager;
 
 @SideOnly(Side.CLIENT)
 public class GuiThaumatorium extends GuiContainer {
@@ -49,11 +50,11 @@ public class GuiThaumatorium extends GuiContainer {
    }
 
    protected void drawGuiContainerBackgroundLayer(float par1, int mx, int my) {
-      GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+      GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
       UtilsFX.bindTexture("textures/gui/gui_thaumatorium.png");
       int k = (this.width - this.xSize) / 2;
       int l = (this.height - this.ySize) / 2;
-      GL11.glEnable(GL11.GL_BLEND);
+      GlStateManager.enableBlend();
       this.drawTexturedModalRect(k, l, 0, 0, this.xSize, this.ySize);
       if (this.index >= this.container.recipes.size()) {
          this.index = this.container.recipes.size() - 1;
@@ -103,37 +104,37 @@ public class GuiThaumatorium extends GuiContainer {
             int x = mx - (k + 112);
             int y = my - (l + 16);
             if (x >= 0 && y >= 0 && x < 16 && y < 16 || this.inventory.recipeHash.contains(this.container.recipes.get(this.index).hash)) {
-               GL11.glPushMatrix();
-               GL11.glEnable(GL11.GL_BLEND);
+               GlStateManager.pushMatrix();
+               GlStateManager.enableBlend();
                this.drawTexturedModalRect(k + 104, l + 8, 176, 96, 48, 48);
-               GL11.glDisable(GL11.GL_BLEND);
-               GL11.glPopMatrix();
+               GlStateManager.disableBlend();
+               GlStateManager.popMatrix();
             }
 
-            GL11.glPushMatrix();
-            GL11.glEnable(GL11.GL_BLEND);
-            float alpha = 0.6F + MathHelper.sin((float)this.mc.thePlayer.ticksExisted / 5.0F) * 0.4F + 0.4F;
-            GL11.glColor4f(1.0F, 1.0F, 1.0F, alpha);
+            GlStateManager.pushMatrix();
+            GlStateManager.enableBlend();
+            float alpha = 0.6F + MathHelper.sin((float)this.mc.player.ticksExisted / 5.0F) * 0.4F + 0.4F;
+            GlStateManager.color(1.0F, 1.0F, 1.0F, alpha);
             this.drawTexturedModalRect(k + 88, l + 16, 176, 56, 24, 24);
-            GL11.glDisable(GL11.GL_BLEND);
-            GL11.glPopMatrix();
+            GlStateManager.disableBlend();
+            GlStateManager.popMatrix();
          }
 
          this.drawAspects(k, l);
          this.drawOutput(k, l, mx, my);
          if (this.inventory.maxRecipes > 1) {
-            GL11.glPushMatrix();
-            GL11.glTranslatef((float)(k + 136), (float)(l + 33), 0.0F);
-            GL11.glScalef(0.5F, 0.5F, 0.0F);
+            GlStateManager.pushMatrix();
+            GlStateManager.translate((float)(k + 136), (float)(l + 33), 0.0F);
+            GlStateManager.scale(0.5F, 0.5F, 0.0F);
             String text = this.inventory.recipeHash.size() + "/" + this.inventory.maxRecipes;
-            int ll = this.fontRendererObj.getStringWidth(text) / 2;
-            this.fontRendererObj.drawString(text, -ll, 0, 16777215);
-            GL11.glScalef(1.0F, 1.0F, 1.0F);
-            GL11.glPopMatrix();
+            int ll = this.fontRenderer.getStringWidth(text) / 2;
+            this.fontRenderer.drawString(text, -ll, 0, 16777215);
+            GlStateManager.scale(1.0F, 1.0F, 1.0F);
+            GlStateManager.popMatrix();
          }
       }
 
-      GL11.glDisable(GL11.GL_BLEND);
+      GlStateManager.disableBlend();
    }
 
    private void drawAspects(int k, int l) {
@@ -142,14 +143,14 @@ public class GuiThaumatorium extends GuiContainer {
       if (this.inventory.recipeHash.contains(this.container.recipes.get(this.index).hash)) {
          for(Aspect aspect : this.container.recipes.get(this.index).aspects.getAspectsSorted()) {
             if (count >= this.startAspect) {
-               GL11.glPushMatrix();
-               GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+               GlStateManager.pushMatrix();
+               GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
                this.drawTexturedModalRect(k + 41 + 16 * pos, l + 57, 176, 8, 14, 6);
                int i1 = (int)((float)this.inventory.essentia.getAmount(aspect) / (float) this.container.recipes.get(this.index).aspects.getAmount(aspect) * 12.0F);
                Color c = new Color(aspect.getColor());
-               GL11.glColor4f((float)c.getRed() / 255.0F, (float)c.getGreen() / 255.0F, (float)c.getBlue() / 255.0F, 1.0F);
+               GlStateManager.color((float)c.getRed() / 255.0F, (float)c.getGreen() / 255.0F, (float)c.getBlue() / 255.0F, 1.0F);
                this.drawTexturedModalRect(k + 42 + 16 * pos, l + 58, 176, 0, i1, 4);
-               GL11.glPopMatrix();
+               GlStateManager.popMatrix();
                ++pos;
             }
 
@@ -178,20 +179,19 @@ public class GuiThaumatorium extends GuiContainer {
    }
 
    private void drawOutput(int x, int y, int mx, int my) {
-      GL11.glPushMatrix();
+      GlStateManager.pushMatrix();
       boolean dull = false;
       if (this.inventory.recipeHash.size() < this.inventory.maxRecipes || this.inventory.recipeHash.contains(this.container.recipes.get(this.index).hash)) {
          dull = true;
-         float alpha = 0.3F + MathHelper.sin((float)this.mc.thePlayer.ticksExisted / 4.0F) * 0.3F + 0.3F;
-         GL11.glColor4f(0.5F, 0.5F, 0.5F, alpha);
-         itemRender.renderWithColor = false;
+         float alpha = 0.3F + MathHelper.sin((float)this.mc.player.ticksExisted / 4.0F) * 0.3F + 0.3F;
+         GlStateManager.color(0.5F, 0.5F, 0.5F, alpha);
       }
 
-      GL11.glEnable(2896);
-      GL11.glEnable(2884);
-      GL11.glEnable(GL11.GL_BLEND);
-      itemRender.renderItemAndEffectIntoGUI(this.mc.fontRenderer, this.mc.renderEngine, this.container.recipes.get(this.index).getRecipeOutput(), x + 112, y + 16);
-      itemRender.renderItemOverlayIntoGUI(this.mc.fontRenderer, this.mc.renderEngine, this.container.recipes.get(this.index).getRecipeOutput(), x + 112, y + 16);
+      GlStateManager.enableLighting();
+      GlStateManager.enableCull();
+      GlStateManager.enableBlend();
+      itemRender.renderItemAndEffectIntoGUI(this.container.recipes.get(this.index).getRecipeOutput(), x + 112, y + 16);
+      itemRender.renderItemOverlayIntoGUI(this.fontRenderer, this.container.recipes.get(this.index).getRecipeOutput(), x + 112, y + 16, null);
       int xx = mx - (x + 112);
       int yy = my - (y + 16);
       if (xx >= 0 && yy >= 0 && xx < 16 && yy < 16) {
@@ -199,15 +199,14 @@ public class GuiThaumatorium extends GuiContainer {
       }
 
       if (dull) {
-         itemRender.renderWithColor = true;
       }
 
-      GL11.glDisable(GL11.GL_BLEND);
-      GL11.glDisable(2896);
-      GL11.glPopMatrix();
+      GlStateManager.disableBlend();
+      GlStateManager.disableLighting();
+      GlStateManager.popMatrix();
    }
 
-   protected void mouseClicked(int mx, int my, int par3) {
+   protected void mouseClicked(int mx, int my, int par3) throws java.io.IOException {
       super.mouseClicked(mx, my, par3);
       int gx = (this.width - this.xSize) / 2;
       int gy = (this.height - this.ySize) / 2;
@@ -263,10 +262,10 @@ public class GuiThaumatorium extends GuiContainer {
    }
 
    private void playButtonSelect() {
-      this.mc.renderViewEntity.worldObj.playSound(this.mc.renderViewEntity.posX, this.mc.renderViewEntity.posY, this.mc.renderViewEntity.posZ, "thaumcraft:hhon", 0.3F, 1.0F, false);
+      {net.minecraft.entity.Entity _rve = this.mc.getRenderViewEntity(); if (_rve != null) {net.minecraft.util.SoundEvent _snd = net.minecraft.util.SoundEvent.REGISTRY.getObject(new net.minecraft.util.ResourceLocation("thaumcraft:hhon")); if (_snd != null) _rve.world.playSound(null, new net.minecraft.util.math.BlockPos(_rve.posX, _rve.posY, _rve.posZ), _snd, net.minecraft.util.SoundCategory.PLAYERS, 0.3F, 1.0F); }}
    }
 
    private void playButtonClick() {
-      this.mc.renderViewEntity.worldObj.playSound(this.mc.renderViewEntity.posX, this.mc.renderViewEntity.posY, this.mc.renderViewEntity.posZ, "thaumcraft:cameraclack", 0.4F, 1.0F, false);
+      {net.minecraft.entity.Entity _rve = this.mc.getRenderViewEntity(); if (_rve != null) {net.minecraft.util.SoundEvent _snd = net.minecraft.util.SoundEvent.REGISTRY.getObject(new net.minecraft.util.ResourceLocation("thaumcraft:cameraclack")); if (_snd != null) _rve.world.playSound(null, new net.minecraft.util.math.BlockPos(_rve.posX, _rve.posY, _rve.posZ), _snd, net.minecraft.util.SoundCategory.PLAYERS, 0.4F, 1.0F); }}
    }
 }

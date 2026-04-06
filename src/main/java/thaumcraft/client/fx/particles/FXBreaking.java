@@ -1,24 +1,30 @@
 package thaumcraft.client.fx.particles;
 
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
-import net.minecraft.client.particle.EntityFX;
-import net.minecraft.client.renderer.Tessellator;
-import net.minecraft.init.Blocks;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
+import net.minecraft.client.particle.Particle;
+import net.minecraft.entity.Entity;
 import net.minecraft.item.Item;
 import net.minecraft.world.World;
+import net.minecraft.client.renderer.BufferBuilder;
+import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 
 @SideOnly(Side.CLIENT)
-public class FXBreaking extends EntityFX {
+public class FXBreaking extends Particle {
    public void setParticleMaxAge(int particleMaxAge) {
       this.particleMaxAge = particleMaxAge;
    }
 
+   public void setMotion(double mx, double my, double mz) {
+      this.motionX = mx;
+      this.motionY = my;
+      this.motionZ = mz;
+   }
+
    public FXBreaking(World par1World, double par2, double par4, double par6, Item par8Item) {
       super(par1World, par2, par4, par6, 0.0F, 0.0F, 0.0F);
-      this.setParticleIcon(par8Item.getIconFromDamage(0));
       this.particleRed = this.particleGreen = this.particleBlue = 1.0F;
-      this.particleGravity = Blocks.snow_layer.blockParticleGravity;
+      this.particleGravity = 0.2F;
       this.particleScale /= 2.0F;
    }
 
@@ -36,29 +42,21 @@ public class FXBreaking extends EntityFX {
       return 2;
    }
 
-   public void renderParticle(Tessellator par1Tessellator, float par2, float par3, float par4, float par5, float par6, float par7) {
-      float f6 = ((float)this.particleTextureIndexX + this.particleTextureJitterX / 4.0F) / 16.0F;
-      float f7 = f6 + 0.015609375F;
-      float f8 = ((float)this.particleTextureIndexY + this.particleTextureJitterY / 4.0F) / 16.0F;
-      float f9 = f8 + 0.015609375F;
+   public void renderParticle(BufferBuilder buffer, Entity entityIn, float par2, float par3, float par4, float par5, float par6, float par7) {
+      float f6 = this.particleTexture != null ? this.particleTexture.getMinU() : 0.0F;
+      float f7 = this.particleTexture != null ? this.particleTexture.getMaxU() : 1.0F;
+      float f8 = this.particleTexture != null ? this.particleTexture.getMinV() : 0.0F;
+      float f9 = this.particleTexture != null ? this.particleTexture.getMaxV() : 1.0F;
       float f10 = 0.1F * this.particleScale;
       float fade = 1.0F - (float)this.particleAge / (float)this.particleMaxAge;
       f10 *= fade;
-      if (this.particleIcon != null) {
-         f6 = this.particleIcon.getInterpolatedU(this.particleTextureJitterX / 4.0F * 16.0F);
-         f7 = this.particleIcon.getInterpolatedU((this.particleTextureJitterX + 1.0F) / 4.0F * 16.0F);
-         f8 = this.particleIcon.getInterpolatedV(this.particleTextureJitterY / 4.0F * 16.0F);
-         f9 = this.particleIcon.getInterpolatedV((this.particleTextureJitterY + 1.0F) / 4.0F * 16.0F);
-      }
-
       float f11 = (float)(this.prevPosX + (this.posX - this.prevPosX) * (double)par2 - interpPosX);
       float f12 = (float)(this.prevPosY + (this.posY - this.prevPosY) * (double)par2 - interpPosY);
       float f13 = (float)(this.prevPosZ + (this.posZ - this.prevPosZ) * (double)par2 - interpPosZ);
-      float f14 = 1.0F;
-      par1Tessellator.setColorRGBA_F(f14 * this.particleRed, f14 * this.particleGreen, f14 * this.particleBlue, this.particleAlpha * fade);
-      par1Tessellator.addVertexWithUV(f11 - par3 * f10 - par6 * f10, f12 - par4 * f10, f13 - par5 * f10 - par7 * f10, f6, f9);
-      par1Tessellator.addVertexWithUV(f11 - par3 * f10 + par6 * f10, f12 + par4 * f10, f13 - par5 * f10 + par7 * f10, f6, f8);
-      par1Tessellator.addVertexWithUV(f11 + par3 * f10 + par6 * f10, f12 + par4 * f10, f13 + par5 * f10 + par7 * f10, f7, f8);
-      par1Tessellator.addVertexWithUV(f11 + par3 * f10 - par6 * f10, f12 - par4 * f10, f13 + par5 * f10 - par7 * f10, f7, f9);
+      float r = this.particleRed, g = this.particleGreen, b = this.particleBlue;
+      buffer.pos(f11 - par3 * f10 - par6 * f10, f12 - par4 * f10, f13 - par5 * f10 - par7 * f10).tex(f6, f9).color(r, g, b, 1.0f).endVertex();
+      buffer.pos(f11 - par3 * f10 + par6 * f10, f12 + par4 * f10, f13 - par5 * f10 + par7 * f10).tex(f6, f8).color(r, g, b, 1.0f).endVertex();
+      buffer.pos(f11 + par3 * f10 + par6 * f10, f12 + par4 * f10, f13 + par5 * f10 + par7 * f10).tex(f7, f8).color(r, g, b, 1.0f).endVertex();
+      buffer.pos(f11 + par3 * f10 - par6 * f10, f12 - par4 * f10, f13 + par5 * f10 - par7 * f10).tex(f7, f9).color(r, g, b, 1.0f).endVertex();
    }
 }

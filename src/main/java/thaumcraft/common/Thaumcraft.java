@@ -1,17 +1,17 @@
 package thaumcraft.common;
 
-import cpw.mods.fml.client.event.ConfigChangedEvent;
-import cpw.mods.fml.common.FMLCommonHandler;
-import cpw.mods.fml.common.Mod;
-import cpw.mods.fml.common.SidedProxy;
-import cpw.mods.fml.common.Mod.EventHandler;
-import cpw.mods.fml.common.Mod.Instance;
-import cpw.mods.fml.common.event.*;
-import cpw.mods.fml.common.eventhandler.SubscribeEvent;
-import cpw.mods.fml.common.network.NetworkRegistry;
-import cpw.mods.fml.common.network.simpleimpl.SimpleNetworkWrapper;
-import cpw.mods.fml.common.registry.GameRegistry;
-import cpw.mods.fml.common.registry.VillagerRegistry;
+import net.minecraftforge.fml.client.event.ConfigChangedEvent;
+import net.minecraftforge.fml.common.FMLCommonHandler;
+import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.common.SidedProxy;
+import net.minecraftforge.fml.common.Mod.EventHandler;
+import net.minecraftforge.fml.common.Mod.Instance;
+import net.minecraftforge.fml.common.event.*;
+import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import net.minecraftforge.fml.common.network.NetworkRegistry;
+import net.minecraftforge.fml.common.network.simpleimpl.SimpleNetworkWrapper;
+import net.minecraftforge.fml.common.registry.GameRegistry;
+import net.minecraftforge.fml.common.registry.VillagerRegistry;
 import java.io.File;
 
 import net.minecraft.block.BlockDispenser;
@@ -21,7 +21,8 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.world.biome.BiomeGenBase;
+import net.minecraft.world.DimensionType;
+import net.minecraft.world.biome.Biome;
 import net.minecraft.world.gen.structure.MapGenStructureIO;
 import net.minecraftforge.common.DimensionManager;
 import net.minecraftforge.common.MinecraftForge;
@@ -73,10 +74,10 @@ import static thaumcraft.common.Thaumcraft.VERSION;
    name = Thaumcraft.MOD_NAME,
    version = VERSION,
    guiFactory = "thaumcraft.client.ThaumcraftGuiFactory",
-   dependencies = "required-after:Forge@[10.13.2,);required-after:Baubles@[1.0.1.10,)"
+   dependencies = "required-after:forge@[14.23.5,);required-after:baubles@[1.0.1.10,)"
 )
 public class Thaumcraft {
-   public static final String MOD_ID = "Thaumcraft";
+   public static final String MOD_ID = "thaumcraft";
    public static final String MOD_NAME = "Thaumcraft";
    public static final String VERSION = "4.2.3.5";
    @SidedProxy(
@@ -85,7 +86,7 @@ public class Thaumcraft {
    )
    public static CommonProxy proxy;
 
-   @Instance("Thaumcraft")
+   @Instance("thaumcraft")
    public static Thaumcraft instance;
    ResearchManager researchManager;
    public ThaumcraftWorldGenerator worldGen;
@@ -98,9 +99,9 @@ public class Thaumcraft {
    public File modDir;
    public static final Logger log = LogManager.getLogger("THAUMCRAFT");
    public static boolean isHalloween = false;
-   public static CreativeTabs tabTC = new CreativeTabThaumcraft(CreativeTabs.getNextID(), "thaumcraft");
+   public static CreativeTabs tabTC = new CreativeTabThaumcraft("thaumcraft");
    public boolean aspectShift = false;
-   public final MyNet CHANNEL = new MyNet(MOD_ID);
+   public final MyNet CHANNEL = new MyNet("tc4tweak");
 
    @EventHandler
    public void preInit(FMLPreInitializationEvent event) {
@@ -116,6 +117,11 @@ public class Thaumcraft {
             Config.save();
          }
       }
+
+      MinecraftForge.EVENT_BUS.register(this);
+
+      // Fluids must be registered during preInit — force ConfigBlocks class load and register
+      thaumcraft.common.config.ConfigBlocks.registerFluids();
 
       ThaumcraftApi.internalMethods = new InternalMethodHandler();
       proxy.playerKnowledge = new PlayerKnowledge();
@@ -142,8 +148,8 @@ public class Thaumcraft {
       ConfigItems.init();
 
       try {
-         MapGenStructureIO.func_143031_a(ComponentWizardTower.class, "TCVillageTower");
-         MapGenStructureIO.func_143031_a(ComponentBankerHome.class, "TCVillageBanker");
+         MapGenStructureIO.registerStructureComponent(ComponentWizardTower.class, "TCVillageTower");
+         MapGenStructureIO.registerStructureComponent(ComponentBankerHome.class, "TCVillageBanker");
       } catch (Throwable var7) {
          log.error("[Thaumcraft] Village tower could not be registered.");
          var7.printStackTrace();
@@ -165,19 +171,17 @@ public class Thaumcraft {
    public void init(FMLInitializationEvent evt) {
       proxy.registerDisplayInformation();
       ConfigEntities.init();
-      BlockDispenser.dispenseBehaviorRegistry.putObject(ConfigItems.itemResource, new BehaviorDispenseAlumetum());
+      BlockDispenser.DISPENSE_BEHAVIOR_REGISTRY.putObject(ConfigItems.itemResource, new BehaviorDispenseAlumetum());
       NetworkRegistry.INSTANCE.registerGuiHandler(instance, proxy);
       VillageWizardManager villageManagerWizard = new VillageWizardManager();
       VillageBankerManager villageManagerBanker = new VillageBankerManager();
-      VillagerRegistry.instance().registerVillagerId(ConfigEntities.entWizardId);
-      VillagerRegistry.instance().registerVillagerId(ConfigEntities.entBankerId);
+      // registerVillagerId removed in 1.12.2; profession-based system used instead
       VillagerRegistry.instance().registerVillageCreationHandler(villageManagerWizard);
       VillagerRegistry.instance().registerVillageCreationHandler(villageManagerBanker);
-      VillagerRegistry.instance().registerVillageTradeHandler(ConfigEntities.entWizardId, villageManagerWizard);
-      VillagerRegistry.instance().registerVillageTradeHandler(ConfigEntities.entBankerId, villageManagerBanker);
+      // registerVillageTradeHandler removed in 1.12.2; trades attached to VillagerProfession/Career objects
       proxy.registerKeyBindings();
-      DimensionManager.registerProviderType(Config.dimensionOuterId, WorldProviderOuter.class, false);
-      DimensionManager.registerDimension(Config.dimensionOuterId, Config.dimensionOuterId);
+      DimensionType outerDimType = DimensionType.register("outer_lands", "_outer", Config.dimensionOuterId, WorldProviderOuter.class, false);
+      DimensionManager.registerDimension(Config.dimensionOuterId, outerDimType);
       proxy.init(evt);
    }
 
@@ -245,11 +249,11 @@ public class Thaumcraft {
 
          if (message.key.equals("biomeBlacklist") && message.isStringMessage()) {
             String[] t = message.getStringValue().split(":");
-            if (t != null && t.length == 2 && BiomeGenBase.getBiome(Integer.parseInt(t[0])) != null) {
+            if (t != null && t.length == 2 && Biome.getBiome(Integer.parseInt(t[0])) != null) {
                try {
                   ThaumcraftWorldGenerator var20 = this.worldGen;
                   ThaumcraftWorldGenerator.addBiomeBlacklist(Integer.parseInt(t[0]), Integer.parseInt(t[1]));
-                   log.warn("Blacklisting [{}] to only spawn TC content at level [{}]", BiomeGenBase.getBiome(Integer.parseInt(t[0])).biomeName, Integer.parseInt(t[1]));
+                   log.warn("Blacklisting [{}] to only spawn TC content at level [{}]", Biome.getBiome(Integer.parseInt(t[0])).getBiomeName(), Integer.parseInt(t[1]));
                } catch (Exception ignored) {
                }
             }
@@ -258,7 +262,7 @@ public class Thaumcraft {
          if (message.key.equals("championWhiteList") && message.isStringMessage()) {
             try {
                String[] t = message.getStringValue().split(":");
-               Class oclass = (Class)EntityList.stringToClassMapping.get(t[0]);
+               Class oclass = EntityList.getClassFromName(t[0]);
                if (oclass != null) {
                   ConfigEntities.championModWhitelist.put(oclass, Integer.parseInt(t[1]));
                    log.warn("Whitelisting [{}] to spawn champion mobs at level [{}]", t[0], Integer.parseInt(t[1]));
@@ -285,7 +289,7 @@ public class Thaumcraft {
 
    @SubscribeEvent
    public void onConfigChanged(ConfigChangedEvent.OnConfigChangedEvent eventArgs) {
-      if (eventArgs.modID.equals("Thaumcraft")) {
+      if (eventArgs.getModID().equals("Thaumcraft")) {
          Config.syncConfigurable();
          if (Config.config != null && Config.config.hasChanged()) {
             Config.save();
@@ -298,25 +302,25 @@ public class Thaumcraft {
       if (player instanceof FakeThaumcraftPlayer || player instanceof FakePlayer) {
          return;
       }
-      if (!player.worldObj.isRemote) {
+      if (!player.world.isRemote) {
          if (proxy.getPlayerKnowledge() != null) {
             if (temporary || amount >= 0) {
                if (amount != 0) {
                   if (temporary) {
-                     if (amount < 0 && proxy.getPlayerKnowledge().getWarpTemp(player.getCommandSenderName()) <= 0) {
+                     if (amount < 0 && proxy.getPlayerKnowledge().getWarpTemp(player.getName()) <= 0) {
                         return;
                      }
 
-                     proxy.getPlayerKnowledge().addWarpTemp(player.getCommandSenderName(), amount);
+                     proxy.getPlayerKnowledge().addWarpTemp(player.getName(), amount);
                      PacketHandler.INSTANCE.sendTo(new PacketSyncWarp(player, (byte)2), (EntityPlayerMP)player);
                      PacketHandler.INSTANCE.sendTo(new PacketWarpMessage(player, (byte)2, amount), (EntityPlayerMP)player);
                   } else {
-                     proxy.getPlayerKnowledge().addWarpPerm(player.getCommandSenderName(), amount);
+                     proxy.getPlayerKnowledge().addWarpPerm(player.getName(), amount);
                      PacketHandler.INSTANCE.sendTo(new PacketSyncWarp(player, (byte)0), (EntityPlayerMP)player);
                      PacketHandler.INSTANCE.sendTo(new PacketWarpMessage(player, (byte)0, amount), (EntityPlayerMP)player);
                   }
 
-                  proxy.getPlayerKnowledge().setWarpCounter(player.getCommandSenderName(), proxy.getPlayerKnowledge().getWarpTotal(player.getCommandSenderName()));
+                  proxy.getPlayerKnowledge().setWarpCounter(player.getName(), proxy.getPlayerKnowledge().getWarpTotal(player.getName()));
                }
             }
          }
@@ -327,17 +331,28 @@ public class Thaumcraft {
       if (player instanceof FakeThaumcraftPlayer || player instanceof FakePlayer) {
          return;
       }
-      if (!player.worldObj.isRemote) {
+      if (!player.world.isRemote) {
          if (proxy.getPlayerKnowledge() != null) {
             if (amount != 0) {
-               if (amount >= 0 || proxy.getPlayerKnowledge().getWarpSticky(player.getCommandSenderName()) > 0) {
-                  proxy.getPlayerKnowledge().addWarpSticky(player.getCommandSenderName(), amount);
+               if (amount >= 0 || proxy.getPlayerKnowledge().getWarpSticky(player.getName()) > 0) {
+                  proxy.getPlayerKnowledge().addWarpSticky(player.getName(), amount);
                   PacketHandler.INSTANCE.sendTo(new PacketSyncWarp(player, (byte)1), (EntityPlayerMP)player);
                   PacketHandler.INSTANCE.sendTo(new PacketWarpMessage(player, (byte)1, amount), (EntityPlayerMP)player);
-                  proxy.getPlayerKnowledge().setWarpCounter(player.getCommandSenderName(), proxy.getPlayerKnowledge().getWarpTotal(player.getCommandSenderName()));
+                  proxy.getPlayerKnowledge().setWarpCounter(player.getName(), proxy.getPlayerKnowledge().getWarpTotal(player.getName()));
                }
             }
          }
       }
+   }
+
+   @SubscribeEvent
+   public void registerBiomes(net.minecraftforge.event.RegistryEvent.Register<Biome> event) {
+      Config.registerBiomes(event.getRegistry());
+   }
+
+   @SubscribeEvent
+   public void registerEnchantments(net.minecraftforge.event.RegistryEvent.Register<net.minecraft.enchantment.Enchantment> event) {
+      event.getRegistry().register(Config.enchHaste.setRegistryName("thaumcraft:haste"));
+      event.getRegistry().register(Config.enchRepair.setRegistryName("thaumcraft:repair"));
    }
 }

@@ -1,7 +1,7 @@
 package thaumcraft.common.tiles;
 
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Items;
 import net.minecraft.inventory.ISidedInventory;
@@ -9,18 +9,19 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.network.NetworkManager;
-import net.minecraft.network.play.server.S35PacketUpdateTileEntity;
+import net.minecraft.network.play.server.SPacketUpdateTileEntity;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.tileentity.TileEntityFurnace;
-import net.minecraft.world.EnumSkyBlock;
-import net.minecraftforge.common.util.ForgeDirection;
+import net.minecraft.util.EnumFacing;
+import net.minecraft.util.ITickable;
 import thaumcraft.api.TileThaumcraft;
 import thaumcraft.api.aspects.Aspect;
 import thaumcraft.api.aspects.AspectList;
 import thaumcraft.common.config.ConfigItems;
 import thaumcraft.common.lib.crafting.ThaumcraftCraftingManager;
+import net.minecraft.util.math.BlockPos;
 
-public class TileAlchemyFurnace extends TileThaumcraft implements ISidedInventory {
+public class TileAlchemyFurnace extends TileThaumcraft implements ISidedInventory, ITickable {
    private static final int[] slots_bottom = new int[]{1};
    private static final int[] slots_top = new int[0];
    private static final int[] slots_sides = new int[]{0};
@@ -42,18 +43,18 @@ public class TileAlchemyFurnace extends TileThaumcraft implements ISidedInventor
    }
 
    public ItemStack getStackInSlot(int par1) {
-      return this.furnaceItemStacks[par1];
+      ItemStack s = this.furnaceItemStacks[par1]; return s != null ? s : ItemStack.EMPTY;
    }
 
    public ItemStack decrStackSize(int par1, int par2) {
       if (this.furnaceItemStacks[par1] != null) {
           ItemStack itemstack;
-          if (this.furnaceItemStacks[par1].stackSize <= par2) {
+          if (this.furnaceItemStacks[par1].getCount() <= par2) {
               itemstack = this.furnaceItemStacks[par1];
             this.furnaceItemStacks[par1] = null;
           } else {
               itemstack = this.furnaceItemStacks[par1].splitStack(par2);
-            if (this.furnaceItemStacks[par1].stackSize == 0) {
+            if (this.furnaceItemStacks[par1].getCount() == 0) {
                this.furnaceItemStacks[par1] = null;
             }
 
@@ -64,7 +65,7 @@ public class TileAlchemyFurnace extends TileThaumcraft implements ISidedInventor
       }
    }
 
-   public ItemStack getStackInSlotOnClosing(int par1) {
+   public ItemStack removeStackFromSlot(int par1) {
       if (this.furnaceItemStacks[par1] != null) {
          ItemStack itemstack = this.furnaceItemStacks[par1];
          this.furnaceItemStacks[par1] = null;
@@ -76,18 +77,26 @@ public class TileAlchemyFurnace extends TileThaumcraft implements ISidedInventor
 
    public void setInventorySlotContents(int par1, ItemStack par2ItemStack) {
       this.furnaceItemStacks[par1] = par2ItemStack;
-      if (par2ItemStack != null && par2ItemStack.stackSize > this.getInventoryStackLimit()) {
-         par2ItemStack.stackSize = this.getInventoryStackLimit();
+      if (par2ItemStack != null && par2ItemStack.getCount() > this.getInventoryStackLimit()) {
+         par2ItemStack.setCount(this.getInventoryStackLimit());
       }
 
    }
 
-   public String getInventoryName() {
-      return this.hasCustomInventoryName() ? this.customName : "container.alchemyfurnace";
+   public String getName() {
+      return this.hasCustomName() ? this.customName : "container.alchemyfurnace";
    }
 
-   public boolean hasCustomInventoryName() {
+   public String getInventoryName() { return getName(); }
+
+   public boolean hasCustomName() {
       return this.customName != null && !this.customName.isEmpty();
+   }
+
+   public boolean hasCustomInventoryName() { return hasCustomName(); }
+
+   public net.minecraft.util.text.ITextComponent getDisplayName() {
+      return new net.minecraft.util.text.TextComponentString(getName());
    }
 
    public void setGuiDisplayName(String par1Str) {
@@ -113,7 +122,7 @@ public class TileAlchemyFurnace extends TileThaumcraft implements ISidedInventor
          NBTTagCompound nbttagcompound1 = nbttaglist.getCompoundTagAt(i);
          byte b0 = nbttagcompound1.getByte("Slot");
          if (b0 >= 0 && b0 < this.furnaceItemStacks.length) {
-            this.furnaceItemStacks[b0] = ItemStack.loadItemStackFromNBT(nbttagcompound1);
+            this.furnaceItemStacks[b0] = new ItemStack(nbttagcompound1);
          }
       }
 
@@ -128,7 +137,7 @@ public class TileAlchemyFurnace extends TileThaumcraft implements ISidedInventor
       this.vis = this.aspects.visSize();
    }
 
-   public void writeToNBT(NBTTagCompound nbtCompound) {
+   public NBTTagCompound writeToNBT(NBTTagCompound nbtCompound) {
       super.writeToNBT(nbtCompound);
       nbtCompound.setBoolean("speedBoost", this.speedBoost);
       nbtCompound.setShort("CookTime", (short)this.furnaceCookTime);
@@ -149,6 +158,7 @@ public class TileAlchemyFurnace extends TileThaumcraft implements ISidedInventor
       }
 
       this.aspects.writeToNBT(nbtCompound);
+      return nbtCompound;
    }
 
    public int getInventoryStackLimit() {
@@ -182,19 +192,8 @@ public class TileAlchemyFurnace extends TileThaumcraft implements ISidedInventor
       return this.furnaceBurnTime > 0;
    }
 
-   public void onDataPacket(NetworkManager net, S35PacketUpdateTileEntity pkt) {
-      super.onDataPacket(net, pkt);
-      if (this.worldObj != null) {
-         this.worldObj.updateLightByType(EnumSkyBlock.Block, this.xCoord, this.yCoord, this.zCoord);
-      }
-
-   }
-
-   public boolean canUpdate() {
-       return super.canUpdate();
-   }
-
-   public void updateEntity() {
+   @Override
+   public void update() {
       boolean flag = this.furnaceBurnTime > 0;
       boolean flag1 = false;
       ++this.count;
@@ -202,7 +201,7 @@ public class TileAlchemyFurnace extends TileThaumcraft implements ISidedInventor
          --this.furnaceBurnTime;
       }
 
-      if (!this.worldObj.isRemote) {
+      if (!this.world.isRemote) {
          if (this.bellows < 0) {
             this.getBellows();
          }
@@ -214,7 +213,7 @@ public class TileAlchemyFurnace extends TileThaumcraft implements ISidedInventor
             Object var10;
             for(TileEntity tile = null; deep < 5; var10 = null) {
                ++deep;
-               TileEntity var9 = this.worldObj.getTileEntity(this.xCoord, this.yCoord + deep, this.zCoord);
+               TileEntity var9 = this.world.getTileEntity(this.getPos().add(0, deep, 0));
                if (!(var9 instanceof TileAlembic)) {
                   break;
                }
@@ -224,8 +223,8 @@ public class TileAlchemyFurnace extends TileThaumcraft implements ISidedInventor
                   this.takeFromContainer(alembic.aspect, 1);
                   alembic.addToContainer(alembic.aspect, 1);
                   exlude.merge(alembic.aspect, 1);
-                  this.worldObj.markBlockForUpdate(this.xCoord, this.yCoord, this.zCoord);
-                  this.worldObj.markBlockForUpdate(this.xCoord, this.yCoord + deep, this.zCoord);
+                  { net.minecraft.block.state.IBlockState _bs = this.world.getBlockState(this.pos); this.world.notifyBlockUpdate(this.pos, _bs, _bs, 3); }
+                  { BlockPos _dp = new BlockPos(this.getPos().getX(), this.getPos().getY() + deep, this.getPos().getZ()); net.minecraft.block.state.IBlockState _bs = this.world.getBlockState(_dp); this.world.notifyBlockUpdate(_dp, _bs, _bs, 3); }
                }
             }
 
@@ -233,7 +232,7 @@ public class TileAlchemyFurnace extends TileThaumcraft implements ISidedInventor
 
             while(deep < 5) {
                ++deep;
-               TileEntity var11 = this.worldObj.getTileEntity(this.xCoord, this.yCoord + deep, this.zCoord);
+               TileEntity var11 = this.world.getTileEntity(this.getPos().add(0, deep, 0));
                if (!(var11 instanceof TileAlembic)) {
                   break;
                }
@@ -249,8 +248,8 @@ public class TileAlchemyFurnace extends TileThaumcraft implements ISidedInventor
 
                   if (as != null) {
                      alembic.addToContainer(as, 1);
-                     this.worldObj.markBlockForUpdate(this.xCoord, this.yCoord, this.zCoord);
-                     this.worldObj.markBlockForUpdate(this.xCoord, this.yCoord + deep, this.zCoord);
+                     { net.minecraft.block.state.IBlockState _bs = this.world.getBlockState(this.pos); this.world.notifyBlockUpdate(this.pos, _bs, _bs, 3); }
+                     { BlockPos _dp = new BlockPos(this.getPos().getX(), this.getPos().getY() + deep, this.getPos().getZ()); net.minecraft.block.state.IBlockState _bs = this.world.getBlockState(_dp); this.world.notifyBlockUpdate(_dp, _bs, _bs, 3); }
                      break;
                   }
                }
@@ -267,8 +266,8 @@ public class TileAlchemyFurnace extends TileThaumcraft implements ISidedInventor
                      this.speedBoost = true;
                   }
 
-                  --this.furnaceItemStacks[1].stackSize;
-                  if (this.furnaceItemStacks[1].stackSize == 0) {
+                  this.furnaceItemStacks[1].setCount(this.furnaceItemStacks[1].getCount()-1);
+                  if (this.furnaceItemStacks[1].getCount() == 0) {
                      this.furnaceItemStacks[1] = this.furnaceItemStacks[1].getItem().getContainerItem(this.furnaceItemStacks[1]);
                   }
                }
@@ -288,7 +287,7 @@ public class TileAlchemyFurnace extends TileThaumcraft implements ISidedInventor
 
          if (flag != this.furnaceBurnTime > 0) {
             flag1 = true;
-            this.worldObj.markBlockForUpdate(this.xCoord, this.yCoord, this.zCoord);
+            { net.minecraft.block.state.IBlockState _bs = this.world.getBlockState(this.pos); this.world.notifyBlockUpdate(this.pos, _bs, _bs, 3); }
          }
       }
 
@@ -319,7 +318,7 @@ public class TileAlchemyFurnace extends TileThaumcraft implements ISidedInventor
    }
 
    public void getBellows() {
-      this.bellows = TileBellows.getBellows(this.worldObj, this.xCoord, this.yCoord, this.zCoord, ForgeDirection.VALID_DIRECTIONS);
+      this.bellows = TileBellows.getBellows(this.world, this.getPos().getX(), this.getPos().getY(), this.getPos().getZ(), EnumFacing.values());
    }
 
    public void smeltItem() {
@@ -332,8 +331,8 @@ public class TileAlchemyFurnace extends TileThaumcraft implements ISidedInventor
          }
 
          this.vis = this.aspects.visSize();
-         --this.furnaceItemStacks[0].stackSize;
-         if (this.furnaceItemStacks[0].stackSize <= 0) {
+         this.furnaceItemStacks[0].setCount(this.furnaceItemStacks[0].getCount()-1);
+         if (this.furnaceItemStacks[0].getCount() <= 0) {
             this.furnaceItemStacks[0] = null;
          }
       }
@@ -344,15 +343,32 @@ public class TileAlchemyFurnace extends TileThaumcraft implements ISidedInventor
       return TileEntityFurnace.getItemBurnTime(par0ItemStack) > 0;
    }
 
-   public boolean isUseableByPlayer(EntityPlayer par1EntityPlayer) {
-      return this.worldObj.getTileEntity(this.xCoord, this.yCoord, this.zCoord) == this && par1EntityPlayer.getDistanceSq((double) this.xCoord + (double) 0.5F, (double) this.yCoord + (double) 0.5F, (double) this.zCoord + (double) 0.5F) <= (double) 64.0F;
+   public boolean isUsableByPlayer(EntityPlayer par1EntityPlayer) {
+      return this.world.getTileEntity(this.getPos()) == this && par1EntityPlayer.getDistanceSq((double) this.getPos().getX() + (double) 0.5F, (double) this.getPos().getY() + (double) 0.5F, (double) this.getPos().getZ() + (double) 0.5F) <= (double) 64.0F;
    }
 
-   public void openInventory() {
+   public void openInventory(EntityPlayer player) {
    }
 
-   public void closeInventory() {
+   public void closeInventory(EntityPlayer player) {
    }
+
+   public boolean isEmpty() {
+      for (ItemStack stack : this.furnaceItemStacks) {
+         if (stack != null) return false;
+      }
+      return true;
+   }
+
+   public void clear() {
+      for (int i = 0; i < this.furnaceItemStacks.length; ++i) {
+         this.furnaceItemStacks[i] = null;
+      }
+   }
+
+   public int getField(int id) { return 0; }
+   public void setField(int id, int value) {}
+   public int getFieldCount() { return 0; }
 
    public boolean isItemValidForSlot(int par1, ItemStack par2ItemStack) {
       if (par1 == 0) {
@@ -366,16 +382,16 @@ public class TileAlchemyFurnace extends TileThaumcraft implements ISidedInventor
       return par1 == 1 && isItemFuel(par2ItemStack);
    }
 
-   public int[] getAccessibleSlotsFromSide(int par1) {
-      return par1 == 0 ? slots_bottom : (par1 == 1 ? slots_top : slots_sides);
+   public int[] getSlotsForFace(EnumFacing par1) {
+      return par1 == EnumFacing.DOWN ? slots_bottom : (par1 == EnumFacing.UP ? slots_top : slots_sides);
    }
 
-   public boolean canInsertItem(int par1, ItemStack par2ItemStack, int par3) {
-      return par3 != 1 && this.isItemValidForSlot(par1, par2ItemStack);
+   public boolean canInsertItem(int par1, ItemStack par2ItemStack, EnumFacing par3) {
+      return par3 != EnumFacing.UP && this.isItemValidForSlot(par1, par2ItemStack);
    }
 
-   public boolean canExtractItem(int par1, ItemStack par2ItemStack, int par3) {
-      return par3 != 0 || par1 != 1 || par2ItemStack.getItem() == Items.bucket;
+   public boolean canExtractItem(int par1, ItemStack par2ItemStack, EnumFacing par3) {
+      return par3 != EnumFacing.DOWN || par1 != 1 || par2ItemStack.getItem() == Items.BUCKET;
    }
 
    public Aspect takeRandomAspect(AspectList exlude) {
@@ -388,7 +404,7 @@ public class TileAlchemyFurnace extends TileThaumcraft implements ISidedInventor
          }
 
          if (temp.size() > 0) {
-            Aspect tag = temp.getAspects()[this.worldObj.rand.nextInt(temp.getAspects().length)];
+            Aspect tag = temp.getAspects()[this.world.rand.nextInt(temp.getAspects().length)];
             this.aspects.remove(tag, 1);
             --this.vis;
             return tag;

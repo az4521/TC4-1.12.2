@@ -1,106 +1,112 @@
 package thaumcraft.common.blocks;
 
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
-import net.minecraft.block.Block;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraft.block.BlockContainer;
 import net.minecraft.block.material.Material;
-import net.minecraft.client.renderer.texture.IIconRegister;
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.IIcon;
-import net.minecraft.util.MathHelper;
-import net.minecraft.world.IBlockAccess;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
 import thaumcraft.common.Thaumcraft;
 import thaumcraft.common.config.ConfigBlocks;
 import thaumcraft.common.tiles.TileEssentiaReservoir;
 
 public class BlockEssentiaReservoir extends BlockContainer {
-   public IIcon icon = null;
+   public static final net.minecraft.block.properties.PropertyInteger META =
+         net.minecraft.block.properties.PropertyInteger.create("meta", 0, 15);
+
+   @Override
+   protected net.minecraft.block.state.BlockStateContainer createBlockState() {
+      return new net.minecraft.block.state.BlockStateContainer(this, META);
+   }
+
+   @Override
+   public net.minecraft.block.state.IBlockState getStateFromMeta(int meta) {
+      return this.getDefaultState().withProperty(META, meta);
+   }
+
+   @Override
+   public int getMetaFromState(net.minecraft.block.state.IBlockState state) {
+      return state.getValue(META);
+   }
+
 
    public BlockEssentiaReservoir() {
-      super(Material.iron);
+      super(Material.IRON);
       this.setHardness(2.0F);
       this.setResistance(17.0F);
-      this.setStepSound(Block.soundTypeMetal);
-      this.setBlockBounds(0.0F, 0.0F, 0.0F, 1.0F, 1.0F, 1.0F);
+      this.setSoundType(net.minecraft.block.SoundType.METAL);
       this.setCreativeTab(Thaumcraft.tabTC);
    }
 
-   @SideOnly(Side.CLIENT)
-   public void registerBlockIcons(IIconRegister ir) {
-      this.icon = ir.registerIcon("thaumcraft:essentiareservoir");
-   }
-
-   public IIcon getIcon(int i, int md) {
-      return this.icon;
-   }
-
-   public IIcon getIcon(IBlockAccess iblockaccess, int i, int j, int k, int side) {
-      return this.icon;
-   }
-
-   public int getRenderType() {
-      return ConfigBlocks.blockEssentiaReservoirRI;
-   }
-
-   public boolean isOpaqueCube() {
+   @Override
+   public boolean isOpaqueCube(IBlockState state) {
       return false;
    }
 
-   public boolean renderAsNormalBlock() {
+   @Override
+   public boolean isFullCube(IBlockState state) {
       return false;
    }
 
-   public int getRenderBlockPass() {
-      return 1;
+   @Override
+   public int damageDropped(IBlockState state) {
+      return state.getBlock().getMetaFromState(state);
    }
 
-   public int damageDropped(int metadata) {
-      return metadata;
+   @Override
+   public TileEntity createTileEntity(World world, IBlockState state) {
+      int metadata = state.getBlock().getMetaFromState(state);
+      return metadata == 0 ? new TileEssentiaReservoir() : super.createTileEntity(world, state);
    }
 
-   public TileEntity createTileEntity(World world, int metadata) {
-      return metadata == 0 ? new TileEssentiaReservoir() : super.createTileEntity(world, metadata);
-   }
-
+   @Override
    public TileEntity createNewTileEntity(World var1, int md) {
       return null;
    }
 
-   public boolean hasComparatorInputOverride() {
+   @Override
+   public boolean hasComparatorInputOverride(IBlockState state) {
       return true;
    }
 
-   public int getComparatorInputOverride(World world, int x, int y, int z, int rs) {
-      TileEntity te = world.getTileEntity(x, y, z);
+   @Override
+   public int getComparatorInputOverride(IBlockState state, World world, BlockPos pos) {
+      TileEntity te = world.getTileEntity(pos);
       if (te instanceof TileEssentiaReservoir) {
-         float r = (float)((TileEssentiaReservoir)te).essentia.visSize() / (float)((TileEssentiaReservoir)te).maxAmount;
-         return MathHelper.floor_float(r * 14.0F) + (((TileEssentiaReservoir)te).essentia.visSize() > 0 ? 1 : 0);
+         float r = (float) ((TileEssentiaReservoir) te).essentia.visSize()
+               / (float) ((TileEssentiaReservoir) te).maxAmount;
+         return MathHelper.floor(r * 14.0F)
+               + (((TileEssentiaReservoir) te).essentia.visSize() > 0 ? 1 : 0);
       } else {
          return 0;
       }
    }
 
-   public void breakBlock(World world, int x, int y, int z, Block par5, int par6) {
-      TileEntity te = world.getTileEntity(x, y, z);
+   @Override
+   public void breakBlock(World world, BlockPos pos, IBlockState state) {
+      TileEntity te = world.getTileEntity(pos);
       if (te instanceof TileEssentiaReservoir) {
-         int sz = ((TileEssentiaReservoir)te).essentia.visSize() / 16;
+         int sz = ((TileEssentiaReservoir) te).essentia.visSize() / 16;
          int q = 0;
          if (sz > 0) {
-            world.createExplosion(null, (double)x + (double)0.5F, (double)y + (double)0.5F, (double)z + (double)0.5F, 1.0F, false);
+            world.createExplosion(null,
+                  pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5,
+                  1.0F, false);
 
-            for(int a = 0; a < 50; ++a) {
-               int xx = x + world.rand.nextInt(5) - world.rand.nextInt(5);
-               int yy = y + world.rand.nextInt(5) - world.rand.nextInt(5);
-               int zz = z + world.rand.nextInt(5) - world.rand.nextInt(5);
-               if (world.isAirBlock(xx, yy, zz)) {
-                  if (yy < y) {
-                     world.setBlock(xx, yy, zz, ConfigBlocks.blockFluxGoo, 8, 3);
+            for (int a = 0; a < 50; ++a) {
+               int xx = pos.getX() + world.rand.nextInt(5) - world.rand.nextInt(5);
+               int yy = pos.getY() + world.rand.nextInt(5) - world.rand.nextInt(5);
+               int zz = pos.getZ() + world.rand.nextInt(5) - world.rand.nextInt(5);
+               BlockPos target = new BlockPos(xx, yy, zz);
+               if (world.isAirBlock(target)) {
+                  if (yy < pos.getY()) {
+                     world.setBlockState(target, ConfigBlocks.blockFluxGoo.getDefaultState(), 3);
                   } else {
-                     world.setBlock(xx, yy, zz, ConfigBlocks.blockFluxGas, 8, 3);
+                     world.setBlockState(target, ConfigBlocks.blockFluxGas.getDefaultState(), 3);
                   }
-
                   if (q++ >= sz) {
                      break;
                   }
@@ -108,7 +114,11 @@ public class BlockEssentiaReservoir extends BlockContainer {
             }
          }
       }
+      super.breakBlock(world, pos, state);
+   }
 
-      super.breakBlock(world, x, y, z, par5, par6);
+   @Override
+   public net.minecraft.util.EnumBlockRenderType getRenderType(net.minecraft.block.state.IBlockState state) {
+      return net.minecraft.util.EnumBlockRenderType.MODEL;
    }
 }

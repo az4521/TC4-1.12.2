@@ -1,30 +1,31 @@
 package thaumcraft.common.items;
 
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
-import net.minecraft.client.renderer.texture.IIconRegister;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
+import thaumcraft.client.renderers.compat.IIconRegister;
 import net.minecraft.item.ItemFood;
-import net.minecraft.potion.Potion;
-import net.minecraft.util.IIcon;
+import net.minecraft.init.MobEffects;
+import net.minecraft.potion.PotionEffect;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import thaumcraft.common.Thaumcraft;
 
 public class ItemTripleMeatTreat extends ItemFood {
-   public IIcon icon;
+   public TextureAtlasSprite icon;
 
    public ItemTripleMeatTreat() {
       super(6, 0.8F, true);
       this.setAlwaysEdible();
-      this.setPotionEffect(Potion.regeneration.id, 5, 0, 0.66F);
+      this.setPotionEffect(new PotionEffect(MobEffects.REGENERATION, 100, 0), 0.66F);
       this.setCreativeTab(Thaumcraft.tabTC);
    }
 
    @SideOnly(Side.CLIENT)
    public void registerIcons(IIconRegister ir) {
-      this.icon = ir.registerIcon("thaumcraft:tripletreat");
+      this.icon = ir.registerSprite("thaumcraft:tripletreat");
    }
 
    @SideOnly(Side.CLIENT)
-   public IIcon getIconFromDamage(int meta) {
+   public TextureAtlasSprite getIconFromDamage(int meta) {
       return this.icon;
    }
 }

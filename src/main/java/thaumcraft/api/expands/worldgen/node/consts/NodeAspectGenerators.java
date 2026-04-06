@@ -4,7 +4,7 @@ import net.minecraft.block.Block;
 import net.minecraft.block.material.Material;
 import net.minecraft.init.Blocks;
 import net.minecraft.world.World;
-import net.minecraft.world.biome.BiomeGenBase;
+import net.minecraft.world.biome.Biome;
 import thaumcraft.api.aspects.Aspect;
 import thaumcraft.api.aspects.AspectList;
 import thaumcraft.api.expands.worldgen.node.listeners.NodeAspectGenerator;
@@ -30,7 +30,7 @@ public class NodeAspectGenerators {
                                          Random random, boolean silverwood, boolean eerie, boolean small, AspectList previous,
                                          NodeType type,@Nullable NodeModifier modifier
                                          ) {
-            BiomeGenBase bg = world.getBiomeGenForCoords(x, z);
+            Biome bg = world.getBiome(new net.minecraft.util.math.BlockPos(x, 0, z));
             int baura = BiomeHandler.getBiomeAura(bg);
             if (type == NodeType.TAINTED) {
 
@@ -42,7 +42,7 @@ public class NodeAspectGenerators {
             }
 
             int value = random.nextInt(baura / 2) + baura / 2;
-            Aspect aspectFromBiome = BiomeHandler.getRandomBiomeTag(bg.biomeID, random);
+            Aspect aspectFromBiome = BiomeHandler.getRandomBiomeTag(net.minecraft.world.biome.Biome.getIdForBiome(bg), random);
             if (aspectFromBiome != null) {
                 previous.add(aspectFromBiome, 2);
             } else {
@@ -103,16 +103,17 @@ public class NodeAspectGenerators {
                     for (int yy = -5; yy <= 5; ++yy) {
                         for (int zz = -5; zz <= 5; ++zz) {
                             try {
-                                Block bi = world.getBlock(x + xx, y + yy, z + zz);
-                                if (bi.getMaterial() == Material.water) {
+                                net.minecraft.block.state.IBlockState _bst = world.getBlockState(new net.minecraft.util.math.BlockPos(x+xx, y+yy, z+zz));
+                                Block bi = _bst.getBlock();
+                                if (_bst.getMaterial() == Material.WATER) {
                                     ++water;
-                                } else if (bi.getMaterial() == Material.lava) {
+                                } else if (_bst.getMaterial() == Material.LAVA) {
                                     ++lava;
-                                } else if (bi == Blocks.stone) {
+                                } else if (bi == Blocks.STONE) {
                                     ++stone;
                                 }
 
-                                if (bi.isFoliage(world, x + xx, y + yy, z + zz)) {
+                                if (bi.isFoliage(world, new net.minecraft.util.math.BlockPos(x + xx, y + yy, z + zz))) {
                                     ++foliage;
                                 }
                             } catch (Exception ignored) {

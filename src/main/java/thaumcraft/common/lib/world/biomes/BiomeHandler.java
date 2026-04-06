@@ -2,7 +2,7 @@ package thaumcraft.common.lib.world.biomes;
 
 import java.util.*;
 
-import net.minecraft.world.biome.BiomeGenBase;
+import net.minecraft.world.biome.Biome;
 import net.minecraftforge.common.BiomeDictionary;
 import thaumcraft.api.aspects.Aspect;
 
@@ -18,8 +18,8 @@ public class BiomeHandler {
       biomeInfo.put(type, info);
    }
 
-   public static int getBiomeAura(BiomeGenBase biome) {
-      BiomeDictionary.Type[] types = BiomeDictionary.getTypesForBiome(biome);
+   public static int getBiomeAura(Biome biome) {
+      Set<BiomeDictionary.Type> types = BiomeDictionary.getTypes(biome);
       int average = 0;
       int count = 0;
 
@@ -36,8 +36,10 @@ public class BiomeHandler {
    }
 
    public static Aspect getRandomBiomeTag(int biomeId, Random random) {
-      BiomeDictionary.Type[] types = BiomeDictionary.getTypesForBiome(BiomeGenBase.getBiome(biomeId));
-      BiomeDictionary.Type type = types[random.nextInt(types.length)];
+      Set<BiomeDictionary.Type> types = BiomeDictionary.getTypes(Biome.getBiome(biomeId));
+      if (types.isEmpty()) return null;
+      List<BiomeDictionary.Type> typeList = new ArrayList<>(types);
+      BiomeDictionary.Type type = typeList.get(random.nextInt(typeList.size()));
       BiomeInfo info = biomeInfo.get(type);
       if (info == null) {
          return null;
@@ -46,7 +48,7 @@ public class BiomeHandler {
    }
 
    public static float getBiomeSupportsGreatwood(int biomeId) {
-      BiomeDictionary.Type[] types = BiomeDictionary.getTypesForBiome(BiomeGenBase.getBiome(biomeId));
+      Set<BiomeDictionary.Type> types = BiomeDictionary.getTypes(Biome.getBiome(biomeId));
 
       for(BiomeDictionary.Type type : types) {
          BiomeInfo info = biomeInfo.get(type);

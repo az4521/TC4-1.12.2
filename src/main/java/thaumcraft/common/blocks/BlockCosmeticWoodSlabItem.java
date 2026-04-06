@@ -7,6 +7,6 @@ import thaumcraft.common.config.ConfigBlocks;
 
 public class BlockCosmeticWoodSlabItem extends ItemSlab {
    public BlockCosmeticWoodSlabItem(Block par1) {
-      super(par1, (BlockSlab)ConfigBlocks.blockSlabWood, (BlockSlab)ConfigBlocks.blockDoubleSlabWood, false);
+      super(par1, (BlockSlab) ConfigBlocks.blockSlabWood, (BlockSlab) ConfigBlocks.blockDoubleSlabWood);
    }
 }

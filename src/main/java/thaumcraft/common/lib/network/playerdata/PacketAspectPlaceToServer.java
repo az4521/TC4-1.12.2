@@ -1,9 +1,9 @@
 package thaumcraft.common.lib.network.playerdata;
 
-import cpw.mods.fml.common.network.ByteBufUtils;
-import cpw.mods.fml.common.network.simpleimpl.IMessage;
-import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
-import cpw.mods.fml.common.network.simpleimpl.MessageContext;
+import net.minecraftforge.fml.common.network.ByteBufUtils;
+import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
+import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
+import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
@@ -12,6 +12,7 @@ import net.minecraft.world.World;
 import net.minecraftforge.common.DimensionManager;
 import thaumcraft.api.aspects.Aspect;
 import thaumcraft.common.tiles.TileResearchTable;
+import net.minecraft.util.math.BlockPos;
 
 public class PacketAspectPlaceToServer implements IMessage, IMessageHandler<PacketAspectPlaceToServer,IMessage> {
    private int dim;
@@ -27,7 +28,7 @@ public class PacketAspectPlaceToServer implements IMessage, IMessageHandler<Pack
    }
 
    public PacketAspectPlaceToServer(EntityPlayer player, byte q, byte r, int x, int y, int z, Aspect aspect) {
-      this.dim = player.worldObj.provider.dimensionId;
+      this.dim = player.world.provider.getDimension();
       this.playerid = player.getEntityId();
       this.x = x;
       this.y = y;
@@ -61,10 +62,10 @@ public class PacketAspectPlaceToServer implements IMessage, IMessageHandler<Pack
 
    public IMessage onMessage(PacketAspectPlaceToServer message, MessageContext ctx) {
       World world = DimensionManager.getWorld(message.dim);
-      if (world != null && (ctx.getServerHandler().playerEntity == null || ctx.getServerHandler().playerEntity.getEntityId() == message.playerid)) {
+      if (world != null && (ctx.getServerHandler().player == null || ctx.getServerHandler().player.getEntityId() == message.playerid)) {
          Entity player = world.getEntityByID(message.playerid);
           if (player != null) {
-              TileEntity rt = world.getTileEntity(message.x, message.y, message.z);
+              TileEntity rt = world.getTileEntity(new BlockPos(message.x, message.y, message.z));
               if (rt instanceof TileResearchTable) {
                   ((TileResearchTable) rt).placeAspect(message.q, message.r, message.aspect, (EntityPlayer) player);
               }

@@ -1,22 +1,25 @@
 package thaumcraft.common.lib.world.dim;
 
+import javax.annotation.Nonnull;
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.world.WorldSavedData;
+import net.minecraft.world.storage.WorldSavedData;
 
 public class MapBossData extends WorldSavedData {
     public int bossCount;
 
-    public MapBossData(String p_i2140_1_) {
-        super(p_i2140_1_);
+    public MapBossData(String mapname) {
+        super(mapname);
     }
 
     @Override
-    public void readFromNBT(NBTTagCompound p_76184_1_) {
-        this.bossCount = p_76184_1_.getInteger("bossCount");
+    public void readFromNBT(NBTTagCompound nbt) {
+        this.bossCount = nbt.getInteger("bossCount");
     }
 
     @Override
-    public void writeToNBT(NBTTagCompound p_76187_1_) {
-        p_76187_1_.setInteger("bossCount", this.bossCount);
+    @Nonnull
+    public NBTTagCompound writeToNBT(NBTTagCompound nbt) {
+        nbt.setInteger("bossCount", this.bossCount);
+        return nbt;
     }
 }

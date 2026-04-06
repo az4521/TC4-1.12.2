@@ -1,15 +1,15 @@
 package thaumcraft.client.renderers.tile;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.RenderBlocks;
+import thaumcraft.client.renderers.compat.RenderBlocks;
 import net.minecraft.client.renderer.texture.TextureMap;
 import net.minecraft.client.renderer.tileentity.TileEntityRendererDispatcher;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
-import net.minecraftforge.client.IItemRenderer;
-import net.minecraftforge.client.IItemRenderer.ItemRenderType;
-import net.minecraftforge.client.IItemRenderer.ItemRendererHelper;
-import org.lwjgl.opengl.GL11;
+import thaumcraft.client.renderers.compat.IItemRenderer;
+import thaumcraft.client.renderers.compat.IItemRenderer.ItemRenderType;
+import thaumcraft.client.renderers.compat.IItemRenderer.ItemRendererHelper;
+
 import thaumcraft.api.aspects.Aspect;
 import thaumcraft.api.aspects.AspectList;
 import thaumcraft.common.blocks.ItemJarFilled;
@@ -17,6 +17,7 @@ import thaumcraft.common.config.ConfigBlocks;
 import thaumcraft.common.config.ConfigItems;
 import thaumcraft.common.tiles.TileJarFillable;
 import thaumcraft.common.tiles.TileJarFillableVoid;
+import net.minecraft.client.renderer.GlStateManager;
 
 public class ItemJarFilledRenderer implements IItemRenderer {
    RenderBlocks rb = new RenderBlocks();
@@ -32,9 +33,9 @@ public class ItemJarFilledRenderer implements IItemRenderer {
    public void renderItem(IItemRenderer.ItemRenderType type, ItemStack item, Object... data) {
       if (item.getItem() == ConfigItems.itemJarFilled) {
          if (type == ItemRenderType.ENTITY) {
-            GL11.glTranslatef(-0.5F, -0.25F, -0.5F);
+            GlStateManager.translate(-0.5F, -0.25F, -0.5F);
          } else if (type == ItemRenderType.EQUIPPED && data[1] instanceof EntityPlayer) {
-            GL11.glTranslatef(0.0F, 0.0F, -0.5F);
+            GlStateManager.translate(0.0F, 0.0F, -0.5F);
          }
 
          TileJarFillable tjf = new TileJarFillable();
@@ -49,26 +50,22 @@ public class ItemJarFilledRenderer implements IItemRenderer {
                tjf.aspect = aspects.getAspects()[0];
             }
 
-            String tf = item.stackTagCompound.getString("AspectFilter");
+            String tf = item.getTagCompound().getString("AspectFilter");
             if (tf != null) {
                tjf.aspectFilter = Aspect.getAspect(tf);
             }
          }
 
          tjf.facing = 5;
-         tjf.blockType = ConfigBlocks.blockJar;
-         tjf.blockMetadata = 0;
-         TileEntityRendererDispatcher.instance.renderTileEntityAt(tjf, 0.0F, 0.0F, 0.0F, 0.0F);
-         GL11.glPushMatrix();
-         GL11.glTranslatef(0.5F, 0.5F, 0.5F);
-         GL11.glEnable(GL11.GL_BLEND);
-         GL11.glBlendFunc(770, 771);
-         GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
-         Minecraft.getMinecraft().renderEngine.bindTexture(TextureMap.locationBlocksTexture);
-         this.rb.useInventoryTint = true;
-         this.rb.renderBlockAsItem(ConfigBlocks.blockJar, item.getItemDamage(), 1.0F);
-         GL11.glPopMatrix();
-         GL11.glEnable(32826);
+         TileEntityRendererDispatcher.instance.render(tjf, 0.0D, 0.0D, 0.0D, 0.0F);
+         GlStateManager.pushMatrix();
+         GlStateManager.translate(0.5F, 0.5F, 0.5F);
+         GlStateManager.enableBlend();
+         GlStateManager.blendFunc(770, 771);
+         GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
+         Minecraft.getMinecraft().getTextureManager().bindTexture(TextureMap.LOCATION_BLOCKS_TEXTURE);
+         GlStateManager.popMatrix();
+         GlStateManager.enableRescaleNormal();
       }
 
    }

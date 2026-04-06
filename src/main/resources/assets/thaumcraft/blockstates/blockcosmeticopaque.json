@@ -1,0 +1,13 @@
+{
+  "variants": {
+    "variant=amber": {
+      "model": "thaumcraft:blockcosmeticopaque_amber"
+    },
+    "variant=amberbrick": {
+      "model": "thaumcraft:blockcosmeticopaque_amberbrick"
+    },
+    "variant=wardedglass": {
+      "model": "thaumcraft:blockcosmeticopaque_wardedglass"
+    }
+  }
+}

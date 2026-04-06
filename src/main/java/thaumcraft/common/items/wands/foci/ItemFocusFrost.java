@@ -1,11 +1,11 @@
 package thaumcraft.common.items.wands.foci;
 
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
-import net.minecraft.client.renderer.texture.IIconRegister;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
+import thaumcraft.client.renderers.compat.IIconRegister;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.MovingObjectPosition;
+import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.World;
 import thaumcraft.api.aspects.Aspect;
@@ -33,10 +33,10 @@ public class ItemFocusFrost extends ItemFocusBasic {
 
    @SideOnly(Side.CLIENT)
    public void registerIcons(IIconRegister ir) {
-      this.icon = ir.registerIcon("thaumcraft:focus_frost");
+      this.icon = ir.registerSprite("thaumcraft:focus_frost");
    }
 
-   public ItemStack onFocusRightClick(ItemStack itemstack, World world, EntityPlayer p, MovingObjectPosition mob) {
+   public ItemStack onFocusRightClick(ItemStack itemstack, World world, EntityPlayer p, RayTraceResult mob) {
       ItemWandCasting wand = (ItemWandCasting)itemstack.getItem();
       if (!world.isRemote && wand.consumeAllVis(itemstack, p, this.getVisCost(itemstack), true, false)) {
          int frosty = this.getUpgradeLevel(wand.getFocusItem(itemstack), FocusUpgradeType.alchemistsfrost);
@@ -47,7 +47,7 @@ public class ItemFocusFrost extends ItemFocusBasic {
                shard.setDamage(1.0F);
                shard.fragile = true;
                shard.setFrosty(frosty);
-               world.spawnEntityInWorld(shard);
+               world.spawnEntity(shard);
             }
          } else if (this.isUpgradedWith(wand.getFocusItem(itemstack), iceboulder)) {
             shard = new EntityFrostShard(world, p, 1.0F);
@@ -55,18 +55,18 @@ public class ItemFocusFrost extends ItemFocusBasic {
             shard.bounce = 0.8;
             shard.bounceLimit = 6;
             shard.setFrosty(frosty);
-            world.spawnEntityInWorld(shard);
+            world.spawnEntity(shard);
          } else {
             shard = new EntityFrostShard(world, p, 1.0F);
             shard.setDamage((float)((double)3.0F + (double)wand.getFocusPotency(itemstack) * (double)1.5F));
             shard.setFrosty(frosty);
-            world.spawnEntityInWorld(shard);
+            world.spawnEntity(shard);
          }
 
-         world.playSoundAtEntity(shard, "thaumcraft:ice", 0.4F, 1.0F + world.rand.nextFloat() * 0.1F);
+         { net.minecraft.util.SoundEvent _snd = net.minecraft.util.SoundEvent.REGISTRY.getObject(new net.minecraft.util.ResourceLocation("thaumcraft:ice")); if (_snd != null) world.playSound(null, shard.posX, shard.posY, shard.posZ, _snd, net.minecraft.util.SoundCategory.NEUTRAL, 0.4F, 1.0F + world.rand.nextFloat() * 0.1F); };
       }
 
-      p.swingItem();
+      p.swingArm(net.minecraft.util.EnumHand.MAIN_HAND);
       return itemstack;
    }
 

@@ -4,17 +4,19 @@ import java.util.Random;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockSapling;
 import net.minecraft.init.Blocks;
-import net.minecraft.util.MathHelper;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
 import net.minecraft.world.gen.feature.WorldGenAbstractTree;
 import net.minecraft.world.gen.feature.WorldGenerator;
-import net.minecraftforge.common.util.ForgeDirection;
+import net.minecraft.util.EnumFacing;
 import thaumcraft.common.config.ConfigBlocks;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.block.state.IBlockState;
 
 public class WorldGenSilverwoodTreesOld extends WorldGenAbstractTree {
    static final byte[] otherCoordPairs = new byte[]{2, 0, 0, 1, 2, 1};
    Random rand = new Random();
-   World worldObj;
+   World world;
    int[] basePos = new int[]{0, 0, 0};
    int heightLimit = 0;
    int height;
@@ -61,8 +63,8 @@ public class WorldGenSilverwoodTreesOld extends WorldGenAbstractTree {
               for (double var9 = 0.5F; var7 < var1; ++var7) {
                   double var11 = this.scaleWidth * (double) var8 * ((double) this.rand.nextFloat() + 0.328);
                   double var13 = (double) this.rand.nextFloat() * (double) 2.0F * Math.PI;
-                  int var15 = MathHelper.floor_double(var11 * Math.sin(var13) + (double) this.basePos[0] + var9);
-                  int var16 = MathHelper.floor_double(var11 * Math.cos(var13) + (double) this.basePos[2] + var9);
+                  int var15 = MathHelper.floor(var11 * Math.sin(var13) + (double) this.basePos[0] + var9);
+                  int var16 = MathHelper.floor(var11 * Math.cos(var13) + (double) this.basePos[2] + var9);
                   int[] var17 = new int[]{var15, var3, var16};
                   int[] var18 = new int[]{var15, var3 + this.leafDistanceLimit, var16};
                   if (this.checkBlockLine(var17, var18) == -1) {
@@ -111,9 +113,11 @@ public class WorldGenSilverwoodTreesOld extends WorldGenAbstractTree {
             double var15 = Math.pow((double)Math.abs(var12) + (double)0.5F, 2.0F) + Math.pow((double)Math.abs(var13) + (double)0.5F, 2.0F);
              if (!(var15 > (double) (par4 * par4))) {
                  var11[var9] = var10[var9] + var13;
-                 Block block = this.worldObj.getBlock(var11[0], var11[1], var11[2]);
-                 if ((block == Blocks.air || block == ConfigBlocks.blockMagicalLeaves) && (block == null || block.canBeReplacedByLeaves(this.worldObj, var11[0], var11[1], var11[2]))) {
-                     this.setBlockAndNotifyAdequately(this.worldObj, var11[0], var11[1], var11[2], par6, 1);
+                 BlockPos bpos = new BlockPos(var11[0], var11[1], var11[2]);
+                 IBlockState bstate = this.world.getBlockState(bpos);
+                 Block block = bstate.getBlock();
+                 if ((block == Blocks.AIR || block == ConfigBlocks.blockMagicalLeaves) && block.canBeReplacedByLeaves(bstate, this.world, bpos)) {
+                     this.setBlockAndNotifyAdequately(this.world, bpos, par6.getDefaultState());
                  }
 
              }
@@ -185,9 +189,9 @@ public class WorldGenSilverwoodTreesOld extends WorldGenAbstractTree {
          int var15 = 0;
 
          for(int var16 = var4[var6] + var9; var15 != var16; var15 += var9) {
-            var14[var6] = MathHelper.floor_double((double)(par1ArrayOfInteger[var6] + var15) + (double)0.5F);
-            var14[var7] = MathHelper.floor_double((double)par1ArrayOfInteger[var7] + (double)var15 * var10 + (double)0.5F);
-            var14[var8] = MathHelper.floor_double((double)par1ArrayOfInteger[var8] + (double)var15 * var12 + (double)0.5F);
+            var14[var6] = MathHelper.floor((double)(par1ArrayOfInteger[var6] + var15) + (double)0.5F);
+            var14[var7] = MathHelper.floor((double)par1ArrayOfInteger[var7] + (double)var15 * var10 + (double)0.5F);
+            var14[var8] = MathHelper.floor((double)par1ArrayOfInteger[var8] + (double)var15 * var12 + (double)0.5F);
             byte var17 = 0;
             int var18 = Math.abs(var14[0] - par1ArrayOfInteger[0]);
             int var19 = Math.abs(var14[2] - par1ArrayOfInteger[2]);
@@ -200,11 +204,12 @@ public class WorldGenSilverwoodTreesOld extends WorldGenAbstractTree {
                }
             }
 
+            BlockPos bpos14 = new BlockPos(var14[0], var14[1], var14[2]);
             if (this.rand.nextInt(50) == 0) {
-               this.setBlockAndNotifyAdequately(this.worldObj, var14[0], var14[1], var14[2], par3, var17 + 2);
-               ThaumcraftWorldGenerator.createRandomNodeAt(this.worldObj, var14[0], var14[1], var14[2], this.rand, true, false, false);
+               this.setBlockAndNotifyAdequately(this.world, bpos14, par3.getStateFromMeta(var17 + 2));
+               ThaumcraftWorldGenerator.createRandomNodeAt(this.world, var14[0], var14[1], var14[2], this.rand, true, false, false);
             } else {
-               this.setBlockAndNotifyAdequately(this.worldObj, var14[0], var14[1], var14[2], par3, var17 + 1);
+               this.setBlockAndNotifyAdequately(this.world, bpos14, par3.getStateFromMeta(var17 + 1));
             }
          }
       }
@@ -297,10 +302,10 @@ public class WorldGenSilverwoodTreesOld extends WorldGenAbstractTree {
          int var15;
          for(var15 = var3[var5] + var8; var14 != var15; var14 += var8) {
             var13[var5] = par1ArrayOfInteger[var5] + var14;
-            var13[var6] = MathHelper.floor_double((double)par1ArrayOfInteger[var6] + (double)var14 * var9);
-            var13[var7] = MathHelper.floor_double((double)par1ArrayOfInteger[var7] + (double)var14 * var11);
-            Block var16 = this.worldObj.getBlock(var13[0], var13[1], var13[2]);
-            if (var16 != Blocks.air && var16 != ConfigBlocks.blockMagicalLeaves) {
+            var13[var6] = MathHelper.floor((double)par1ArrayOfInteger[var6] + (double)var14 * var9);
+            var13[var7] = MathHelper.floor((double)par1ArrayOfInteger[var7] + (double)var14 * var11);
+            Block var16 = this.world.getBlockState(new BlockPos(var13[0], var13[1], var13[2])).getBlock();
+            if (var16 != Blocks.AIR && var16 != ConfigBlocks.blockMagicalLeaves) {
                break;
             }
          }
@@ -312,8 +317,9 @@ public class WorldGenSilverwoodTreesOld extends WorldGenAbstractTree {
    boolean validTreeLocation(int x, int z) {
       int[] var1 = new int[]{this.basePos[0] + x, this.basePos[1], this.basePos[2] + z};
       int[] var2 = new int[]{this.basePos[0] + x, this.basePos[1] + this.heightLimit - 1, this.basePos[2] + z};
-      Block var3 = this.worldObj.getBlock(this.basePos[0] + x, this.basePos[1] - 1, this.basePos[2] + z);
-      boolean isSoil = var3.canSustainPlant(this.worldObj, this.basePos[0] + x, this.basePos[1] - 1, this.basePos[2] + z, ForgeDirection.UP, (BlockSapling)Blocks.sapling);
+      BlockPos soilPos = new BlockPos(this.basePos[0] + x, this.basePos[1] - 1, this.basePos[2] + z);
+      Block var3 = this.world.getBlockState(soilPos).getBlock();
+      boolean isSoil = var3.canSustainPlant(this.world.getBlockState(soilPos), this.world, soilPos, EnumFacing.UP, (BlockSapling)Blocks.SAPLING);
       if (!isSoil) {
          return false;
       } else {
@@ -332,8 +338,13 @@ public class WorldGenSilverwoodTreesOld extends WorldGenAbstractTree {
    public void setScale(double par1, double par3, double par5) {
    }
 
-   public boolean generate(World par1World, Random par2Random, int par3, int par4, int par5) {
-      this.worldObj = par1World;
+   @Override
+   public boolean generate(World par1World, Random par2Random, BlockPos pos) {
+      return doGenerate(par1World, par2Random, pos.getX(), pos.getY(), pos.getZ());
+   }
+
+   private boolean doGenerate(World par1World, Random par2Random, int par3, int par4, int par5) {
+      this.world = par1World;
       long var6 = par2Random.nextLong();
       this.rand.setSeed(var6);
       this.basePos[0] = par3;
@@ -366,7 +377,7 @@ public class WorldGenSilverwoodTreesOld extends WorldGenAbstractTree {
       this.generateLeafNodeBases();
       this.generateTrunk();
       WorldGenerator flowers = new WorldGenCustomFlowers(ConfigBlocks.blockCustomPlant, 2);
-      flowers.generate(par1World, par2Random, par3, par4, par5);
+      flowers.generate(par1World, par2Random, new BlockPos(par3, par4, par5));
       this.basePos[0] = par3;
       return true;
    }

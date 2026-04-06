@@ -15,9 +15,9 @@ public class PlayerNotifications {
    }
 
    public static void addAspectNotification(Aspect aspect) {
-      long time = System.nanoTime() / 1000000L + (long)Minecraft.getMinecraft().theWorld.rand.nextInt(1000);
-      float x = 0.4F + Minecraft.getMinecraft().theWorld.rand.nextFloat() * 0.2F;
-      float y = 0.4F + Minecraft.getMinecraft().theWorld.rand.nextFloat() * 0.2F;
+      long time = System.nanoTime() / 1000000L + (long)Minecraft.getMinecraft().world.rand.nextInt(1000);
+      float x = 0.4F + Minecraft.getMinecraft().world.rand.nextFloat() * 0.2F;
+      float y = 0.4F + Minecraft.getMinecraft().world.rand.nextFloat() * 0.2F;
       aspectList.add(new AspectNotification(aspect, x, y, time, time + 1500L));
    }
 

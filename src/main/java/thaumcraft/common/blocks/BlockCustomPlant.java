@@ -1,23 +1,24 @@
 package thaumcraft.common.blocks;
 
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraft.block.BlockBush;
 import net.minecraft.block.material.Material;
-import net.minecraft.client.renderer.texture.IIconRegister;
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.potion.Potion;
+import net.minecraft.init.MobEffects;
 import net.minecraft.potion.PotionEffect;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.IIcon;
+import net.minecraft.util.EnumParticleTypes;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 import net.minecraftforge.common.EnumPlantType;
-import net.minecraftforge.common.util.ForgeDirection;
+import net.minecraft.util.EnumFacing;
+import net.minecraft.util.NonNullList;
 import thaumcraft.client.fx.ParticleEngine;
 import thaumcraft.client.fx.particles.FXWisp;
 import thaumcraft.common.Thaumcraft;
@@ -25,70 +26,91 @@ import thaumcraft.common.lib.world.WorldGenGreatwoodTrees;
 import thaumcraft.common.lib.world.WorldGenSilverwoodTrees;
 import thaumcraft.common.tiles.TileEtherealBloom;
 
-import java.util.List;
 import java.util.Random;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import thaumcraft.client.renderers.compat.IIconRegister;
 
 public class BlockCustomPlant extends BlockBush {
-   public IIcon[] icon = new IIcon[6];
-   public IIcon iconLeaves;
-   public IIcon iconStalk;
-   IIcon blank;
+   // --- Variant property for 1.12.2 blockstate system ---
+   public static final net.minecraft.block.properties.PropertyEnum<PlantVariant> VARIANT =
+         net.minecraft.block.properties.PropertyEnum.create("variant", PlantVariant.class);
 
-   public BlockCustomPlant() {
-      super(Material.plants);
-      this.setStepSound(soundTypeGrass);
-      float var3 = 0.4F;
-      this.setCreativeTab(Thaumcraft.tabTC);
-      this.setBlockBounds(0.5F - var3, 0.0F, 0.5F - var3, 0.5F + var3, 0.8F, 0.5F + var3);
+   public enum PlantVariant implements net.minecraft.util.IStringSerializable {
+      GREATWOODSAP(0, "greatwoodsap"), SILVERWOODSAP(1, "silverwoodsap"), SHIMMERLEAF(2, "shimmerleaf"), CINDERPEARL(3, "cinderpearl"), ETHEREALBLOOM(4, "etherealbloom"), MANASHROOM(5, "manashroom");
+      private final int meta;
+      private final String name;
+      PlantVariant(int meta, String name) { this.meta = meta; this.name = name; }
+      public int getMeta() { return meta; }
+      @Override public String getName() { return name; }
+      public static PlantVariant byMeta(int m) {
+         for (PlantVariant v : values()) if (v.meta == m) return v;
+         return SHIMMERLEAF;
+      }
    }
+
+   @Override
+   protected net.minecraft.block.state.BlockStateContainer createBlockState() {
+      return new net.minecraft.block.state.BlockStateContainer(this, VARIANT);
+   }
+
+   @Override
+   public net.minecraft.block.state.IBlockState getStateFromMeta(int meta) {
+      return this.getDefaultState().withProperty(VARIANT, PlantVariant.byMeta(meta));
+   }
+
+   @Override
+   public int getMetaFromState(net.minecraft.block.state.IBlockState state) {
+      return state.getValue(VARIANT).getMeta();
+   }
+   // --- End variant property ---
+
+
+   @SideOnly(Side.CLIENT)
+   public TextureAtlasSprite iconLeaves;
+   @SideOnly(Side.CLIENT)
+   public TextureAtlasSprite iconStalk;
 
    @SideOnly(Side.CLIENT)
    public void registerBlockIcons(IIconRegister ir) {
-      this.icon[0] = ir.registerIcon("thaumcraft:greatwoodsapling");
-      this.icon[1] = ir.registerIcon("thaumcraft:silverwoodsapling");
-      this.icon[2] = ir.registerIcon("thaumcraft:shimmerleaf");
-      this.icon[3] = ir.registerIcon("thaumcraft:cinderpearl");
-      this.icon[4] = ir.registerIcon("thaumcraft:purifier_seed");
-      this.icon[5] = ir.registerIcon("thaumcraft:manashroom");
-      this.iconLeaves = ir.registerIcon("thaumcraft:purifier_leaves");
-      this.iconStalk = ir.registerIcon("thaumcraft:purifier_stalk");
-      this.blank = ir.registerIcon("thaumcraft:blank");
+      this.iconLeaves = ir.registerSprite("thaumcraft:bloom_leaves");
+      this.iconStalk  = ir.registerSprite("thaumcraft:bloom_stalk");
    }
 
-   @SideOnly(Side.CLIENT)
-   public IIcon getIcon(int par1, int par2) {
-      if (par2 == 4 && par1 == 0) {
-         return this.blank;
-      } else {
-         return par2 < this.icon.length ? this.icon[par2] : null;
-      }
+   public BlockCustomPlant() {
+      super(Material.PLANTS);
+      this.setCreativeTab(Thaumcraft.tabTC);
    }
 
-   public void getSubBlocks(Item par1, CreativeTabs par2CreativeTabs, List par3List) {
+   @Override
+   public void getSubBlocks(CreativeTabs par2CreativeTabs, net.minecraft.util.NonNullList<ItemStack> par3List) {
       for(int var4 = 0; var4 <= 5; ++var4) {
-         par3List.add(new ItemStack(par1, 1, var4));
+         par3List.add(new ItemStack(this, 1, var4));
       }
-
    }
 
-   public boolean hasTileEntity(int metadata) {
-      return metadata == 4 || super.hasTileEntity(metadata);
+   @Override
+   public boolean hasTileEntity(IBlockState state) {
+      int metadata = this.getMetaFromState(state);
+      return metadata == 4 || super.hasTileEntity(state);
    }
 
-   public TileEntity createTileEntity(World world, int metadata) {
-      return metadata == 4 ? new TileEtherealBloom() : super.createTileEntity(world, metadata);
+   @Override
+   public TileEntity createTileEntity(World world, IBlockState state) {
+      int metadata = this.getMetaFromState(state);
+      return metadata == 4 ? new TileEtherealBloom() : super.createTileEntity(world, state);
    }
 
-   public int damageDropped(int par1) {
-      return par1;
+   public int damageDropped(IBlockState state) {
+      return this.getMetaFromState(state);
    }
 
-   public Item getItemDropped(int par1, Random par2Random, int par3) {
+   public Item getItemDropped(IBlockState state, Random par2Random, int par3) {
       return Item.getItemFromBlock(this);
    }
 
-   public EnumPlantType getPlantType(IBlockAccess world, int x, int y, int z) {
-      int md = world.getBlockMetadata(x, y, z);
+   public EnumPlantType getPlantType(IBlockAccess world, BlockPos pos) {
+      int md = this.getMetaFromState(world.getBlockState(pos));
       if (md == 3) {
          return EnumPlantType.Desert;
       } else {
@@ -96,32 +118,32 @@ public class BlockCustomPlant extends BlockBush {
       }
    }
 
-   public boolean canPlaceBlockAt(World par1World, int par2, int par3, int par4) {
+   @Override
+   public boolean canPlaceBlockAt(World par1World, BlockPos pos) {
       return true;
    }
 
-   public void updateTick(World world, int i, int j, int k, Random random) {
+   @Override
+   public void updateTick(World world, BlockPos pos, IBlockState state, Random random) {
       if (!world.isRemote) {
-         super.updateTick(world, i, j, k, random);
-         int l = world.getBlockMetadata(i, j, k);
-         if (l == 0 && world.getBlockLightValue(i, j + 1, k) >= 9 && random.nextInt(25) == 0) {
-            this.growGreatTree(world, i, j, k, random);
-         } else if (l == 1 && world.getBlockLightValue(i, j + 1, k) >= 9 && random.nextInt(50) == 0) {
-            this.growSilverTree(world, i, j, k, random);
+         super.updateTick(world, pos, state, random);
+         int l = this.getMetaFromState(state);
+         if (l == 0 && world.getLightFromNeighbors(pos.up()) >= 9 && random.nextInt(25) == 0) {
+            this.growGreatTree(world, pos.getX(), pos.getY(), pos.getZ(), random);
+         } else if (l == 1 && world.getLightFromNeighbors(pos.up()) >= 9 && random.nextInt(50) == 0) {
+            this.growSilverTree(world, pos.getX(), pos.getY(), pos.getZ(), random);
          }
       }
-
    }
 
    public void growGreatTree(World world, int i, int j, int k, Random random) {
       if (world != null && world.provider != null) {
          if (!world.isRemote) {
-            world.setBlockToAir(i, j, k);
+            world.setBlockToAir(new BlockPos(i, j, k));
             WorldGenGreatwoodTrees obj = new WorldGenGreatwoodTrees(true);
             if (!obj.generate(world, random, i, j, k, false)) {
-               world.setBlock(i, j, k, this, 0, 0);
+               world.setBlockState(new BlockPos(i, j, k), this.getDefaultState(), 0);
             }
-
          }
       }
    }
@@ -129,37 +151,38 @@ public class BlockCustomPlant extends BlockBush {
    public void growSilverTree(World world, int i, int j, int k, Random random) {
       if (world != null && world.provider != null) {
          if (!world.isRemote) {
-            world.setBlockToAir(i, j, k);
+            world.setBlockToAir(new BlockPos(i, j, k));
             WorldGenSilverwoodTrees obj = new WorldGenSilverwoodTrees(true, 7, 5);
-            if (!obj.generate(world, random, i, j, k)) {
-               world.setBlock(i, j, k, this, 1, 0);
+            if (!obj.generate(world, random, new BlockPos(i, j, k))) {
+               world.setBlockState(new BlockPos(i, j, k), this.getStateFromMeta(1), 0);
             }
-
          }
       }
    }
 
-   public int getLightValue(IBlockAccess world, int x, int y, int z) {
-      int md = world.getBlockMetadata(x, y, z);
+   @Override
+   public int getLightValue(IBlockState state, IBlockAccess world, BlockPos pos) {
+      int md = this.getMetaFromState(state);
       if (md != 1 && md != 2 && md != 3 && md != 5) {
-         return md == 4 ? 15 : super.getLightValue(world, x, y, z);
+         return md == 4 ? 15 : super.getLightValue(state, world, pos);
       } else {
          return 8;
       }
    }
 
-   public void onEntityCollidedWithBlock(World world, int x, int y, int z, Entity entity) {
-      int md = world.getBlockMetadata(x, y, z);
+   @Override
+   public void onEntityCollision(World world, BlockPos pos, IBlockState state, Entity entity) {
+      int md = this.getMetaFromState(state);
       if (md == 5 && entity instanceof EntityLivingBase) {
-         ((EntityLivingBase)entity).addPotionEffect(new PotionEffect(Potion.confusion.id, 200, 0));
+         ((EntityLivingBase)entity).addPotionEffect(new PotionEffect(MobEffects.NAUSEA, 200, 0));
       }
-
-      super.onEntityCollidedWithBlock(world, x, y, z, entity);
    }
 
    @SideOnly(Side.CLIENT)
-   public void randomDisplayTick(World world, int i, int j, int k, Random random) {
-      int md = world.getBlockMetadata(i, j, k);
+   @Override
+   public void randomDisplayTick(IBlockState state, World world, BlockPos pos, Random random) {
+      int md = this.getMetaFromState(state);
+      int i = pos.getX(), j = pos.getY(), k = pos.getZ();
       if (md == 2 && random.nextInt(3) == 0) {
          float cr = 0.3F + world.rand.nextFloat() * 0.3F;
          float cg = 0.7F + world.rand.nextFloat() * 0.3F;
@@ -174,8 +197,8 @@ public class BlockCustomPlant extends BlockBush {
          float xr = (float)i + 0.5F + (world.rand.nextFloat() - world.rand.nextFloat()) * 0.1F;
          float yr = (float)j + 0.6F + (world.rand.nextFloat() - world.rand.nextFloat()) * 0.1F;
          float zr = (float)k + 0.5F + (world.rand.nextFloat() - world.rand.nextFloat()) * 0.1F;
-         world.spawnParticle("smoke", xr, yr, zr, 0.0F, 0.0F, 0.0F);
-         world.spawnParticle("flame", xr, yr, zr, 0.0F, 0.0F, 0.0F);
+         world.spawnParticle(EnumParticleTypes.SMOKE_NORMAL, xr, yr, zr, 0.0F, 0.0F, 0.0F);
+         world.spawnParticle(EnumParticleTypes.FLAME, xr, yr, zr, 0.0F, 0.0F, 0.0F);
       } else if (md == 5 && random.nextInt(3) == 0) {
          float xr = (float)i + 0.5F + (world.rand.nextFloat() - world.rand.nextFloat()) * 0.4F;
          float yr = (float)j + 0.3F;
@@ -186,14 +209,13 @@ public class BlockCustomPlant extends BlockBush {
          ef.setGravity(0.015F);
          ParticleEngine.instance.addEffect(world, ef);
       }
-
    }
 
-   public int getFlammability(IBlockAccess world, int x, int y, int z, ForgeDirection face) {
+   public int getFlammability(IBlockAccess world, BlockPos pos, EnumFacing face) {
       return 100;
    }
 
-   public int getFireSpreadSpeed(IBlockAccess world, int x, int y, int z, ForgeDirection face) {
+   public int getFireSpreadSpeed(IBlockAccess world, BlockPos pos, EnumFacing face) {
       return 60;
    }
 }

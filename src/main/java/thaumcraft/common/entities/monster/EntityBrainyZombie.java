@@ -13,9 +13,9 @@ import thaumcraft.common.config.ConfigItems;
 public class EntityBrainyZombie extends EntityZombie {
    protected void applyEntityAttributes() {
       super.applyEntityAttributes();
-      this.getEntityAttribute(SharedMonsterAttributes.maxHealth).setBaseValue(25.0F);
-      this.getEntityAttribute(SharedMonsterAttributes.attackDamage).setBaseValue(5.0F);
-      this.getEntityAttribute(field_110186_bp).setBaseValue(0.0F);
+      this.getEntityAttribute(SharedMonsterAttributes.MAX_HEALTH).setBaseValue(25.0F);
+      this.getEntityAttribute(SharedMonsterAttributes.ATTACK_DAMAGE).setBaseValue(5.0F);
+
    }
 
    public EntityBrainyZombie(World world) {
@@ -42,12 +42,12 @@ public class EntityBrainyZombie extends EntityZombie {
 
    protected void dropFewItems(boolean flag, int i) {
       for(int a = 0; a < 3; ++a) {
-         if (this.worldObj.rand.nextBoolean()) {
-            this.dropItem(Items.rotten_flesh, 1);
+         if (this.world.rand.nextBoolean()) {
+            this.dropItem(Items.ROTTEN_FLESH, 1);
          }
       }
 
-      if (this.worldObj.rand.nextInt(10) - i <= 4) {
+      if (this.world.rand.nextInt(10) - i <= 4) {
          this.entityDropItem(new ItemStack(ConfigItems.itemZombieBrain), 1.5F);
       }
 

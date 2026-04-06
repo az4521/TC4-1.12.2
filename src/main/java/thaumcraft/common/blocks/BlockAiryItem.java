@@ -1,18 +1,17 @@
 package thaumcraft.common.blocks;
 
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraft.block.Block;
-import net.minecraft.client.renderer.texture.IIconRegister;
-import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.IIcon;
+import net.minecraft.world.World;
 
+import javax.annotation.Nullable;
 import java.util.List;
 
 public class BlockAiryItem extends ItemBlock {
-   public IIcon icon;
 
    public BlockAiryItem(Block b) {
       super(b);
@@ -20,30 +19,22 @@ public class BlockAiryItem extends ItemBlock {
       this.setHasSubtypes(true);
    }
 
-   @SideOnly(Side.CLIENT)
-   public void registerIcons(IIconRegister ir) {
-      this.icon = ir.registerIcon("thaumcraft:taint_over_2");
-   }
-
-   public IIcon getIconFromDamage(int par1) {
-      return this.icon;
-   }
-
    public int getMetadata(int par1) {
       return par1;
    }
 
-   public String getUnlocalizedName(ItemStack par1ItemStack) {
-      return super.getUnlocalizedName() + "." + par1ItemStack.getItemDamage();
+   public String getTranslationKey(ItemStack par1ItemStack) {
+      return super.getTranslationKey() + "." + par1ItemStack.getItemDamage();
    }
 
-   public void addInformation(ItemStack par1ItemStack, EntityPlayer par2EntityPlayer, List list, boolean par4) {
-      List<String> loreList = (List<String>) list;
+   @Override
+   @SideOnly(Side.CLIENT)
+   public void addInformation(ItemStack par1ItemStack, @Nullable World world, List<String> list, ITooltipFlag flag) {
       if (par1ItemStack.getItemDamage() == 0) {
-         loreList.add("§5Place a randomly generated node");
-         loreList.add("§oCreative Mode Only");
+         list.add("§5Place a randomly generated node");
+         list.add("§oCreative Mode Only");
       }
 
-      super.addInformation(par1ItemStack, par2EntityPlayer, loreList, par4);
+      super.addInformation(par1ItemStack, world, list, flag);
    }
 }

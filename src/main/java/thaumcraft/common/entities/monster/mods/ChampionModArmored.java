@@ -15,11 +15,11 @@ public class ChampionModArmored implements IChampionModifierEffect {
    }
 
    public void showFX(EntityLivingBase boss) {
-      if (boss.worldObj.rand.nextInt(4) == 0) {
-         float w = boss.worldObj.rand.nextFloat() * boss.width;
-         float d = boss.worldObj.rand.nextFloat() * boss.width;
-         float h = boss.worldObj.rand.nextFloat() * boss.height;
-         Thaumcraft.proxy.drawGenericParticles(boss.worldObj, boss.boundingBox.minX + (double)w, boss.boundingBox.minY + (double)h, boss.boundingBox.minZ + (double)d, 0.0F, 0.0F, 0.0F, 0.9F, 0.9F, 0.9F + boss.worldObj.rand.nextFloat() * 0.1F, 0.7F, false, 112, 9, 1, 5 + boss.worldObj.rand.nextInt(4), 0, 0.6F + boss.worldObj.rand.nextFloat() * 0.2F);
+      if (boss.world.rand.nextInt(4) == 0) {
+         float w = boss.world.rand.nextFloat() * boss.width;
+         float d = boss.world.rand.nextFloat() * boss.width;
+         float h = boss.world.rand.nextFloat() * boss.height;
+         Thaumcraft.proxy.drawGenericParticles(boss.world, boss.getEntityBoundingBox().minX + (double)w, boss.getEntityBoundingBox().minY + (double)h, boss.getEntityBoundingBox().minZ + (double)d, 0.0F, 0.0F, 0.0F, 0.9F, 0.9F, 0.9F + boss.world.rand.nextFloat() * 0.1F, 0.7F, false, 112, 9, 1, 5 + boss.world.rand.nextInt(4), 0, 0.6F + boss.world.rand.nextFloat() * 0.2F);
       }
    }
 }

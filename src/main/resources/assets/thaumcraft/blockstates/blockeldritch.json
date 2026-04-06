@@ -1,0 +1,52 @@
+{
+  "variants": {
+    "meta=0": {
+      "model": "thaumcraft:blockeldritch_altar"
+    },
+    "meta=1": {
+      "model": "thaumcraft:blockeldritch_obelisk"
+    },
+    "meta=2": {
+      "model": "thaumcraft:blockeldritch_unused"
+    },
+    "meta=3": {
+      "model": "thaumcraft:blockeldritch_cap"
+    },
+    "meta=4": {
+      "model": "thaumcraft:blockeldritch_stone"
+    },
+    "meta=5": {
+      "model": "thaumcraft:blockeldritch_resource"
+    },
+    "meta=6": {
+      "model": "thaumcraft:blockeldritch_deco1"
+    },
+    "meta=7": {
+      "model": "thaumcraft:blockeldritch_deco2"
+    },
+    "meta=8": {
+      "model": "thaumcraft:blockeldritch_lock"
+    },
+    "meta=9": {
+      "model": "thaumcraft:blockeldritch_spawner"
+    },
+    "meta=10": {
+      "model": "thaumcraft:blockeldritch_trap"
+    },
+    "meta=11": {
+      "model": "thaumcraft:blockeldritch_altar"
+    },
+    "meta=12": {
+      "model": "thaumcraft:blockeldritch_altar"
+    },
+    "meta=13": {
+      "model": "thaumcraft:blockeldritch_altar"
+    },
+    "meta=14": {
+      "model": "thaumcraft:blockeldritch_altar"
+    },
+    "meta=15": {
+      "model": "thaumcraft:blockeldritch_altar"
+    }
+  }
+}

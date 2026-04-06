@@ -1,17 +1,21 @@
 package thaumcraft.common.blocks;
 
-import net.minecraft.block.Block;
+import net.minecraft.block.SoundType;
+import net.minecraft.init.SoundEvents;
 
-public class JarStepSound extends Block.SoundType {
-   public JarStepSound(String par1Str, float par2, float par3) {
-      super(par1Str, par2, par3);
-   }
+/**
+ * Custom step sound for jars using vanilla glass sounds.
+ */
+public class JarStepSound extends SoundType {
+    public String soundName;
 
-   public String getBreakSound() {
-      return "thaumcraft:" + this.soundName;
-   }
-
-   public String getStepResourcePath() {
-      return "thaumcraft:" + this.soundName;
-   }
+    public JarStepSound(String par1Str, float volume, float pitch) {
+        super(volume, pitch,
+            SoundEvents.BLOCK_GLASS_BREAK,
+            SoundEvents.BLOCK_GLASS_STEP,
+            SoundEvents.BLOCK_GLASS_PLACE,
+            SoundEvents.BLOCK_GLASS_HIT,
+            SoundEvents.BLOCK_GLASS_FALL);
+        this.soundName = par1Str;
+    }
 }

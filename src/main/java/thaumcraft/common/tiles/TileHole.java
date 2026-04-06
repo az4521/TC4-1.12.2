@@ -4,8 +4,9 @@ import net.minecraft.block.Block;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.NetworkManager;
 import net.minecraft.network.Packet;
-import net.minecraft.network.play.server.S35PacketUpdateTileEntity;
+import net.minecraft.network.play.server.SPacketUpdateTileEntity;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.math.BlockPos;
 import tc4tweak.network.TileHoleSyncPacket;
 import thaumcraft.common.Thaumcraft;
 import thaumcraft.common.config.ConfigBlocks;
@@ -36,15 +37,14 @@ public class TileHole extends TileMemory {
    }
 
    public void updateEntity() {
-      super.updateEntity();
-      if (this.worldObj.isRemote) {
+      if (this.world.isRemote) {
          this.surroundwithsparkles();
       }
 
       if (this.countdown == 0 && this.count > 1 && this.direction != -1) {
-         int ii = this.xCoord;
-         int jj = this.yCoord;
-         int kk = this.zCoord;
+         int ii = this.getPos().getX();
+         int jj = this.getPos().getY();
+         int kk = this.getPos().getZ();
          switch (this.direction) {
             case 0:
             case 1:
@@ -52,7 +52,7 @@ public class TileHole extends TileMemory {
 
                for(; a < 9; ++a) {
                   if (a / 3 != 1 || a % 3 != 1) {
-                     ItemFocusPortableHole.createHole(this.worldObj, ii - 1 + a / 3, jj, kk - 1 + a % 3, -1, (byte)1, this.countdownmax);
+                     ItemFocusPortableHole.createHole(this.world, ii - 1 + a / 3, jj, kk - 1 + a % 3, -1, (byte)1, this.countdownmax);
                   }
                }
                break;
@@ -60,7 +60,7 @@ public class TileHole extends TileMemory {
             case 3:
                for(int i = 0; i < 9; ++i) {
                   if (i / 3 != 1 || i % 3 != 1) {
-                     ItemFocusPortableHole.createHole(this.worldObj, ii - 1 + i / 3, jj - 1 + i % 3, kk, -1, (byte)1, this.countdownmax);
+                     ItemFocusPortableHole.createHole(this.world, ii - 1 + i / 3, jj - 1 + i % 3, kk, -1, (byte)1, this.countdownmax);
                   }
                }
                break;
@@ -68,7 +68,7 @@ public class TileHole extends TileMemory {
             case 5:
                for(int i = 0; i < 9; ++i) {
                   if (i / 3 != 1 || i % 3 != 1) {
-                     ItemFocusPortableHole.createHole(this.worldObj, ii, jj - 1 + i / 3, kk - 1 + i % 3, -1, (byte)1, this.countdownmax);
+                     ItemFocusPortableHole.createHole(this.world, ii, jj - 1 + i / 3, kk - 1 + i % 3, -1, (byte)1, this.countdownmax);
                   }
                }
          }
@@ -93,132 +93,132 @@ public class TileHole extends TileMemory {
                --ii;
          }
 
-         if (!ItemFocusPortableHole.createHole(this.worldObj, ii, jj, kk, this.direction, (byte)(this.count - 1), this.countdownmax)) {
+         if (!ItemFocusPortableHole.createHole(this.world, ii, jj, kk, this.direction, (byte)(this.count - 1), this.countdownmax)) {
             this.count = 0;
          }
       }
 
       ++this.countdown;
       if (this.countdown >= this.countdownmax) {
-         if (this.worldObj.isRemote) {
-            Thaumcraft.proxy.blockSparkle(this.worldObj, this.xCoord, this.yCoord, this.zCoord, 4194368, 1);
+         if (this.world.isRemote) {
+            Thaumcraft.proxy.blockSparkle(this.world, this.getPos().getX(), this.getPos().getY(), this.getPos().getZ(), 4194368, 1);
          } else {
-            this.worldObj.setBlock(this.xCoord, this.yCoord, this.zCoord, this.oldblock, this.oldmeta, 0);
+            this.world.setBlockState(this.getPos(), this.oldblock.getStateFromMeta(this.oldmeta), 0);
             this.recreateTileEntity();
          }
 
-         this.worldObj.scheduleBlockUpdate(this.xCoord, this.yCoord, this.zCoord, this.oldblock, 2);
+         this.world.scheduleUpdate(this.getPos(), this.oldblock, 2);
       }
 
    }
 
    private void surroundwithsparkles() {
-      boolean yp = this.worldObj.getBlock(this.xCoord, this.yCoord + 1, this.zCoord).isOpaqueCube();
-      boolean xp = this.worldObj.getBlock(this.xCoord + 1, this.yCoord, this.zCoord).isOpaqueCube();
-      boolean zp = this.worldObj.getBlock(this.xCoord, this.yCoord, this.zCoord + 1).isOpaqueCube();
-      boolean yn = this.worldObj.getBlock(this.xCoord, this.yCoord - 1, this.zCoord).isOpaqueCube();
-      boolean xn = this.worldObj.getBlock(this.xCoord - 1, this.yCoord, this.zCoord).isOpaqueCube();
-      boolean zn = this.worldObj.getBlock(this.xCoord, this.yCoord, this.zCoord - 1).isOpaqueCube();
-      boolean b1 = this.worldObj.getBlock(this.xCoord, this.yCoord + 1, this.zCoord) != ConfigBlocks.blockHole;
-      boolean b2 = this.worldObj.getBlock(this.xCoord, this.yCoord - 1, this.zCoord) != ConfigBlocks.blockHole;
-      boolean b3 = this.worldObj.getBlock(this.xCoord, this.yCoord, this.zCoord - 1) != ConfigBlocks.blockHole;
-      boolean b4 = this.worldObj.getBlock(this.xCoord, this.yCoord, this.zCoord + 1) != ConfigBlocks.blockHole;
-      boolean b5 = this.worldObj.getBlock(this.xCoord - 1, this.yCoord, this.zCoord) != ConfigBlocks.blockHole;
-      boolean b6 = this.worldObj.getBlock(this.xCoord + 1, this.yCoord, this.zCoord) != ConfigBlocks.blockHole;
+      boolean yp = this.world.getBlockState(this.getPos().up()).isOpaqueCube();
+      boolean xp = this.world.getBlockState(this.getPos().east()).isOpaqueCube();
+      boolean zp = this.world.getBlockState(this.getPos().south()).isOpaqueCube();
+      boolean yn = this.world.getBlockState(this.getPos().down()).isOpaqueCube();
+      boolean xn = this.world.getBlockState(this.getPos().west()).isOpaqueCube();
+      boolean zn = this.world.getBlockState(this.getPos().north()).isOpaqueCube();
+      boolean b1 = this.world.getBlockState(this.getPos().up()).getBlock() != ConfigBlocks.blockHole;
+      boolean b2 = this.world.getBlockState(this.getPos().down()).getBlock() != ConfigBlocks.blockHole;
+      boolean b3 = this.world.getBlockState(this.getPos().north()).getBlock() != ConfigBlocks.blockHole;
+      boolean b4 = this.world.getBlockState(this.getPos().south()).getBlock() != ConfigBlocks.blockHole;
+      boolean b5 = this.world.getBlockState(this.getPos().west()).getBlock() != ConfigBlocks.blockHole;
+      boolean b6 = this.world.getBlockState(this.getPos().east()).getBlock() != ConfigBlocks.blockHole;
       if (!xp && yp && b6) {
-         Thaumcraft.proxy.sparkle((float)(this.xCoord + 1), (float)(this.yCoord + 1), (float)this.zCoord + this.worldObj.rand.nextFloat(), 2);
+         Thaumcraft.proxy.sparkle((float)(this.getPos().getX() + 1), (float)(this.getPos().getY() + 1), (float)this.getPos().getZ() + this.world.rand.nextFloat(), 2);
       }
 
       if (!xn && yp && b5) {
-         Thaumcraft.proxy.sparkle((float)this.xCoord, (float)(this.yCoord + 1), (float)this.zCoord + this.worldObj.rand.nextFloat(), 2);
+         Thaumcraft.proxy.sparkle((float)this.getPos().getX(), (float)(this.getPos().getY() + 1), (float)this.getPos().getZ() + this.world.rand.nextFloat(), 2);
       }
 
       if (!zp && yp && b4) {
-         Thaumcraft.proxy.sparkle((float)this.xCoord + this.worldObj.rand.nextFloat(), (float)(this.yCoord + 1), (float)(this.zCoord + 1), 2);
+         Thaumcraft.proxy.sparkle((float)this.getPos().getX() + this.world.rand.nextFloat(), (float)(this.getPos().getY() + 1), (float)(this.getPos().getZ() + 1), 2);
       }
 
       if (!zn && yp && b3) {
-         Thaumcraft.proxy.sparkle((float)this.xCoord + this.worldObj.rand.nextFloat(), (float)(this.yCoord + 1), (float)this.zCoord, 2);
+         Thaumcraft.proxy.sparkle((float)this.getPos().getX() + this.world.rand.nextFloat(), (float)(this.getPos().getY() + 1), (float)this.getPos().getZ(), 2);
       }
 
       if (!xp && yn && b6) {
-         Thaumcraft.proxy.sparkle((float)(this.xCoord + 1), (float)this.yCoord, (float)this.zCoord + this.worldObj.rand.nextFloat(), 2);
+         Thaumcraft.proxy.sparkle((float)(this.getPos().getX() + 1), (float)this.getPos().getY(), (float)this.getPos().getZ() + this.world.rand.nextFloat(), 2);
       }
 
       if (!xn && yn && b5) {
-         Thaumcraft.proxy.sparkle((float)this.xCoord, (float)this.yCoord, (float)this.zCoord + this.worldObj.rand.nextFloat(), 2);
+         Thaumcraft.proxy.sparkle((float)this.getPos().getX(), (float)this.getPos().getY(), (float)this.getPos().getZ() + this.world.rand.nextFloat(), 2);
       }
 
       if (!zp && yn && b4) {
-         Thaumcraft.proxy.sparkle((float)this.xCoord + this.worldObj.rand.nextFloat(), (float)this.yCoord, (float)(this.zCoord + 1), 2);
+         Thaumcraft.proxy.sparkle((float)this.getPos().getX() + this.world.rand.nextFloat(), (float)this.getPos().getY(), (float)(this.getPos().getZ() + 1), 2);
       }
 
       if (!zn && yn && b3) {
-         Thaumcraft.proxy.sparkle((float)this.xCoord + this.worldObj.rand.nextFloat(), (float)this.yCoord, (float)this.zCoord, 2);
+         Thaumcraft.proxy.sparkle((float)this.getPos().getX() + this.world.rand.nextFloat(), (float)this.getPos().getY(), (float)this.getPos().getZ(), 2);
       }
 
       if (!yp && xp && b1) {
-         Thaumcraft.proxy.sparkle((float)(this.xCoord + 1), (float)(this.yCoord + 1), (float)this.zCoord + this.worldObj.rand.nextFloat(), 2);
+         Thaumcraft.proxy.sparkle((float)(this.getPos().getX() + 1), (float)(this.getPos().getY() + 1), (float)this.getPos().getZ() + this.world.rand.nextFloat(), 2);
       }
 
       if (!yn && xp && b2) {
-         Thaumcraft.proxy.sparkle((float)(this.xCoord + 1), (float)this.yCoord, (float)this.zCoord + this.worldObj.rand.nextFloat(), 2);
+         Thaumcraft.proxy.sparkle((float)(this.getPos().getX() + 1), (float)this.getPos().getY(), (float)this.getPos().getZ() + this.world.rand.nextFloat(), 2);
       }
 
       if (!zp && xp && b4) {
-         Thaumcraft.proxy.sparkle((float)(this.xCoord + 1), (float)this.yCoord + this.worldObj.rand.nextFloat(), (float)(this.zCoord + 1), 2);
+         Thaumcraft.proxy.sparkle((float)(this.getPos().getX() + 1), (float)this.getPos().getY() + this.world.rand.nextFloat(), (float)(this.getPos().getZ() + 1), 2);
       }
 
       if (!zn && xp && b3) {
-         Thaumcraft.proxy.sparkle((float)(this.xCoord + 1), (float)this.yCoord + this.worldObj.rand.nextFloat(), (float)this.zCoord, 2);
+         Thaumcraft.proxy.sparkle((float)(this.getPos().getX() + 1), (float)this.getPos().getY() + this.world.rand.nextFloat(), (float)this.getPos().getZ(), 2);
       }
 
       if (!yp && xn && b1) {
-         Thaumcraft.proxy.sparkle((float)this.xCoord, (float)(this.yCoord + 1), (float)this.zCoord + this.worldObj.rand.nextFloat(), 2);
+         Thaumcraft.proxy.sparkle((float)this.getPos().getX(), (float)(this.getPos().getY() + 1), (float)this.getPos().getZ() + this.world.rand.nextFloat(), 2);
       }
 
       if (!yn && xn && b2) {
-         Thaumcraft.proxy.sparkle((float)this.xCoord, (float)this.yCoord, (float)this.zCoord + this.worldObj.rand.nextFloat(), 2);
+         Thaumcraft.proxy.sparkle((float)this.getPos().getX(), (float)this.getPos().getY(), (float)this.getPos().getZ() + this.world.rand.nextFloat(), 2);
       }
 
       if (!zp && xn && b4) {
-         Thaumcraft.proxy.sparkle((float)this.xCoord, (float)this.yCoord + this.worldObj.rand.nextFloat(), (float)(this.zCoord + 1), 2);
+         Thaumcraft.proxy.sparkle((float)this.getPos().getX(), (float)this.getPos().getY() + this.world.rand.nextFloat(), (float)(this.getPos().getZ() + 1), 2);
       }
 
       if (!zn && xn && b3) {
-         Thaumcraft.proxy.sparkle((float)this.xCoord, (float)this.yCoord + this.worldObj.rand.nextFloat(), (float)this.zCoord, 2);
+         Thaumcraft.proxy.sparkle((float)this.getPos().getX(), (float)this.getPos().getY() + this.world.rand.nextFloat(), (float)this.getPos().getZ(), 2);
       }
 
       if (!xp && zp && b6) {
-         Thaumcraft.proxy.sparkle((float)(this.xCoord + 1), (float)this.yCoord + this.worldObj.rand.nextFloat(), (float)(this.zCoord + 1), 2);
+         Thaumcraft.proxy.sparkle((float)(this.getPos().getX() + 1), (float)this.getPos().getY() + this.world.rand.nextFloat(), (float)(this.getPos().getZ() + 1), 2);
       }
 
       if (!xn && zp && b5) {
-         Thaumcraft.proxy.sparkle((float)this.xCoord, (float)this.yCoord + this.worldObj.rand.nextFloat(), (float)(this.zCoord + 1), 2);
+         Thaumcraft.proxy.sparkle((float)this.getPos().getX(), (float)this.getPos().getY() + this.world.rand.nextFloat(), (float)(this.getPos().getZ() + 1), 2);
       }
 
       if (!yp && zp && b1) {
-         Thaumcraft.proxy.sparkle((float)this.xCoord + this.worldObj.rand.nextFloat(), (float)(this.yCoord + 1), (float)(this.zCoord + 1), 2);
+         Thaumcraft.proxy.sparkle((float)this.getPos().getX() + this.world.rand.nextFloat(), (float)(this.getPos().getY() + 1), (float)(this.getPos().getZ() + 1), 2);
       }
 
       if (!yn && zp && b2) {
-         Thaumcraft.proxy.sparkle((float)this.xCoord + this.worldObj.rand.nextFloat(), (float)this.yCoord, (float)(this.zCoord + 1), 2);
+         Thaumcraft.proxy.sparkle((float)this.getPos().getX() + this.world.rand.nextFloat(), (float)this.getPos().getY(), (float)(this.getPos().getZ() + 1), 2);
       }
 
       if (!xp && zn && b6) {
-         Thaumcraft.proxy.sparkle((float)(this.xCoord + 1), (float)this.yCoord + this.worldObj.rand.nextFloat(), (float)this.zCoord, 2);
+         Thaumcraft.proxy.sparkle((float)(this.getPos().getX() + 1), (float)this.getPos().getY() + this.world.rand.nextFloat(), (float)this.getPos().getZ(), 2);
       }
 
       if (!xn && zn && b5) {
-         Thaumcraft.proxy.sparkle((float)this.xCoord, (float)this.yCoord + this.worldObj.rand.nextFloat(), (float)this.zCoord, 2);
+         Thaumcraft.proxy.sparkle((float)this.getPos().getX(), (float)this.getPos().getY() + this.world.rand.nextFloat(), (float)this.getPos().getZ(), 2);
       }
 
       if (!yp && zn && b1) {
-         Thaumcraft.proxy.sparkle((float)this.xCoord + this.worldObj.rand.nextFloat(), (float)(this.yCoord + 1), (float)this.zCoord, 2);
+         Thaumcraft.proxy.sparkle((float)this.getPos().getX() + this.world.rand.nextFloat(), (float)(this.getPos().getY() + 1), (float)this.getPos().getZ(), 2);
       }
 
       if (!yn && zn && b2) {
-         Thaumcraft.proxy.sparkle((float)this.xCoord + this.worldObj.rand.nextFloat(), (float)this.yCoord, (float)this.zCoord, 2);
+         Thaumcraft.proxy.sparkle((float)this.getPos().getX() + this.world.rand.nextFloat(), (float)this.getPos().getY(), (float)this.getPos().getZ(), 2);
       }
 
    }
@@ -235,9 +235,11 @@ public class TileHole extends TileMemory {
       this.direction = nbttagcompound.getByte("direction");
    }
 
-   public void writeToNBT(NBTTagCompound nbttagcompound) {
+   @Override
+   public NBTTagCompound writeToNBT(NBTTagCompound nbttagcompound) {
       super.writeToNBT(nbttagcompound);
       this.writeCustomNBT(nbttagcompound);
+      return nbttagcompound;
    }
 
    public void writeCustomNBT(NBTTagCompound nbttagcompound) {
@@ -250,8 +252,7 @@ public class TileHole extends TileMemory {
    public Packet getDescriptionPacket() {
       NBTTagCompound nbttagcompound = new NBTTagCompound();
       this.writeCustomNBT(nbttagcompound);
-      S35PacketUpdateTileEntity origin =
-              new S35PacketUpdateTileEntity(this.xCoord, this.yCoord, this.zCoord, -999, nbttagcompound);
+      SPacketUpdateTileEntity origin = new SPacketUpdateTileEntity(this.getPos(), -999, nbttagcompound);
       try {
          return Thaumcraft.instance.CHANNEL.getPacketFrom(new TileHoleSyncPacket(origin));
       } catch (Exception ex) {
@@ -260,8 +261,8 @@ public class TileHole extends TileMemory {
       }
    }
 
-   public void onDataPacket(NetworkManager net, S35PacketUpdateTileEntity pkt) {
+   public void onDataPacket(NetworkManager net, SPacketUpdateTileEntity pkt) {
       super.onDataPacket(net, pkt);
-      this.readCustomNBT(pkt.func_148857_g());
+      this.readCustomNBT(pkt.getNbtCompound());
    }
 }

@@ -1,10 +1,10 @@
 package thaumcraft.common.lib.network.misc;
 
-import cpw.mods.fml.common.network.simpleimpl.IMessage;
-import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
-import cpw.mods.fml.common.network.simpleimpl.MessageContext;
+import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
+import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
+import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
 import io.netty.buffer.ByteBuf;
-import net.minecraft.world.biome.BiomeGenBase;
+import net.minecraft.world.biome.Biome;
 import thaumcraft.common.Thaumcraft;
 import thaumcraft.common.lib.utils.Utils;
 
@@ -35,7 +35,7 @@ public class PacketBiomeChange implements IMessage, IMessageHandler<PacketBiomeC
    }
 
    public IMessage onMessage(PacketBiomeChange message, MessageContext ctx) {
-      Utils.setBiomeAt(Thaumcraft.proxy.getClientWorld(), message.x, message.z, BiomeGenBase.getBiome(message.biome));
+      Utils.setBiomeAt(Thaumcraft.proxy.getClientWorld(), message.x, message.z, Biome.getBiome(message.biome));
       return null;
    }
 }

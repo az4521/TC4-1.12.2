@@ -1,23 +1,19 @@
 package thaumcraft.common.items.wands.foci;
 
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import java.util.ArrayList;
 import net.minecraft.block.Block;
-import net.minecraft.client.renderer.texture.IIconRegister;
+import thaumcraft.client.renderers.compat.IIconRegister;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.init.Blocks;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.util.IIcon;
-import net.minecraft.util.MathHelper;
-import net.minecraft.util.MovingObjectPosition;
-import net.minecraft.util.Vec3;
-import net.minecraft.util.MovingObjectPosition.MovingObjectType;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.world.World;
-import net.minecraftforge.common.util.ForgeDirection;
+import net.minecraft.util.EnumFacing;
 import thaumcraft.api.BlockCoordinates;
 import thaumcraft.api.IArchitect;
 import thaumcraft.api.aspects.Aspect;
@@ -30,9 +26,10 @@ import thaumcraft.common.items.wands.ItemWandCasting;
 import thaumcraft.common.items.wands.WandManager;
 import thaumcraft.common.lib.events.ServerTickEventsFML;
 import thaumcraft.common.lib.utils.BlockUtils;
+import net.minecraft.util.math.BlockPos;
 
 public class ItemFocusTrade extends ItemFocusBasic implements IArchitect {
-   public IIcon iconOrnament;
+   public TextureAtlasSprite iconOrnament;
    private static final AspectList cost;
    private static AspectList cost2;
    ArrayList<BlockCoordinates> checked = new ArrayList<>();
@@ -47,12 +44,12 @@ public class ItemFocusTrade extends ItemFocusBasic implements IArchitect {
 
    @SideOnly(Side.CLIENT)
    public void registerIcons(IIconRegister ir) {
-      this.icon = ir.registerIcon("thaumcraft:focus_trade");
-      this.iconOrnament = ir.registerIcon("thaumcraft:focus_trade_orn");
+      this.icon = ir.registerSprite("thaumcraft:focus_trade");
+      this.iconOrnament = ir.registerSprite("thaumcraft:focus_trade_orn");
    }
 
    @SideOnly(Side.CLIENT)
-   public IIcon getIconFromDamageForRenderPass(int par1, int renderPass) {
+   public TextureAtlasSprite getIconFromDamageForRenderPass(int par1, int renderPass) {
       return renderPass == 1 ? this.icon : this.iconOrnament;
    }
 
@@ -61,48 +58,25 @@ public class ItemFocusTrade extends ItemFocusBasic implements IArchitect {
       return true;
    }
 
-   public IIcon getOrnament(ItemStack itemstack) {
+   public TextureAtlasSprite getOrnament(ItemStack itemstack) {
       return this.iconOrnament;
    }
 
-   protected MovingObjectPosition getMovingObjectPositionFromPlayer(World par1World, EntityPlayer par2EntityPlayer) {
-      float f = 1.0F;
-      float f1 = par2EntityPlayer.prevRotationPitch + (par2EntityPlayer.rotationPitch - par2EntityPlayer.prevRotationPitch) * f;
-      float f2 = par2EntityPlayer.prevRotationYaw + (par2EntityPlayer.rotationYaw - par2EntityPlayer.prevRotationYaw) * f;
-      double d0 = par2EntityPlayer.prevPosX + (par2EntityPlayer.posX - par2EntityPlayer.prevPosX) * (double)f;
-      double d1 = par2EntityPlayer.prevPosY + (par2EntityPlayer.posY - par2EntityPlayer.prevPosY) * (double)f + (double)(par1World.isRemote ? par2EntityPlayer.getEyeHeight() - par2EntityPlayer.getDefaultEyeHeight() : par2EntityPlayer.getEyeHeight());
-      double d2 = par2EntityPlayer.prevPosZ + (par2EntityPlayer.posZ - par2EntityPlayer.prevPosZ) * (double)f;
-      Vec3 vec3 = Vec3.createVectorHelper(d0, d1, d2);
-      float f3 = MathHelper.cos(-f2 * ((float)Math.PI / 180F) - (float)Math.PI);
-      float f4 = MathHelper.sin(-f2 * ((float)Math.PI / 180F) - (float)Math.PI);
-      float f5 = -MathHelper.cos(-f1 * ((float)Math.PI / 180F));
-      float f6 = MathHelper.sin(-f1 * ((float)Math.PI / 180F));
-      float f7 = f4 * f5;
-      float f8 = f3 * f5;
-      double d3 = 5.0F;
-      if (par2EntityPlayer instanceof EntityPlayerMP) {
-         d3 = ((EntityPlayerMP)par2EntityPlayer).theItemInWorldManager.getBlockReachDistance();
-      }
-
-      Vec3 vec31 = vec3.addVector((double)f7 * d3, (double)f6 * d3, (double)f8 * d3);
-      return par1World.rayTraceBlocks(vec3, vec31, false);
-   }
-
-   public ItemStack onFocusRightClick(ItemStack itemstack, World world, EntityPlayer player, MovingObjectPosition movingobjectposition) {
-      MovingObjectPosition mop = this.getMovingObjectPositionFromPlayer(world, player);
+   public ItemStack onFocusRightClick(ItemStack itemstack, World world, EntityPlayer player, RayTraceResult movingobjectposition) {
+      RayTraceResult mop = rayTrace(world, player, false);
       ItemWandCasting wand = (ItemWandCasting)itemstack.getItem();
-      if (mop != null && mop.typeOfHit == MovingObjectType.BLOCK) {
-         int x = mop.blockX;
-         int y = mop.blockY;
-         int z = mop.blockZ;
-         Block bi = world.getBlock(x, y, z);
-         int md = world.getBlockMetadata(x, y, z);
+      if (mop != null && mop.typeOfHit == RayTraceResult.Type.BLOCK) {
+         int x = mop.getBlockPos().getX();
+         int y = mop.getBlockPos().getY();
+         int z = mop.getBlockPos().getZ();
+         Block bi = world.getBlockState(new BlockPos(x, y, z)).getBlock();
+         int md = world.getBlockState(new BlockPos(x, y, z)).getBlock().getMetaFromState(world.getBlockState(new BlockPos(x, y, z)));
          if (player.isSneaking()) {
-            if (!world.isRemote && world.getTileEntity(x, y, z) == null) {
+            if (!world.isRemote && world.getTileEntity(new BlockPos(x, y, z)) == null) {
                ItemStack isout = new ItemStack(bi, 1, md);
 
                try {
-                  if (bi != Blocks.air) {
+                  if (bi != Blocks.AIR) {
                      ItemStack is = BlockUtils.createStackedBlock(bi, md);
                      if (is != null) {
                         isout = is.copy();
@@ -113,22 +87,21 @@ public class ItemFocusTrade extends ItemFocusBasic implements IArchitect {
 
                this.storePickedBlock(itemstack, isout);
             } else {
-               player.swingItem();
+               player.swingArm(net.minecraft.util.EnumHand.MAIN_HAND);
             }
          } else {
             ItemStack pb = this.getPickedBlock(itemstack);
             if (pb != null && world.isRemote) {
-               player.swingItem();
-            } else if (pb != null && world.getTileEntity(x, y, z) == null && world.getBlock(x, y, z).getMaterial() != Config.taintMaterial) {
+               player.swingArm(net.minecraft.util.EnumHand.MAIN_HAND);
+            } else if (pb != null && world.getTileEntity(new BlockPos(x, y, z)) == null && world.getBlockState(new BlockPos(x, y, z)).getMaterial() != Config.taintMaterial) {
                if (this.isUpgradedWith(wand.getFocusItem(itemstack), FocusUpgradeType.architect)) {
-                  int sizeX = WandManager.getAreaX(itemstack);
-                  int sizeZ = WandManager.getAreaZ(itemstack);
-
                   for(BlockCoordinates c : this.getArchitectBlocks(itemstack, world, x, y, z, mop.sideHit, player)) {
-                     ServerTickEventsFML.addSwapper(world, c.x, c.y, c.z, world.getBlock(c.x, c.y, c.z), world.getBlockMetadata(c.x, c.y, c.z), pb, 0, player, player.inventory.currentItem);
+                     ServerTickEventsFML.addSwapper(world, c.x, c.y, c.z, world.getBlockState(new BlockPos(c.x, c.y, c.z)).getBlock(),
+                        world.getBlockState(new BlockPos(c.x, c.y, c.z)).getBlock().getMetaFromState(world.getBlockState(new BlockPos(c.x, c.y, c.z))), pb, 0, player, player.inventory.currentItem);
                   }
                } else {
-                  ServerTickEventsFML.addSwapper(world, x, y, z, world.getBlock(x, y, z), world.getBlockMetadata(x, y, z), pb, 3 + wand.getFocusEnlarge(itemstack), player, player.inventory.currentItem);
+                  ServerTickEventsFML.addSwapper(world, x, y, z, world.getBlockState(new BlockPos(x, y, z)).getBlock(),
+                     world.getBlockState(new BlockPos(x, y, z)).getBlock().getMetaFromState(world.getBlockState(new BlockPos(x, y, z))), pb, 3 + wand.getFocusEnlarge(itemstack), player, player.inventory.currentItem);
                }
             }
          }
@@ -137,20 +110,21 @@ public class ItemFocusTrade extends ItemFocusBasic implements IArchitect {
       return itemstack;
    }
 
-   public float func_150893_a(ItemStack itemstack, Block block) {
+   public float getStrVsBlock(ItemStack itemstack, Block block) {
       return 0.0F;
    }
 
    public boolean onEntitySwing(EntityLivingBase player, ItemStack stack) {
-      if (!player.worldObj.isRemote && player instanceof EntityPlayer) {
+      if (!player.world.isRemote && player instanceof EntityPlayer) {
          ItemStack pb = this.getPickedBlock(stack);
-         MovingObjectPosition mop = this.getMovingObjectPositionFromPlayer(player.worldObj, (EntityPlayer)player);
-         if (mop != null && mop.typeOfHit == MovingObjectType.BLOCK) {
-            int x = mop.blockX;
-            int y = mop.blockY;
-            int z = mop.blockZ;
-            if (pb != null && player.worldObj.getTileEntity(x, y, z) == null && player.worldObj.getBlock(x, y, z).getMaterial() != Config.taintMaterial) {
-               ServerTickEventsFML.addSwapper(player.worldObj, x, y, z, player.worldObj.getBlock(x, y, z), player.worldObj.getBlockMetadata(x, y, z), pb, 0, (EntityPlayer)player, ((EntityPlayer)player).inventory.currentItem);
+         RayTraceResult mop = rayTrace(player.world, (EntityPlayer)player, false);
+         if (mop != null && mop.typeOfHit == RayTraceResult.Type.BLOCK) {
+            int x = mop.getBlockPos().getX();
+            int y = mop.getBlockPos().getY();
+            int z = mop.getBlockPos().getZ();
+            if (pb != null && player.world.getTileEntity(new BlockPos(x, y, z)) == null && player.world.getBlockState(new BlockPos(x, y, z)).getMaterial() != Config.taintMaterial) {
+               int md = player.world.getBlockState(new BlockPos(x, y, z)).getBlock().getMetaFromState(player.world.getBlockState(new BlockPos(x, y, z)));
+               ServerTickEventsFML.addSwapper(player.world, x, y, z, player.world.getBlockState(new BlockPos(x, y, z)).getBlock(), md, pb, 0, (EntityPlayer)player, ((EntityPlayer)player).inventory.currentItem);
             }
          }
       }
@@ -165,9 +139,9 @@ public class ItemFocusTrade extends ItemFocusBasic implements IArchitect {
 
    public ItemStack getPickedBlock(ItemStack stack) {
       ItemStack out = null;
-      if (stack.hasTagCompound() && stack.stackTagCompound.hasKey("picked")) {
-         out = new ItemStack(Blocks.air);
-         out.readFromNBT(stack.stackTagCompound.getCompoundTag("picked"));
+      if (stack.hasTagCompound() && stack.getTagCompound().hasKey("picked")) {
+         out = new ItemStack(Blocks.AIR);
+         out.deserializeNBT(stack.getTagCompound().getCompoundTag("picked"));
       }
 
       return out;
@@ -211,23 +185,24 @@ public class ItemFocusTrade extends ItemFocusBasic implements IArchitect {
       return 3 + this.getUpgradeLevel(focusstack, FocusUpgradeType.enlarge) * 2;
    }
 
-   public ArrayList<BlockCoordinates> getArchitectBlocks(ItemStack stack, World world, int x, int y, int z, int side, EntityPlayer player) {
+   public ArrayList<BlockCoordinates> getArchitectBlocks(ItemStack stack, World world, int x, int y, int z, EnumFacing side, EntityPlayer player) {
       ItemWandCasting wand = (ItemWandCasting)stack.getItem();
       wand.getFocus(stack);
-      Block bi = world.getBlock(x, y, z);
-      int md = world.getBlockMetadata(x, y, z);
+      Block bi = world.getBlockState(new BlockPos(x, y, z)).getBlock();
+      int md = world.getBlockState(new BlockPos(x, y, z)).getBlock().getMetaFromState(world.getBlockState(new BlockPos(x, y, z)));
       ArrayList<BlockCoordinates> out = new ArrayList<>();
       this.checked.clear();
-      if (side != 2 && side != 3) {
-         this.checkNeighbours(world, x, y, z, bi, md, new BlockCoordinates(x, y, z), side, WandManager.getAreaX(stack), WandManager.getAreaY(stack), WandManager.getAreaZ(stack), out, player);
+      int sideIdx = side.getIndex();
+      if (sideIdx != 2 && sideIdx != 3) {
+         this.checkNeighbours(world, x, y, z, bi, md, new BlockCoordinates(x, y, z), sideIdx, WandManager.getAreaX(stack), WandManager.getAreaY(stack), WandManager.getAreaZ(stack), out, player);
       } else {
-         this.checkNeighbours(world, x, y, z, bi, md, new BlockCoordinates(x, y, z), side, WandManager.getAreaZ(stack), WandManager.getAreaY(stack), WandManager.getAreaX(stack), out, player);
+         this.checkNeighbours(world, x, y, z, bi, md, new BlockCoordinates(x, y, z), sideIdx, WandManager.getAreaZ(stack), WandManager.getAreaY(stack), WandManager.getAreaX(stack), out, player);
       }
 
       return out;
    }
 
-   public void checkNeighbours(World world, int x, int y, int z, Block bi, int md, BlockCoordinates pos, int side, int sizeX, int sizeY, int sizeZ, ArrayList list, EntityPlayer player) {
+   public void checkNeighbours(World world, int x, int y, int z, Block bi, int md, BlockCoordinates pos, int side, int sizeX, int sizeY, int sizeZ, ArrayList<BlockCoordinates> list, EntityPlayer player) {
       if (!this.checked.contains(pos)) {
          this.checked.add(pos);
          switch (side) {
@@ -262,12 +237,18 @@ public class ItemFocusTrade extends ItemFocusBasic implements IArchitect {
                }
          }
 
-         if (world.getBlock(pos.x, pos.y, pos.z) == bi && world.getBlockMetadata(pos.x, pos.y, pos.z) == md && BlockUtils.isBlockExposed(world, pos.x, pos.y, pos.z) && !world.isAirBlock(pos.x, pos.y, pos.z) && world.getBlock(pos.x, pos.y, pos.z).getBlockHardness(world, pos.x, pos.y, pos.z) >= 0.0F && world.canMineBlock(player, pos.x, pos.y, pos.z)) {
+         BlockPos bpos = new BlockPos(pos.x, pos.y, pos.z);
+         if (world.getBlockState(bpos).getBlock() == bi
+               && world.getBlockState(bpos).getBlock().getMetaFromState(world.getBlockState(bpos)) == md
+               && BlockUtils.isBlockExposed(world, pos.x, pos.y, pos.z)
+               && !world.isAirBlock(bpos)
+               && world.getBlockState(bpos).getBlock().getBlockHardness(world.getBlockState(bpos), world, bpos) >= 0.0F
+               && world.isBlockModifiable(player, bpos)) {
             list.add(pos);
 
-            for(ForgeDirection dir : ForgeDirection.VALID_DIRECTIONS) {
-               if (dir.ordinal() != side && dir.getOpposite().ordinal() != side) {
-                  BlockCoordinates cc = new BlockCoordinates(pos.x + dir.offsetX, pos.y + dir.offsetY, pos.z + dir.offsetZ);
+            for(EnumFacing dir : EnumFacing.VALUES) {
+               if (dir.getIndex() != side && dir.getOpposite().getIndex() != side) {
+                  BlockCoordinates cc = new BlockCoordinates(pos.x + dir.getXOffset(), pos.y + dir.getYOffset(), pos.z + dir.getZOffset());
                   this.checkNeighbours(world, x, y, z, bi, md, cc, side, sizeX, sizeY, sizeZ, list, player);
                }
             }
@@ -276,9 +257,9 @@ public class ItemFocusTrade extends ItemFocusBasic implements IArchitect {
       }
    }
 
-   public boolean showAxis(ItemStack stack, World world, EntityPlayer player, int side, IArchitect.EnumAxis axis) {
+   public boolean showAxis(ItemStack stack, World world, EntityPlayer player, EnumFacing side, IArchitect.EnumAxis axis) {
       int dim = WandManager.getAreaDim(stack);
-      switch (side) {
+      switch (side.getIndex()) {
          case 0:
          case 1:
             if (axis == IArchitect.EnumAxis.X && (dim == 0 || dim == 1) || axis == IArchitect.EnumAxis.Z && (dim == 0 || dim == 2)) {

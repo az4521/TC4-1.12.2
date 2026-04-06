@@ -1,12 +1,14 @@
 package thaumcraft.common.blocks;
 
 import net.minecraft.block.Block;
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.EnumFacing;
 import net.minecraft.world.World;
-import net.minecraftforge.common.util.ForgeDirection;
 import thaumcraft.common.tiles.TileFluxScrubber;
+import net.minecraft.util.math.BlockPos;
 
 public class BlockStoneDeviceItem extends ItemBlock {
    public BlockStoneDeviceItem(Block par1) {
@@ -19,18 +21,21 @@ public class BlockStoneDeviceItem extends ItemBlock {
       return par1;
    }
 
-   public String getUnlocalizedName(ItemStack par1ItemStack) {
-      return super.getUnlocalizedName() + "." + par1ItemStack.getItemDamage();
+   @Override
+   public String getTranslationKey(ItemStack par1ItemStack) {
+      return super.getTranslationKey() + "." + par1ItemStack.getItemDamage();
    }
 
-   public boolean placeBlockAt(ItemStack stack, EntityPlayer player, World world, int x, int y, int z, int side, float hitX, float hitY, float hitZ, int metadata) {
-      boolean ret = super.placeBlockAt(stack, player, world, x, y, z, side, hitX, hitY, hitZ, metadata);
+   @Override
+   public boolean placeBlockAt(ItemStack stack, EntityPlayer player, World world, BlockPos pos, EnumFacing side, float hitX, float hitY, float hitZ, IBlockState newState) {
+      boolean ret = super.placeBlockAt(stack, player, world, pos, side, hitX, hitY, hitZ, newState);
+      int metadata = stack.getItemDamage();
       if (metadata == 14) {
-         TileFluxScrubber tile = (TileFluxScrubber)world.getTileEntity(x, y, z);
+         TileFluxScrubber tile = (TileFluxScrubber)world.getTileEntity(pos);
          if (tile instanceof TileFluxScrubber) {
-            tile.facing = ForgeDirection.getOrientation(side).getOpposite();
+            tile.facing = side.getOpposite();
             tile.markDirty();
-            world.markBlockForUpdate(x, y, x);
+            { net.minecraft.block.state.IBlockState _bs = world.getBlockState(pos); world.notifyBlockUpdate(pos, _bs, _bs, 3); }
          }
       }
 

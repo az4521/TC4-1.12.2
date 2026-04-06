@@ -1,0 +1,52 @@
+{
+  "variants": {
+    "variant=obsidiantotem": {
+      "model": "thaumcraft:blockcosmeticsolid_obsidiantotem"
+    },
+    "variant=obsidiantile": {
+      "model": "thaumcraft:blockcosmeticsolid_obsidiantile"
+    },
+    "variant=pavingtravel": {
+      "model": "thaumcraft:blockcosmeticsolid_pavingtravel"
+    },
+    "variant=pavingwarding": {
+      "model": "thaumcraft:blockcosmeticsolid_pavingwarding"
+    },
+    "variant=thaumiumblock": {
+      "model": "thaumcraft:blockcosmeticsolid_thaumiumblock"
+    },
+    "variant=tallowblock": {
+      "model": "thaumcraft:blockcosmeticsolid_tallowblock"
+    },
+    "variant=arcanestone": {
+      "model": "thaumcraft:blockcosmeticsolid_arcanestone"
+    },
+    "variant=arcanestonebrick": {
+      "model": "thaumcraft:blockcosmeticsolid_arcanestonebrick"
+    },
+    "variant=obsidiantotemcharged": {
+      "model": "thaumcraft:blockcosmeticsolid_obsidiantotemcharged"
+    },
+    "variant=golemfetter": {
+      "model": "thaumcraft:blockcosmeticsolid_golemfetter"
+    },
+    "variant=ancientstone": {
+      "model": "thaumcraft:blockcosmeticsolid_ancientstone"
+    },
+    "variant=ancientrock": {
+      "model": "thaumcraft:blockcosmeticsolid_ancientrock"
+    },
+    "variant=crustedstone": {
+      "model": "thaumcraft:blockcosmeticsolid_crustedstone"
+    },
+    "variant=pedestalstone": {
+      "model": "thaumcraft:blockcosmeticsolid_pedestalstone"
+    },
+    "variant=golemfetteractive": {
+      "model": "thaumcraft:blockcosmeticsolid_golemfetter"
+    },
+    "variant=focalmanipulator": {
+      "model": "thaumcraft:blockcosmeticsolid_arcanestone"
+    }
+  }
+}

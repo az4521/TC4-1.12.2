@@ -1,126 +1,138 @@
 package thaumcraft.common.blocks;
 
 import net.minecraft.block.Block;
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
 import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.EnumActionResult;
+import net.minecraft.util.EnumFacing;
+import net.minecraft.util.EnumHand;
+import net.minecraft.util.SoundCategory;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
-import net.minecraftforge.common.util.ForgeDirection;
 import thaumcraft.common.config.ConfigBlocks;
 import thaumcraft.common.tiles.*;
 
 public class BlockMetalDeviceItem extends ItemBlock {
+
    public BlockMetalDeviceItem(Block par1) {
       super(par1);
       this.setMaxDamage(0);
       this.setHasSubtypes(true);
    }
 
+   @Override
    public int getMetadata(int par1) {
       return par1;
    }
 
-   public String getUnlocalizedName(ItemStack par1ItemStack) {
-      return super.getUnlocalizedName() + "." + par1ItemStack.getItemDamage();
+   @Override
+   public String getTranslationKey(ItemStack par1ItemStack) {
+      return super.getTranslationKey() + "." + par1ItemStack.getItemDamage();
    }
 
-   public boolean onItemUse(ItemStack stack, EntityPlayer player, World world, int x, int y, int z, int side, float par8, float par9, float par10) {
-      if (stack.getItemDamage() != 0 && stack.getItemDamage() != 1 && stack.getItemDamage() != 2 && stack.getItemDamage() != 3 && stack.getItemDamage() != 5 && stack.getItemDamage() != 6 && stack.getItemDamage() != 7 && stack.getItemDamage() != 8 && stack.getItemDamage() != 9 && stack.getItemDamage() != 13 && stack.getItemDamage() != 14) {
-         Block bi = world.getBlock(x, y, z);
-         int md = world.getBlockMetadata(x, y, z);
-         if (stack.getItemDamage() == 12) {
-            return bi == ConfigBlocks.blockMetalDevice && (md == 10 || md == 11) && super.onItemUse(stack, player, world, x, y, z, side, par8, par9, par10);
+   @Override
+   public EnumActionResult onItemUse(EntityPlayer player, World world, BlockPos pos, EnumHand hand, EnumFacing facing, float hitX, float hitY, float hitZ) {
+      ItemStack stack = player.getHeldItem(hand);
+      int dmg = stack.getItemDamage();
+      if (dmg != 0 && dmg != 1 && dmg != 2 && dmg != 3 && dmg != 5 && dmg != 6 && dmg != 7 && dmg != 8 && dmg != 9 && dmg != 13 && dmg != 14) {
+         Block bi = world.getBlockState(pos).getBlock();
+         IBlockState posState = world.getBlockState(pos);
+         int md = posState.getBlock().getMetaFromState(posState);
+
+         if (dmg == 12) {
+            return bi == ConfigBlocks.blockMetalDevice && (md == 10 || md == 11)
+                  ? super.onItemUse(player, world, pos, hand, facing, hitX, hitY, hitZ)
+                  : EnumActionResult.FAIL;
          } else {
+            BlockPos placePos = pos;
             if (bi == ConfigBlocks.blockMetalDevice && md == 0) {
-               if (side == 0 || side == 1) {
-                  return false;
+               int sideIdx = facing.getIndex();
+               if (sideIdx == 0 || sideIdx == 1) {
+                  return EnumActionResult.FAIL;
                }
-
-               if (side == 2) {
-                  --z;
-               }
-
-               if (side == 3) {
-                  ++z;
-               }
-
-               if (side == 4) {
-                  --x;
-               }
-
-               if (side == 5) {
-                  ++x;
-               }
+               if (sideIdx == 2) placePos = pos.north();
+               if (sideIdx == 3) placePos = pos.south();
+               if (sideIdx == 4) placePos = pos.west();
+               if (sideIdx == 5) placePos = pos.east();
             }
 
-            if (stack.stackSize == 0) {
-               return false;
-            } else if (!player.canPlayerEdit(x, y, z, side, stack)) {
-               return false;
-            } else if (y == 255 && this.field_150939_a.getMaterial().isSolid()) {
-               return false;
+            if (stack.isEmpty()) {
+               return EnumActionResult.FAIL;
+            } else if (!player.canPlayerEdit(placePos, facing, stack)) {
+               return EnumActionResult.FAIL;
+            } else if (placePos.getY() == 255 && this.block.getDefaultState().getMaterial().isSolid()) {
+               return EnumActionResult.FAIL;
             } else {
-               Block var11 = world.getBlock(x, y, z);
-               if (world.isAirBlock(x, y, z) || var11.isReplaceable(world, x, y, z) || var11 == Blocks.vine || var11 == Blocks.tallgrass || var11 == Blocks.deadbush || var11 == Blocks.snow_layer) {
-                  for(int a = 2; a < 6; ++a) {
-                     ForgeDirection dir = ForgeDirection.getOrientation(a);
-                     int xx = x + dir.offsetX;
-                     int yy = y + dir.offsetY;
-                     int zz = z + dir.offsetZ;
-                     Block bid = world.getBlock(xx, yy, zz);
-                     int meta = world.getBlockMetadata(xx, yy, zz);
-                     if (bid == ConfigBlocks.blockMetalDevice && meta == 0 && this.placeBlockAt(stack, player, world, x, y, z, side, par8, par9, par10, stack.getItemDamage())) {
-                        world.playSoundEffect((float)x + 0.5F, (float)y + 0.5F, (float)z + 0.5F, this.field_150939_a.stepSound.getStepResourcePath(), (this.field_150939_a.stepSound.getVolume() + 1.0F) / 2.0F, this.field_150939_a.stepSound.getPitch() * 0.8F);
-                        --stack.stackSize;
-                        world.setBlock(x, y, z, ConfigBlocks.blockMetalDevice, dir.getOpposite().ordinal() - 1, 3);
-                        return true;
+               Block var11 = world.getBlockState(placePos).getBlock();
+               if (world.isAirBlock(placePos) || var11.isReplaceable(world, placePos) || var11 == Blocks.VINE || var11 == Blocks.TALLGRASS || var11 == Blocks.DEADBUSH || var11 == Blocks.SNOW_LAYER) {
+                  for (int a = 2; a < 6; ++a) {
+                     EnumFacing dir = EnumFacing.byIndex(a);
+                     BlockPos adjPos = placePos.add(dir.getXOffset(), dir.getYOffset(), dir.getZOffset());
+                     IBlockState adjState = world.getBlockState(adjPos);
+                     Block bid = adjState.getBlock();
+                     int meta = adjState.getBlock().getMetaFromState(adjState);
+                     if (bid == ConfigBlocks.blockMetalDevice && meta == 0) {
+                        IBlockState newState = this.block.getStateFromMeta(dmg);
+                        if (placeBlockAt(stack, player, world, placePos, facing, hitX, hitY, hitZ, newState)) {
+                           world.playSound(null, placePos,
+                                 this.block.getSoundType(newState, world, placePos, player).getPlaceSound(),
+                                 SoundCategory.BLOCKS,
+                                 (this.block.getSoundType(newState, world, placePos, player).getVolume() + 1.0F) / 2.0F,
+                                 this.block.getSoundType(newState, world, placePos, player).getPitch() * 0.8F);
+                           stack.shrink(1);
+                           world.setBlockState(placePos,
+                                 ConfigBlocks.blockMetalDevice.getStateFromMeta(dir.getOpposite().ordinal() - 1), 3);
+                           return EnumActionResult.SUCCESS;
+                        }
                      }
                   }
                }
-
-               return false;
+               return EnumActionResult.FAIL;
             }
          }
       } else {
-         return super.onItemUse(stack, player, world, x, y, z, side, par8, par9, par10);
+         return super.onItemUse(player, world, pos, hand, facing, hitX, hitY, hitZ);
       }
    }
 
-   public boolean placeBlockAt(ItemStack stack, EntityPlayer player, World world, int x, int y, int z, int side, float hitX, float hitY, float hitZ, int metadata) {
-      boolean ret = super.placeBlockAt(stack, player, world, x, y, z, side, hitX, hitY, hitZ, metadata);
+   @Override
+   public boolean placeBlockAt(ItemStack stack, EntityPlayer player, World world, BlockPos pos, EnumFacing side, float hitX, float hitY, float hitZ, IBlockState newState) {
+      int metadata = stack.getItemDamage();
+      boolean ret = super.placeBlockAt(stack, player, world, pos, side, hitX, hitY, hitZ, newState);
       if (metadata == 7) {
-         TileArcaneLamp tile = (TileArcaneLamp)world.getTileEntity(x, y, z);
+         TileArcaneLamp tile = (TileArcaneLamp) world.getTileEntity(pos);
          if (tile instanceof TileArcaneLamp) {
-            tile.facing = ForgeDirection.getOrientation(side).getOpposite();
-            world.markBlockForUpdate(x, y, x);
+            tile.facing = side.getOpposite();
+            { net.minecraft.block.state.IBlockState _bs = world.getBlockState(pos); world.notifyBlockUpdate(pos, _bs, _bs, 3); }
          }
       } else if (metadata == 8) {
-         TileArcaneLampGrowth tile = (TileArcaneLampGrowth)world.getTileEntity(x, y, z);
+         TileArcaneLampGrowth tile = (TileArcaneLampGrowth) world.getTileEntity(pos);
          if (tile instanceof TileArcaneLampGrowth) {
-            tile.facing = ForgeDirection.getOrientation(side).getOpposite();
-            world.markBlockForUpdate(x, y, x);
+            tile.facing = side.getOpposite();
+            { net.minecraft.block.state.IBlockState _bs = world.getBlockState(pos); world.notifyBlockUpdate(pos, _bs, _bs, 3); }
          }
       } else if (metadata == 12) {
-         TileBrainbox tile = (TileBrainbox)world.getTileEntity(x, y, z);
+         TileBrainbox tile = (TileBrainbox) world.getTileEntity(pos);
          if (tile instanceof TileBrainbox) {
-            tile.facing = ForgeDirection.getOrientation(side).getOpposite();
-            world.markBlockForUpdate(x, y, x);
+            tile.facing = side.getOpposite();
+            { net.minecraft.block.state.IBlockState _bs = world.getBlockState(pos); world.notifyBlockUpdate(pos, _bs, _bs, 3); }
          }
       } else if (metadata == 13) {
-         TileArcaneLampFertility tile = (TileArcaneLampFertility)world.getTileEntity(x, y, z);
+         TileArcaneLampFertility tile = (TileArcaneLampFertility) world.getTileEntity(pos);
          if (tile instanceof TileArcaneLampFertility) {
-            tile.facing = ForgeDirection.getOrientation(side).getOpposite();
-            world.markBlockForUpdate(x, y, x);
+            tile.facing = side.getOpposite();
+            { net.minecraft.block.state.IBlockState _bs = world.getBlockState(pos); world.notifyBlockUpdate(pos, _bs, _bs, 3); }
          }
       } else if (metadata == 14) {
-         TileVisRelay tile = (TileVisRelay)world.getTileEntity(x, y, z);
+         TileVisRelay tile = (TileVisRelay) world.getTileEntity(pos);
          if (tile instanceof TileVisRelay) {
-            tile.orientation = (short)side;
-            world.markBlockForUpdate(x, y, x);
+            tile.orientation = (short) side.getIndex();
+            { net.minecraft.block.state.IBlockState _bs = world.getBlockState(pos); world.notifyBlockUpdate(pos, _bs, _bs, 3); }
          }
       }
-
       return ret;
    }
 }

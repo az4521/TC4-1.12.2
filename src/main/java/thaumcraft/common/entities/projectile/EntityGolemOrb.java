@@ -1,15 +1,14 @@
 package thaumcraft.common.entities.projectile;
 
-import cpw.mods.fml.common.registry.IEntityAdditionalSpawnData;
+import net.minecraftforge.fml.common.registry.IEntityAdditionalSpawnData;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.SharedMonsterAttributes;
 import net.minecraft.entity.projectile.EntityThrowable;
 import net.minecraft.util.DamageSource;
-import net.minecraft.util.MathHelper;
-import net.minecraft.util.MovingObjectPosition;
-import net.minecraft.util.Vec3;
-import net.minecraft.util.MovingObjectPosition.MovingObjectType;
+import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.RayTraceResult;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import thaumcraft.common.Thaumcraft;
 
@@ -47,7 +46,7 @@ public class EntityGolemOrb extends EntityThrowable implements IEntityAdditional
 
       try {
          if (id >= 0) {
-            this.target = (EntityLivingBase)this.worldObj.getEntityByID(id);
+            this.target = (EntityLivingBase)this.world.getEntityByID(id);
          }
       } catch (Exception ignored) {
       }
@@ -55,13 +54,13 @@ public class EntityGolemOrb extends EntityThrowable implements IEntityAdditional
       this.red = data.readBoolean();
    }
 
-   protected void onImpact(MovingObjectPosition mop) {
-      if (!this.worldObj.isRemote && this.getThrower() != null && mop.typeOfHit == MovingObjectType.ENTITY) {
-         mop.entityHit.attackEntityFrom(DamageSource.causeIndirectMagicDamage(this, this.getThrower()), (float)this.getThrower().getEntityAttribute(SharedMonsterAttributes.attackDamage).getAttributeValue() * (this.red ? 1.0F : 0.6F));
+   protected void onImpact(RayTraceResult mop) {
+      if (!this.world.isRemote && this.getThrower() != null && mop.typeOfHit == RayTraceResult.Type.ENTITY) {
+         mop.entityHit.attackEntityFrom(DamageSource.causeIndirectMagicDamage(this, this.getThrower()), (float)this.getThrower().getEntityAttribute(SharedMonsterAttributes.ATTACK_DAMAGE).getAttributeValue() * (this.red ? 1.0F : 0.6F));
       }
 
-      this.worldObj.playSoundEffect(this.posX, this.posY, this.posZ, "thaumcraft:shock", 1.0F, 1.0F + (this.rand.nextFloat() - this.rand.nextFloat()) * 0.2F);
-      Thaumcraft.proxy.burst(this.worldObj, this.posX, this.posY, this.posZ, 1.0F);
+      { net.minecraft.util.SoundEvent _snd = net.minecraft.util.SoundEvent.REGISTRY.getObject(new net.minecraft.util.ResourceLocation("thaumcraft:shock")); if (_snd != null) this.world.playSound(null, this.posX, this.posY, this.posZ, _snd, net.minecraft.util.SoundCategory.BLOCKS, 1.0F, 1.0F + (this.rand.nextFloat() - this.rand.nextFloat()) * 0.2F); }
+      Thaumcraft.proxy.burst(this.world, this.posX, this.posY, this.posZ, 1.0F);
       this.setDead();
    }
 
@@ -76,9 +75,9 @@ public class EntityGolemOrb extends EntityThrowable implements IEntityAdditional
       }
 
       if (this.target != null) {
-         double d = this.getDistanceSqToEntity(this.target);
+         double d = this.getDistanceSq(this.target);
          double dx = this.target.posX - this.posX;
-         double dy = this.target.boundingBox.minY + (double)this.target.height * 0.6 - this.posY;
+         double dy = this.target.getEntityBoundingBox().minY + (double)this.target.height * 0.6 - this.posY;
          double dz = this.target.posZ - this.posZ;
          double d13 = 0.2;
          dx /= d;
@@ -87,28 +86,27 @@ public class EntityGolemOrb extends EntityThrowable implements IEntityAdditional
          this.motionX += dx * d13;
          this.motionY += dy * d13;
          this.motionZ += dz * d13;
-         this.motionX = MathHelper.clamp_float((float)this.motionX, -0.25F, 0.25F);
-         this.motionY = MathHelper.clamp_float((float)this.motionY, -0.25F, 0.25F);
-         this.motionZ = MathHelper.clamp_float((float)this.motionZ, -0.25F, 0.25F);
+         this.motionX = MathHelper.clamp((float)this.motionX, -0.25F, 0.25F);
+         this.motionY = MathHelper.clamp((float)this.motionY, -0.25F, 0.25F);
+         this.motionZ = MathHelper.clamp((float)this.motionZ, -0.25F, 0.25F);
       }
 
    }
 
-   public boolean attackEntityFrom(DamageSource p_70097_1_, float p_70097_2_) {
-      if (this.isEntityInvulnerable()) {
+   public boolean attackEntityFrom(DamageSource source, float amount) {
+      if (this.isEntityInvulnerable(source)) {
          return false;
       } else {
-         this.setBeenAttacked();
-         if (p_70097_1_.getEntity() != null) {
-            Vec3 vec3 = p_70097_1_.getEntity().getLookVec();
+         if (source.getTrueSource() != null) {
+            Vec3d vec3 = source.getTrueSource().getLookVec();
             if (vec3 != null) {
-               this.motionX = vec3.xCoord;
-               this.motionY = vec3.yCoord;
-               this.motionZ = vec3.zCoord;
+               this.motionX = vec3.x;
+               this.motionY = vec3.y;
+               this.motionZ = vec3.z;
                this.motionX *= 0.9;
                this.motionY *= 0.9;
                this.motionZ *= 0.9;
-               this.worldObj.playSoundAtEntity(this, "thaumcraft:zap", 1.0F, 1.0F + (this.rand.nextFloat() - this.rand.nextFloat()) * 0.2F);
+               { net.minecraft.util.SoundEvent _snd = net.minecraft.util.SoundEvent.REGISTRY.getObject(new net.minecraft.util.ResourceLocation("thaumcraft:zap")); if (_snd != null) this.world.playSound(null, this.posX, this.posY, this.posZ, _snd, net.minecraft.util.SoundCategory.NEUTRAL, 1.0F, 1.0F + (this.rand.nextFloat() - this.rand.nextFloat()) * 0.2F); }
             }
 
             return true;

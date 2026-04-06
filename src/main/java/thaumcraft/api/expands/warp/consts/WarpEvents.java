@@ -6,8 +6,8 @@ import net.minecraft.init.Items;
 import net.minecraft.item.ItemStack;
 import net.minecraft.potion.Potion;
 import net.minecraft.potion.PotionEffect;
-import net.minecraft.util.ChatComponentText;
-import net.minecraft.util.StatCollector;
+import net.minecraft.util.text.TextComponentString;
+import net.minecraft.util.text.translation.I18n;
 import thaumcraft.api.expands.warp.PickWarpEventContext;
 import thaumcraft.api.expands.warp.WarpEvent;
 import thaumcraft.common.Thaumcraft;
@@ -28,19 +28,19 @@ public class WarpEvents {
         @Override
         public void onEventTriggered(PickWarpEventContext warpContext, EntityPlayer player) {
             grantResearch(player, 1);
-            player.addChatMessage(new ChatComponentText("§5§o" + StatCollector.translateToLocal("warp.text.3")));
+            player.sendMessage(new TextComponentString("§5§o" + I18n.translateToLocal("warp.text.3")));
         }
     };
     public static final WarpEvent NOISE_AND_FOLLOWING = new WarpEvent(4,8) {
         @Override
         public void onEventTriggered(PickWarpEventContext warpContext,EntityPlayer player) {
-            player.addChatMessage(new ChatComponentText("§5§o" + StatCollector.translateToLocal("warp.text.11")));
+            player.sendMessage(new TextComponentString("§5§o" + I18n.translateToLocal("warp.text.11")));
         }
     };
     public static final WarpEvent VIS_EXHAUST = new WarpEvent(4,16) {
         @Override
         public void onEventTriggered(PickWarpEventContext warpContext,EntityPlayer player) {
-            PotionEffect pe = new PotionEffect(Config.potionVisExhaustID, 5000, Math.min(3, warpContext.warp / 15), true);
+            PotionEffect pe = new PotionEffect(Potion.getPotionById(Config.potionVisExhaustID), 5000, Math.min(3, warpContext.warp / 15), true, true);
             pe.getCurativeItems().clear();
 
             try {
@@ -49,13 +49,13 @@ public class WarpEvents {
                 e.printStackTrace();
             }
 
-            player.addChatMessage(new ChatComponentText("§5§o" + StatCollector.translateToLocal("warp.text.1")));
+            player.sendMessage(new TextComponentString("§5§o" + I18n.translateToLocal("warp.text.1")));
         }
     };
     public static final WarpEvent THAUMARHIA = new WarpEvent(4,20) {
         @Override
         public void onEventTriggered(PickWarpEventContext warpContext, EntityPlayer player) {
-            PotionEffect pe = new PotionEffect(Config.potionThaumarhiaID, Math.min(32000, 10 * warpContext.warp), 0, true);
+            PotionEffect pe = new PotionEffect(Potion.getPotionById(Config.potionThaumarhiaID), Math.min(32000, 10 * warpContext.warp), 0, true, true);
             pe.getCurativeItems().clear();
 
             try {
@@ -65,15 +65,15 @@ public class WarpEvents {
                 e.printStackTrace();
             }
 
-            player.addChatMessage(new ChatComponentText("§5§o" + StatCollector.translateToLocal("warp.text.15")));
+            player.sendMessage(new TextComponentString("§5§o" + I18n.translateToLocal("warp.text.15")));
         }
     };
     public static final WarpEvent STRANGE_HUNGER = new WarpEvent(4,24) {
         @Override
         public void onEventTriggered(PickWarpEventContext warpContext, EntityPlayer player) {
-            PotionEffect pe = new PotionEffect(Config.potionUnHungerID, 5000, Math.min(3, warpContext.warp / 15), true);
+            PotionEffect pe = new PotionEffect(Potion.getPotionById(Config.potionUnHungerID), 5000, Math.min(3, warpContext.warp / 15), true, true);
             pe.getCurativeItems().clear();
-            pe.addCurativeItem(new ItemStack(Items.rotten_flesh));
+            pe.addCurativeItem(new ItemStack(Items.ROTTEN_FLESH));
             pe.addCurativeItem(new ItemStack(ConfigItems.itemZombieBrain));
 
             try {
@@ -83,13 +83,13 @@ public class WarpEvents {
                 e.printStackTrace();
             }
 
-            player.addChatMessage(new ChatComponentText("§5§o" + StatCollector.translateToLocal("warp.text.2")));
+            player.sendMessage(new TextComponentString("§5§o" + I18n.translateToLocal("warp.text.2")));
         }
     };
     public static final WarpEvent FOLLOWING = new WarpEvent(4,28) {
         @Override
         public void onEventTriggered(PickWarpEventContext warpContext, EntityPlayer player) {
-            player.addChatMessage(new ChatComponentText("§5§o" + StatCollector.translateToLocal("warp.text.12")));
+            player.sendMessage(new TextComponentString("§5§o" + I18n.translateToLocal("warp.text.12")));
         }
     };
     public static final WarpEvent SPAWN_A_GUARD = new WarpEvent(4,32) {
@@ -102,7 +102,7 @@ public class WarpEvents {
         @Override
         public void onEventTriggered(PickWarpEventContext warpContext, EntityPlayer player) {
             try {
-                player.addPotionEffect(new PotionEffect(Config.potionBlurredID, Math.min(32000, 10 * warpContext.warp), 0, true));
+                player.addPotionEffect(new PotionEffect(Potion.getPotionById(Config.potionBlurredID), Math.min(32000, 10 * warpContext.warp), 0, true, true));
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -111,7 +111,7 @@ public class WarpEvents {
     public static final WarpEvent SUN_SCORNED = new WarpEvent(4,40) {
         @Override
         public void onEventTriggered(PickWarpEventContext warpContext, EntityPlayer player) {
-            PotionEffect pe = new PotionEffect(Config.potionSunScornedID, 5000, Math.min(3, warpContext.warp / 15), true);
+            PotionEffect pe = new PotionEffect(Potion.getPotionById(Config.potionSunScornedID), 5000, Math.min(3, warpContext.warp / 15), true, true);
             pe.getCurativeItems().clear();
 
             try {
@@ -120,7 +120,7 @@ public class WarpEvents {
                 e.printStackTrace();
             }
 
-            player.addChatMessage(new ChatComponentText("§5§o" + StatCollector.translateToLocal("warp.text.5")));
+            player.sendMessage(new TextComponentString("§5§o" + I18n.translateToLocal("warp.text.5")));
         }
     };
     public static final WarpEvent SLOW_DIGGING = new WarpEvent(4,44) {
@@ -128,18 +128,18 @@ public class WarpEvents {
         public void onEventTriggered(PickWarpEventContext warpContext, EntityPlayer player) {
 
             try {
-                player.addPotionEffect(new PotionEffect(Potion.digSlowdown.id, 1200, Math.min(3, warpContext.warp / 15), true));
+                player.addPotionEffect(new PotionEffect(net.minecraft.init.MobEffects.MINING_FATIGUE, 1200, Math.min(3, warpContext.warp / 15), true, true));
             } catch (Exception e) {
                 e.printStackTrace();
             }
 
-            player.addChatMessage(new ChatComponentText("§5§o" + StatCollector.translateToLocal("warp.text.9")));
+            player.sendMessage(new TextComponentString("§5§o" + I18n.translateToLocal("warp.text.9")));
         }
     };
     public static final WarpEvent INF_VIS_EXHAUST = new WarpEvent(4,48) {
         @Override
         public void onEventTriggered(PickWarpEventContext warpContext, EntityPlayer player) {
-            PotionEffect pe = new PotionEffect(Config.potionInfVisExhaustID, 6000, Math.min(3, warpContext.warp / 15), false);
+            PotionEffect pe = new PotionEffect(Potion.getPotionById(Config.potionInfVisExhaustID), 6000, Math.min(3, warpContext.warp / 15), false, true);
             pe.getCurativeItems().clear();
 
             try {
@@ -148,20 +148,20 @@ public class WarpEvents {
                 e.printStackTrace();
             }
 
-            player.addChatMessage(new ChatComponentText("§5§o" + StatCollector.translateToLocal("warp.text.1")));
+            player.sendMessage(new TextComponentString("§5§o" + I18n.translateToLocal("warp.text.1")));
         }
     };
     public static final WarpEvent NIGHT_VISION = new WarpEvent(4,52) {
         @Override
         public void onEventTriggered(PickWarpEventContext warpContext, EntityPlayer player) {
-            player.addPotionEffect(new PotionEffect(Potion.nightVision.id, Math.min(40 * warpContext.warp, 6000), 0, true));
-            player.addChatMessage(new ChatComponentText("§5§o" + StatCollector.translateToLocal("warp.text.10")));
+            player.addPotionEffect(new PotionEffect(net.minecraft.init.MobEffects.NIGHT_VISION, Math.min(40 * warpContext.warp, 6000), 0, true, true));
+            player.sendMessage(new TextComponentString("§5§o" + I18n.translateToLocal("warp.text.10")));
         }
     };
     public static final WarpEvent DEATH_GAZE = new WarpEvent(4,56) {
         @Override
         public void onEventTriggered(PickWarpEventContext warpContext, EntityPlayer player) {
-            PotionEffect pe = new PotionEffect(Config.potionDeathGazeID, 6000, Math.min(3, warpContext.warp / 15), true);
+            PotionEffect pe = new PotionEffect(Potion.getPotionById(Config.potionDeathGazeID), 6000, Math.min(3, warpContext.warp / 15), true, true);
             pe.getCurativeItems().clear();
 
             try {
@@ -170,7 +170,7 @@ public class WarpEvents {
                 e.printStackTrace();
             }
 
-            player.addChatMessage(new ChatComponentText("§5§o" + StatCollector.translateToLocal("warp.text.4")));
+            player.sendMessage(new TextComponentString("§5§o" + I18n.translateToLocal("warp.text.4")));
         }
     };
     public static final WarpEvent FAKE_SPIDERS = new WarpEvent(4,60) {
@@ -182,7 +182,7 @@ public class WarpEvents {
     public static final WarpEvent BEING_WATCHED = new WarpEvent(4,64) {
         @Override
         public void onEventTriggered(PickWarpEventContext warpContext, EntityPlayer player) {
-            player.addChatMessage(new ChatComponentText("§5§o" + StatCollector.translateToLocal("warp.text.13")));
+            player.sendMessage(new TextComponentString("§5§o" + I18n.translateToLocal("warp.text.13")));
         }
     };
     public static final WarpEvent SPAWN_SOME_GUARDS = new WarpEvent(4,68) {
@@ -195,7 +195,7 @@ public class WarpEvents {
         @Override
         public void onEventTriggered(PickWarpEventContext warpContext, EntityPlayer player) {
             try {
-                player.addPotionEffect(new PotionEffect(Potion.blindness.id, Math.min(32000, 5 * warpContext.warp), 0, true));
+                player.addPotionEffect(new PotionEffect(net.minecraft.init.MobEffects.BLINDNESS, Math.min(32000, 5 * warpContext.warp), 0, true, true));
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -205,23 +205,23 @@ public class WarpEvents {
         @Override
         public void onEventTriggered(PickWarpEventContext warpContext, EntityPlayer player) {
 
-            if (Thaumcraft.proxy.getPlayerKnowledge().getWarpSticky(player.getCommandSenderName()) > 0) {
-                Thaumcraft.proxy.getPlayerKnowledge().addWarpSticky(player.getCommandSenderName(), -1);
+            if (Thaumcraft.proxy.getPlayerKnowledge().getWarpSticky(player.getName()) > 0) {
+                Thaumcraft.proxy.getPlayerKnowledge().addWarpSticky(player.getName(), -1);
                 if (player instanceof EntityPlayerMP) {
                     PacketHandler.INSTANCE.sendTo(new PacketSyncWarp(player, (byte) 1), (EntityPlayerMP) player);
                     PacketHandler.INSTANCE.sendTo(new PacketWarpMessage(player, (byte) 1, -1), (EntityPlayerMP) player);
                 }
             }
 
-            player.addChatMessage(new ChatComponentText("§5§o" + StatCollector.translateToLocal("warp.text.14")));
+            player.sendMessage(new TextComponentString("§5§o" + I18n.translateToLocal("warp.text.14")));
         }
     };
     public static final WarpEvent STRANGE_HUNGER_2 = new WarpEvent(4,80) {
         @Override
         public void onEventTriggered(PickWarpEventContext warpContext, EntityPlayer player) {
-            PotionEffect pe = new PotionEffect(Config.potionUnHungerID, 6000, Math.min(3, warpContext.warp / 15), true);
+            PotionEffect pe = new PotionEffect(Potion.getPotionById(Config.potionUnHungerID), 6000, Math.min(3, warpContext.warp / 15), true, true);
             pe.getCurativeItems().clear();
-            pe.addCurativeItem(new ItemStack(Items.rotten_flesh));
+            pe.addCurativeItem(new ItemStack(Items.ROTTEN_FLESH));
             pe.addCurativeItem(new ItemStack(ConfigItems.itemZombieBrain));
 
             try {
@@ -230,14 +230,14 @@ public class WarpEvents {
                 e.printStackTrace();
             }
 
-            player.addChatMessage(new ChatComponentText("§5§o" + StatCollector.translateToLocal("warp.text.2")));
+            player.sendMessage(new TextComponentString("§5§o" + I18n.translateToLocal("warp.text.2")));
         }
     };
     public static final WarpEvent GRANT_RESEARCH_HIGH = new WarpEvent(4,84) {
         @Override
         public void onEventTriggered(PickWarpEventContext warpContext, EntityPlayer player) {
             grantResearch(player, warpContext.warp / 10);
-            player.addChatMessage(new ChatComponentText("§5§o" + StatCollector.translateToLocal("warp.text.3")));
+            player.sendMessage(new TextComponentString("§5§o" + I18n.translateToLocal("warp.text.3")));
         }
     };
     public static final WarpEvent REAL_SPIDERS = new WarpEvent(4,92) {

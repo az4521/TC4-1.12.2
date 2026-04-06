@@ -1,6 +1,6 @@
 package thaumcraft.common.tiles;
 
-import cpw.mods.fml.common.network.NetworkRegistry;
+import net.minecraftforge.fml.common.network.NetworkRegistry;
 import java.awt.Color;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -13,13 +13,13 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.AxisAlignedBB;
+import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.DamageSource;
-import net.minecraft.util.MovingObjectPosition;
-import net.minecraft.util.Vec3;
-import net.minecraft.util.MovingObjectPosition.MovingObjectType;
+import net.minecraft.util.math.RayTraceResult;
+import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.EnumFacing;
 import net.minecraft.world.World;
-import net.minecraft.world.biome.BiomeGenBase;
+import net.minecraft.world.biome.Biome;
 import thaumcraft.api.ThaumcraftApiHelper;
 import thaumcraft.api.TileThaumcraft;
 import thaumcraft.api.WorldCoordinates;
@@ -45,6 +45,7 @@ import thaumcraft.common.lib.research.ScanManager;
 import thaumcraft.common.lib.utils.EntityUtils;
 import thaumcraft.common.lib.utils.Utils;
 import thaumcraft.common.lib.world.ThaumcraftWorldGenerator;
+import net.minecraft.util.math.BlockPos;
 
 public class TileNode extends TileThaumcraft implements INode, IWandable {
    long lastActive = 0L;
@@ -60,7 +61,7 @@ public class TileNode extends TileThaumcraft implements INode, IWandable {
    byte nodeLock;
    boolean catchUp;
    public Entity drainEntity;
-   public MovingObjectPosition drainCollision;
+   public RayTraceResult drainCollision;
    public int drainColor;
    public Color targetColor;
    public Color color;
@@ -90,13 +91,13 @@ public class TileNode extends TileThaumcraft implements INode, IWandable {
    }
 
    public String generateId() {
-      this.id = this.worldObj.provider.dimensionId + ":" + this.xCoord + ":" + this.yCoord + ":" + this.zCoord;
-      if (this.worldObj != null && locations != null) {
+      this.id = this.world.provider.getDimension() + ":" + this.getPos().getX() + ":" + this.getPos().getY() + ":" + this.getPos().getZ();
+      if (this.world != null && locations != null) {
          ArrayList<Integer> t = new ArrayList<>();
-         t.add(this.worldObj.provider.dimensionId);
-         t.add(this.xCoord);
-         t.add(this.yCoord);
-         t.add(this.zCoord);
+         t.add(this.world.provider.getDimension());
+         t.add(this.getPos().getX());
+         t.add(this.getPos().getY());
+         t.add(this.getPos().getZ());
          locations.put(this.id, t);
       }
 
@@ -116,8 +117,7 @@ public class TileNode extends TileThaumcraft implements INode, IWandable {
    }
 
    public void updateEntity() {
-      super.updateEntity();
-      if (this.id == null) {
+            if (this.id == null) {
          this.generateId();
       }
 
@@ -125,7 +125,7 @@ public class TileNode extends TileThaumcraft implements INode, IWandable {
       change = this.handleHungryNodeFirst(change);
       ++this.count;
       this.checkLock();
-      if (!this.worldObj.isRemote) {
+      if (!this.world.isRemote) {
          change = this.handleDischarge(change);
          change = this.handleRecharge(change);
          change = this.handleTaintNode(change);
@@ -135,7 +135,7 @@ public class TileNode extends TileThaumcraft implements INode, IWandable {
          change = this.handleHungryNodeSecond(change);
          if (change) {
             this.markDirty();
-            this.worldObj.markBlockForUpdate(this.xCoord, this.yCoord, this.zCoord);
+            { net.minecraft.block.state.IBlockState _bs = this.world.getBlockState(this.pos); this.world.notifyBlockUpdate(this.pos, _bs, _bs, 3); }
          }
       } else if (this.getNodeType() == NodeType.DARK && this.count % 50 == 0) {
          ItemCompassStone.sinisterNodes.put(new WorldCoordinates(this), System.currentTimeMillis());
@@ -146,17 +146,13 @@ public class TileNode extends TileThaumcraft implements INode, IWandable {
    public void nodeChange() {
       this.regeneration = -1;
       this.markDirty();
-      this.worldObj.markBlockForUpdate(this.xCoord, this.yCoord, this.zCoord);
-   }
-
-   public boolean canUpdate() {
-       return super.canUpdate();
+      { net.minecraft.block.state.IBlockState _bs = this.world.getBlockState(this.pos); this.world.notifyBlockUpdate(this.pos, _bs, _bs, 3); }
    }
 
    public double getDistanceTo(double par1, double par3, double par5) {
-      double var7 = (double)this.xCoord + (double)0.5F - par1;
-      double var9 = (double)this.yCoord + (double)0.5F - par3;
-      double var11 = (double)this.zCoord + (double)0.5F - par5;
+      double var7 = (double)this.getPos().getX() + (double)0.5F - par1;
+      double var9 = (double)this.getPos().getY() + (double)0.5F - par3;
+      double var11 = (double)this.getPos().getZ() + (double)0.5F - par5;
       return var7 * var7 + var9 * var9 + var11 * var11;
    }
 
@@ -165,9 +161,9 @@ public class TileNode extends TileThaumcraft implements INode, IWandable {
    }
 
    public ItemStack onWandRightClick(World world, ItemStack wandstack, EntityPlayer player) {
-      player.setItemInUse(wandstack, Integer.MAX_VALUE);
+      player.setActiveHand(net.minecraft.util.EnumHand.MAIN_HAND);
       ItemWandCasting wand = (ItemWandCasting)wandstack.getItem();
-      wand.setObjectInUse(wandstack, this.xCoord, this.yCoord, this.zCoord);
+      wand.setObjectInUse(wandstack, this.getPos().getX(), this.getPos().getY(), this.getPos().getZ());
       return wandstack;
    }
 
@@ -197,7 +193,7 @@ public class TileNode extends TileThaumcraft implements INode, IWandable {
 
    public Aspect takeRandomPrimalFromSource() {
       Aspect[] primals = this.aspects.getPrimalAspects();
-      Aspect asp = primals[this.worldObj.rand.nextInt(primals.length)];
+      Aspect asp = primals[this.world.rand.nextInt(primals.length)];
       return asp != null && this.aspects.reduce(asp, 1) ? asp : null;
    }
 
@@ -214,7 +210,7 @@ public class TileNode extends TileThaumcraft implements INode, IWandable {
       if (validaspects.isEmpty()) {
          return null;
       } else {
-         Aspect asp = validaspects.get(this.worldObj.rand.nextInt(validaspects.size()));
+         Aspect asp = validaspects.get(this.world.rand.nextInt(validaspects.size()));
          if (asp != null && this.aspects.getAmount(asp) > min) {
             return asp;
          } else {
@@ -297,7 +293,7 @@ public class TileNode extends TileThaumcraft implements INode, IWandable {
 
    }
 
-   public void writeToNBT(NBTTagCompound nbttagcompound) {
+   public NBTTagCompound writeToNBT(NBTTagCompound nbttagcompound) {
       super.writeToNBT(nbttagcompound);
       nbttagcompound.setLong("lastActive", this.lastActive);
       NBTTagList tlist = new NBTTagList();
@@ -312,16 +308,18 @@ public class TileNode extends TileThaumcraft implements INode, IWandable {
          }
       }
 
+      return nbttagcompound;
    }
 
    public void readCustomNBT(NBTTagCompound nbttagcompound) {
+      System.out.println("[TC4-DEBUG] TileNode.readCustomNBT at " + this.getPos() + " hasAspectsTag=" + nbttagcompound.hasKey("Aspects") + " world=" + (this.world != null));
       this.id = nbttagcompound.getString("nodeId");
-      if (this.worldObj != null && locations != null) {
+      if (this.world != null && locations != null) {
          ArrayList<Integer> t = new ArrayList<>();
-         t.add(this.worldObj.provider.dimensionId);
-         t.add(this.xCoord);
-         t.add(this.yCoord);
-         t.add(this.zCoord);
+         t.add(this.world.provider.getDimension());
+         t.add(this.getPos().getX());
+         t.add(this.getPos().getY());
+         t.add(this.getPos().getZ());
          locations.put(this.id, t);
       }
 
@@ -334,11 +332,12 @@ public class TileNode extends TileThaumcraft implements INode, IWandable {
       }
 
       this.aspects.readFromNBT(nbttagcompound);
+      System.out.println("[TC4-DEBUG] TileNode aspects loaded: " + this.aspects.size() + " aspects at " + this.getPos());
       String de = nbttagcompound.getString("drainer");
-      if (de != null && !de.isEmpty() && this.getWorldObj() != null) {
-         this.drainEntity = this.getWorldObj().getPlayerEntityByName(de);
+      if (de != null && !de.isEmpty() && this.getWorld() != null) {
+         this.drainEntity = this.getWorld().getPlayerEntityByName(de);
          if (this.drainEntity != null) {
-            this.drainCollision = new MovingObjectPosition(this.xCoord, this.yCoord, this.zCoord, 0, Vec3.createVectorHelper(this.drainEntity.posX, this.drainEntity.posY, this.drainEntity.posZ));
+            this.drainCollision = new RayTraceResult(RayTraceResult.Type.BLOCK, new Vec3d(this.drainEntity.posX, this.drainEntity.posY, this.drainEntity.posZ), EnumFacing.UP, new BlockPos(this.getPos().getX(), this.getPos().getY(), this.getPos().getZ()));
          }
       }
 
@@ -350,12 +349,12 @@ public class TileNode extends TileThaumcraft implements INode, IWandable {
          this.id = this.generateId();
       }
 
-      if (this.worldObj != null && locations != null) {
+      if (this.world != null && locations != null) {
          ArrayList<Integer> t = new ArrayList<>();
-         t.add(this.worldObj.provider.dimensionId);
-         t.add(this.xCoord);
-         t.add(this.yCoord);
-         t.add(this.zCoord);
+         t.add(this.world.provider.getDimension());
+         t.add(this.getPos().getX());
+         t.add(this.getPos().getY());
+         t.add(this.getPos().getZ());
          locations.put(this.id, t);
       }
 
@@ -364,7 +363,7 @@ public class TileNode extends TileThaumcraft implements INode, IWandable {
       nbttagcompound.setByte("modifier", this.getNodeModifier() == null ? -1 : (byte)this.getNodeModifier().ordinal());
       this.aspects.writeToNBT(nbttagcompound);
       if (this.drainEntity != null && this.drainEntity instanceof EntityPlayer) {
-         nbttagcompound.setString("drainer", this.drainEntity.getCommandSenderName());
+         nbttagcompound.setString("drainer", this.drainEntity.getName());
       }
 
       nbttagcompound.setInteger("draincolor", this.drainColor);
@@ -373,29 +372,29 @@ public class TileNode extends TileThaumcraft implements INode, IWandable {
    public void onUsingWandTick(ItemStack wandstack, EntityPlayer player, int count) {
       boolean mfu = false;
       ItemWandCasting wand = (ItemWandCasting)wandstack.getItem();
-      MovingObjectPosition movingobjectposition = EntityUtils.getMovingObjectPositionFromPlayer(this.worldObj, player, true);
-      if (movingobjectposition != null && movingobjectposition.typeOfHit == MovingObjectType.BLOCK) {
-         int i = movingobjectposition.blockX;
-         int j = movingobjectposition.blockY;
-         int k = movingobjectposition.blockZ;
-         if (i != this.xCoord || j != this.yCoord || k != this.zCoord) {
-            player.stopUsingItem();
+      RayTraceResult movingobjectposition = EntityUtils.getMovingObjectPositionFromPlayer(this.world, player, true);
+      if (movingobjectposition != null && movingobjectposition.typeOfHit == RayTraceResult.Type.BLOCK) {
+         int i = movingobjectposition.getBlockPos().getX();
+         int j = movingobjectposition.getBlockPos().getY();
+         int k = movingobjectposition.getBlockPos().getZ();
+         if (i != this.getPos().getX() || j != this.getPos().getY() || k != this.getPos().getZ()) {
+            player.stopActiveHand();
          }
       } else {
-         player.stopUsingItem();
+         player.stopActiveHand();
       }
 
       if (count % 5 == 0) {
          int tap = 1;
-         if (ResearchManager.isResearchComplete(player.getCommandSenderName(), "NODETAPPER1")) {
+         if (ResearchManager.isResearchComplete(player.getName(), "NODETAPPER1")) {
             ++tap;
          }
 
-         if (ResearchManager.isResearchComplete(player.getCommandSenderName(), "NODETAPPER2")) {
+         if (ResearchManager.isResearchComplete(player.getName(), "NODETAPPER2")) {
             ++tap;
          }
 
-         boolean preserve = !player.isSneaking() && ResearchManager.isResearchComplete(player.getCommandSenderName(), "NODEPRESERVE") && !wand.getRod(wandstack).getTag().equals("wood") && !wand.getCap(wandstack).getTag().equals("iron");
+         boolean preserve = !player.isSneaking() && ResearchManager.isResearchComplete(player.getName(), "NODEPRESERVE") && !wand.getRod(wandstack).getTag().equals("wood") && !wand.getCap(wandstack).getTag().equals("iron");
          boolean success = false;
          Aspect aspect = null;
          if ((aspect = this.chooseRandomFilteredFromSource(wand.getAspectsWithRoom(wandstack), preserve)) != null) {
@@ -409,10 +408,10 @@ public class TileNode extends TileThaumcraft implements INode, IWandable {
             }
 
             if (tap > 0) {
-               int rem = wand.addVis(wandstack, aspect, tap, !this.worldObj.isRemote);
+               int rem = wand.addVis(wandstack, aspect, tap, !this.world.isRemote);
                if (rem < tap) {
                   this.drainColor = aspect.getColor();
-                  if (!this.worldObj.isRemote) {
+                  if (!this.world.isRemote) {
                      this.takeFromContainer(aspect, tap - rem);
                      mfu = true;
                   }
@@ -432,12 +431,13 @@ public class TileNode extends TileThaumcraft implements INode, IWandable {
          }
 
          if (mfu) {
-            this.worldObj.markBlockForUpdate(this.xCoord, this.yCoord, this.zCoord);
             this.markDirty();
+            net.minecraft.block.state.IBlockState state = this.world.getBlockState(this.getPos());
+            this.world.notifyBlockUpdate(this.getPos(), state, state, 3);
          }
       }
 
-      if (player.worldObj.isRemote) {
+      if (player.world.isRemote) {
          int r = this.targetColor.getRed();
          int g = this.targetColor.getGreen();
          int b = this.targetColor.getBlue();
@@ -480,52 +480,52 @@ public class TileNode extends TileThaumcraft implements INode, IWandable {
 
    private boolean handleHungryNodeFirst(boolean change) {
       if (this.getNodeType() == NodeType.HUNGRY) {
-         if (this.worldObj.isRemote) {
+         if (this.world.isRemote) {
             for(int a = 0; a < Thaumcraft.proxy.particleCount(1); ++a) {
-               int tx = this.xCoord + this.worldObj.rand.nextInt(16) - this.worldObj.rand.nextInt(16);
-               int ty = this.yCoord + this.worldObj.rand.nextInt(16) - this.worldObj.rand.nextInt(16);
-               int tz = this.zCoord + this.worldObj.rand.nextInt(16) - this.worldObj.rand.nextInt(16);
-               if (ty > this.worldObj.getHeightValue(tx, tz)) {
-                  ty = this.worldObj.getHeightValue(tx, tz);
+               int tx = this.getPos().getX() + this.world.rand.nextInt(16) - this.world.rand.nextInt(16);
+               int ty = this.getPos().getY() + this.world.rand.nextInt(16) - this.world.rand.nextInt(16);
+               int tz = this.getPos().getZ() + this.world.rand.nextInt(16) - this.world.rand.nextInt(16);
+               if (ty > this.world.getHeight(tx, tz)) {
+                  ty = this.world.getHeight(tx, tz);
                }
 
-               Vec3 v1 = Vec3.createVectorHelper((double)this.xCoord + (double)0.5F, (double)this.yCoord + (double)0.5F, (double)this.zCoord + (double)0.5F);
-               Vec3 v2 = Vec3.createVectorHelper((double)tx + (double)0.5F, (double)ty + (double)0.5F, (double)tz + (double)0.5F);
-               MovingObjectPosition mop = ThaumcraftApiHelper.rayTraceIgnoringSource(this.worldObj, v1, v2, true, false, false);
-               if (mop != null && this.getDistanceFrom(mop.blockX, mop.blockY, mop.blockZ) < (double)256.0F) {
-                  tx = mop.blockX;
-                  ty = mop.blockY;
-                  tz = mop.blockZ;
-                  Block bi = this.worldObj.getBlock(tx, ty, tz);
-                  int md = this.worldObj.getBlockMetadata(tx, ty, tz);
-                  if (!bi.isAir(this.worldObj, tx, ty, tz)) {
-                     Thaumcraft.proxy.hungryNodeFX(this.worldObj, tx, ty, tz, this.xCoord, this.yCoord, this.zCoord, bi, md);
+               Vec3d v1 = new Vec3d((double)this.getPos().getX() + (double)0.5F, (double)this.getPos().getY() + (double)0.5F, (double)this.getPos().getZ() + (double)0.5F);
+               Vec3d v2 = new Vec3d((double)tx + (double)0.5F, (double)ty + (double)0.5F, (double)tz + (double)0.5F);
+               RayTraceResult mop = ThaumcraftApiHelper.rayTraceIgnoringSource(this.world, v1, v2, true, false, false);
+               if (mop != null && this.getPos().distanceSqToCenter(mop.getBlockPos().getX()+0.5, mop.getBlockPos().getY()+0.5, mop.getBlockPos().getZ()+0.5) < 65536.0) {
+                  tx = mop.getBlockPos().getX();
+                  ty = mop.getBlockPos().getY();
+                  tz = mop.getBlockPos().getZ();
+                  Block bi = this.world.getBlockState(new BlockPos(tx, ty, tz)).getBlock();
+                  int md = world.getBlockState(new net.minecraft.util.math.BlockPos(tx, ty, tz)).getBlock().getMetaFromState(world.getBlockState(new net.minecraft.util.math.BlockPos(tx, ty, tz)));
+                  if (!this.world.isAirBlock(new net.minecraft.util.math.BlockPos(tx, ty, tz))) {
+                     Thaumcraft.proxy.hungryNodeFX(this.world, tx, ty, tz, this.getPos().getX(), this.getPos().getY(), this.getPos().getZ(), bi, md);
                   }
                }
             }
          }
 
          if (Config.hardNode) {
-            List ents = this.worldObj.getEntitiesWithinAABB(Entity.class, AxisAlignedBB.getBoundingBox(this.xCoord, this.yCoord, this.zCoord, this.xCoord + 1, this.yCoord + 1, this.zCoord + 1).expand(15.0F, 15.0F, 15.0F));
+            List ents = this.world.getEntitiesWithinAABB(Entity.class, new AxisAlignedBB(this.getPos().getX(), this.getPos().getY(), this.getPos().getZ(), this.getPos().getX() + 1, this.getPos().getY() + 1, this.getPos().getZ() + 1).expand(15.0F, 15.0F, 15.0F));
             if (ents != null && !ents.isEmpty()) {
                for(Object ent : ents) {
                   Entity eo = (Entity)ent;
                   if (!(eo instanceof EntityPlayer) || !((EntityPlayer)eo).capabilities.disableDamage) {
-                     if (eo.isEntityAlive() && !eo.isEntityInvulnerable()) {
+                     if (eo.isEntityAlive() && !eo.isEntityInvulnerable(DamageSource.OUT_OF_WORLD)) {
                         double d = this.getDistanceTo(eo.posX, eo.posY, eo.posZ);
                         if (d < (double)2.0F) {
-                           eo.attackEntityFrom(DamageSource.outOfWorld, 1.0F);
-                           if (!eo.isEntityAlive() && !this.worldObj.isRemote) {
+                           eo.attackEntityFrom(DamageSource.OUT_OF_WORLD, 1.0F);
+                           if (!eo.isEntityAlive() && !this.world.isRemote) {
                               ScanResult scan = new ScanResult((byte)2, 0, 0, eo, "");
-                              AspectList al = ScanManager.getScanAspects(scan, this.worldObj);
+                              AspectList al = ScanManager.getScanAspects(scan, this.world);
                               if (al != null && al.size() > 0) {
                                  al = ResearchManager.reduceToPrimals(al.copy());
                                  if (al != null && al.size() > 0) {
-                                    Aspect a = al.getAspects()[this.worldObj.rand.nextInt(al.size())];
+                                    Aspect a = al.getAspects()[this.world.rand.nextInt(al.size())];
                                     if (this.getAspects().getAmount(a) < this.getNodeVisBase(a)) {
                                        this.addToContainer(a, 1);
                                        change = true;
-                                    } else if (this.worldObj.rand.nextInt(1 + this.getNodeVisBase(a) * 2) < al.getAmount(a)) {
+                                    } else if (this.world.rand.nextInt(1 + this.getNodeVisBase(a) * 2) < al.getAmount(a)) {
                                        this.aspectsBase.add(a, 1);
                                        change = true;
                                     }
@@ -535,9 +535,9 @@ public class TileNode extends TileThaumcraft implements INode, IWandable {
                         }
                      }
 
-                     double var3 = ((double)this.xCoord + (double)0.5F - eo.posX) / (double)15.0F;
-                     double var5 = ((double)this.yCoord + (double)0.5F - eo.posY) / (double)15.0F;
-                     double var7 = ((double)this.zCoord + (double)0.5F - eo.posZ) / (double)15.0F;
+                     double var3 = ((double)this.getPos().getX() + (double)0.5F - eo.posX) / (double)15.0F;
+                     double var5 = ((double)this.getPos().getY() + (double)0.5F - eo.posY) / (double)15.0F;
+                     double var7 = ((double)this.getPos().getZ() + (double)0.5F - eo.posZ) / (double)15.0F;
                      double var9 = Math.sqrt(var3 * var3 + var5 * var5 + var7 * var7);
                      double var11 = (double)1.0F - var9;
                      if (var11 > (double)0.0F) {
@@ -556,7 +556,7 @@ public class TileNode extends TileThaumcraft implements INode, IWandable {
    }
 
    private boolean handleDischarge(boolean change) {
-      if (this.worldObj.getBlock(this.xCoord, this.yCoord, this.zCoord) == ConfigBlocks.blockAiry
+      if (this.world.getBlockState(new BlockPos(this.getPos().getX(), this.getPos().getY(), this.getPos().getZ())).getBlock() == ConfigBlocks.blockAiry
               && this.getLock() != 1) {
          if (this.getNodeModifier() == NodeModifier.FADING) {
             return change;
@@ -566,15 +566,15 @@ public class TileNode extends TileThaumcraft implements INode, IWandable {
             if (this.count % inc != 0) {
                return change;
             } else {
-               int x = this.worldObj.rand.nextInt(5) - this.worldObj.rand.nextInt(5);
-               int y = this.worldObj.rand.nextInt(5) - this.worldObj.rand.nextInt(5);
-               int z = this.worldObj.rand.nextInt(5) - this.worldObj.rand.nextInt(5);
-               if (this.getNodeModifier() == NodeModifier.PALE && this.worldObj.rand.nextBoolean()) {
+               int x = this.world.rand.nextInt(5) - this.world.rand.nextInt(5);
+               int y = this.world.rand.nextInt(5) - this.world.rand.nextInt(5);
+               int z = this.world.rand.nextInt(5) - this.world.rand.nextInt(5);
+               if (this.getNodeModifier() == NodeModifier.PALE && this.world.rand.nextBoolean()) {
                   return change;
                } else {
                   if (x != 0 || y != 0 || z != 0) {
-                     TileEntity te = this.worldObj.getTileEntity(this.xCoord + x, this.yCoord + y, this.zCoord + z);
-                     if (te instanceof INode && this.worldObj.getBlock(this.xCoord + x, this.yCoord + y, this.zCoord + z) == ConfigBlocks.blockAiry) {
+                     TileEntity te = this.world.getTileEntity(new BlockPos(this.getPos().getX() + x, this.getPos().getY() + y, this.getPos().getZ() + z));
+                     if (te instanceof INode && this.world.getBlockState(new net.minecraft.util.math.BlockPos(this.getPos().getX() + x, this.getPos().getY() + y, this.getPos().getZ() + z)).getBlock() == ConfigBlocks.blockAiry) {
                         if (te instanceof TileNode && ((TileNode)te).getLock() > 0) {
                            return change;
                         }
@@ -583,20 +583,20 @@ public class TileNode extends TileThaumcraft implements INode, IWandable {
                         int ndavg = (anotherNode.getAspects().visSize() + anotherNode.getAspectsBase().visSize()) / 2;
                         int thisavg = (this.getAspects().visSize() + this.getAspectsBase().visSize()) / 2;
                         if (ndavg < thisavg && anotherNode.getAspects().size() > 0) {
-                           Aspect a = anotherNode.getAspects().getAspects()[this.worldObj.rand.nextInt(anotherNode.getAspects().size())];
+                           Aspect a = anotherNode.getAspects().getAspects()[this.world.rand.nextInt(anotherNode.getAspects().size())];
                            boolean u = false;
                            if (this.getAspects().getAmount(a) < this.getNodeVisBase(a) && anotherNode.takeFromContainer(a, 1)) {
                               this.addToContainer(a, 1);
                               u = true;
                            } else if (anotherNode.takeFromContainer(a, 1)) {
-                              if (this.worldObj.rand.nextInt(1 + (int)((double)this.getNodeVisBase(a) / (shiny ? (double)1.5F : (double)1.0F))) == 0) {
+                              if (this.world.rand.nextInt(1 + (int)((double)this.getNodeVisBase(a) / (shiny ? (double)1.5F : (double)1.0F))) == 0) {
                                  this.aspectsBase.add(a, 1);
-                                 if (this.getNodeModifier() == NodeModifier.PALE && this.worldObj.rand.nextInt(100) == 0) {
+                                 if (this.getNodeModifier() == NodeModifier.PALE && this.world.rand.nextInt(100) == 0) {
                                     this.setNodeModifier(null);
                                     this.regeneration = -1;
                                  }
 
-                                 if (this.worldObj.rand.nextInt(3) == 0) {
+                                 if (this.world.rand.nextInt(3) == 0) {
                                     anotherNode.setNodeVisBase(a, (short)(anotherNode.getNodeVisBase(a) - 1));
                                  }
                               }
@@ -606,10 +606,11 @@ public class TileNode extends TileThaumcraft implements INode, IWandable {
 
                            if (u) {
                               ((TileNode)te).wait = ((TileNode)te).regeneration / 2;
-                              this.worldObj.markBlockForUpdate(this.xCoord + x, this.yCoord + y, this.zCoord + z);
+                              BlockPos updatePos = new BlockPos(this.getPos().getX() + x, this.getPos().getY() + y, this.getPos().getZ() + z);
+                              this.world.notifyBlockUpdate(updatePos, this.world.getBlockState(updatePos), this.world.getBlockState(updatePos), 3);
                               te.markDirty();
                               change = true;
-                              PacketHandler.INSTANCE.sendToAllAround(new PacketFXBlockZap((float)(this.xCoord + x) + 0.5F, (float)(this.yCoord + y) + 0.5F, (float)(this.zCoord + z) + 0.5F, (float)this.xCoord + 0.5F, (float)this.yCoord + 0.5F, (float)this.zCoord + 0.5F), new NetworkRegistry.TargetPoint(this.worldObj.provider.dimensionId, this.xCoord, this.yCoord, this.zCoord, 32.0F));
+                              PacketHandler.INSTANCE.sendToAllAround(new PacketFXBlockZap((float)(this.getPos().getX() + x) + 0.5F, (float)(this.getPos().getY() + y) + 0.5F, (float)(this.getPos().getZ() + z) + 0.5F, (float)this.getPos().getX() + 0.5F, (float)this.getPos().getY() + 0.5F, (float)this.getPos().getZ() + 0.5F), new NetworkRegistry.TargetPoint(this.world.provider.getDimension(), this.getPos().getX(), this.getPos().getY(), this.getPos().getZ(), 32.0F));
                            }
                         }
                      }
@@ -666,7 +667,7 @@ public class TileNode extends TileThaumcraft implements INode, IWandable {
                }
 
                if (al.size() > 0) {
-                  this.addToContainer(al.getAspects()[this.worldObj.rand.nextInt(al.size())], 1);
+                  this.addToContainer(al.getAspects()[this.world.rand.nextInt(al.size())], 1);
                }
             }
          }
@@ -676,16 +677,16 @@ public class TileNode extends TileThaumcraft implements INode, IWandable {
          for(Aspect aspect : this.getAspects().getAspects()) {
             if (this.getAspects().getAmount(aspect) <= 0) {
                this.setNodeVisBase(aspect, (short)(this.getNodeVisBase(aspect) - 1));
-               if (this.worldObj.rand.nextInt(20) == 0 || this.getNodeVisBase(aspect) <= 0) {
+               if (this.world.rand.nextInt(20) == 0 || this.getNodeVisBase(aspect) <= 0) {
                   this.getAspects().remove(aspect);
-                  if (this.worldObj.rand.nextInt(5) == 0) {
+                  if (this.world.rand.nextInt(5) == 0) {
                      if (this.getNodeModifier() == NodeModifier.BRIGHT) {
                         this.setNodeModifier(null);
                      } else if (this.getNodeModifier() == null) {
                         this.setNodeModifier(NodeModifier.PALE);
                      }
 
-                     if (this.getNodeModifier() == NodeModifier.PALE && this.worldObj.rand.nextInt(5) == 0) {
+                     if (this.getNodeModifier() == NodeModifier.PALE && this.world.rand.nextInt(5) == 0) {
                         this.setNodeModifier(NodeModifier.FADING);
                      }
                   }
@@ -701,10 +702,9 @@ public class TileNode extends TileThaumcraft implements INode, IWandable {
          if (this.getAspects().size() <= 0) {
             this.invalidate();
             if (this.getBlockType() == ConfigBlocks.blockAiry) {
-               this.worldObj.setBlockToAir(this.xCoord, this.yCoord, this.zCoord);
+               this.world.setBlockToAir(new BlockPos(this.getPos().getX(), this.getPos().getY(), this.getPos().getZ()));
             } else if (this.getBlockType() == ConfigBlocks.blockMagicalLog) {
-               this.worldObj.setBlockMetadataWithNotify(this.xCoord, this.yCoord, this.zCoord,
-                       this.worldObj.getBlockMetadata(this.xCoord, this.yCoord, this.zCoord) - 1, 3);
+               { net.minecraft.util.math.BlockPos _p = this.getPos(); int _m = this.world.getBlockState(_p).getBlock().getMetaFromState(this.world.getBlockState(_p)); this.world.setBlockState(_p, this.world.getBlockState(_p).getBlock().getStateFromMeta(_m - 1), 3); }
             }
          }
       }
@@ -724,7 +724,7 @@ public class TileNode extends TileThaumcraft implements INode, IWandable {
          }
 
          if (al.size() > 0) {
-            this.addToContainer(al.getAspects()[this.worldObj.rand.nextInt(al.size())], 1);
+            this.addToContainer(al.getAspects()[this.world.rand.nextInt(al.size())], 1);
             change = true;
          }
       }
@@ -737,23 +737,23 @@ public class TileNode extends TileThaumcraft implements INode, IWandable {
          int x = 0;
          int z = 0;
          int y = 0;
-         x = this.xCoord + this.worldObj.rand.nextInt(8) - this.worldObj.rand.nextInt(8);
-         z = this.zCoord + this.worldObj.rand.nextInt(8) - this.worldObj.rand.nextInt(8);
-         BiomeGenBase bg = this.worldObj.getBiomeGenForCoords(x, z);
-         if (bg.biomeID != ThaumcraftWorldGenerator.biomeTaint.biomeID) {
-            Utils.setBiomeAt(this.worldObj, x, z, ThaumcraftWorldGenerator.biomeTaint);
+         x = this.getPos().getX() + this.world.rand.nextInt(8) - this.world.rand.nextInt(8);
+         z = this.getPos().getZ() + this.world.rand.nextInt(8) - this.world.rand.nextInt(8);
+         Biome bg = this.world.getBiome(new BlockPos(x, 0, z));
+         if (Biome.getIdForBiome(bg) != Biome.getIdForBiome(ThaumcraftWorldGenerator.biomeTaint)) {
+            Utils.setBiomeAt(this.world, x, z, ThaumcraftWorldGenerator.biomeTaint);
          }
 
-         if (Config.hardNode && this.worldObj.rand.nextBoolean()) {
-            x = this.xCoord + this.worldObj.rand.nextInt(5) - this.worldObj.rand.nextInt(5);
-            z = this.zCoord + this.worldObj.rand.nextInt(5) - this.worldObj.rand.nextInt(5);
-            y = this.yCoord + this.worldObj.rand.nextInt(5) - this.worldObj.rand.nextInt(5);
-            if (BlockTaintFibres.spreadFibres(this.worldObj, x, y, z)) {
+         if (Config.hardNode && this.world.rand.nextBoolean()) {
+            x = this.getPos().getX() + this.world.rand.nextInt(5) - this.world.rand.nextInt(5);
+            z = this.getPos().getZ() + this.world.rand.nextInt(5) - this.world.rand.nextInt(5);
+            y = this.getPos().getY() + this.world.rand.nextInt(5) - this.world.rand.nextInt(5);
+            if (BlockTaintFibres.spreadFibres(this.world, x, y, z)) {
             }
          }
       } else if (this.getNodeType() != NodeType.PURE && this.getNodeType() != NodeType.TAINTED && this.count % 100 == 0) {
-         BiomeGenBase bg = this.worldObj.getBiomeGenForCoords(this.xCoord, this.zCoord);
-         if (bg.biomeID == ThaumcraftWorldGenerator.biomeTaint.biomeID && this.worldObj.rand.nextInt(500) == 0) {
+         Biome bg = this.world.getBiome(new BlockPos(this.getPos().getX(), 0, this.getPos().getZ()));
+         if (Biome.getIdForBiome(bg) == Biome.getIdForBiome(ThaumcraftWorldGenerator.biomeTaint) && this.world.rand.nextInt(500) == 0) {
             this.setNodeType(NodeType.TAINTED);
             this.nodeChange();
          }
@@ -764,21 +764,21 @@ public class TileNode extends TileThaumcraft implements INode, IWandable {
 
    private boolean handleNodeStability(boolean change) {
       if (this.count % 100 == 0) {
-         if (this.getNodeType() == NodeType.UNSTABLE && this.worldObj.rand.nextBoolean()) {
+         if (this.getNodeType() == NodeType.UNSTABLE && this.world.rand.nextBoolean()) {
             if (this.getLock() == 0) {
                Aspect aspect = null;
                if ((aspect = this.takeRandomPrimalFromSource()) != null) {
-                  EntityAspectOrb orb = new EntityAspectOrb(this.worldObj, (double)this.xCoord + (double)0.5F, (double)this.yCoord + (double)0.5F, (double)this.zCoord + (double)0.5F, aspect, 1);
-                  this.worldObj.spawnEntityInWorld(orb);
+                  EntityAspectOrb orb = new EntityAspectOrb(this.world, (double)this.getPos().getX() + (double)0.5F, (double)this.getPos().getY() + (double)0.5F, (double)this.getPos().getZ() + (double)0.5F, aspect, 1);
+                  this.world.spawnEntity(orb);
                   change = true;
                }
-            } else if (this.worldObj.rand.nextInt(10000 / this.getLock()) == 42) {
+            } else if (this.world.rand.nextInt(10000 / this.getLock()) == 42) {
                this.setNodeType(NodeType.NORMAL);
                change = true;
             }
          }
 
-         if (this.getNodeModifier() == NodeModifier.FADING && this.getLock() > 0 && this.worldObj.rand.nextInt(12500 / this.getLock()) == 69) {
+         if (this.getNodeModifier() == NodeModifier.FADING && this.getLock() > 0 && this.world.rand.nextInt(12500 / this.getLock()) == 69) {
             this.setNodeModifier(NodeModifier.PALE);
             change = true;
          }
@@ -788,17 +788,17 @@ public class TileNode extends TileThaumcraft implements INode, IWandable {
    }
 
    private boolean handlePureNode(boolean change) {
-      int dimbl = ThaumcraftWorldGenerator.getDimBlacklist(this.worldObj.provider.dimensionId);
-      if (this.worldObj.provider.dimensionId != -1 && this.worldObj.provider.dimensionId != 1 && dimbl != 0 && dimbl != 2 && this.getNodeType() == NodeType.PURE && this.count % 50 == 0) {
-         int x = this.xCoord + this.worldObj.rand.nextInt(8) - this.worldObj.rand.nextInt(8);
-         int z = this.zCoord + this.worldObj.rand.nextInt(8) - this.worldObj.rand.nextInt(8);
-         BiomeGenBase bg = this.worldObj.getBiomeGenForCoords(x, z);
-         int biobl = ThaumcraftWorldGenerator.getBiomeBlacklist(bg.biomeID);
-         if (biobl != 0 && biobl != 2 && bg.biomeID != ThaumcraftWorldGenerator.biomeMagicalForest.biomeID) {
-            if (bg.biomeID == ThaumcraftWorldGenerator.biomeTaint.biomeID) {
-               Utils.setBiomeAt(this.worldObj, x, z, ThaumcraftWorldGenerator.biomeMagicalForest);
-            } else if (this.worldObj.getBlock(this.xCoord, this.yCoord, this.zCoord) == ConfigBlocks.blockMagicalLog) {
-               Utils.setBiomeAt(this.worldObj, x, z, ThaumcraftWorldGenerator.biomeMagicalForest);
+      int dimbl = ThaumcraftWorldGenerator.getDimBlacklist(this.world.provider.getDimension());
+      if (this.world.provider.getDimension() != -1 && this.world.provider.getDimension() != 1 && dimbl != 0 && dimbl != 2 && this.getNodeType() == NodeType.PURE && this.count % 50 == 0) {
+         int x = this.getPos().getX() + this.world.rand.nextInt(8) - this.world.rand.nextInt(8);
+         int z = this.getPos().getZ() + this.world.rand.nextInt(8) - this.world.rand.nextInt(8);
+         Biome bg = this.world.getBiome(new BlockPos(x, 0, z));
+         int biobl = ThaumcraftWorldGenerator.getBiomeBlacklist(Biome.getIdForBiome(bg));
+         if (biobl != 0 && biobl != 2 && Biome.getIdForBiome(bg) != Biome.getIdForBiome(ThaumcraftWorldGenerator.biomeMagicalForest)) {
+            if (Biome.getIdForBiome(bg) == Biome.getIdForBiome(ThaumcraftWorldGenerator.biomeTaint)) {
+               Utils.setBiomeAt(this.world, x, z, ThaumcraftWorldGenerator.biomeMagicalForest);
+            } else if (this.world.getBlockState(new BlockPos(this.getPos().getX(), this.getPos().getY(), this.getPos().getZ())).getBlock() == ConfigBlocks.blockMagicalLog) {
+               Utils.setBiomeAt(this.world, x, z, ThaumcraftWorldGenerator.biomeMagicalForest);
             }
          }
       }
@@ -807,29 +807,29 @@ public class TileNode extends TileThaumcraft implements INode, IWandable {
    }
 
    private boolean handleDarkNode(boolean change) {
-      int dimbl = ThaumcraftWorldGenerator.getDimBlacklist(this.worldObj.provider.dimensionId);
-      int biobl = ThaumcraftWorldGenerator.getBiomeBlacklist(this.worldObj.getBiomeGenForCoords(this.xCoord, this.zCoord).biomeID);
-      if (biobl != 0 && biobl != 2 && this.worldObj.provider.dimensionId != -1 && this.worldObj.provider.dimensionId != 1 && dimbl != 0 && dimbl != 2 && this.getNodeType() == NodeType.DARK && this.count % 50 == 0) {
-         int x = this.xCoord + this.worldObj.rand.nextInt(12) - this.worldObj.rand.nextInt(12);
-         int z = this.zCoord + this.worldObj.rand.nextInt(12) - this.worldObj.rand.nextInt(12);
-         BiomeGenBase bg = this.worldObj.getBiomeGenForCoords(x, z);
-         if (bg.biomeID != ThaumcraftWorldGenerator.biomeEerie.biomeID) {
-            Utils.setBiomeAt(this.worldObj, x, z, ThaumcraftWorldGenerator.biomeEerie);
+      int dimbl = ThaumcraftWorldGenerator.getDimBlacklist(this.world.provider.getDimension());
+      int biobl = ThaumcraftWorldGenerator.getBiomeBlacklist(Biome.getIdForBiome(this.world.getBiome(new BlockPos(this.getPos().getX(), 0, this.getPos().getZ()))));
+      if (biobl != 0 && biobl != 2 && this.world.provider.getDimension() != -1 && this.world.provider.getDimension() != 1 && dimbl != 0 && dimbl != 2 && this.getNodeType() == NodeType.DARK && this.count % 50 == 0) {
+         int x = this.getPos().getX() + this.world.rand.nextInt(12) - this.world.rand.nextInt(12);
+         int z = this.getPos().getZ() + this.world.rand.nextInt(12) - this.world.rand.nextInt(12);
+         Biome bg = this.world.getBiome(new BlockPos(x, 0, z));
+         if (Biome.getIdForBiome(bg) != Biome.getIdForBiome(ThaumcraftWorldGenerator.biomeEerie)) {
+            Utils.setBiomeAt(this.world, x, z, ThaumcraftWorldGenerator.biomeEerie);
          }
 
-         if (Config.hardNode && this.worldObj.rand.nextBoolean() && this.worldObj.getClosestPlayer((double)this.xCoord + (double)0.5F, (double)this.yCoord + (double)0.5F, (double)this.zCoord + (double)0.5F, 24.0F) != null) {
-            EntityGiantBrainyZombie entity = new EntityGiantBrainyZombie(this.worldObj);
+         if (Config.hardNode && this.world.rand.nextBoolean() && this.world.getClosestPlayer((double)this.getPos().getX() + (double)0.5F, (double)this.getPos().getY() + (double)0.5F, (double)this.getPos().getZ() + (double)0.5F, 24.0F, false) != null) {
+            EntityGiantBrainyZombie entity = new EntityGiantBrainyZombie(this.world);
             if (entity != null) {
-               int j = this.worldObj.getEntitiesWithinAABB(entity.getClass(), AxisAlignedBB.getBoundingBox(this.xCoord, this.yCoord, this.zCoord, this.xCoord + 1, this.yCoord + 1, this.zCoord + 1).expand(10.0F, 6.0F, 10.0F)).size();
+               int j = this.world.getEntitiesWithinAABB(entity.getClass(), new AxisAlignedBB(this.getPos().getX(), this.getPos().getY(), this.getPos().getZ(), this.getPos().getX() + 1, this.getPos().getY() + 1, this.getPos().getZ() + 1).expand(10.0F, 6.0F, 10.0F)).size();
                if (j <= 3) {
-                  double d0 = (double)this.xCoord + (this.worldObj.rand.nextDouble() - this.worldObj.rand.nextDouble()) * (double)5.0F;
-                  double d3 = this.yCoord + this.worldObj.rand.nextInt(3) - 1;
-                  double d4 = (double)this.zCoord + (this.worldObj.rand.nextDouble() - this.worldObj.rand.nextDouble()) * (double)5.0F;
+                  double d0 = (double)this.getPos().getX() + (this.world.rand.nextDouble() - this.world.rand.nextDouble()) * (double)5.0F;
+                  double d3 = this.getPos().getY() + this.world.rand.nextInt(3) - 1;
+                  double d4 = (double)this.getPos().getZ() + (this.world.rand.nextDouble() - this.world.rand.nextDouble()) * (double)5.0F;
                   EntityLiving entityliving = entity instanceof EntityLiving ? entity : null;
-                  entity.setLocationAndAngles(d0, d3, d4, this.worldObj.rand.nextFloat() * 360.0F, 0.0F);
+                  entity.setLocationAndAngles(d0, d3, d4, this.world.rand.nextFloat() * 360.0F, 0.0F);
                   if (entityliving == null || entityliving.getCanSpawnHere()) {
-                     this.worldObj.spawnEntityInWorld(entityliving);
-                     this.worldObj.playAuxSFX(2004, this.xCoord, this.yCoord, this.zCoord, 0);
+                     this.world.spawnEntity(entityliving);
+                     this.world.playEvent(2004, this.getPos(), 0);
                      if (entityliving != null) {
                         entityliving.spawnExplosionParticle();
                      }
@@ -844,26 +844,25 @@ public class TileNode extends TileThaumcraft implements INode, IWandable {
 
    private boolean handleHungryNodeSecond(boolean change) {
       if (this.getNodeType() == NodeType.HUNGRY && this.count % 50 == 0) {
-         int tx = this.xCoord + this.worldObj.rand.nextInt(16) - this.worldObj.rand.nextInt(16);
-         int ty = this.yCoord + this.worldObj.rand.nextInt(16) - this.worldObj.rand.nextInt(16);
-         int tz = this.zCoord + this.worldObj.rand.nextInt(16) - this.worldObj.rand.nextInt(16);
-         if (ty > this.worldObj.getHeightValue(tx, tz)) {
-            ty = this.worldObj.getHeightValue(tx, tz);
+         int tx = this.getPos().getX() + this.world.rand.nextInt(16) - this.world.rand.nextInt(16);
+         int ty = this.getPos().getY() + this.world.rand.nextInt(16) - this.world.rand.nextInt(16);
+         int tz = this.getPos().getZ() + this.world.rand.nextInt(16) - this.world.rand.nextInt(16);
+         if (ty > this.world.getHeight(tx, tz)) {
+            ty = this.world.getHeight(tx, tz);
          }
 
-         Vec3 v1 = Vec3.createVectorHelper((double)this.xCoord + (double)0.5F, (double)this.yCoord + (double)0.5F, (double)this.zCoord + (double)0.5F);
-         Vec3 v2 = Vec3.createVectorHelper((double)tx + (double)0.5F, (double)ty + (double)0.5F, (double)tz + (double)0.5F);
-         MovingObjectPosition mop = ThaumcraftApiHelper.rayTraceIgnoringSource(this.worldObj, v1, v2, true, false, false);
-         if (mop != null && this.getDistanceFrom(mop.blockX, mop.blockY, mop.blockZ) < (double)256.0F) {
-            tx = mop.blockX;
-            ty = mop.blockY;
-            tz = mop.blockZ;
-            Block bi = this.worldObj.getBlock(tx, ty, tz);
-            this.worldObj.getBlockMetadata(tx, ty, tz);
-            if (!bi.isAir(this.worldObj, tx, ty, tz)) {
-               float h = bi.getBlockHardness(this.worldObj, tx, ty, tz);
+         Vec3d v1 = new Vec3d((double)this.getPos().getX() + (double)0.5F, (double)this.getPos().getY() + (double)0.5F, (double)this.getPos().getZ() + (double)0.5F);
+         Vec3d v2 = new Vec3d((double)tx + (double)0.5F, (double)ty + (double)0.5F, (double)tz + (double)0.5F);
+         RayTraceResult mop = ThaumcraftApiHelper.rayTraceIgnoringSource(this.world, v1, v2, true, false, false);
+         if (mop != null && this.getPos().distanceSqToCenter(mop.getBlockPos().getX()+0.5, mop.getBlockPos().getY()+0.5, mop.getBlockPos().getZ()+0.5) < 65536.0) {
+            tx = mop.getBlockPos().getX();
+            ty = mop.getBlockPos().getY();
+            tz = mop.getBlockPos().getZ();
+            if (!this.world.isAirBlock(new net.minecraft.util.math.BlockPos(tx, ty, tz))) {
+               BlockPos destroyPos = new BlockPos(tx, ty, tz);
+               float h = this.world.getBlockState(destroyPos).getBlockHardness(this.world, destroyPos);
                if (h >= 0.0F && h < 5.0F) {
-                  this.worldObj.func_147480_a(tx, ty, tz, true);
+                  this.world.destroyBlock(destroyPos, true);
                }
             }
          }
@@ -877,14 +876,14 @@ public class TileNode extends TileThaumcraft implements INode, IWandable {
    }
 
    public void checkLock() {
-      if ((this.count <= 1 || this.count % 50 == 0) && this.yCoord > 0 && this.getBlockType() == ConfigBlocks.blockAiry) {
+      if ((this.count <= 1 || this.count % 50 == 0) && this.getPos().getY() > 0 && this.getBlockType() == ConfigBlocks.blockAiry) {
          byte oldLock = this.nodeLock;
          this.nodeLock = 0;
-         if (!this.worldObj.isBlockIndirectlyGettingPowered(this.xCoord, this.yCoord - 1, this.zCoord)
-                 && this.worldObj.getBlock(this.xCoord, this.yCoord - 1, this.zCoord) == ConfigBlocks.blockStoneDevice) {
-            if (this.worldObj.getBlockMetadata(this.xCoord, this.yCoord - 1, this.zCoord) == 9) {
+         if (!this.world.isBlockPowered(new net.minecraft.util.math.BlockPos(this.getPos().getX(), this.getPos().getY() - 1, this.getPos().getZ()))
+                 && this.world.getBlockState(new net.minecraft.util.math.BlockPos(this.getPos().getX(), this.getPos().getY() - 1, this.getPos().getZ())).getBlock() == ConfigBlocks.blockStoneDevice) {
+            if (world.getBlockState(new net.minecraft.util.math.BlockPos(this.getPos().getX(), this.getPos().getY() - 1, this.getPos().getZ())).getBlock().getMetaFromState(world.getBlockState(new net.minecraft.util.math.BlockPos(this.getPos().getX(), this.getPos().getY() - 1, this.getPos().getZ()))) == 9) {
                this.nodeLock = 1;
-            } else if (this.worldObj.getBlockMetadata(this.xCoord, this.yCoord - 1, this.zCoord) == 10) {
+            } else if (world.getBlockState(new net.minecraft.util.math.BlockPos(this.getPos().getX(), this.getPos().getY() - 1, this.getPos().getZ())).getBlock().getMetaFromState(world.getBlockState(new net.minecraft.util.math.BlockPos(this.getPos().getX(), this.getPos().getY() - 1, this.getPos().getZ()))) == 10) {
                this.nodeLock = 2;
             }
          }

@@ -1,18 +1,18 @@
 package thaumcraft.common.items.wands.foci;
 
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
-import net.minecraft.client.renderer.texture.IIconRegister;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
+import thaumcraft.client.renderers.compat.IIconRegister;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.util.IIcon;
-import net.minecraft.util.MathHelper;
-import net.minecraft.util.MovingObjectPosition;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.Vec3;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import thaumcraft.api.ThaumcraftApiHelper;
 import thaumcraft.api.aspects.Aspect;
@@ -25,7 +25,7 @@ import thaumcraft.common.items.wands.ItemWandCasting;
 import thaumcraft.common.lib.utils.EntityUtils;
 
 public class ItemFocusHellbat extends ItemFocusBasic {
-   public IIcon iconOrnament;
+   public TextureAtlasSprite iconOrnament;
    private static final AspectList costBase;
    private static final AspectList costBomb;
    private static final AspectList costDevil;
@@ -43,12 +43,12 @@ public class ItemFocusHellbat extends ItemFocusBasic {
 
    @SideOnly(Side.CLIENT)
    public void registerIcons(IIconRegister ir) {
-      this.icon = ir.registerIcon("thaumcraft:focus_hellbat");
-      this.iconOrnament = ir.registerIcon("thaumcraft:focus_hellbat_orn");
+      this.icon = ir.registerSprite("thaumcraft:focus_hellbat");
+      this.iconOrnament = ir.registerSprite("thaumcraft:focus_hellbat_orn");
    }
 
    @SideOnly(Side.CLIENT)
-   public IIcon getIconFromDamageForRenderPass(int par1, int renderPass) {
+   public TextureAtlasSprite getIconFromDamageForRenderPass(int par1, int renderPass) {
       return renderPass == 1 ? this.icon : this.iconOrnament;
    }
 
@@ -57,33 +57,33 @@ public class ItemFocusHellbat extends ItemFocusBasic {
       return true;
    }
 
-   public IIcon getOrnament(ItemStack itemstack) {
+   public TextureAtlasSprite getOrnament(ItemStack itemstack) {
       return this.iconOrnament;
    }
 
-   public ItemStack onFocusRightClick(ItemStack itemstack, World world, EntityPlayer player, MovingObjectPosition movingobjectposition) {
+   public ItemStack onFocusRightClick(ItemStack itemstack, World world, EntityPlayer player, RayTraceResult movingobjectposition) {
       ItemWandCasting wand = (ItemWandCasting)itemstack.getItem();
-      Entity pointedEntity = EntityUtils.getPointedEntity(player.worldObj, player, 32.0F, EntityFireBat.class);
+      Entity pointedEntity = EntityUtils.getPointedEntity(player.world, player, 32.0F, EntityFireBat.class);
       double px = player.posX;
       double py = player.posY;
       double pz = player.posZ;
-      py = player.boundingBox.minY + (double)(player.height / 2.0F) + (double)0.25F;
+      py = player.getEntityBoundingBox().minY + (double)(player.height / 2.0F) + (double)0.25F;
       px -= MathHelper.cos(player.rotationYaw / 180.0F * 3.141593F) * 0.16F;
       py -= 0.05000000014901161;
       pz -= MathHelper.sin(player.rotationYaw / 180.0F * 3.141593F) * 0.16F;
-      Vec3 vec3d = player.getLook(1.0F);
-      px += vec3d.xCoord * (double)0.5F;
-      py += vec3d.yCoord * (double)0.5F;
-      pz += vec3d.zCoord * (double)0.5F;
+      Vec3d vec3d = player.getLook(1.0F);
+      px += vec3d.x * (double)0.5F;
+      py += vec3d.y * (double)0.5F;
+      pz += vec3d.z * (double)0.5F;
       if (pointedEntity instanceof EntityLivingBase) {
          if (!world.isRemote) {
-            if (pointedEntity instanceof EntityPlayer && !MinecraftServer.getServer().isPVPEnabled()) {
+            if (pointedEntity instanceof EntityPlayer && !world.getMinecraftServer().isPVPEnabled()) {
                return itemstack;
             }
 
             EntityFireBat firebat = new EntityFireBat(world);
             firebat.setLocationAndAngles(px, py + (double)firebat.height, pz, player.rotationYaw, 0.0F);
-            firebat.setTarget(pointedEntity);
+            firebat.setAttackTarget((EntityLivingBase)pointedEntity);
             firebat.damBonus = wand.getFocusPotency(itemstack);
             firebat.setIsSummoned(true);
             firebat.setIsBatHanging(false);
@@ -100,15 +100,15 @@ public class ItemFocusHellbat extends ItemFocusBasic {
                firebat.setIsVampire(true);
             }
 
-            if (wand.consumeAllVis(itemstack, player, this.getVisCost(itemstack), true, false) && world.spawnEntityInWorld(firebat)) {
-               world.playAuxSFX(2004, (int)px, (int)py, (int)pz, 0);
-               world.playSoundAtEntity(firebat, "thaumcraft:ice", 0.2F, 0.95F + world.rand.nextFloat() * 0.1F);
+            if (wand.consumeAllVis(itemstack, player, this.getVisCost(itemstack), true, false) && world.spawnEntity(firebat)) {
+               world.playEvent(2004, new net.minecraft.util.math.BlockPos((int)px, (int)py, (int)pz), 0);
+               { net.minecraft.util.SoundEvent _snd = net.minecraft.util.SoundEvent.REGISTRY.getObject(new net.minecraft.util.ResourceLocation("thaumcraft:ice")); if (_snd != null) world.playSound(null, firebat.posX, firebat.posY, firebat.posZ, _snd, net.minecraft.util.SoundCategory.NEUTRAL, 0.2F, 0.95F + world.rand.nextFloat() * 0.1F); };
             } else {
-               world.playSoundAtEntity(player, "thaumcraft:wandfail", 0.1F, 0.8F + world.rand.nextFloat() * 0.1F);
+               { net.minecraft.util.SoundEvent _snd = net.minecraft.util.SoundEvent.REGISTRY.getObject(new net.minecraft.util.ResourceLocation("thaumcraft:wandfail")); if (_snd != null) world.playSound(null, player.posX, player.posY, player.posZ, _snd, net.minecraft.util.SoundCategory.NEUTRAL, 0.1F, 0.8F + world.rand.nextFloat() * 0.1F); };
             }
          }
 
-         player.swingItem();
+         player.swingArm(net.minecraft.util.EnumHand.MAIN_HAND);
       }
 
       return itemstack;
@@ -144,7 +144,7 @@ public class ItemFocusHellbat extends ItemFocusBasic {
    }
 
    public boolean canApplyUpgrade(ItemStack focusstack, EntityPlayer player, FocusUpgradeType type, int rank) {
-      return !type.equals(vampirebats) || ThaumcraftApiHelper.isResearchComplete(player.getCommandSenderName(), "VAMPBAT");
+      return !type.equals(vampirebats) || ThaumcraftApiHelper.isResearchComplete(player.getName(), "VAMPBAT");
    }
 
    static {

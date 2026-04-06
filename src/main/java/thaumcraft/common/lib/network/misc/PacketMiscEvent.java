@@ -1,10 +1,10 @@
 package thaumcraft.common.lib.network.misc;
 
-import cpw.mods.fml.common.network.simpleimpl.IMessage;
-import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
-import cpw.mods.fml.common.network.simpleimpl.MessageContext;
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
+import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
+import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
+import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.player.EntityPlayer;
@@ -34,11 +34,11 @@ public class PacketMiscEvent implements IMessage, IMessageHandler<PacketMiscEven
 
    @SideOnly(Side.CLIENT)
    public IMessage onMessage(PacketMiscEvent message, MessageContext ctx) {
-      EntityPlayer p = Minecraft.getMinecraft().thePlayer;
+      EntityPlayer p = Minecraft.getMinecraft().player;
       switch (message.type) {
          case 0:
             ClientTickEventsFML.warpVignette = 100;
-            p.worldObj.playSound(p.posX, p.posY, p.posZ, "thaumcraft:heartbeat", 1.0F, 1.0F, false);
+            { net.minecraft.util.SoundEvent _snd = net.minecraft.util.SoundEvent.REGISTRY.getObject(new net.minecraft.util.ResourceLocation("thaumcraft:heartbeat")); if (_snd != null) p.world.playSound(null, p.posX, p.posY, p.posZ, _snd, net.minecraft.util.SoundCategory.NEUTRAL, 1.0F, 1.0F); };
             break;
          case 1:
             RenderEventHandler.fogFiddled = true;

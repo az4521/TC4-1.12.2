@@ -1,7 +1,7 @@
 package thaumcraft.client.gui;
 
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import java.awt.Color;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
@@ -13,9 +13,9 @@ import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.client.renderer.RenderHelper;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.entity.player.InventoryPlayer;
-import net.minecraft.util.EnumChatFormatting;
-import net.minecraft.util.StatCollector;
-import org.lwjgl.opengl.GL11;
+import net.minecraft.util.text.TextFormatting;
+import net.minecraft.util.text.translation.I18n;
+
 import thaumcraft.api.aspects.Aspect;
 import thaumcraft.api.aspects.AspectList;
 import thaumcraft.api.wands.FocusUpgradeType;
@@ -25,6 +25,9 @@ import thaumcraft.client.lib.UtilsFX;
 import thaumcraft.common.container.ContainerFocalManipulator;
 import thaumcraft.common.lib.research.ResearchManager;
 import thaumcraft.common.tiles.TileFocalManipulator;
+import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.client.renderer.BufferBuilder;
+import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 
 @SideOnly(Side.CLIENT)
 public class GuiFocalManipulator extends GuiContainer {
@@ -68,9 +71,9 @@ public class GuiFocalManipulator extends GuiContainer {
             if (mposx >= 0 && mposy >= 0 && mposx < 16 && mposy < 16) {
                FocusUpgradeType u = this.possibleUpgrades.get(a);
                List list = new ArrayList<>();
-               list.add(EnumChatFormatting.DARK_PURPLE + "" + EnumChatFormatting.UNDERLINE + u.getLocalizedName());
+               list.add(TextFormatting.DARK_PURPLE + "" + TextFormatting.UNDERLINE + u.getLocalizedName());
                list.add(u.getLocalizedText());
-               this.drawHoveringTextFixed(list, baseX + this.xSize - 36, baseY + 24, this.fontRendererObj, this.width - (baseX + this.xSize - 16));
+               this.drawHoveringTextFixed(list, baseX + this.xSize - 36, baseY + 24, this.fontRenderer, this.width - (baseX + this.xSize - 16));
             }
          }
       }
@@ -80,25 +83,25 @@ public class GuiFocalManipulator extends GuiContainer {
          mposy = par2 - (baseY + 48);
          if (mposx >= 0 && mposy >= 0 && mposx < 36 && mposy < 36) {
             List list = new ArrayList<>();
-            list.add(StatCollector.translateToLocal("wandtable.text1"));
-            this.drawHoveringText(list, par1, par2, this.fontRendererObj);
+            list.add(I18n.translateToLocal("wandtable.text1"));
+            this.drawHoveringText(list, par1, par2, this.fontRenderer);
          }
 
          mposx = par1 - (baseX + 108);
          mposy = par2 - (baseY + 58);
          if (mposx >= 0 && mposy >= 0 && mposx < 36 && mposy < 16) {
             List list = new ArrayList<>();
-            list.add(StatCollector.translateToLocal("wandtable.text2"));
-            this.drawHoveringText(list, par1, par2, this.fontRendererObj);
+            list.add(I18n.translateToLocal("wandtable.text2"));
+            this.drawHoveringText(list, par1, par2, this.fontRenderer);
          }
 
-         if (this.table.size == 0 && this.rank * 8 <= this.mc.thePlayer.experienceLevel) {
+         if (this.table.size == 0 && this.rank * 8 <= this.mc.player.experienceLevel) {
             mposx = par1 - (baseX + 48);
             mposy = par2 - (baseY + 88);
             if (mposx >= 0 && mposy >= 0 && mposx < 96 && mposy < 8) {
                List list = new ArrayList<>();
-               list.add(StatCollector.translateToLocal("wandtable.text3"));
-               this.drawHoveringText(list, par1, par2, this.fontRendererObj);
+               list.add(I18n.translateToLocal("wandtable.text3"));
+               this.drawHoveringText(list, par1, par2, this.fontRenderer);
             }
          }
       }
@@ -109,9 +112,9 @@ public class GuiFocalManipulator extends GuiContainer {
          if (mposx >= 0 && mposy >= 0 && mposx < 16 && mposy < 16) {
             FocusUpgradeType u = this.upgrades.get(a);
             List list = new ArrayList<>();
-            list.add(EnumChatFormatting.DARK_PURPLE + "" + EnumChatFormatting.UNDERLINE + u.getLocalizedName());
+            list.add(TextFormatting.DARK_PURPLE + "" + TextFormatting.UNDERLINE + u.getLocalizedName());
             list.add(u.getLocalizedText());
-            this.drawHoveringTextFixed(list, baseX + this.xSize - 36, baseY + 24, this.fontRendererObj, this.width - (baseX + this.xSize - 16));
+            this.drawHoveringTextFixed(list, baseX + this.xSize - 36, baseY + 24, this.fontRenderer, this.width - (baseX + this.xSize - 16));
          }
       }
 
@@ -119,14 +122,14 @@ public class GuiFocalManipulator extends GuiContainer {
 
    protected void drawGuiContainerBackgroundLayer(float par1, int par2, int par3) {
       this.time = System.currentTimeMillis();
-      GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+      GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
       UtilsFX.bindTexture("textures/gui/gui_wandtable.png");
       int k = (this.width - this.xSize) / 2;
       int l = (this.height - this.ySize) / 2;
-      GL11.glEnable(GL11.GL_BLEND);
-      GL11.glBlendFunc(770, 771);
+      GlStateManager.enableBlend();
+      GlStateManager.blendFunc(770, 771);
       this.drawTexturedModalRect(k, l, 0, 0, this.xSize, this.ySize);
-      if (this.table.getStackInSlot(0) == null || this.table.rank < 0 || this.table.reset) {
+      if (this.table.getStackInSlot(0).isEmpty() || this.table.rank < 0 || this.table.reset) {
          this.rank = 0;
          this.selected = -1;
          this.possibleUpgrades.clear();
@@ -145,9 +148,9 @@ public class GuiFocalManipulator extends GuiContainer {
          }
       }
 
-      if (this.rank > 0 && this.selected >= 0 && this.table.getStackInSlot(0) != null) {
+      if (this.rank > 0 && this.selected >= 0 && !this.table.getStackInSlot(0).isEmpty()) {
          int xp = this.rank * 8;
-         if (this.table.size == 0 && xp <= this.mc.thePlayer.experienceLevel) {
+         if (this.table.size == 0 && xp <= this.mc.player.experienceLevel) {
             this.drawTexturedModalRect(k + 48, l + 88, 8, 240, 96, 8);
          }
 
@@ -158,10 +161,10 @@ public class GuiFocalManipulator extends GuiContainer {
                if (aspect != null && this.table.aspects.getAmount(aspect) != 0) {
                   int size = (int)((float)this.table.aspects.getAmount(aspect) / (float)this.table.size * 96.0F);
                   Color c = new Color(aspect.getColor());
-                  GL11.glColor4f((float)c.getRed() / 255.0F, (float)c.getGreen() / 255.0F, (float)c.getBlue() / 255.0F, 0.9F);
+                  GlStateManager.color((float)c.getRed() / 255.0F, (float)c.getGreen() / 255.0F, (float)c.getBlue() / 255.0F, 0.9F);
                   this.drawTexturedModalRect(k + 48 + start, l + 88, 112 + start, 240, size, 8);
                   start += size;
-                  if (this.table.getWorldObj().rand.nextInt(66) == 0) {
+                  if (this.table.getWorld().rand.nextInt(66) == 0) {
                      float x = (float)(48 + start);
                      float y = 92.0F;
                      float xx = ((float)(46 + this.rank * 16) - x) / 9.0F;
@@ -172,7 +175,7 @@ public class GuiFocalManipulator extends GuiContainer {
             }
          }
 
-         this.fontRendererObj.drawStringWithShadow("" + xp, k + 125, l + 64, xp > this.mc.thePlayer.experienceLevel ? 16151160 : 10092429);
+         this.fontRenderer.drawStringWithShadow("" + xp, k + 125, l + 64, xp > this.mc.player.experienceLevel ? 16151160 : 10092429);
          AspectList al = this.aspects;
          if (this.table.size > 0) {
             al = this.table.aspects;
@@ -182,13 +185,13 @@ public class GuiFocalManipulator extends GuiContainer {
 
          for(Aspect a : al.getAspectsSorted()) {
             if (a != null) {
-               GL11.glPushMatrix();
-               GL11.glTranslated(k + 49, (double)(l + 68) - (double)al.size() * (double)2.5F, 0.0F);
-               GL11.glScaled(0.5F, 0.5F, 0.5F);
-               this.fontRendererObj.drawStringWithShadow(a.getName(), 0, q * 10, a.getColor());
+               GlStateManager.pushMatrix();
+               GlStateManager.translate(k + 49, (double)(l + 68) - (double)al.size() * (double)2.5F, 0.0F);
+               GlStateManager.scale(0.5F, 0.5F, 0.5F);
+               this.fontRenderer.drawStringWithShadow(a.getName(), 0, q * 10, a.getColor());
                String s = this.myFormatter.format((float)al.getAmount(a) / 100.0F);
-               this.fontRendererObj.drawStringWithShadow(s, 48, q * 10, a.getColor());
-               GL11.glPopMatrix();
+               this.fontRenderer.drawStringWithShadow(s, 48, q * 10, a.getColor());
+               GlStateManager.popMatrix();
                ++q;
             }
          }
@@ -196,41 +199,41 @@ public class GuiFocalManipulator extends GuiContainer {
 
       if (this.rank > 0) {
          if (this.nextSparkle < this.time) {
-            this.nextSparkle = this.time + (long)(this.table.size > 0 ? 10 : 500) + (long)this.table.getWorldObj().rand.nextInt(200);
-            this.sparkles.put(this.time, new Sparkle((float) (42 + this.rank * 16 + this.table.getWorldObj().rand.nextInt(12)), (float) (34 + this.table.getWorldObj().rand.nextInt(12)), 0.0F, 0.0F, 0.5F + this.table.getWorldObj().rand.nextFloat() * 0.4F, 1.0F - this.table.getWorldObj().rand.nextFloat() * 0.4F, 1.0F - this.table.getWorldObj().rand.nextFloat() * 0.4F));
+            this.nextSparkle = this.time + (long)(this.table.size > 0 ? 10 : 500) + (long)this.table.getWorld().rand.nextInt(200);
+            this.sparkles.put(this.time, new Sparkle((float) (42 + this.rank * 16 + this.table.getWorld().rand.nextInt(12)), (float) (34 + this.table.getWorld().rand.nextInt(12)), 0.0F, 0.0F, 0.5F + this.table.getWorld().rand.nextFloat() * 0.4F, 1.0F - this.table.getWorld().rand.nextFloat() * 0.4F, 1.0F - this.table.getWorld().rand.nextFloat() * 0.4F));
          }
 
-         GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+         GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
 
          for(int a = 0; a < this.possibleUpgrades.size(); ++a) {
             FocusUpgradeType u = this.possibleUpgrades.get(a);
-            GL11.glPushMatrix();
-            GL11.glEnable(GL11.GL_BLEND);
-            GL11.glBlendFunc(770, 771);
+            GlStateManager.pushMatrix();
+            GlStateManager.enableBlend();
+            GlStateManager.blendFunc(770, 771);
             this.mc.renderEngine.bindTexture(u.icon);
             UtilsFX.drawTexturedQuadFull(k + 48 + a * 16, l + 104, this.zLevel);
-            GL11.glPopMatrix();
+            GlStateManager.popMatrix();
          }
-      } else if (this.rank == 0 && this.table.getStackInSlot(0) != null) {
+      } else if (this.rank == 0 && !this.table.getStackInSlot(0).isEmpty()) {
          try {
             this.gatherInfo();
          } catch (Exception ignored) {
          }
       }
 
-      GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+      GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
 
       for(int a = 0; a < this.upgrades.size(); ++a) {
          FocusUpgradeType u = this.upgrades.get(a);
-         GL11.glPushMatrix();
-         GL11.glEnable(GL11.GL_BLEND);
-         GL11.glBlendFunc(770, 771);
+         GlStateManager.pushMatrix();
+         GlStateManager.enableBlend();
+         GlStateManager.blendFunc(770, 771);
          this.mc.renderEngine.bindTexture(u.icon);
          UtilsFX.drawTexturedQuadFull(k + 56 + a * 16, l + 32, this.zLevel);
-         GL11.glPopMatrix();
+         GlStateManager.popMatrix();
       }
 
-      GL11.glDisable(GL11.GL_BLEND);
+      GlStateManager.disableBlend();
    }
 
    private void gatherInfo() {
@@ -256,7 +259,7 @@ public class GuiFocalManipulator extends GuiContainer {
          }
 
           for (FocusUpgradeType focusUpgradeType : ut) {
-              if (focus.canApplyUpgrade(this.table.getStackInSlot(0), Minecraft.getMinecraft().thePlayer, focusUpgradeType, this.rank)) {
+              if (focus.canApplyUpgrade(this.table.getStackInSlot(0), Minecraft.getMinecraft().player, focusUpgradeType, this.rank)) {
                   this.possibleUpgrades.add(focusUpgradeType);
               }
           }
@@ -268,7 +271,7 @@ public class GuiFocalManipulator extends GuiContainer {
 
    }
 
-   protected void drawGuiContainerForegroundLayer(int p_146979_1_, int p_146979_2_) {
+   protected void drawGuiContainerForegroundLayer(int mouseX, int mouseY) {
       UtilsFX.bindTexture(ParticleEngine.particleTexture);
       Long[] keys = this.sparkles.keySet().toArray(new Long[0]);
 
@@ -291,13 +294,13 @@ public class GuiFocalManipulator extends GuiContainer {
 
    }
 
-   protected void mouseClicked(int mx, int my, int par3) {
+   protected void mouseClicked(int mx, int my, int par3) throws java.io.IOException {
       super.mouseClicked(mx, my, par3);
       int gx = (this.width - this.xSize) / 2;
       int gy = (this.height - this.ySize) / 2;
       int var7 = mx - (gx + 48);
       int var8 = my - (gy + 88);
-      if (this.table.size == 0 && this.selected >= 0 && this.rank * 8 <= this.mc.thePlayer.experienceLevel && var7 >= 0 && var8 >= 0 && var7 < 96 && var8 < 8) {
+      if (this.table.size == 0 && this.selected >= 0 && this.rank * 8 <= this.mc.player.experienceLevel && var7 >= 0 && var8 >= 0 && var7 < 96 && var8 < 8) {
          this.mc.playerController.sendEnchantPacket(this.inventorySlots.windowId, this.selected);
          this.playButtonClick();
       } else {
@@ -337,31 +340,36 @@ public class GuiFocalManipulator extends GuiContainer {
    }
 
    private void playButtonClick() {
-      this.mc.renderViewEntity.worldObj.playSound(this.mc.renderViewEntity.posX, this.mc.renderViewEntity.posY, this.mc.renderViewEntity.posZ, "thaumcraft:cameraclack", 0.4F, 1.0F, false);
+      { net.minecraft.entity.Entity _rve = this.mc.getRenderViewEntity(); if (_rve != null) { net.minecraft.util.SoundEvent _snd = net.minecraft.util.SoundEvent.REGISTRY.getObject(new net.minecraft.util.ResourceLocation("thaumcraft:cameraclack")); if (_snd != null) _rve.world.playSound(null, new net.minecraft.util.math.BlockPos(_rve.posX, _rve.posY, _rve.posZ), _snd, net.minecraft.util.SoundCategory.PLAYERS, 0.4F, 1.0F); } }
    }
 
    private void drawSparkle(double x, double y, int frame, float r, float g, float b) {
-      GL11.glPushMatrix();
-      GL11.glEnable(GL11.GL_BLEND);
-      GL11.glBlendFunc(770, 1);
-      GL11.glColor4f(r, g, b, 0.9F);
-      GL11.glTranslated(x, y, 200.0F);
-      Tessellator tessellator = Tessellator.instance;
+      GlStateManager.pushMatrix();
+      GlStateManager.enableBlend();
+      GlStateManager.blendFunc(770, 1);
+      GlStateManager.color(r, g, b, 0.9F);
+      GlStateManager.translate(x, y, 200.0F);
+      Tessellator tessellator = Tessellator.getInstance();
+      BufferBuilder buffer = tessellator.getBuffer();
       float var8 = (float)frame / 16.0F;
       float var9 = var8 + 0.0624375F;
       float var10 = 0.4375F;
       float var11 = var10 + 0.0624375F;
-      tessellator.startDrawingQuads();
-      tessellator.setBrightness(220);
-      tessellator.setColorRGBA_F(r, g, b, 0.9F);
-      tessellator.addVertexWithUV(-4.0F, 4.0F, this.zLevel, var9, var11);
-      tessellator.addVertexWithUV(4.0F, 4.0F, this.zLevel, var9, var10);
-      tessellator.addVertexWithUV(4.0F, -4.0F, this.zLevel, var8, var10);
-      tessellator.addVertexWithUV(-4.0F, -4.0F, this.zLevel, var8, var11);
+      buffer.begin(7 /* GL_QUADS */, DefaultVertexFormats.POSITION_TEX_COLOR);
+     
+     
+      buffer.pos(-4.0F, 4.0F, this.zLevel).tex(var9, var11).color(r, g, b, 0.9F)
+        .endVertex();
+      buffer.pos(4.0F, 4.0F, this.zLevel).tex(var9, var10).color(r, g, b, 0.9F)
+        .endVertex();
+      buffer.pos(4.0F, -4.0F, this.zLevel).tex(var8, var10).color(r, g, b, 0.9F)
+        .endVertex();
+      buffer.pos(-4.0F, -4.0F, this.zLevel).tex(var8, var11).color(r, g, b, 0.9F)
+        .endVertex();
       tessellator.draw();
-      GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
-      GL11.glDisable(GL11.GL_BLEND);
-      GL11.glPopMatrix();
+      GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
+      GlStateManager.disableBlend();
+      GlStateManager.popMatrix();
    }
 
    protected void drawHoveringTextFixed(List<String> listin, int x, int y, FontRenderer font, int width) {
@@ -374,10 +382,10 @@ public class GuiFocalManipulator extends GuiContainer {
              list.addAll((List<String>) font.listFormattedStringToWidth(s, width));
          }
 
-         GL11.glDisable(32826);
+         GlStateManager.disableRescaleNormal();
          RenderHelper.disableStandardItemLighting();
-         GL11.glDisable(2896);
-         GL11.glDisable(2929);
+         GlStateManager.disableLighting();
+         GlStateManager.disableDepth();
          int k = 0;
 
          for(String s : list) {
@@ -421,20 +429,20 @@ public class GuiFocalManipulator extends GuiContainer {
 
          this.zLevel = 0.0F;
          itemRender.zLevel = 0.0F;
-         GL11.glEnable(2896);
-         GL11.glEnable(2929);
+         GlStateManager.enableLighting();
+         GlStateManager.enableDepth();
          RenderHelper.enableStandardItemLighting();
-         GL11.glEnable(32826);
+         GlStateManager.enableRescaleNormal();
       }
 
    }
 
-   private String trimStringNewline(String p_78273_1_) {
-      while(p_78273_1_ != null && p_78273_1_.endsWith("\n")) {
-         p_78273_1_ = p_78273_1_.substring(0, p_78273_1_.length() - 1);
+   private String trimStringNewline(String text) {
+      while(text != null && text.endsWith("\n")) {
+         text = text.substring(0, text.length() - 1);
       }
 
-      return p_78273_1_;
+      return text;
    }
 
    private static class Sparkle {

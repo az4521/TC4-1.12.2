@@ -1,27 +1,33 @@
 package thaumcraft.common.blocks;
 
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockContainer;
-import net.minecraft.client.particle.EffectRenderer;
-import net.minecraft.client.renderer.texture.IIconRegister;
+import net.minecraft.block.SoundType;
+import net.minecraft.block.state.IBlockState;
+import net.minecraft.client.particle.ParticleManager;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.init.MobEffects;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.potion.Potion;
 import net.minecraft.potion.PotionEffect;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.AxisAlignedBB;
+import net.minecraft.util.EnumFacing;
+import net.minecraft.util.NonNullList;
+import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.SoundCategory;
+import net.minecraft.util.SoundEvent;
 import net.minecraft.util.DamageSource;
-import net.minecraft.util.IIcon;
-import net.minecraft.util.MovingObjectPosition;
+import net.minecraft.util.math.AxisAlignedBB;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.RayTraceResult;
+import net.minecraft.world.Explosion;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
-import net.minecraftforge.common.util.ForgeDirection;
 import thaumcraft.api.aspects.Aspect;
 import thaumcraft.api.aspects.AspectList;
 import thaumcraft.api.entities.IEldritchMob;
@@ -43,49 +49,63 @@ import java.util.List;
 import java.util.Random;
 
 public class BlockAiry extends BlockContainer {
-   public IIcon blankIcon;
+   public static final net.minecraft.block.properties.PropertyInteger META =
+         net.minecraft.block.properties.PropertyInteger.create("meta", 0, 15);
+
+   @Override
+   protected net.minecraft.block.state.BlockStateContainer createBlockState() {
+      return new net.minecraft.block.state.BlockStateContainer(this, META);
+   }
+
+   @Override
+   public net.minecraft.block.state.IBlockState getStateFromMeta(int meta) {
+      return this.getDefaultState().withProperty(META, meta);
+   }
+
+   @Override
+   public int getMetaFromState(net.minecraft.block.state.IBlockState state) {
+      return state.getValue(META);
+   }
+
 
    public BlockAiry() {
       super(Config.airyMaterial);
-      this.setStepSound(new Block.SoundType("cloth", 0.0F, 1.0F));
+      this.setSoundType(SoundType.CLOTH);
       this.setCreativeTab(Thaumcraft.tabTC);
       this.setTickRandomly(true);
    }
 
    @SideOnly(Side.CLIENT)
-   public void registerBlockIcons(IIconRegister ir) {
-      this.blankIcon = ir.registerIcon("thaumcraft:blank");
-   }
-
-   @SideOnly(Side.CLIENT)
-   public IIcon getIcon(int side, int meta) {
-      return this.blankIcon;
-   }
-
-   @SideOnly(Side.CLIENT)
-   public boolean addHitEffects(World worldObj, MovingObjectPosition target, EffectRenderer effectRenderer) {
-      int md = worldObj.getBlockMetadata(target.blockX, target.blockY, target.blockZ);
-      if ((md == 0 || md == 5) && worldObj.rand.nextBoolean()) {
-         UtilsFX.infusedStoneSparkle(worldObj, target.blockX, target.blockY, target.blockZ, 0);
+   @Override
+   public boolean addHitEffects(IBlockState state, World world, RayTraceResult target, ParticleManager effectRenderer) {
+      int md = state.getBlock().getMetaFromState(state);
+      if ((md == 0 || md == 5) && world.rand.nextBoolean()) {
+         BlockPos pos = target.getBlockPos();
+         UtilsFX.infusedStoneSparkle(world, pos.getX(), pos.getY(), pos.getZ(), 0);
       }
 
-      return super.addHitEffects(worldObj, target, effectRenderer);
+      return super.addHitEffects(state, world, target, effectRenderer);
    }
 
-   public boolean addDestroyEffects(World world, int x, int y, int z, int meta, EffectRenderer effectRenderer) {
-      if (meta == 0 || meta == 5) {
-         Thaumcraft.proxy.burst(world, (double)x + (double)0.5F, (double)y + (double)0.5F, (double)z + (double)0.5F, 1.0F);
-         world.playSound((double)x + (double)0.5F, (double)y + (double)0.5F, (double)z + (double)0.5F, "thaumcraft:craftfail", 1.0F, 1.0F, false);
+   @Override
+   public boolean addDestroyEffects(World world, BlockPos pos, ParticleManager effectRenderer) {
+      int md = world.getBlockState(pos).getBlock().getMetaFromState(world.getBlockState(pos));
+      if (md == 0 || md == 5) {
+         Thaumcraft.proxy.burst(world, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, 1.0F);
+         world.playSound(null, pos,
+               new SoundEvent(new ResourceLocation("thaumcraft", "craftfail")),
+               SoundCategory.BLOCKS, 1.0F, 1.0F);
       }
 
-      return super.addDestroyEffects(world, x, y, z, meta, effectRenderer);
+      return super.addDestroyEffects(world, pos, effectRenderer);
    }
 
-   public float getBlockHardness(World world, int x, int y, int z) {
-      int md = world.getBlockMetadata(x, y, z);
+   @Override
+   public float getBlockHardness(IBlockState state, World world, BlockPos pos) {
+      int md = state.getBlock().getMetaFromState(state);
       if (md != 0 && md != 5) {
          if (md != 10 && md != 11) {
-            return md == 12 ? -1.0F : super.getBlockHardness(world, x, y, z);
+            return md == 12 ? -1.0F : super.getBlockHardness(state, world, pos);
          } else {
             return 100.0F;
          }
@@ -94,11 +114,12 @@ public class BlockAiry extends BlockContainer {
       }
    }
 
-   public float getExplosionResistance(Entity par1Entity, World world, int x, int y, int z, double explosionX, double explosionY, double explosionZ) {
-      int md = world.getBlockMetadata(x, y, z);
+   @Override
+   public float getExplosionResistance(World world, BlockPos pos, Entity exploder, Explosion explosion) {
+      int md = world.getBlockState(pos).getBlock().getMetaFromState(world.getBlockState(pos));
       if (md != 0 && md != 5) {
          if (md != 10 && md != 11) {
-            return md == 12 ? Float.MAX_VALUE : super.getExplosionResistance(par1Entity, world, x, y, z, explosionX, explosionY, explosionZ);
+            return md == 12 ? Float.MAX_VALUE : super.getExplosionResistance(world, pos, exploder, explosion);
          } else {
             return 50.0F;
          }
@@ -107,11 +128,12 @@ public class BlockAiry extends BlockContainer {
       }
    }
 
-   public int getLightValue(IBlockAccess world, int x, int y, int z) {
-      int md = world.getBlockMetadata(x, y, z);
+   @Override
+   public int getLightValue(IBlockState state, IBlockAccess world, BlockPos pos) {
+      int md = state.getBlock().getMetaFromState(state);
       if (md != 1 && md != 2 && md != 3) {
          if (md != 4 && md != 12) {
-            return md != 0 && md != 5 && md != 10 && md != 11 ? super.getLightValue(world, x, y, z) : 8;
+            return md != 0 && md != 5 && md != 10 && md != 11 ? super.getLightValue(state, world, pos) : 8;
          } else {
             return 0;
          }
@@ -120,58 +142,63 @@ public class BlockAiry extends BlockContainer {
       }
    }
 
-   public void setBlockBoundsBasedOnState(IBlockAccess ba, int x, int y, int z) {
-      int md = ba.getBlockMetadata(x, y, z);
+   @Override
+   public AxisAlignedBB getBoundingBox(IBlockState state, IBlockAccess world, BlockPos pos) {
+      int md = state.getBlock().getMetaFromState(state);
       if (md != 3 && md != 4 && md != 10 && md != 11 && md != 12) {
-         this.setBlockBounds(0.3F, 0.3F, 0.3F, 0.7F, 0.7F, 0.7F);
+         return new AxisAlignedBB(0.3, 0.3, 0.3, 0.7, 0.7, 0.7);
       } else {
-         this.setBlockBounds(0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F);
+         return new AxisAlignedBB(0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
       }
-
-      super.setBlockBoundsBasedOnState(ba, x, y, z);
    }
 
-   public boolean isReplaceable(IBlockAccess world, int x, int y, int z) {
-      int md = world.getBlockMetadata(x, y, z);
+   @Override
+   public boolean isReplaceable(IBlockAccess world, BlockPos pos) {
+      int md = world.getBlockState(pos).getBlock().getMetaFromState(world.getBlockState(pos));
       return md == 2 || md == 3 || md == 4 || md == 10 || md == 11;
    }
 
-   public boolean canBeReplacedByLeaves(IBlockAccess world, int x, int y, int z) {
-      int md = world.getBlockMetadata(x, y, z);
-      return md == 2 || md == 3 || md == 4 || super.canBeReplacedByLeaves(world, x, y, z);
+   @Override
+   public boolean canBeReplacedByLeaves(IBlockState state, IBlockAccess world, BlockPos pos) {
+      int md = state.getBlock().getMetaFromState(state);
+      return md == 2 || md == 3 || md == 4 || super.canBeReplacedByLeaves(state, world, pos);
    }
 
-   public boolean isLeaves(IBlockAccess world, int x, int y, int z) {
-      int md = world.getBlockMetadata(x, y, z);
-      return md == 2 || md == 3 || super.isLeaves(world, x, y, z);
+   @Override
+   public boolean isLeaves(IBlockState state, IBlockAccess world, BlockPos pos) {
+      int md = state.getBlock().getMetaFromState(state);
+      return md == 2 || md == 3 || super.isLeaves(state, world, pos);
    }
 
-   public void addCollisionBoxesToList(World world, int x, int y, int z, AxisAlignedBB par5AxisAlignedBB, List par6List, Entity par7Entity) {
-      int metadata = world.getBlockMetadata(x, y, z);
-      if (metadata == 4 && par7Entity instanceof EntityLivingBase && !(par7Entity instanceof EntityPlayer)) {
+   @Override
+   public void addCollisionBoxToList(IBlockState state, World world, BlockPos pos,
+         AxisAlignedBB entityBox, List<AxisAlignedBB> collidingBoxes, Entity entity, boolean p_185477_7_) {
+      int metadata = state.getBlock().getMetaFromState(state);
+      int x = pos.getX(), y = pos.getY(), z = pos.getZ();
+      if (metadata == 4 && entity instanceof EntityLivingBase && !(entity instanceof EntityPlayer)) {
          int a = 1;
-         if (world.getBlock(x, y - a, z) != ConfigBlocks.blockCosmeticSolid) {
+         if (world.getBlockState(new BlockPos(x, y - a, z)).getBlock() != ConfigBlocks.blockCosmeticSolid) {
             ++a;
          }
 
-         if (!world.isBlockIndirectlyGettingPowered(x, y - a, z)) {
-            this.setBlockBounds(0.0F, 0.0F, 0.0F, 1.0F, 1.0F, 1.0F);
-            super.addCollisionBoxesToList(world, x, y, z, par5AxisAlignedBB, par6List, par7Entity);
+         if (!world.isBlockPowered(new BlockPos(x, y - a, z))) {
+            AxisAlignedBB bb = new AxisAlignedBB(0.0, 0.0, 0.0, 1.0, 1.0, 1.0).offset(pos);
+            if (entityBox.intersects(bb)) collidingBoxes.add(bb);
          }
       } else if (metadata == 12) {
-         this.setBlockBounds(0.0F, 0.0F, 0.0F, 1.0F, 1.0F, 1.0F);
-         super.addCollisionBoxesToList(world, x, y, z, par5AxisAlignedBB, par6List, par7Entity);
+         AxisAlignedBB bb = new AxisAlignedBB(0.0, 0.0, 0.0, 1.0, 1.0, 1.0).offset(pos);
+         if (entityBox.intersects(bb)) collidingBoxes.add(bb);
       }
-
    }
 
-   public boolean getBlocksMovement(IBlockAccess world, int x, int y, int z) {
-      int metadata = world.getBlockMetadata(x, y, z);
+   @Override
+   public boolean isPassable(IBlockAccess world, BlockPos pos) {
+      int metadata = world.getBlockState(pos).getBlock().getMetaFromState(world.getBlockState(pos));
       if (metadata == 4) {
-         for(int a = 1; a < 3; ++a) {
-            TileEntity te = world.getTileEntity(x, y - a, z);
+         for (int a = 1; a < 3; ++a) {
+            TileEntity te = world.getTileEntity(new BlockPos(pos.getX(), pos.getY() - a, pos.getZ()));
             if (te instanceof TileWardingStone) {
-               return te.getWorldObj().isBlockIndirectlyGettingPowered(x, y - a, z);
+               return te.getWorld().isBlockPowered(new BlockPos(pos.getX(), pos.getY() - a, pos.getZ()));
             }
          }
       }
@@ -179,72 +206,87 @@ public class BlockAiry extends BlockContainer {
       return true;
    }
 
-   public AxisAlignedBB getCollisionBoundingBoxFromPool(World world, int x, int y, int z) {
-      int metadata = world.getBlockMetadata(x, y, z);
-      return metadata != 4 && metadata != 12 ? null : super.getCollisionBoundingBoxFromPool(world, x, y, z);
+   @Override
+   public AxisAlignedBB getCollisionBoundingBox(IBlockState state, IBlockAccess world, BlockPos pos) {
+      int metadata = state.getBlock().getMetaFromState(state);
+      return metadata != 4 && metadata != 12 ? NULL_AABB : super.getCollisionBoundingBox(state, world, pos);
    }
 
-   public AxisAlignedBB getSelectedBoundingBoxFromPool(World par1World, int par2, int par3, int par4) {
-      int md = par1World.getBlockMetadata(par2, par3, par4);
-      return md != 0 && md != 2 && md != 3 && md != 4 && md != 5 && md != 10 && md != 11 && md != 12 ? super.getSelectedBoundingBoxFromPool(par1World, par2, par3, par4) : AxisAlignedBB.getBoundingBox(0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F);
+   @Override
+   public AxisAlignedBB getSelectedBoundingBox(IBlockState state, World world, BlockPos pos) {
+      int md = state.getBlock().getMetaFromState(state);
+      return md != 0 && md != 2 && md != 3 && md != 4 && md != 5 && md != 10 && md != 11 && md != 12
+            ? super.getSelectedBoundingBox(state, world, pos)
+            : new AxisAlignedBB(0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
    }
 
-   public boolean isSideSolid(IBlockAccess world, int x, int y, int z, ForgeDirection side) {
+   @Override
+   public boolean isSideSolid(IBlockState state, IBlockAccess world, BlockPos pos, EnumFacing side) {
       return false;
    }
 
-   public int getRenderType() {
-      return -1;
-   }
-
-   public boolean renderAsNormalBlock() {
+   @Override
+   public boolean isFullCube(IBlockState state) {
       return false;
    }
 
-   public boolean isOpaqueCube() {
+   @Override
+   public boolean isOpaqueCube(IBlockState state) {
       return false;
    }
 
-   public int damageDropped(int par1) {
-      return par1;
+   @Override
+   public int damageDropped(IBlockState state) {
+      return state.getBlock().getMetaFromState(state);
    }
 
-   public Item getItemDropped(int par1, Random par2Random, int par3) {
+   @Override
+   public Item getItemDropped(IBlockState state, Random rand, int fortune) {
+      int par1 = state.getBlock().getMetaFromState(state);
       return par1 == 1 ? ConfigItems.itemResource : Item.getItemById(0);
    }
 
-   public Item getItem(World world, int x, int y, int z) {
-      int md = world.getBlockMetadata(x, y, z);
-      return md == 1 ? ConfigItems.itemResource : Item.getItemById(0);
+   @Override
+   public ItemStack getItem(World world, BlockPos pos, IBlockState state) {
+      int md = state.getBlock().getMetaFromState(state);
+      Item item = md == 1 ? ConfigItems.itemResource : Item.getItemById(0);
+      return new ItemStack(item);
    }
 
-   public void onBlockHarvested(World par1World, int par2, int par3, int par4, int par5, EntityPlayer par6EntityPlayer) {
+   @Override
+   public void onBlockHarvested(World par1World, BlockPos pos, IBlockState state, EntityPlayer par6EntityPlayer) {
+      int par5 = state.getBlock().getMetaFromState(state);
       if (par5 == 0 && !par1World.isRemote) {
-         TileEntity te = par1World.getTileEntity(par2, par3, par4);
+         TileEntity te = par1World.getTileEntity(pos);
          if (te instanceof INode && ((INode) te).getAspects().size() > 0) {
-            for(Aspect aspect : ((INode)te).getAspects().getAspects()) {
-               for(int a = 0; a <= ((INode)te).getAspects().getAmount(aspect) / 10; ++a) {
-                  if (((INode)te).getAspects().getAmount(aspect) >= 5) {
+            for (Aspect aspect : ((INode) te).getAspects().getAspects()) {
+               for (int a = 0; a <= ((INode) te).getAspects().getAmount(aspect) / 10; ++a) {
+                  if (((INode) te).getAspects().getAmount(aspect) >= 5) {
                      ItemStack ess = new ItemStack(ConfigItems.itemWispEssence);
                      new AspectList();
-                     ((ItemWispEssence)ess.getItem()).setAspects(ess, (new AspectList()).add(aspect, 2));
-                     this.dropBlockAsItem(par1World, par2, par3, par4, ess);
+                     ((ItemWispEssence) ess.getItem()).setAspects(ess, (new AspectList()).add(aspect, 2));
+                     Block.spawnAsEntity(par1World, pos, ess);
                   }
                }
             }
          }
       }
 
-      super.onBlockHarvested(par1World, par2, par3, par4, par5, par6EntityPlayer);
+      super.onBlockHarvested(par1World, pos, state, par6EntityPlayer);
    }
 
    @SideOnly(Side.CLIENT)
-   public void randomDisplayTick(World w, int i, int j, int k, Random r) {
-      int md = w.getBlockMetadata(i, j, k);
+   @Override
+   public void randomDisplayTick(IBlockState state, World w, BlockPos pos, Random r) {
+      int md = state.getBlock().getMetaFromState(state);
+      int i = pos.getX(), j = pos.getY(), k = pos.getZ();
       if (md == 1) {
-         FXSparkle ef2 = new FXSparkle(w, (float)i + 0.5F, (float)j + 0.5F, (float)k + 0.5F, (float)i + 0.5F + (r.nextFloat() - r.nextFloat()) / 3.0F, (float)j + 0.5F + (r.nextFloat() - r.nextFloat()) / 3.0F, (float)k + 0.5F + (r.nextFloat() - r.nextFloat()) / 3.0F, 1.0F, 6, 3);
+         FXSparkle ef2 = new FXSparkle(w, (float) i + 0.5F, (float) j + 0.5F, (float) k + 0.5F,
+               (float) i + 0.5F + (r.nextFloat() - r.nextFloat()) / 3.0F,
+               (float) j + 0.5F + (r.nextFloat() - r.nextFloat()) / 3.0F,
+               (float) k + 0.5F + (r.nextFloat() - r.nextFloat()) / 3.0F, 1.0F, 6, 3);
          ef2.setGravity(0.05F);
-         ef2.noClip = true;
+         ef2.setNoClip(true);
          ParticleEngine.instance.addEffect(w, ef2);
       } else if (md == 2 && r.nextInt(500) == 0) {
          int x1 = i + r.nextInt(3) - r.nextInt(3);
@@ -253,10 +295,12 @@ public class BlockAiry extends BlockContainer {
          int x2 = x1 + r.nextInt(3) - r.nextInt(3);
          int y2 = y1 + r.nextInt(3) - r.nextInt(3);
          int z2 = z1 + r.nextInt(3) - r.nextInt(3);
-         Thaumcraft.proxy.wispFX3(w, x1, y1, z1, x2, y2, z2, 0.1F + r.nextFloat() * 0.1F, 7, false, r.nextBoolean() ? -0.033F : 0.033F);
+         Thaumcraft.proxy.wispFX3(w, x1, y1, z1, x2, y2, z2, 0.1F + r.nextFloat() * 0.1F, 7, false,
+               r.nextBoolean() ? -0.033F : 0.033F);
       } else if (md == 10 || md == 11) {
          float h = r.nextFloat() * 0.33F;
-         FXSpark ef = new FXSpark(w, (float)i + w.rand.nextFloat(), (float)j + 0.1515F + h / 2.0F, (float)k + w.rand.nextFloat(), 0.33F + h);
+         FXSpark ef = new FXSpark(w, (float) i + w.rand.nextFloat(), (float) j + 0.1515F + h / 2.0F,
+               (float) k + w.rand.nextFloat(), 0.33F + h);
          if (md == 10) {
             ef.setRBGColorF(0.65F + w.rand.nextFloat() * 0.1F, 1.0F, 1.0F);
             ef.setAlphaF(0.8F);
@@ -266,13 +310,16 @@ public class BlockAiry extends BlockContainer {
 
          ParticleEngine.instance.addEffect(w, ef);
          if (r.nextInt(50) == 0) {
-            w.playSound(i, j, k, "thaumcraft:jacobs", 0.5F, 1.0F + (r.nextFloat() - r.nextFloat()) * 0.2F, false);
+            w.playSound(null, pos,
+                  new SoundEvent(new ResourceLocation("thaumcraft", "jacobs")),
+                  SoundCategory.BLOCKS, 0.5F, 1.0F + (r.nextFloat() - r.nextFloat()) * 0.2F);
          }
       }
-
    }
 
-   public TileEntity createTileEntity(World world, int metadata) {
+   @Override
+   public TileEntity createTileEntity(World world, IBlockState state) {
+      int metadata = state.getBlock().getMetaFromState(state);
       if (metadata == 0) {
          return new TileNode();
       } else if (metadata == 1) {
@@ -280,104 +327,115 @@ public class BlockAiry extends BlockContainer {
       } else if (metadata == 4) {
          return new TileWardingStoneFence();
       } else {
-         return metadata == 5 ? new TileNodeEnergized() : super.createTileEntity(world, metadata);
+         return metadata == 5 ? new TileNodeEnergized() : super.createTileEntity(world, state);
       }
    }
 
+   @Override
    public TileEntity createNewTileEntity(World var1, int md) {
       return null;
    }
 
    @SideOnly(Side.CLIENT)
-   public void getSubBlocks(Item par1, CreativeTabs par2CreativeTabs, List par3List) {
-      par3List.add(new ItemStack(par1, 1, 0));
+   @Override
+   public void getSubBlocks(CreativeTabs tab, NonNullList<ItemStack> list) {
+      list.add(new ItemStack(Item.getItemFromBlock(this), 1, 0));
    }
 
-   public void onBlockPlacedBy(World world, int x, int y, int z, EntityLivingBase entity, ItemStack stack) {
+   @Override
+   public void onBlockPlacedBy(World world, BlockPos pos, IBlockState state, EntityLivingBase entity, ItemStack stack) {
       if (stack.getItemDamage() == 0 && entity instanceof EntityPlayer) {
-         ThaumcraftWorldGenerator.createRandomNodeAt(world, x, y, z, world.rand, false, false, false);
+         ThaumcraftWorldGenerator.createRandomNodeAt(world, pos.getX(), pos.getY(), pos.getZ(), world.rand, false, false, false);
       }
 
-      super.onBlockPlacedBy(world, x, y, z, entity, stack);
+      super.onBlockPlacedBy(world, pos, state, entity, stack);
    }
 
-   public boolean isAir(IBlockAccess world, int x, int y, int z) {
-      int md = world.getBlockMetadata(x, y, z);
+   @Override
+   public boolean isAir(IBlockState state, IBlockAccess world, BlockPos pos) {
+      int md = state.getBlock().getMetaFromState(state);
       return md == 2 || md == 3 || md == 10 || md == 11;
    }
 
-   public void onNeighborBlockChange(World world, int x, int y, int z, Block block) {
-      int md = world.getBlockMetadata(x, y, z);
+   @Override
+   public void neighborChanged(IBlockState state, World world, BlockPos pos, Block block, BlockPos fromPos) {
+      int md = state.getBlock().getMetaFromState(state);
       if (md == 5) {
-         TileEntity te = world.getTileEntity(x, y - 1, z);
-         if (!world.isBlockIndirectlyGettingPowered(x, y - 1, z) && te instanceof TileNodeStabilizer) {
-            te = world.getTileEntity(x, y + 1, z);
+         TileEntity te = world.getTileEntity(new BlockPos(pos.getX(), pos.getY() - 1, pos.getZ()));
+         if (!world.isBlockPowered(new BlockPos(pos.getX(), pos.getY() - 1, pos.getZ())) && te instanceof TileNodeStabilizer) {
+            te = world.getTileEntity(new BlockPos(pos.getX(), pos.getY() + 1, pos.getZ()));
             if (!(te instanceof TileNodeConverter)) {
-               explodify(world, x, y, z);
+               explodify(world, pos.getX(), pos.getY(), pos.getZ());
             }
          } else {
-            explodify(world, x, y, z);
+            explodify(world, pos.getX(), pos.getY(), pos.getZ());
          }
       }
 
-      super.onNeighborBlockChange(world, x, y, z, block);
+      super.neighborChanged(state, world, pos, block, fromPos);
    }
 
    public static void explodify(World world, int x, int y, int z) {
       if (!world.isRemote) {
-         world.setBlockToAir(x, y, z);
-         world.createExplosion(null, (double)x + (double)0.5F, (double)y + (double)0.5F, (double)z + (double)0.5F, 3.0F, false);
+         world.setBlockToAir(new BlockPos(x, y, z));
+         world.createExplosion(null, (double) x + 0.5, (double) y + 0.5, (double) z + 0.5, 3.0F, false);
 
-         for(int a = 0; a < 50; ++a) {
+         for (int a = 0; a < 50; ++a) {
             int xx = x + world.rand.nextInt(8) - world.rand.nextInt(8);
             int yy = y + world.rand.nextInt(8) - world.rand.nextInt(8);
             int zz = z + world.rand.nextInt(8) - world.rand.nextInt(8);
-            if (world.isAirBlock(xx, yy, zz)) {
+            if (world.isAirBlock(new BlockPos(xx, yy, zz))) {
                if (yy < y) {
-                  world.setBlock(xx, yy, zz, ConfigBlocks.blockFluxGoo, 8, 3);
+                  world.setBlockState(new BlockPos(xx, yy, zz),
+                        ConfigBlocks.blockFluxGoo.getStateFromMeta(8), 3);
                } else {
-                  world.setBlock(xx, yy, zz, ConfigBlocks.blockFluxGas, 8, 3);
+                  world.setBlockState(new BlockPos(xx, yy, zz),
+                        ConfigBlocks.blockFluxGas.getStateFromMeta(8), 3);
                }
             }
          }
       }
-
    }
 
-   public void onEntityCollidedWithBlock(World world, int x, int y, int z, Entity entity) {
-      int md = world.getBlockMetadata(x, y, z);
+   @Override
+   public void onEntityCollision(World world, BlockPos pos, IBlockState state, Entity entity) {
+      int md = state.getBlock().getMetaFromState(state);
       if (md == 10 && entity instanceof EntityLivingBase && EntityShockOrb.canEarthShockHurt(entity)) {
-         entity.attackEntityFrom(DamageSource.magic, (float)(1 + world.rand.nextInt(2)));
+         entity.attackEntityFrom(DamageSource.MAGIC, (float) (1 + world.rand.nextInt(2)));
          entity.motionX *= 0.8;
          entity.motionZ *= 0.8;
          if (!world.isRemote && world.rand.nextInt(100) == 0) {
-            world.setBlockToAir(x, y, z);
+            world.setBlockToAir(pos);
          }
       } else if (md == 11 && !(entity instanceof IEldritchMob)) {
          if (world.rand.nextInt(100) == 0) {
-            entity.attackEntityFrom(DamageSource.wither, 1.0F);
+            entity.attackEntityFrom(DamageSource.WITHER, 1.0F);
          }
 
          entity.motionX *= 0.66;
          entity.motionZ *= 0.66;
          if (entity instanceof EntityPlayer) {
-            ((EntityPlayer)entity).addExhaustion(0.05F);
+            ((EntityPlayer) entity).addExhaustion(0.05F);
          }
 
          if (entity instanceof EntityLivingBase) {
-            PotionEffect pe = new PotionEffect(Potion.weakness.id, 100, 1, true);
-            ((EntityLivingBase)entity).addPotionEffect(pe);
+            PotionEffect pe = new PotionEffect(MobEffects.WEAKNESS, 100, 1, true, false);
+            ((EntityLivingBase) entity).addPotionEffect(pe);
          }
       }
-
    }
 
-   public void updateTick(World world, int x, int y, int z, Random rand) {
-      super.updateTick(world, x, y, z, rand);
-      int md = world.getBlockMetadata(x, y, z);
+   @Override
+   public void updateTick(World world, BlockPos pos, IBlockState state, Random rand) {
+      super.updateTick(world, pos, state, rand);
+      int md = state.getBlock().getMetaFromState(state);
       if ((md == 10 || md == 11) && !world.isRemote) {
-         world.setBlockToAir(x, y, z);
+         world.setBlockToAir(pos);
       }
+   }
 
+   @Override
+   public net.minecraft.util.EnumBlockRenderType getRenderType(net.minecraft.block.state.IBlockState state) {
+      return net.minecraft.util.EnumBlockRenderType.INVISIBLE;
    }
 }

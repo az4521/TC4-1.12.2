@@ -1,15 +1,20 @@
 package thaumcraft.client.fx.particles;
 
-import cpw.mods.fml.client.FMLClientHandler;
+import net.minecraftforge.fml.client.FMLClientHandler;
 import java.awt.Color;
-import net.minecraft.client.particle.EntityFX;
+import net.minecraft.client.particle.Particle;
+import net.minecraft.entity.Entity;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.util.MathHelper;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
-import org.lwjgl.opengl.GL11;
 
-public class FXEssentiaTrail extends EntityFX {
+import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.client.renderer.BufferBuilder;
+import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
+import net.minecraft.util.math.BlockPos;
+
+public class FXEssentiaTrail extends Particle {
    private double targetX;
    private double targetY;
    private double targetZ;
@@ -27,7 +32,7 @@ public class FXEssentiaTrail extends EntityFX {
       double dx = tx - this.posX;
       double dy = ty - this.posY;
       double dz = tz - this.posZ;
-      int base = (int)(MathHelper.sqrt_double(dx * dx + dy * dy + dz * dz) * 30.0F);
+      int base = (int)(MathHelper.sqrt(dx * dx + dy * dy + dz * dz) * 30.0F);
       if (base < 1) {
          base = 1;
       }
@@ -44,10 +49,10 @@ public class FXEssentiaTrail extends EntityFX {
       this.particleGreen = (float)c.getGreen() / 255.0F - mg + this.rand.nextFloat() * mg;
       this.particleBlue = (float)c.getBlue() / 255.0F - mb + this.rand.nextFloat() * mb;
       this.particleGravity = 0.2F;
-      this.noClip = false;
+      this.canCollide = true;
 
       try {
-         EntityLivingBase renderentity = FMLClientHandler.instance().getClient().renderViewEntity;
+         EntityLivingBase renderentity = (EntityLivingBase)FMLClientHandler.instance().getClient().getRenderViewEntity();
          int visibleDistance = 64;
          if (!FMLClientHandler.instance().getClient().gameSettings.fancyGraphics) {
             visibleDistance = 32;
@@ -61,12 +66,12 @@ public class FXEssentiaTrail extends EntityFX {
 
    }
 
-   public void renderParticle(Tessellator tessellator, float f, float f1, float f2, float f3, float f4, float f5) {
+   public void renderParticle(BufferBuilder buffer, Entity entityIn, float f, float f1, float f2, float f3, float f4, float f5) {
       float t2 = 0.5625F;
       float t3 = 0.625F;
       float t4 = 0.0625F;
       float t5 = 0.125F;
-      GL11.glColor4f(1.0F, 1.0F, 1.0F, 0.5F);
+      GlStateManager.color(1.0F, 1.0F, 1.0F, 0.5F);
       int var10000 = this.particle + this.particleAge % 16;
       float s = MathHelper.sin((float)(this.particleAge - this.count) / 5.0F) * 0.25F + 1.0F;
       float var12 = 0.1F * this.particleScale * s;
@@ -74,12 +79,14 @@ public class FXEssentiaTrail extends EntityFX {
       float var14 = (float)(this.prevPosY + (this.posY - this.prevPosY) * (double)f - interpPosY);
       float var15 = (float)(this.prevPosZ + (this.posZ - this.prevPosZ) * (double)f - interpPosZ);
       float var16 = 1.0F;
-      tessellator.setBrightness(240);
-      tessellator.setColorRGBA_F(this.particleRed * var16, this.particleGreen * var16, this.particleBlue * var16, 0.5F);
-      tessellator.addVertexWithUV(var13 - f1 * var12 - f4 * var12, var14 - f2 * var12, var15 - f3 * var12 - f5 * var12, t2, t5);
-      tessellator.addVertexWithUV(var13 - f1 * var12 + f4 * var12, var14 + f2 * var12, var15 - f3 * var12 + f5 * var12, t3, t5);
-      tessellator.addVertexWithUV(var13 + f1 * var12 + f4 * var12, var14 + f2 * var12, var15 + f3 * var12 + f5 * var12, t3, t4);
-      tessellator.addVertexWithUV(var13 + f1 * var12 - f4 * var12, var14 - f2 * var12, var15 + f3 * var12 - f5 * var12, t2, t4);
+      buffer.pos(var13 - f1 * var12 - f4 * var12, var14 - f2 * var12, var15 - f3 * var12 - f5 * var12).tex(t2, t5).color(this.particleRed, this.particleGreen, this.particleBlue, 0.5F)
+        .endVertex();
+      buffer.pos(var13 - f1 * var12 + f4 * var12, var14 + f2 * var12, var15 - f3 * var12 + f5 * var12).tex(t3, t5).color(this.particleRed, this.particleGreen, this.particleBlue, 0.5F)
+        .endVertex();
+      buffer.pos(var13 + f1 * var12 + f4 * var12, var14 + f2 * var12, var15 + f3 * var12 + f5 * var12).tex(t3, t4).color(this.particleRed, this.particleGreen, this.particleBlue, 0.5F)
+        .endVertex();
+      buffer.pos(var13 + f1 * var12 - f4 * var12, var14 - f2 * var12, var15 + f3 * var12 - f5 * var12).tex(t2, t4).color(this.particleRed, this.particleGreen, this.particleBlue, 0.5F)
+        .endVertex();
    }
 
    public int getFXLayer() {
@@ -91,31 +98,31 @@ public class FXEssentiaTrail extends EntityFX {
       this.prevPosY = this.posY;
       this.prevPosZ = this.posZ;
       if (this.particleAge++ >= this.particleMaxAge) {
-         this.setDead();
+         this.setExpired();
       } else {
          this.motionY += 0.01 * (double)this.particleGravity;
-         if (!this.noClip) {
+         if (this.canCollide) {
             this.pushOutOfBlocks(this.posX, this.posY, this.posZ);
          }
 
-         this.moveEntity(this.motionX, this.motionY, this.motionZ);
+         this.move(this.motionX, this.motionY, this.motionZ);
          this.motionX *= 0.985;
          this.motionY *= 0.985;
          this.motionZ *= 0.985;
-         this.motionX = MathHelper.clamp_float((float)this.motionX, -0.05F, 0.05F);
-         this.motionY = MathHelper.clamp_float((float)this.motionY, -0.05F, 0.05F);
-         this.motionZ = MathHelper.clamp_float((float)this.motionZ, -0.05F, 0.05F);
+         this.motionX = MathHelper.clamp((float)this.motionX, -0.05F, 0.05F);
+         this.motionY = MathHelper.clamp((float)this.motionY, -0.05F, 0.05F);
+         this.motionZ = MathHelper.clamp((float)this.motionZ, -0.05F, 0.05F);
          double dx = this.targetX - this.posX;
          double dy = this.targetY - this.posY;
          double dz = this.targetZ - this.posZ;
          double d13 = 0.01;
-         double d11 = MathHelper.sqrt_double(dx * dx + dy * dy + dz * dz);
+         double d11 = MathHelper.sqrt(dx * dx + dy * dy + dz * dz);
          if (d11 < (double)2.0F) {
             this.particleScale *= 0.98F;
          }
 
          if (this.particleScale < 0.2F) {
-            this.setDead();
+            this.setExpired();
          } else {
             dx /= d11;
             dy /= d11;
@@ -132,19 +139,19 @@ public class FXEssentiaTrail extends EntityFX {
    }
 
    protected boolean pushOutOfBlocks(double par1, double par3, double par5) {
-      int var7 = MathHelper.floor_double(par1);
-      int var8 = MathHelper.floor_double(par3);
-      int var9 = MathHelper.floor_double(par5);
+      int var7 = MathHelper.floor(par1);
+      int var8 = MathHelper.floor(par3);
+      int var9 = MathHelper.floor(par5);
       double var10 = par1 - (double)var7;
       double var12 = par3 - (double)var8;
       double var14 = par5 - (double)var9;
-      if (!this.worldObj.isAirBlock(var7, var8, var9) && this.worldObj.isBlockNormalCubeDefault(var7, var8, var9, true) && !this.worldObj.isAnyLiquid(this.boundingBox)) {
-         boolean var16 = !this.worldObj.isBlockNormalCubeDefault(var7 - 1, var8, var9, true);
-         boolean var17 = !this.worldObj.isBlockNormalCubeDefault(var7 + 1, var8, var9, true);
-         boolean var18 = !this.worldObj.isBlockNormalCubeDefault(var7, var8 - 1, var9, true);
-         boolean var19 = !this.worldObj.isBlockNormalCubeDefault(var7, var8 + 1, var9, true);
-         boolean var20 = !this.worldObj.isBlockNormalCubeDefault(var7, var8, var9 - 1, true);
-         boolean var21 = !this.worldObj.isBlockNormalCubeDefault(var7, var8, var9 + 1, true);
+      if (!this.world.isAirBlock(new BlockPos(var7, var8, var9)) && this.world.getBlockState(new BlockPos(var7, var8, var9)).getMaterial().blocksMovement() ) {
+         boolean var16 = !this.world.getBlockState(new BlockPos(var7-1,var8,var9)).getMaterial().blocksMovement();
+         boolean var17 = !this.world.getBlockState(new BlockPos(var7+1,var8,var9)).getMaterial().blocksMovement();
+         boolean var18 = !this.world.getBlockState(new BlockPos(var7,var8-1,var9)).getMaterial().blocksMovement();
+         boolean var19 = !this.world.getBlockState(new BlockPos(var7,var8+1,var9)).getMaterial().blocksMovement();
+         boolean var20 = !this.world.getBlockState(new BlockPos(var7,var8,var9-1)).getMaterial().blocksMovement();
+         boolean var21 = !this.world.getBlockState(new BlockPos(var7,var8,var9+1)).getMaterial().blocksMovement();
          byte var22 = -1;
          double var23 = 9999.0F;
          if (var16 && var10 < var23) {

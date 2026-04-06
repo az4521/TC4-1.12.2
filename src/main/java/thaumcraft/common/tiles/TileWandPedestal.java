@@ -1,7 +1,7 @@
 package thaumcraft.common.tiles;
 
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import java.util.ArrayList;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.ISidedInventory;
@@ -9,10 +9,11 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.network.NetworkManager;
-import net.minecraft.network.play.server.S35PacketUpdateTileEntity;
+import net.minecraft.network.play.server.SPacketUpdateTileEntity;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.AxisAlignedBB;
-import net.minecraft.util.ChunkCoordinates;
+import net.minecraft.util.math.AxisAlignedBB;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.EnumFacing;
 import thaumcraft.api.TileThaumcraft;
 import thaumcraft.api.aspects.Aspect;
 import thaumcraft.api.aspects.AspectList;
@@ -34,11 +35,11 @@ public class TileWandPedestal extends TileThaumcraft implements ISidedInventory,
    public int drainY = 0;
    public int drainZ = 0;
    public int drainColor = 0;
-   ArrayList<ChunkCoordinates> nodes = null;
+   ArrayList<BlockPos> nodes = null;
 
    @SideOnly(Side.CLIENT)
    public AxisAlignedBB getRenderBoundingBox() {
-      return AxisAlignedBB.getBoundingBox(this.xCoord, this.yCoord, this.zCoord, this.xCoord + 1, this.yCoord + 1, this.zCoord + 1).expand(2.0F, 2.0F, 2.0F);
+      return new AxisAlignedBB(this.getPos().getX(), this.getPos().getY(), this.getPos().getZ(), this.getPos().getX() + 1, this.getPos().getY() + 1, this.getPos().getZ() + 1).expand(2.0F, 2.0F, 2.0F);
    }
 
    public int getSizeInventory() {
@@ -46,19 +47,19 @@ public class TileWandPedestal extends TileThaumcraft implements ISidedInventory,
    }
 
    public ItemStack getStackInSlot(int par1) {
-      return this.inventory[par1];
+      ItemStack s = this.inventory[par1]; return s != null ? s : ItemStack.EMPTY;
    }
 
    public ItemStack decrStackSize(int par1, int par2) {
       if (this.inventory[par1] != null) {
-         this.worldObj.markBlockForUpdate(this.xCoord, this.yCoord, this.zCoord);
+         { net.minecraft.block.state.IBlockState _bs = this.world.getBlockState(this.pos); this.world.notifyBlockUpdate(this.pos, _bs, _bs, 3); }
           ItemStack itemstack;
-          if (this.inventory[par1].stackSize <= par2) {
+          if (this.inventory[par1].getCount() <= par2) {
               itemstack = this.inventory[par1];
             this.inventory[par1] = null;
           } else {
               itemstack = this.inventory[par1].splitStack(par2);
-            if (this.inventory[par1].stackSize == 0) {
+            if (this.inventory[par1].getCount() == 0) {
                this.inventory[par1] = null;
             }
 
@@ -83,20 +84,12 @@ public class TileWandPedestal extends TileThaumcraft implements ISidedInventory,
 
    public void setInventorySlotContents(int par1, ItemStack par2ItemStack) {
       this.inventory[par1] = par2ItemStack;
-      if (par2ItemStack != null && par2ItemStack.stackSize > this.getInventoryStackLimit()) {
-         par2ItemStack.stackSize = this.getInventoryStackLimit();
+      if (par2ItemStack != null && par2ItemStack.getCount() > this.getInventoryStackLimit()) {
+         par2ItemStack.setCount(this.getInventoryStackLimit());
       }
 
       this.markDirty();
-      this.worldObj.markBlockForUpdate(this.xCoord, this.yCoord, this.zCoord);
-   }
-
-   public String getInventoryName() {
-      return this.hasCustomInventoryName() ? this.customName : "container.wandpedestal";
-   }
-
-   public boolean hasCustomInventoryName() {
-      return this.customName != null && !this.customName.isEmpty();
+      { net.minecraft.block.state.IBlockState _bs = this.world.getBlockState(this.pos); this.world.notifyBlockUpdate(this.pos, _bs, _bs, 3); }
    }
 
    public void setGuiDisplayName(String par1Str) {
@@ -111,7 +104,7 @@ public class TileWandPedestal extends TileThaumcraft implements ISidedInventory,
          NBTTagCompound nbttagcompound1 = nbttaglist.getCompoundTagAt(i);
          byte b0 = nbttagcompound1.getByte("Slot");
          if (b0 >= 0 && b0 < this.inventory.length) {
-            this.inventory[b0] = ItemStack.loadItemStackFromNBT(nbttagcompound1);
+            this.inventory[b0] = new ItemStack(nbttagcompound1);
          }
       }
 
@@ -140,45 +133,43 @@ public class TileWandPedestal extends TileThaumcraft implements ISidedInventory,
 
    }
 
-   public void writeToNBT(NBTTagCompound nbtCompound) {
+   @Override
+   public NBTTagCompound writeToNBT(NBTTagCompound nbtCompound) {
       super.writeToNBT(nbtCompound);
-      if (this.hasCustomInventoryName()) {
+      if (this.hasCustomName()) {
          nbtCompound.setString("CustomName", this.customName);
       }
-
+      return nbtCompound;
    }
 
    public int getInventoryStackLimit() {
       return 1;
    }
 
-   public void onDataPacket(NetworkManager net, S35PacketUpdateTileEntity pkt) {
+   public void onDataPacket(NetworkManager net, SPacketUpdateTileEntity pkt) {
       super.onDataPacket(net, pkt);
-      if (this.worldObj != null && this.worldObj.isRemote) {
-         this.worldObj.markBlockForUpdate(this.xCoord, this.yCoord, this.zCoord);
+      if (this.world != null && this.world.isRemote) {
+         { net.minecraft.block.state.IBlockState _bs = this.world.getBlockState(this.pos); this.world.notifyBlockUpdate(this.pos, _bs, _bs, 3); }
       }
 
    }
 
-   public boolean canUpdate() {
-       return super.canUpdate();
-   }
-
    public void updateEntity() {
-      super.updateEntity();
-      if (this.nodes == null) {
+            if (this.nodes == null) {
          this.findNodes();
       }
 
       ++this.counter;
       boolean recalc = false;
-      if (this.counter % 20 == 0 && this.somethingChanged && this.nodes != null && !this.nodes.isEmpty() && this.getStackInSlot(0) != null) {
-         this.worldObj.notifyBlocksOfNeighborChange(this.xCoord, this.yCoord, this.zCoord, this.getBlockType());
+      if (this.counter % 20 == 0 && this.somethingChanged && this.nodes != null && !this.nodes.isEmpty() && !this.getStackInSlot(0).isEmpty()) {
+         this.world.notifyNeighborsOfStateChange(this.getPos(), this.getBlockType(), false);
          this.somethingChanged = false;
       }
 
-      if (this.counter % 5 == 0 && this.nodes != null && !this.nodes.isEmpty() && this.getStackInSlot(0) != null) {
-         boolean hasThingy = this.worldObj.getBlock(this.xCoord, this.yCoord + 1, this.zCoord) == ConfigBlocks.blockStoneDevice && this.worldObj.getBlockMetadata(this.xCoord, this.yCoord + 1, this.zCoord) == 8;
+      if (this.counter % 5 == 0 && this.nodes != null && !this.nodes.isEmpty() && !this.getStackInSlot(0).isEmpty()) {
+         BlockPos abovePos = new BlockPos(this.getPos().getX(), this.getPos().getY() + 1, this.getPos().getZ());
+         boolean hasThingy = this.world.getBlockState(abovePos).getBlock() == ConfigBlocks.blockStoneDevice
+               && this.world.getBlockState(abovePos).getBlock().getMetaFromState(this.world.getBlockState(abovePos)) == 8;
 
           if (this.getStackInSlot(0).getItem() instanceof ItemWandCasting) {
             ItemWandCasting wand = (ItemWandCasting)this.getStackInSlot(0).getItem();
@@ -191,8 +182,8 @@ public class TileWandPedestal extends TileThaumcraft implements ISidedInventory,
             this.draining = false;
             if (as != null && as.size() > 0) {
                label152:
-               for(ChunkCoordinates co : this.nodes) {
-                  TileEntity te = this.worldObj.getTileEntity(co.posX, co.posY, co.posZ);
+               for(BlockPos co : this.nodes) {
+                  TileEntity te = this.world.getTileEntity(co);
                   if (te instanceof INode && !(te instanceof TileJarNode)) {
                      INode node = (INode)te;
 
@@ -202,10 +193,10 @@ public class TileWandPedestal extends TileThaumcraft implements ISidedInventory,
                            node.takeFromContainer(aspect, 1);
                            this.somethingChanged = true;
                            this.draining = true;
-                           if (this.worldObj.isRemote) {
-                              this.drainX = co.posX;
-                              this.drainY = co.posY;
-                              this.drainZ = co.posZ;
+                           if (this.world.isRemote) {
+                              this.drainX = co.getX();
+                              this.drainY = co.getY();
+                              this.drainZ = co.getZ();
                               this.drainColor = aspect.getColor();
                            }
                            break label152;
@@ -223,10 +214,10 @@ public class TileWandPedestal extends TileThaumcraft implements ISidedInventory,
                                     node.takeFromContainer(aspect, 1);
                                     this.somethingChanged = true;
                                     this.draining = true;
-                                    if (this.worldObj.isRemote) {
-                                       this.drainX = co.posX;
-                                       this.drainY = co.posY;
-                                       this.drainZ = co.posZ;
+                                    if (this.world.isRemote) {
+                                       this.drainX = co.getX();
+                                       this.drainY = co.getY();
+                                       this.drainZ = co.getZ();
                                        this.drainColor = aspect.getColor();
                                     }
                                     break label152;
@@ -249,8 +240,8 @@ public class TileWandPedestal extends TileThaumcraft implements ISidedInventory,
             this.draining = false;
             if (as != null && as.size() > 0) {
                label207:
-               for(ChunkCoordinates co : this.nodes) {
-                  TileEntity te = this.worldObj.getTileEntity(co.posX, co.posY, co.posZ);
+               for(BlockPos co : this.nodes) {
+                  TileEntity te = this.world.getTileEntity(co);
                   if (te instanceof INode && !(te instanceof TileJarNode)) {
                      INode node = (INode)te;
 
@@ -259,10 +250,10 @@ public class TileWandPedestal extends TileThaumcraft implements ISidedInventory,
                            amulet.addVis(this.getStackInSlot(0), aspect, 1, true);
                            node.takeFromContainer(aspect, 1);
                            this.draining = true;
-                           if (this.worldObj.isRemote) {
-                              this.drainX = co.posX;
-                              this.drainY = co.posY;
-                              this.drainZ = co.posZ;
+                           if (this.world.isRemote) {
+                              this.drainX = co.getX();
+                              this.drainY = co.getY();
+                              this.drainZ = co.getZ();
                               this.drainColor = aspect.getColor();
                            }
                            break label207;
@@ -279,10 +270,10 @@ public class TileWandPedestal extends TileThaumcraft implements ISidedInventory,
                                     amulet.addVis(this.getStackInSlot(0), aspect2, 1, true);
                                     node.takeFromContainer(aspect, 1);
                                     this.draining = true;
-                                    if (this.worldObj.isRemote) {
-                                       this.drainX = co.posX;
-                                       this.drainY = co.posY;
-                                       this.drainZ = co.posZ;
+                                    if (this.world.isRemote) {
+                                       this.drainX = co.getX();
+                                       this.drainY = co.getY();
+                                       this.drainZ = co.getZ();
                                        this.drainColor = aspect.getColor();
                                     }
                                     break label207;
@@ -313,9 +304,9 @@ public class TileWandPedestal extends TileThaumcraft implements ISidedInventory,
       for(int xx = -8; xx <= 8; ++xx) {
          for(int yy = -8; yy <= 8; ++yy) {
             for(int zz = -8; zz <= 8; ++zz) {
-               TileEntity te = this.worldObj.getTileEntity(this.xCoord + xx, this.yCoord + yy, this.zCoord + zz);
+               TileEntity te = this.world.getTileEntity(new BlockPos(this.getPos().getX() + xx, this.getPos().getY() + yy, this.getPos().getZ() + zz));
                if (te instanceof INode) {
-                  this.nodes.add(new ChunkCoordinates(this.xCoord + xx, this.yCoord + yy, this.zCoord + zz));
+                  this.nodes.add(new BlockPos(this.getPos().getX() + xx, this.getPos().getY() + yy, this.getPos().getZ() + zz));
                }
             }
          }
@@ -323,34 +314,80 @@ public class TileWandPedestal extends TileThaumcraft implements ISidedInventory,
 
    }
 
-   public boolean isUseableByPlayer(EntityPlayer par1EntityPlayer) {
-      return this.worldObj.getTileEntity(this.xCoord, this.yCoord, this.zCoord) == this && par1EntityPlayer.getDistanceSq((double) this.xCoord + (double) 0.5F, (double) this.yCoord + (double) 0.5F, (double) this.zCoord + (double) 0.5F) <= (double) 64.0F;
+   @Override
+   public boolean isUsableByPlayer(EntityPlayer par1EntityPlayer) {
+      return this.world.getTileEntity(this.getPos()) == this && par1EntityPlayer.getDistanceSq((double) this.getPos().getX() + (double) 0.5F, (double) this.getPos().getY() + (double) 0.5F, (double) this.getPos().getZ() + (double) 0.5F) <= (double) 64.0F;
    }
 
-   public void openInventory() {
+   @Override
+   public boolean isEmpty() {
+      for (ItemStack stack : this.inventory) {
+         if (stack != null && !stack.isEmpty()) return false;
+      }
+      return true;
    }
 
-   public void closeInventory() {
+   @Override
+   public ItemStack removeStackFromSlot(int index) {
+      if (this.inventory[index] != null) {
+         ItemStack stack = this.inventory[index];
+         this.inventory[index] = null;
+         return stack;
+      }
+      return ItemStack.EMPTY;
+   }
+
+   @Override
+   public String getName() {
+      return this.hasCustomName() ? this.customName : "container.wandpedestal";
+   }
+
+   @Override
+   public boolean hasCustomName() {
+      return this.customName != null && !this.customName.isEmpty();
+   }
+
+   @Override
+   public int getField(int id) { return 0; }
+
+   @Override
+   public void setField(int id, int value) {}
+
+   @Override
+   public int getFieldCount() { return 0; }
+
+   @Override
+   public void clear() {
+      for (int i = 0; i < this.inventory.length; i++) this.inventory[i] = null;
+   }
+
+   public void openInventory(EntityPlayer player) {
+   }
+
+   public void closeInventory(EntityPlayer player) {
    }
 
    public boolean isItemValidForSlot(int par1, ItemStack par2ItemStack) {
       return par2ItemStack != null && (par2ItemStack.getItem() instanceof ItemWandCasting || par2ItemStack.getItem() instanceof ItemAmuletVis);
    }
 
-   public int[] getAccessibleSlotsFromSide(int par1) {
+   @Override
+   public int[] getSlotsForFace(EnumFacing side) {
       return slots;
    }
 
-   public boolean canInsertItem(int par1, ItemStack par2ItemStack, int par3) {
-      return this.getStackInSlot(par1) == null && (par2ItemStack.getItem() instanceof ItemWandCasting || par2ItemStack.getItem() instanceof ItemAmuletVis);
+   @Override
+   public boolean canInsertItem(int index, ItemStack stack, EnumFacing side) {
+      return this.getStackInSlot(index).isEmpty() && (stack.getItem() instanceof ItemWandCasting || stack.getItem() instanceof ItemAmuletVis);
    }
 
-   public boolean canExtractItem(int par1, ItemStack par2ItemStack, int par3) {
+   @Override
+   public boolean canExtractItem(int index, ItemStack stack, EnumFacing side) {
       return true;
    }
 
    public AspectList getAspects() {
-      if (this.getStackInSlot(0) != null && this.getStackInSlot(0).getItem() instanceof ItemWandCasting) {
+      if (!this.getStackInSlot(0).isEmpty() && this.getStackInSlot(0).getItem() instanceof ItemWandCasting) {
          ItemWandCasting wand = (ItemWandCasting)this.getStackInSlot(0).getItem();
          AspectList al = wand.getAllVis(this.getStackInSlot(0));
          AspectList out = new AspectList();
@@ -360,7 +397,7 @@ public class TileWandPedestal extends TileThaumcraft implements ISidedInventory,
          }
 
          return out;
-      } else if (this.getStackInSlot(0) != null && this.getStackInSlot(0).getItem() instanceof ItemAmuletVis) {
+      } else if (!this.getStackInSlot(0).isEmpty() && this.getStackInSlot(0).getItem() instanceof ItemAmuletVis) {
          ItemAmuletVis amulet = (ItemAmuletVis)this.getStackInSlot(0).getItem();
          AspectList al = amulet.getAllVis(this.getStackInSlot(0));
          AspectList out = new AspectList();

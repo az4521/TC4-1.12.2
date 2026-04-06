@@ -5,6 +5,9 @@ import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.inventory.Container;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.SoundCategory;
+import net.minecraft.util.SoundEvent;
 import thaumcraft.api.wands.ItemFocusBasic;
 import thaumcraft.common.tiles.TileFocalManipulator;
 
@@ -30,18 +33,21 @@ public class ContainerFocalManipulator extends Container {
 
    public boolean enchantItem(EntityPlayer p, int button) {
       if (button >= 0 && !this.table.startCraft(button, p)) {
-         this.table.getWorldObj().playSoundEffect(this.table.xCoord, this.table.yCoord, this.table.zCoord, "thaumcraft:craftfail", 0.33F, 1.0F);
+         SoundEvent snd = SoundEvent.REGISTRY.getObject(new ResourceLocation("thaumcraft", "craftfail"));
+         if (snd != null) {
+            this.table.getWorld().playSound(null, this.table.getPos(), snd, SoundCategory.BLOCKS, 0.33F, 1.0F);
+         }
       }
 
       return false;
    }
 
    public boolean canInteractWith(EntityPlayer par1EntityPlayer) {
-      return this.table.isUseableByPlayer(par1EntityPlayer);
+      return this.table.isUsableByPlayer(par1EntityPlayer);
    }
 
    public ItemStack transferStackInSlot(EntityPlayer par1EntityPlayer, int par2) {
-      ItemStack itemstack = null;
+      ItemStack itemstack = ItemStack.EMPTY;
       Slot slot = (Slot)this.inventorySlots.get(par2);
       if (slot != null && slot.getHasStack()) {
          ItemStack itemstack1 = slot.getStack();
@@ -49,30 +55,30 @@ public class ContainerFocalManipulator extends Container {
          if (par2 != 0) {
             if (itemstack1.getItem() instanceof ItemFocusBasic) {
                if (!this.mergeItemStack(itemstack1, 0, 1, false)) {
-                  return null;
+                  return ItemStack.EMPTY;
                }
             } else if (par2 >= 1 && par2 < 28) {
                if (!this.mergeItemStack(itemstack1, 28, 37, false)) {
-                  return null;
+                  return ItemStack.EMPTY;
                }
             } else if (par2 >= 28 && par2 < 37 && !this.mergeItemStack(itemstack1, 1, 28, false)) {
-               return null;
+               return ItemStack.EMPTY;
             }
          } else if (!this.mergeItemStack(itemstack1, 1, 37, false)) {
-            return null;
+            return ItemStack.EMPTY;
          }
 
-         if (itemstack1.stackSize == 0) {
-            slot.putStack(null);
+         if (itemstack1.isEmpty()) {
+            slot.putStack(ItemStack.EMPTY);
          } else {
             slot.onSlotChanged();
          }
 
-         if (itemstack1.stackSize == itemstack.stackSize) {
-            return null;
+         if (itemstack1.getCount() == itemstack.getCount()) {
+            return ItemStack.EMPTY;
          }
 
-         slot.onPickupFromSlot(par1EntityPlayer, itemstack1);
+         slot.onTake(par1EntityPlayer, itemstack1);
       }
 
       return itemstack;

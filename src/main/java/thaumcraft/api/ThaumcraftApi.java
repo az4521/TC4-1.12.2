@@ -13,6 +13,7 @@ import net.minecraft.item.Item;
 import net.minecraft.item.Item.ToolMaterial;
 import net.minecraft.item.ItemArmor.ArmorMaterial;
 import net.minecraft.item.ItemStack;
+import net.minecraft.init.SoundEvents;
 import net.minecraftforge.common.util.EnumHelper;
 import net.minecraftforge.oredict.OreDictionary;
 import tc4tweak.modules.findCrucibleRecipe.FindCrucibleRecipe;
@@ -46,11 +47,11 @@ public class ThaumcraftApi {
 	public static ToolMaterial toolMatThaumium = EnumHelper.addToolMaterial("THAUMIUM", 3, 400, 7F, 2, 22);
 	public static ToolMaterial toolMatVoid = EnumHelper.addToolMaterial("VOID", 4, 150, 8F, 3, 10);
 	public static ToolMaterial toolMatElemental = EnumHelper.addToolMaterial("THAUMIUM_ELEMENTAL", 3, 1500, 10F, 3, 18);
-	public static ArmorMaterial armorMatThaumium = EnumHelper.addArmorMaterial("THAUMIUM", 25, new int[] { 2, 6, 5, 2 }, 25);
-	public static ArmorMaterial armorMatSpecial = EnumHelper.addArmorMaterial("SPECIAL", 25, new int[] { 1, 3, 2, 1 }, 25);
-	public static ArmorMaterial armorMatThaumiumFortress = EnumHelper.addArmorMaterial("FORTRESS", 40, new int[] { 3, 7, 6, 3 }, 25);
-	public static ArmorMaterial armorMatVoid = EnumHelper.addArmorMaterial("VOID", 10, new int[] { 3, 7, 6, 3 }, 10);
-	public static ArmorMaterial armorMatVoidFortress = EnumHelper.addArmorMaterial("VOIDFORTRESS", 18, new int[] { 4, 8, 7, 4 }, 10);
+	public static ArmorMaterial armorMatThaumium = EnumHelper.addArmorMaterial("THAUMIUM", "thaumcraft:thaumium", 25, new int[] { 2, 6, 5, 2 }, 25, SoundEvents.ITEM_ARMOR_EQUIP_IRON, 0.0f);
+	public static ArmorMaterial armorMatSpecial = EnumHelper.addArmorMaterial("SPECIAL", "thaumcraft:special", 25, new int[] { 1, 3, 2, 1 }, 25, SoundEvents.ITEM_ARMOR_EQUIP_IRON, 0.0f);
+	public static ArmorMaterial armorMatThaumiumFortress = EnumHelper.addArmorMaterial("FORTRESS", "thaumcraft:fortress", 40, new int[] { 3, 7, 6, 3 }, 25, SoundEvents.ITEM_ARMOR_EQUIP_IRON, 0.0f);
+	public static ArmorMaterial armorMatVoid = EnumHelper.addArmorMaterial("VOID", "thaumcraft:void", 10, new int[] { 3, 7, 6, 3 }, 10, SoundEvents.ITEM_ARMOR_EQUIP_IRON, 0.0f);
+	public static ArmorMaterial armorMatVoidFortress = EnumHelper.addArmorMaterial("VOIDFORTRESS", "thaumcraft:voidfortress", 18, new int[] { 4, 8, 7, 4 }, 10, SoundEvents.ITEM_ARMOR_EQUIP_IRON, 0.0f);
 	
 	//Enchantment references
 	public static int enchantFrugal;
@@ -151,7 +152,8 @@ public class ThaumcraftApi {
 			out = smeltingBonus.get(Arrays.asList(in.getItem(),OreDictionary.WILDCARD_VALUE));
 		}
 		if (out==null) {
-			String od = OreDictionary.getOreName( OreDictionary.getOreID(in));
+			int[] oreIds = OreDictionary.getOreIDs(in);
+			String od = oreIds.length > 0 ? OreDictionary.getOreName(oreIds[0]) : "Unknown";
 			out = smeltingBonus.get(od);
 		}
 		return out;
@@ -294,7 +296,7 @@ public class ThaumcraftApi {
 		int[] key = new int[] {Item.getIdFromItem(stack.getItem()),stack.getItemDamage()};
 		if (keyCache.containsKey(key)) {
 			if (keyCache.get(key)==null) return null;
-			if (ThaumcraftApiHelper.isResearchComplete(player.getCommandSenderName(), (String)(keyCache.get(key))[0]))
+			if (ThaumcraftApiHelper.isResearchComplete(player.getName(), (String)(keyCache.get(key))[0]))
 				return keyCache.get(key);
 			else 
 				return null;
@@ -309,14 +311,14 @@ public class ThaumcraftApi {
 						for (CrucibleRecipe cr:crs) {
 							if (cr.getRecipeOutput().isItemEqual(stack)) {
 								keyCache.put(key,new Object[] {ri.key,a});
-								if (ThaumcraftApiHelper.isResearchComplete(player.getCommandSenderName(), ri.key))
+								if (ThaumcraftApiHelper.isResearchComplete(player.getName(), ri.key))
 									return new Object[] {ri.key,a};
 							}
 						}
 					} else
 					if (page.recipeOutput!=null && stack !=null && page.recipeOutput.isItemEqual(stack)) {
 						keyCache.put(key,new Object[] {ri.key,a});
-						if (ThaumcraftApiHelper.isResearchComplete(player.getCommandSenderName(), ri.key))
+						if (ThaumcraftApiHelper.isResearchComplete(player.getName(), ri.key))
 							return new Object[] {ri.key,a};
 						else 
 							return null;
@@ -358,7 +360,7 @@ public class ThaumcraftApi {
 	
 	/**
 	 * Used to assign apsects to the given item/block. Here is an example of the declaration for cobblestone:<p>
-	 * <i>ThaumcraftApi.registerObjectTag(new ItemStack(Blocks.cobblestone), (new AspectList()).add(Aspect.ENTROPY, 1).add(Aspect.EARTH, 1));</i>
+	 * <i>ThaumcraftApi.registerObjectTag(new ItemStack(Blocks.COBBLESTONE), (new AspectList()).add(Aspect.ENTROPY, 1).add(Aspect.EARTH, 1));</i>
 	 * @param item the item passed. Pass OreDictionary.WILDCARD_VALUE if all damage values of this item/block should have the same aspects
 	 * @param aspects A ObjectTags object of the associated aspects
 	 */
@@ -372,7 +374,7 @@ public class ThaumcraftApi {
 	
 	/**
 	 * Used to assign apsects to the given item/block. Here is an example of the declaration for cobblestone:<p>
-	 * <i>ThaumcraftApi.registerObjectTag(new ItemStack(Blocks.cobblestone), new int[]{0,1}, (new AspectList()).add(Aspect.ENTROPY, 1).add(Aspect.EARTH, 1));</i>
+	 * <i>ThaumcraftApi.registerObjectTag(new ItemStack(Blocks.COBBLESTONE), new int[]{0,1}, (new AspectList()).add(Aspect.ENTROPY, 1).add(Aspect.EARTH, 1));</i>
 	 * @param item
 	 * @param meta A range of meta values if you wish to lump several item meta's together as being the "same" item (i.e. stair orientations)
 	 * @param aspects A ObjectTags object of the associated aspects
@@ -395,7 +397,7 @@ public class ThaumcraftApi {
 	 */
 	public static void registerObjectTag(String oreDict, AspectList aspects) {
 		if (aspects==null) aspects=new AspectList();
-		ArrayList<ItemStack> ores = OreDictionary.getOres(oreDict);
+		List<ItemStack> ores = OreDictionary.getOres(oreDict);
 		if (ores!=null && !ores.isEmpty()) {
 			for (ItemStack ore:ores) {
 				try {
@@ -409,7 +411,7 @@ public class ThaumcraftApi {
 	 * Used to assign aspects to the given item/block. 
 	 * Attempts to automatically generate aspect tags by checking registered recipes.
 	 * Here is an example of the declaration for pistons:<p>
-	 * <i>ThaumcraftApi.registerComplexObjectTag(new ItemStack(Blocks.cobblestone), (new AspectList()).add(Aspect.MECHANISM, 2).add(Aspect.MOTION, 4));</i>
+	 * <i>ThaumcraftApi.registerComplexObjectTag(new ItemStack(Blocks.COBBLESTONE), (new AspectList()).add(Aspect.MECHANISM, 2).add(Aspect.MOTION, 4));</i>
 	 * IMPORTANT - this should only be used if you are not happy with the default aspects the object would be assigned.
 	 * @param item, pass OreDictionary.WILDCARD_VALUE to meta if all damage values of this item/block should have the same aspects
 	 * @param aspects A ObjectTags object of the associated aspects

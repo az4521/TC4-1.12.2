@@ -18,16 +18,16 @@ public class InfusionRunicAugmentRecipe extends InfusionRecipe {
    private ItemStack[] components;
 
    public InfusionRunicAugmentRecipe() {
-      super("RUNICAUGMENTATION", null, 0, null, null, new ItemStack[]{new ItemStack(Items.diamond), new ItemStack(ConfigItems.itemResource, 1, 14)});
+      super("RUNICAUGMENTATION", null, 0, null, null, new ItemStack[]{new ItemStack(Items.DIAMOND), new ItemStack(ConfigItems.itemResource, 1, 14)});
    }
 
    public InfusionRunicAugmentRecipe(ItemStack in) {
-      super("RUNICAUGMENTATION", null, 0, null, in, new ItemStack[]{new ItemStack(Items.diamond), new ItemStack(ConfigItems.itemResource, 1, 14)});
-      this.components = new ItemStack[]{new ItemStack(Items.diamond), new ItemStack(ConfigItems.itemResource, 1, 14)};
+      super("RUNICAUGMENTATION", null, 0, null, in, new ItemStack[]{new ItemStack(Items.DIAMOND), new ItemStack(ConfigItems.itemResource, 1, 14)});
+      this.components = new ItemStack[]{new ItemStack(Items.DIAMOND), new ItemStack(ConfigItems.itemResource, 1, 14)};
       int fc = EventHandlerRunic.getFinalCharge(in);
       if (fc > 0) {
          ArrayList<ItemStack> com = new ArrayList<>();
-         com.add(new ItemStack(Items.diamond));
+         com.add(new ItemStack(Items.DIAMOND));
          com.add(new ItemStack(ConfigItems.itemResource, 1, 14));
          int c = 0;
 
@@ -42,7 +42,7 @@ public class InfusionRunicAugmentRecipe extends InfusionRecipe {
    }
 
    public boolean matches(ArrayList<ItemStack> input, ItemStack central, World world, EntityPlayer player) {
-      if (!this.research.isEmpty() && !ThaumcraftApiHelper.isResearchComplete(player.getCommandSenderName(), this.research)) {
+      if (!this.research.isEmpty() && !ThaumcraftApiHelper.isResearchComplete(player.getName(), this.research)) {
          return false;
       } else if (!(central.getItem() instanceof IRunicArmor)) {
          return false;
@@ -109,7 +109,7 @@ public class InfusionRunicAugmentRecipe extends InfusionRecipe {
 
    public ItemStack[] getComponents(ItemStack input) {
       ArrayList<ItemStack> com = new ArrayList<>();
-      com.add(new ItemStack(Items.diamond));
+      com.add(new ItemStack(Items.DIAMOND));
       com.add(new ItemStack(ConfigItems.itemResource, 1, 14));
       int fc = EventHandlerRunic.getFinalCharge(input);
       if (fc > 0) {

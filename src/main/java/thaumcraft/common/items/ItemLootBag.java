@@ -1,23 +1,23 @@
 package thaumcraft.common.items;
 
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import java.util.List;
-import net.minecraft.client.renderer.texture.IIconRegister;
+import thaumcraft.client.renderers.compat.IIconRegister;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.EnumRarity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.IIcon;
-import net.minecraft.util.StatCollector;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.util.text.translation.I18n;
 import net.minecraft.world.World;
 import thaumcraft.common.Thaumcraft;
 import thaumcraft.common.lib.utils.Utils;
 
 public class ItemLootBag extends Item {
-   public IIcon[] icon = new IIcon[3];
+   public TextureAtlasSprite[] icon = new TextureAtlasSprite[3];
 
    public ItemLootBag() {
       this.setMaxStackSize(16);
@@ -28,22 +28,24 @@ public class ItemLootBag extends Item {
 
    @SideOnly(Side.CLIENT)
    public void registerIcons(IIconRegister ir) {
-      this.icon[0] = ir.registerIcon("thaumcraft:lootbag");
-      this.icon[1] = ir.registerIcon("thaumcraft:lootbagunc");
-      this.icon[2] = ir.registerIcon("thaumcraft:lootbagrare");
+      this.icon[0] = ir.registerSprite("thaumcraft:lootbag");
+      this.icon[1] = ir.registerSprite("thaumcraft:lootbagunc");
+      this.icon[2] = ir.registerSprite("thaumcraft:lootbagrare");
    }
 
    @SideOnly(Side.CLIENT)
-   public IIcon getIconFromDamage(int par1) {
+   public TextureAtlasSprite getIconFromDamage(int par1) {
       return this.icon[par1];
    }
 
-   public String getUnlocalizedName(ItemStack par1ItemStack) {
-      return super.getUnlocalizedName() + "." + par1ItemStack.getItemDamage();
+   @Override
+   public String getTranslationKey(ItemStack par1ItemStack) {
+      return getTranslationKey() + "." + par1ItemStack.getItemDamage();
    }
 
    @SideOnly(Side.CLIENT)
-   public void getSubItems(Item par1, CreativeTabs par2CreativeTabs, List par3List) {
+   @Override
+   public void getSubItems(CreativeTabs par2CreativeTabs, net.minecraft.util.NonNullList<ItemStack> par3List) {
       par3List.add(new ItemStack(this, 1, 0));
       par3List.add(new ItemStack(this, 1, 1));
       par3List.add(new ItemStack(this, 1, 2));
@@ -52,32 +54,34 @@ public class ItemLootBag extends Item {
    public EnumRarity getRarity(ItemStack stack) {
       switch (stack.getItemDamage()) {
          case 1:
-            return EnumRarity.uncommon;
+            return EnumRarity.UNCOMMON;
          case 2:
-            return EnumRarity.rare;
+            return EnumRarity.RARE;
          default:
-            return EnumRarity.common;
+            return EnumRarity.COMMON;
       }
    }
 
-   public void addInformation(ItemStack stack, EntityPlayer player, List list, boolean par4) {
-      super.addInformation(stack, player, list, par4);
-      list.add(StatCollector.translateToLocal("tc.lootbag"));
+   public void addInformation(ItemStack stack, @javax.annotation.Nullable net.minecraft.world.World worldIn, List list, net.minecraft.client.util.ITooltipFlag flagIn) {
+      super.addInformation(stack, worldIn, list, flagIn);
+      list.add(I18n.translateToLocal("tc.lootbag"));
    }
 
-   public ItemStack onItemRightClick(ItemStack stack, World world, EntityPlayer player) {
+   @Override
+   public net.minecraft.util.ActionResult<ItemStack> onItemRightClick(World world, EntityPlayer player, net.minecraft.util.EnumHand hand) {
+      ItemStack stack = player.getHeldItem(hand);
       if (!world.isRemote) {
          int q = 8 + world.rand.nextInt(5);
 
          for(int a = 0; a < q; ++a) {
             ItemStack is = Utils.generateLoot(stack.getItemDamage(), world.rand);
-            world.spawnEntityInWorld(new EntityItem(world, player.posX, player.posY, player.posZ, is.copy()));
+            world.spawnEntity(new EntityItem(world, player.posX, player.posY, player.posZ, is.copy()));
          }
 
-         world.playSoundAtEntity(player, "thaumcraft:coins", 0.75F, 1.0F);
+         { net.minecraft.util.SoundEvent _snd = net.minecraft.util.SoundEvent.REGISTRY.getObject(new net.minecraft.util.ResourceLocation("thaumcraft:coins")); if (_snd != null) world.playSound(null, player.posX, player.posY, player.posZ, _snd, net.minecraft.util.SoundCategory.NEUTRAL, 0.75F, 1.0F); };
       }
 
-      --stack.stackSize;
-      return stack;
+      stack.shrink(1);
+      return new net.minecraft.util.ActionResult<>(net.minecraft.util.EnumActionResult.SUCCESS, stack);
    }
 }

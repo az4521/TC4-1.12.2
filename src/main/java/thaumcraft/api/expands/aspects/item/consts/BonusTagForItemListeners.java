@@ -1,6 +1,7 @@
 package thaumcraft.api.expands.aspects.item.consts;
 
 import net.minecraft.enchantment.Enchantment;
+import net.minecraft.init.Enchantments;
 import net.minecraft.item.*;
 import net.minecraft.nbt.NBTTagList;
 import thaumcraft.api.aspects.Aspect;
@@ -47,8 +48,15 @@ public class BonusTagForItemListeners {
         @Override
         @ParametersAreNonnullByDefault
         public void onItem(@Nullable Item item, ItemStack itemstack, UnmodifiableAspectList sourceTags, AspectList currentAspects) {
-            if (item instanceof ItemSword && ((ItemSword) item).func_150931_i() + 1.0F > 0.0F) {
-                currentAspects.merge(Aspect.WEAPON, (int) (((ItemSword) item).func_150931_i() + 1.0F));
+            if (item instanceof ItemSword) {
+                com.google.common.collect.Multimap<String, net.minecraft.entity.ai.attributes.AttributeModifier> attrs = item.getAttributeModifiers(net.minecraft.inventory.EntityEquipmentSlot.MAINHAND, itemstack);
+                java.util.Collection<net.minecraft.entity.ai.attributes.AttributeModifier> mods = attrs.get(net.minecraft.entity.SharedMonsterAttributes.ATTACK_DAMAGE.getName());
+                if (!mods.isEmpty()) {
+                    double dmg = mods.iterator().next().getAmount();
+                    if (dmg + 1.0 > 0.0) {
+                        currentAspects.merge(Aspect.WEAPON, (int)(dmg + 1.0));
+                    }
+                }
             }
         }
     };
@@ -143,7 +151,7 @@ public class BonusTagForItemListeners {
 
                 NBTTagList ench = itemstack.getEnchantmentTagList();
                 if (item instanceof ItemEnchantedBook) {
-                    ench = ((ItemEnchantedBook) item).func_92110_g(itemstack);
+                    ench = ItemEnchantedBook.getEnchantments(itemstack);
                 }
 
                 if (ench != null) {
@@ -152,57 +160,58 @@ public class BonusTagForItemListeners {
                     for (int var3 = 0; var3 < ench.tagCount(); ++var3) {
                         short eid = ench.getCompoundTagAt(var3).getShort("id");
                         short lvl = ench.getCompoundTagAt(var3).getShort("lvl");
-                        if (eid == Enchantment.aquaAffinity.effectId) {
+                        Enchantment enchObj = Enchantment.getEnchantmentByID(eid & 0xFFFF);
+                        if (enchObj == Enchantments.AQUA_AFFINITY) {
                             currentAspects.merge(Aspect.WATER, lvl);
-                        } else if (eid == Enchantment.baneOfArthropods.effectId) {
+                        } else if (enchObj == Enchantments.BANE_OF_ARTHROPODS) {
                             currentAspects.merge(Aspect.BEAST, lvl);
-                        } else if (eid == Enchantment.blastProtection.effectId) {
+                        } else if (enchObj == Enchantments.BLAST_PROTECTION) {
                             currentAspects.merge(Aspect.ARMOR, lvl);
-                        } else if (eid == Enchantment.efficiency.effectId) {
+                        } else if (enchObj == Enchantments.EFFICIENCY) {
                             currentAspects.merge(Aspect.TOOL, lvl);
-                        } else if (eid == Enchantment.featherFalling.effectId) {
+                        } else if (enchObj == Enchantments.FEATHER_FALLING) {
                             currentAspects.merge(Aspect.FLIGHT, lvl);
-                        } else if (eid == Enchantment.fireAspect.effectId) {
+                        } else if (enchObj == Enchantments.FIRE_ASPECT) {
                             currentAspects.merge(Aspect.FIRE, lvl);
-                        } else if (eid == Enchantment.fireProtection.effectId) {
+                        } else if (enchObj == Enchantments.FIRE_PROTECTION) {
                             currentAspects.merge(Aspect.ARMOR, lvl);
-                        } else if (eid == Enchantment.flame.effectId) {
+                        } else if (enchObj == Enchantments.FLAME) {
                             currentAspects.merge(Aspect.FIRE, lvl);
-                        } else if (eid == Enchantment.fortune.effectId) {
+                        } else if (enchObj == Enchantments.FORTUNE) {
                             currentAspects.merge(Aspect.GREED, lvl);
-                        } else if (eid == Enchantment.infinity.effectId) {
+                        } else if (enchObj == Enchantments.INFINITY) {
                             currentAspects.merge(Aspect.CRAFT, lvl);
-                        } else if (eid == Enchantment.knockback.effectId) {
+                        } else if (enchObj == Enchantments.KNOCKBACK) {
                             currentAspects.merge(Aspect.AIR, lvl);
-                        } else if (eid == Enchantment.looting.effectId) {
+                        } else if (enchObj == Enchantments.LOOTING) {
                             currentAspects.merge(Aspect.GREED, lvl);
-                        } else if (eid == Enchantment.power.effectId) {
+                        } else if (enchObj == Enchantments.POWER) {
                             currentAspects.merge(Aspect.WEAPON, lvl);
-                        } else if (eid == Enchantment.projectileProtection.effectId) {
+                        } else if (enchObj == Enchantments.PROJECTILE_PROTECTION) {
                             currentAspects.merge(Aspect.ARMOR, lvl);
-                        } else if (eid == Enchantment.protection.effectId) {
+                        } else if (enchObj == Enchantments.PROTECTION) {
                             currentAspects.merge(Aspect.ARMOR, lvl);
-                        } else if (eid == Enchantment.punch.effectId) {
+                        } else if (enchObj == Enchantments.PUNCH) {
                             currentAspects.merge(Aspect.AIR, lvl);
-                        } else if (eid == Enchantment.respiration.effectId) {
+                        } else if (enchObj == Enchantments.RESPIRATION) {
                             currentAspects.merge(Aspect.AIR, lvl);
-                        } else if (eid == Enchantment.sharpness.effectId) {
+                        } else if (enchObj == Enchantments.SHARPNESS) {
                             currentAspects.merge(Aspect.WEAPON, lvl);
-                        } else if (eid == Enchantment.silkTouch.effectId) {
+                        } else if (enchObj == Enchantments.SILK_TOUCH) {
                             currentAspects.merge(Aspect.EXCHANGE, lvl);
-                        } else if (eid == Enchantment.thorns.effectId) {
+                        } else if (enchObj == Enchantments.THORNS) {
                             currentAspects.merge(Aspect.WEAPON, lvl);
-                        } else if (eid == Enchantment.smite.effectId) {
+                        } else if (enchObj == Enchantments.SMITE) {
                             currentAspects.merge(Aspect.ENTROPY, lvl);
-                        } else if (eid == Enchantment.unbreaking.effectId) {
+                        } else if (enchObj == Enchantments.UNBREAKING) {
                             currentAspects.merge(Aspect.EARTH, lvl);
-                        } else if (eid == Enchantment.field_151370_z.effectId) {
+                        } else if (enchObj == Enchantments.LUCK_OF_THE_SEA) {
                             currentAspects.merge(Aspect.GREED, lvl);
-                        } else if (eid == Enchantment.field_151369_A.effectId) {
+                        } else if (enchObj == Enchantments.LURE) {
                             currentAspects.merge(Aspect.BEAST, lvl);
-                        } else if (eid == Config.enchHaste.effectId) {
+                        } else if (enchObj == Config.enchHaste) {
                             currentAspects.merge(Aspect.MOTION, lvl);
-                        } else if (eid == Config.enchRepair.effectId) {
+                        } else if (enchObj == Config.enchRepair) {
                             currentAspects.merge(Aspect.TOOL, lvl);
                         }
 

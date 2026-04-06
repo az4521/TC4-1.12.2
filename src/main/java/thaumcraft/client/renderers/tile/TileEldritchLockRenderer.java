@@ -3,25 +3,25 @@ package thaumcraft.client.renderers.tile;
 import java.nio.FloatBuffer;
 import java.util.Random;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.ActiveRenderInfo;
 import net.minecraft.client.renderer.GLAllocation;
 import net.minecraft.client.renderer.Tessellator;
-import net.minecraft.client.renderer.entity.RenderItem;
-import net.minecraft.client.renderer.entity.RenderManager;
 import net.minecraft.client.renderer.tileentity.TileEntityRendererDispatcher;
 import net.minecraft.client.renderer.tileentity.TileEntitySpecialRenderer;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.MathHelper;
-import net.minecraftforge.common.util.ForgeDirection;
+import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.EnumFacing;
 import org.lwjgl.opengl.GL11;
 import thaumcraft.client.lib.UtilsFX;
 import thaumcraft.client.renderers.models.ModelCube;
 import thaumcraft.common.config.ConfigItems;
 import thaumcraft.common.tiles.TileEldritchLock;
+import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.client.renderer.BufferBuilder;
+import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 
-public class TileEldritchLockRenderer extends TileEntitySpecialRenderer {
+public class TileEldritchLockRenderer extends TileEntitySpecialRenderer<TileEntity> {
    FloatBuffer fBuffer = GLAllocation.createDirectFloatBuffer(16);
    private boolean inrange;
    private ModelCube model = new ModelCube(0);
@@ -31,73 +31,73 @@ public class TileEldritchLockRenderer extends TileEntitySpecialRenderer {
    ItemStack is = null;
    EntityItem entityitem = null;
 
-   public void renderTileEntityAt(TileEntity te, double x, double y, double z, float f) {
-      double var10002 = (double)te.xCoord + (double)0.5F;
-      double var10003 = (double)te.yCoord + (double)0.5F;
-      double var10004 = te.zCoord;
-      this.inrange = Minecraft.getMinecraft().renderViewEntity.getDistanceSq(var10002, var10003, var10004 + (double)0.5F) < (double)512.0F;
+   @Override
+
+
+   public void render(TileEntity te, double x, double y, double z, float f, int destroyStage, float alpha) {
+      double var10002 = (double)te.getPos().getX() + (double)0.5F;
+      double var10003 = (double)te.getPos().getY() + (double)0.5F;
+      double var10004 = te.getPos().getZ();
+      this.inrange = Minecraft.getMinecraft().getRenderViewEntity().getDistanceSq(var10002, var10003, var10004 + (double)0.5F) < (double)512.0F;
       if (this.is == null) {
          this.is = new ItemStack(ConfigItems.itemEldritchObject, 1, 2);
       }
 
       float bob = 0.0F;
-      float count = (float)Minecraft.getMinecraft().renderViewEntity.ticksExisted + f;
-      GL11.glPushMatrix();
+      float count = (float)Minecraft.getMinecraft().getRenderViewEntity().ticksExisted + f;
+      GlStateManager.pushMatrix();
       UtilsFX.bindTexture("textures/models/eldritch_cube.png");
-      GL11.glTranslated(x + (double)0.5F, y + (double)0.5F, z + (double)0.5F);
-      ForgeDirection dir = ForgeDirection.getOrientation(((TileEldritchLock)te).getFacing());
+      GlStateManager.translate(x + (double)0.5F, y + (double)0.5F, z + (double)0.5F);
+      EnumFacing dir = EnumFacing.byIndex(((TileEldritchLock)te).getFacing());
 
       for(int u = 0; u < 4; ++u) {
-         GL11.glPushMatrix();
-         GL11.glRotated(90 * u, dir.offsetX, dir.offsetY, dir.offsetZ);
+         GlStateManager.pushMatrix();
+         GlStateManager.rotate(90 * u, dir.getXOffset(), dir.getYOffset(), dir.getZOffset());
 
          for(int a = 1; a < 5 - (((TileEldritchLock)te).count + u * 5) / 20; ++a) {
-            GL11.glPushMatrix();
-            GL11.glTranslated(0.0F, 0.25F + 0.5F * (float)a, 0.0F);
+            GlStateManager.pushMatrix();
+            GlStateManager.translate(0.0F, 0.25F + 0.5F * (float)a, 0.0F);
             float w = MathHelper.sin((count + (float)(a * 10) + (float)(u * 20)) / 20.0F) * 0.1F;
             if (a == 1 || a == 4) {
                w = w / 2.0F + 0.2F;
             }
 
-            GL11.glScaled((double)0.5F + (double)w, 0.5F, (double)0.5F + (double)w);
+            GlStateManager.scale((double)0.5F + (double)w, 0.5F, (double)0.5F + (double)w);
             this.model.render();
-            GL11.glPopMatrix();
+            GlStateManager.popMatrix();
          }
 
-         GL11.glPopMatrix();
+         GlStateManager.popMatrix();
       }
 
-      GL11.glPopMatrix();
+      GlStateManager.popMatrix();
       if (((TileEldritchLock)te).count >= 0) {
-         GL11.glPushMatrix();
-         GL11.glTranslatef((float)x + 0.5F + (float)dir.offsetX * 0.525F, (float)y + 0.285F, (float)z + 0.5F + (float)dir.offsetZ * 0.525F);
+         GlStateManager.pushMatrix();
+         GlStateManager.translate((float)x + 0.5F + (float)dir.getXOffset() * 0.525F, (float)y + 0.285F, (float)z + 0.5F + (float)dir.getZOffset() * 0.525F);
          switch (dir.ordinal()) {
             case 2:
-               GL11.glRotatef(180.0F, 0.0F, 1.0F, 0.0F);
+               GlStateManager.rotate(180.0F, 0.0F, 1.0F, 0.0F);
             case 3:
             default:
                break;
             case 4:
-               GL11.glRotatef(270.0F, 0.0F, 1.0F, 0.0F);
+               GlStateManager.rotate(270.0F, 0.0F, 1.0F, 0.0F);
                break;
             case 5:
-               GL11.glRotatef(90.0F, 0.0F, 1.0F, 0.0F);
+               GlStateManager.rotate(90.0F, 0.0F, 1.0F, 0.0F);
          }
 
-         GL11.glScaled(1.0F, 1.0F, 1.0F);
+         GlStateManager.scale(1.0F, 1.0F, 1.0F);
          if (this.entityitem == null) {
-            this.entityitem = new EntityItem(te.getWorldObj(), 0.0F, 0.0F, 0.0F, this.is);
+            this.entityitem = new EntityItem(te.getWorld(), 0.0F, 0.0F, 0.0F, this.is);
          }
 
          this.entityitem.hoverStart = 0.0F;
-         RenderItem.renderInFrame = true;
-         RenderManager.instance.renderEntityWithPosYaw(this.entityitem, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F);
-         RenderItem.renderInFrame = false;
-         GL11.glPopMatrix();
+         GlStateManager.popMatrix();
       }
 
-      GL11.glPushMatrix();
-      GL11.glDisable(2912);
+      GlStateManager.pushMatrix();
+      GlStateManager.disableFog();
       switch (((TileEldritchLock)te).getFacing()) {
          case 2:
             this.drawPlaneZNeg(x, y, z, f, 3);
@@ -112,20 +112,20 @@ public class TileEldritchLockRenderer extends TileEntitySpecialRenderer {
             this.drawPlaneXPos(x, y, z, f, 3);
       }
 
-      GL11.glEnable(2912);
-      GL11.glPopMatrix();
+      GlStateManager.enableFog();
+      GlStateManager.popMatrix();
    }
 
    public void drawPlaneZPos(double x, double y, double z, float f, int height) {
       float px = (float)TileEntityRendererDispatcher.staticPlayerX;
       float py = (float)TileEntityRendererDispatcher.staticPlayerY;
       float pz = (float)TileEntityRendererDispatcher.staticPlayerZ;
-      GL11.glDisable(2896);
+      GlStateManager.disableLighting();
       Random random = new Random(31100L);
       float offset = 0.5F;
       if (this.inrange) {
          for(int i = 0; i < 16; ++i) {
-            GL11.glPushMatrix();
+            GlStateManager.pushMatrix();
             float f5 = (float)(16 - i);
             float f6 = 0.0625F;
             float f7 = 1.0F / (f5 + 1.0F);
@@ -134,23 +134,23 @@ public class TileEldritchLockRenderer extends TileEntitySpecialRenderer {
                f7 = 0.1F;
                f5 = 65.0F;
                f6 = 0.125F;
-               GL11.glEnable(GL11.GL_BLEND);
-               GL11.glBlendFunc(770, 771);
+               GlStateManager.enableBlend();
+               GlStateManager.blendFunc(770, 771);
             }
 
             if (i == 1) {
                UtilsFX.bindTexture(this.t2);
-               GL11.glEnable(GL11.GL_BLEND);
-               GL11.glBlendFunc(1, 1);
+               GlStateManager.enableBlend();
+               GlStateManager.blendFunc(1, 1);
                f6 = 0.5F;
             }
 
             float f8 = (float)(-(z + (double)offset));
-            float f9 = f8 + ActiveRenderInfo.objectZ;
-            float f10 = f8 + f5 + ActiveRenderInfo.objectZ;
+            float f9 = f8 + (float)TileEntityRendererDispatcher.staticPlayerZ;
+            float f10 = f8 + f5 + (float)TileEntityRendererDispatcher.staticPlayerZ;
             float f11 = f9 / f10;
             f11 = (float)(z + (double)offset) + f11;
-            GL11.glTranslatef(px, py, f11);
+            GlStateManager.translate(px, py, f11);
             GL11.glTexGeni(8192, 9472, 9217);
             GL11.glTexGeni(8193, 9472, 9217);
             GL11.glTexGeni(8194, 9472, 9217);
@@ -163,19 +163,20 @@ public class TileEldritchLockRenderer extends TileEntitySpecialRenderer {
             GL11.glEnable(3169);
             GL11.glEnable(3170);
             GL11.glEnable(3171);
-            GL11.glPopMatrix();
+            GlStateManager.popMatrix();
             GL11.glMatrixMode(5890);
-            GL11.glPushMatrix();
+            GlStateManager.pushMatrix();
             GL11.glLoadIdentity();
-            GL11.glTranslatef(0.0F, (float)(System.currentTimeMillis() % 700000L) / 250000.0F, 0.0F);
-            GL11.glScalef(f6, f6, f6);
-            GL11.glTranslatef(0.5F, 0.5F, 0.0F);
-            GL11.glRotatef((float)(i * i * 4321 + i * 9) * 2.0F, 0.0F, 0.0F, 1.0F);
-            GL11.glTranslatef(-0.5F, -0.5F, 0.0F);
-            GL11.glTranslatef(-px, -py, -pz);
-            GL11.glTranslatef(ActiveRenderInfo.objectX * f5 / f9, ActiveRenderInfo.objectY * f5 / f9, -pz);
-            Tessellator tessellator = Tessellator.instance;
-            tessellator.startDrawingQuads();
+            GlStateManager.translate(0.0F, (float)(System.currentTimeMillis() % 700000L) / 250000.0F, 0.0F);
+            GlStateManager.scale(f6, f6, f6);
+            GlStateManager.translate(0.5F, 0.5F, 0.0F);
+            GlStateManager.rotate((float)(i * i * 4321 + i * 9) * 2.0F, 0.0F, 0.0F, 1.0F);
+            GlStateManager.translate(-0.5F, -0.5F, 0.0F);
+            GlStateManager.translate(-px, -py, -pz);
+            GlStateManager.translate((float)TileEntityRendererDispatcher.staticPlayerX * f5 / f9, (float)TileEntityRendererDispatcher.staticPlayerY * f5 / f9, -pz);
+            Tessellator tessellator = Tessellator.getInstance();
+            BufferBuilder buffer = tessellator.getBuffer();
+            buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX); 
             f11 = random.nextFloat() * 0.5F + 0.1F;
             float f12 = random.nextFloat() * 0.5F + 0.4F;
             float f13 = random.nextFloat() * 0.5F + 0.5F;
@@ -185,49 +186,54 @@ public class TileEldritchLockRenderer extends TileEntitySpecialRenderer {
                f11 = 1.0F;
             }
 
-            tessellator.setBrightness(180);
-            tessellator.setColorRGBA_F(f11 * f7, f12 * f7, f13 * f7, 1.0F);
-            tessellator.addVertex(x - (double)2.0F, y + (double)3.0F, z + (double)offset);
-            tessellator.addVertex(x - (double)2.0F, y - (double)2.0F, z + (double)offset);
-            tessellator.addVertex(x + (double)3.0F, y - (double)2.0F, z + (double)offset);
-            tessellator.addVertex(x + (double)3.0F, y + (double)3.0F, z + (double)offset);
+           
+           
+            buffer.pos(x - (double)2.0F, y + (double)3.0F, z + (double)offset);
+            buffer.pos(x - (double)2.0F, y - (double)2.0F, z + (double)offset);
+            buffer.pos(x + (double)3.0F, y - (double)2.0F, z + (double)offset);
+            buffer.pos(x + (double)3.0F, y + (double)3.0F, z + (double)offset);
             tessellator.draw();
-            GL11.glPopMatrix();
+            GlStateManager.popMatrix();
             GL11.glMatrixMode(5888);
          }
       } else {
-         GL11.glPushMatrix();
+         GlStateManager.pushMatrix();
          UtilsFX.bindTexture(this.t3);
-         Tessellator tessellator = Tessellator.instance;
-         tessellator.startDrawingQuads();
-         tessellator.setBrightness(180);
-         tessellator.setColorRGBA_F(0.5F, 0.5F, 0.5F, 1.0F);
-         tessellator.addVertexWithUV(x - (double)2.0F, y + (double)3.0F, z + (double)offset, 1.0F, 1.0F);
-         tessellator.addVertexWithUV(x - (double)2.0F, y - (double)2.0F, z + (double)offset, 1.0F, 0.0F);
-         tessellator.addVertexWithUV(x + (double)3.0F, y - (double)2.0F, z + (double)offset, 0.0F, 0.0F);
-         tessellator.addVertexWithUV(x + (double)3.0F, y + (double)3.0F, z + (double)offset, 0.0F, 1.0F);
+         Tessellator tessellator = Tessellator.getInstance();
+         BufferBuilder buffer = tessellator.getBuffer();
+         buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX_COLOR); 
+        
+        
+         buffer.pos(x - (double)2.0F, y + (double)3.0F, z + (double)offset).tex(1.0F, 1.0F).color(0.5F, 0.5F, 0.5F, 1.0F)
+        .endVertex();
+         buffer.pos(x - (double)2.0F, y - (double)2.0F, z + (double)offset).tex(1.0F, 0.0F).color(0.5F, 0.5F, 0.5F, 1.0F)
+        .endVertex();
+         buffer.pos(x + (double)3.0F, y - (double)2.0F, z + (double)offset).tex(0.0F, 0.0F).color(0.5F, 0.5F, 0.5F, 1.0F)
+        .endVertex();
+         buffer.pos(x + (double)3.0F, y + (double)3.0F, z + (double)offset).tex(0.0F, 1.0F).color(0.5F, 0.5F, 0.5F, 1.0F)
+        .endVertex();
          tessellator.draw();
-         GL11.glPopMatrix();
+         GlStateManager.popMatrix();
       }
 
-      GL11.glDisable(GL11.GL_BLEND);
+      GlStateManager.disableBlend();
       GL11.glDisable(3168);
       GL11.glDisable(3169);
       GL11.glDisable(3170);
       GL11.glDisable(3171);
-      GL11.glEnable(2896);
+      GlStateManager.enableLighting();
    }
 
    public void drawPlaneZNeg(double x, double y, double z, float f, int height) {
       float px = (float)TileEntityRendererDispatcher.staticPlayerX;
       float py = (float)TileEntityRendererDispatcher.staticPlayerY;
       float pz = (float)TileEntityRendererDispatcher.staticPlayerZ;
-      GL11.glDisable(2896);
+      GlStateManager.disableLighting();
       Random random = new Random(31100L);
       float offset = 0.5F;
       if (this.inrange) {
          for(int i = 0; i < 16; ++i) {
-            GL11.glPushMatrix();
+            GlStateManager.pushMatrix();
             float f5 = (float)(16 - i);
             float f6 = 0.0625F;
             float f7 = 1.0F / (f5 + 1.0F);
@@ -236,23 +242,23 @@ public class TileEldritchLockRenderer extends TileEntitySpecialRenderer {
                f7 = 0.1F;
                f5 = 65.0F;
                f6 = 0.125F;
-               GL11.glEnable(GL11.GL_BLEND);
-               GL11.glBlendFunc(770, 771);
+               GlStateManager.enableBlend();
+               GlStateManager.blendFunc(770, 771);
             }
 
             if (i == 1) {
                UtilsFX.bindTexture(this.t2);
-               GL11.glEnable(GL11.GL_BLEND);
-               GL11.glBlendFunc(1, 1);
+               GlStateManager.enableBlend();
+               GlStateManager.blendFunc(1, 1);
                f6 = 0.5F;
             }
 
             float f8 = (float)(z + (double)offset);
-            float f9 = f8 - ActiveRenderInfo.objectZ;
-            float f10 = f8 + f5 - ActiveRenderInfo.objectZ;
+            float f9 = f8 - (float)TileEntityRendererDispatcher.staticPlayerZ;
+            float f10 = f8 + f5 - (float)TileEntityRendererDispatcher.staticPlayerZ;
             float f11 = f9 / f10;
             f11 = (float)(z + (double)offset) + f11;
-            GL11.glTranslatef(px, py, f11);
+            GlStateManager.translate(px, py, f11);
             GL11.glTexGeni(8192, 9472, 9217);
             GL11.glTexGeni(8193, 9472, 9217);
             GL11.glTexGeni(8194, 9472, 9217);
@@ -265,19 +271,20 @@ public class TileEldritchLockRenderer extends TileEntitySpecialRenderer {
             GL11.glEnable(3169);
             GL11.glEnable(3170);
             GL11.glEnable(3171);
-            GL11.glPopMatrix();
+            GlStateManager.popMatrix();
             GL11.glMatrixMode(5890);
-            GL11.glPushMatrix();
+            GlStateManager.pushMatrix();
             GL11.glLoadIdentity();
-            GL11.glTranslatef(0.0F, (float)(System.currentTimeMillis() % 700000L) / 250000.0F, 0.0F);
-            GL11.glScalef(f6, f6, f6);
-            GL11.glTranslatef(0.5F, 0.5F, 0.0F);
-            GL11.glRotatef((float)(i * i * 4321 + i * 9) * 2.0F, 0.0F, 0.0F, 1.0F);
-            GL11.glTranslatef(-0.5F, -0.5F, 0.0F);
-            GL11.glTranslatef(-px, -py, -pz);
-            GL11.glTranslatef(ActiveRenderInfo.objectX * f5 / f9, ActiveRenderInfo.objectY * f5 / f9, -pz);
-            Tessellator tessellator = Tessellator.instance;
-            tessellator.startDrawingQuads();
+            GlStateManager.translate(0.0F, (float)(System.currentTimeMillis() % 700000L) / 250000.0F, 0.0F);
+            GlStateManager.scale(f6, f6, f6);
+            GlStateManager.translate(0.5F, 0.5F, 0.0F);
+            GlStateManager.rotate((float)(i * i * 4321 + i * 9) * 2.0F, 0.0F, 0.0F, 1.0F);
+            GlStateManager.translate(-0.5F, -0.5F, 0.0F);
+            GlStateManager.translate(-px, -py, -pz);
+            GlStateManager.translate((float)TileEntityRendererDispatcher.staticPlayerX * f5 / f9, (float)TileEntityRendererDispatcher.staticPlayerY * f5 / f9, -pz);
+            Tessellator tessellator = Tessellator.getInstance();
+            BufferBuilder buffer = tessellator.getBuffer();
+            buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX); 
             f11 = random.nextFloat() * 0.5F + 0.1F;
             float f12 = random.nextFloat() * 0.5F + 0.4F;
             float f13 = random.nextFloat() * 0.5F + 0.5F;
@@ -287,49 +294,54 @@ public class TileEldritchLockRenderer extends TileEntitySpecialRenderer {
                f11 = 1.0F;
             }
 
-            tessellator.setBrightness(180);
-            tessellator.setColorRGBA_F(f11 * f7, f12 * f7, f13 * f7, 1.0F);
-            tessellator.addVertex(x - (double)2.0F, y - (double)2.0F, z + (double)offset);
-            tessellator.addVertex(x - (double)2.0F, y + (double)3.0F, z + (double)offset);
-            tessellator.addVertex(x + (double)3.0F, y + (double)3.0F, z + (double)offset);
-            tessellator.addVertex(x + (double)3.0F, y - (double)2.0F, z + (double)offset);
+           
+           
+            buffer.pos(x - (double)2.0F, y - (double)2.0F, z + (double)offset);
+            buffer.pos(x - (double)2.0F, y + (double)3.0F, z + (double)offset);
+            buffer.pos(x + (double)3.0F, y + (double)3.0F, z + (double)offset);
+            buffer.pos(x + (double)3.0F, y - (double)2.0F, z + (double)offset);
             tessellator.draw();
-            GL11.glPopMatrix();
+            GlStateManager.popMatrix();
             GL11.glMatrixMode(5888);
          }
       } else {
-         GL11.glPushMatrix();
+         GlStateManager.pushMatrix();
          UtilsFX.bindTexture(this.t3);
-         Tessellator tessellator = Tessellator.instance;
-         tessellator.startDrawingQuads();
-         tessellator.setBrightness(180);
-         tessellator.setColorRGBA_F(0.5F, 0.5F, 0.5F, 1.0F);
-         tessellator.addVertexWithUV(x - (double)2.0F, y - (double)2.0F, z + (double)offset, 1.0F, 1.0F);
-         tessellator.addVertexWithUV(x - (double)2.0F, y + (double)3.0F, z + (double)offset, 1.0F, 0.0F);
-         tessellator.addVertexWithUV(x + (double)3.0F, y + (double)3.0F, z + (double)offset, 0.0F, 0.0F);
-         tessellator.addVertexWithUV(x + (double)3.0F, y - (double)2.0F, z + (double)offset, 0.0F, 1.0F);
+         Tessellator tessellator = Tessellator.getInstance();
+         BufferBuilder buffer = tessellator.getBuffer();
+         buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX_COLOR); 
+        
+        
+         buffer.pos(x - (double)2.0F, y - (double)2.0F, z + (double)offset).tex(1.0F, 1.0F).color(0.5F, 0.5F, 0.5F, 1.0F)
+        .endVertex();
+         buffer.pos(x - (double)2.0F, y + (double)3.0F, z + (double)offset).tex(1.0F, 0.0F).color(0.5F, 0.5F, 0.5F, 1.0F)
+        .endVertex();
+         buffer.pos(x + (double)3.0F, y + (double)3.0F, z + (double)offset).tex(0.0F, 0.0F).color(0.5F, 0.5F, 0.5F, 1.0F)
+        .endVertex();
+         buffer.pos(x + (double)3.0F, y - (double)2.0F, z + (double)offset).tex(0.0F, 1.0F).color(0.5F, 0.5F, 0.5F, 1.0F)
+        .endVertex();
          tessellator.draw();
-         GL11.glPopMatrix();
+         GlStateManager.popMatrix();
       }
 
-      GL11.glDisable(GL11.GL_BLEND);
+      GlStateManager.disableBlend();
       GL11.glDisable(3168);
       GL11.glDisable(3169);
       GL11.glDisable(3170);
       GL11.glDisable(3171);
-      GL11.glEnable(2896);
+      GlStateManager.enableLighting();
    }
 
    public void drawPlaneXPos(double x, double y, double z, float f, int height) {
       float px = (float)TileEntityRendererDispatcher.staticPlayerX;
       float py = (float)TileEntityRendererDispatcher.staticPlayerY;
       float pz = (float)TileEntityRendererDispatcher.staticPlayerZ;
-      GL11.glDisable(2896);
+      GlStateManager.disableLighting();
       Random random = new Random(31100L);
       float offset = 0.5F;
       if (this.inrange) {
          for(int i = 0; i < 16; ++i) {
-            GL11.glPushMatrix();
+            GlStateManager.pushMatrix();
             float f5 = (float)(16 - i);
             float f6 = 0.0625F;
             float f7 = 1.0F / (f5 + 1.0F);
@@ -338,23 +350,23 @@ public class TileEldritchLockRenderer extends TileEntitySpecialRenderer {
                f7 = 0.1F;
                f5 = 65.0F;
                f6 = 0.125F;
-               GL11.glEnable(GL11.GL_BLEND);
-               GL11.glBlendFunc(770, 771);
+               GlStateManager.enableBlend();
+               GlStateManager.blendFunc(770, 771);
             }
 
             if (i == 1) {
                UtilsFX.bindTexture(this.t2);
-               GL11.glEnable(GL11.GL_BLEND);
-               GL11.glBlendFunc(1, 1);
+               GlStateManager.enableBlend();
+               GlStateManager.blendFunc(1, 1);
                f6 = 0.5F;
             }
 
             float f8 = (float)(-(x + (double)offset));
-            float f9 = f8 + ActiveRenderInfo.objectX;
-            float f10 = f8 + f5 + ActiveRenderInfo.objectX;
+            float f9 = f8 + (float)TileEntityRendererDispatcher.staticPlayerX;
+            float f10 = f8 + f5 + (float)TileEntityRendererDispatcher.staticPlayerX;
             float f11 = f9 / f10;
             f11 = (float)(x + (double)offset) + f11;
-            GL11.glTranslatef(f11, py, pz);
+            GlStateManager.translate(f11, py, pz);
             GL11.glTexGeni(8192, 9472, 9217);
             GL11.glTexGeni(8193, 9472, 9217);
             GL11.glTexGeni(8194, 9472, 9217);
@@ -367,19 +379,20 @@ public class TileEldritchLockRenderer extends TileEntitySpecialRenderer {
             GL11.glEnable(3169);
             GL11.glEnable(3170);
             GL11.glEnable(3171);
-            GL11.glPopMatrix();
+            GlStateManager.popMatrix();
             GL11.glMatrixMode(5890);
-            GL11.glPushMatrix();
+            GlStateManager.pushMatrix();
             GL11.glLoadIdentity();
-            GL11.glTranslatef(0.0F, (float)(System.currentTimeMillis() % 700000L) / 250000.0F, 0.0F);
-            GL11.glScalef(f6, f6, f6);
-            GL11.glTranslatef(0.5F, 0.5F, 0.0F);
-            GL11.glRotatef((float)(i * i * 4321 + i * 9) * 2.0F, 0.0F, 0.0F, 1.0F);
-            GL11.glTranslatef(-0.5F, -0.5F, 0.0F);
-            GL11.glTranslatef(-pz, -py, -px);
-            GL11.glTranslatef(ActiveRenderInfo.objectZ * f5 / f9, ActiveRenderInfo.objectY * f5 / f9, -px);
-            Tessellator tessellator = Tessellator.instance;
-            tessellator.startDrawingQuads();
+            GlStateManager.translate(0.0F, (float)(System.currentTimeMillis() % 700000L) / 250000.0F, 0.0F);
+            GlStateManager.scale(f6, f6, f6);
+            GlStateManager.translate(0.5F, 0.5F, 0.0F);
+            GlStateManager.rotate((float)(i * i * 4321 + i * 9) * 2.0F, 0.0F, 0.0F, 1.0F);
+            GlStateManager.translate(-0.5F, -0.5F, 0.0F);
+            GlStateManager.translate(-pz, -py, -px);
+            GlStateManager.translate((float)TileEntityRendererDispatcher.staticPlayerZ * f5 / f9, (float)TileEntityRendererDispatcher.staticPlayerY * f5 / f9, -px);
+            Tessellator tessellator = Tessellator.getInstance();
+            BufferBuilder buffer = tessellator.getBuffer();
+            buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX); 
             f11 = random.nextFloat() * 0.5F + 0.1F;
             float f12 = random.nextFloat() * 0.5F + 0.4F;
             float f13 = random.nextFloat() * 0.5F + 0.5F;
@@ -389,49 +402,54 @@ public class TileEldritchLockRenderer extends TileEntitySpecialRenderer {
                f11 = 1.0F;
             }
 
-            tessellator.setBrightness(180);
-            tessellator.setColorRGBA_F(f11 * f7, f12 * f7, f13 * f7, 1.0F);
-            tessellator.addVertex(x + (double)offset, y + (double)3.0F, z - (double)2.0F);
-            tessellator.addVertex(x + (double)offset, y + (double)3.0F, z + (double)3.0F);
-            tessellator.addVertex(x + (double)offset, y - (double)2.0F, z + (double)3.0F);
-            tessellator.addVertex(x + (double)offset, y - (double)2.0F, z - (double)2.0F);
+           
+           
+            buffer.pos(x + (double)offset, y + (double)3.0F, z - (double)2.0F);
+            buffer.pos(x + (double)offset, y + (double)3.0F, z + (double)3.0F);
+            buffer.pos(x + (double)offset, y - (double)2.0F, z + (double)3.0F);
+            buffer.pos(x + (double)offset, y - (double)2.0F, z - (double)2.0F);
             tessellator.draw();
-            GL11.glPopMatrix();
+            GlStateManager.popMatrix();
             GL11.glMatrixMode(5888);
          }
       } else {
-         GL11.glPushMatrix();
+         GlStateManager.pushMatrix();
          UtilsFX.bindTexture(this.t3);
-         Tessellator tessellator = Tessellator.instance;
-         tessellator.startDrawingQuads();
-         tessellator.setBrightness(180);
-         tessellator.setColorRGBA_F(0.5F, 0.5F, 0.5F, 1.0F);
-         tessellator.addVertexWithUV(x + (double)offset, y + (double)3.0F, z - (double)2.0F, 1.0F, 1.0F);
-         tessellator.addVertexWithUV(x + (double)offset, y + (double)3.0F, z + (double)3.0F, 1.0F, 0.0F);
-         tessellator.addVertexWithUV(x + (double)offset, y - (double)2.0F, z + (double)3.0F, 0.0F, 0.0F);
-         tessellator.addVertexWithUV(x + (double)offset, y - (double)2.0F, z - (double)2.0F, 0.0F, 1.0F);
+         Tessellator tessellator = Tessellator.getInstance();
+         BufferBuilder buffer = tessellator.getBuffer();
+         buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX_COLOR); 
+        
+        
+         buffer.pos(x + (double)offset, y + (double)3.0F, z - (double)2.0F).tex(1.0F, 1.0F).color(0.5F, 0.5F, 0.5F, 1.0F)
+        .endVertex();
+         buffer.pos(x + (double)offset, y + (double)3.0F, z + (double)3.0F).tex(1.0F, 0.0F).color(0.5F, 0.5F, 0.5F, 1.0F)
+        .endVertex();
+         buffer.pos(x + (double)offset, y - (double)2.0F, z + (double)3.0F).tex(0.0F, 0.0F).color(0.5F, 0.5F, 0.5F, 1.0F)
+        .endVertex();
+         buffer.pos(x + (double)offset, y - (double)2.0F, z - (double)2.0F).tex(0.0F, 1.0F).color(0.5F, 0.5F, 0.5F, 1.0F)
+        .endVertex();
          tessellator.draw();
-         GL11.glPopMatrix();
+         GlStateManager.popMatrix();
       }
 
-      GL11.glDisable(GL11.GL_BLEND);
+      GlStateManager.disableBlend();
       GL11.glDisable(3168);
       GL11.glDisable(3169);
       GL11.glDisable(3170);
       GL11.glDisable(3171);
-      GL11.glEnable(2896);
+      GlStateManager.enableLighting();
    }
 
    public void drawPlaneXNeg(double x, double y, double z, float f, int height) {
       float px = (float)TileEntityRendererDispatcher.staticPlayerX;
       float py = (float)TileEntityRendererDispatcher.staticPlayerY;
       float pz = (float)TileEntityRendererDispatcher.staticPlayerZ;
-      GL11.glDisable(2896);
+      GlStateManager.disableLighting();
       Random random = new Random(31100L);
       float offset = 0.5F;
       if (this.inrange) {
          for(int i = 0; i < 16; ++i) {
-            GL11.glPushMatrix();
+            GlStateManager.pushMatrix();
             float f5 = (float)(16 - i);
             float f6 = 0.0625F;
             float f7 = 1.0F / (f5 + 1.0F);
@@ -440,23 +458,23 @@ public class TileEldritchLockRenderer extends TileEntitySpecialRenderer {
                f7 = 0.1F;
                f5 = 65.0F;
                f6 = 0.125F;
-               GL11.glEnable(GL11.GL_BLEND);
-               GL11.glBlendFunc(770, 771);
+               GlStateManager.enableBlend();
+               GlStateManager.blendFunc(770, 771);
             }
 
             if (i == 1) {
                UtilsFX.bindTexture(this.t2);
-               GL11.glEnable(GL11.GL_BLEND);
-               GL11.glBlendFunc(1, 1);
+               GlStateManager.enableBlend();
+               GlStateManager.blendFunc(1, 1);
                f6 = 0.5F;
             }
 
             float f8 = (float)(x + (double)offset);
-            float f9 = f8 - ActiveRenderInfo.objectX;
-            float f10 = f8 + f5 - ActiveRenderInfo.objectX;
+            float f9 = f8 - (float)TileEntityRendererDispatcher.staticPlayerX;
+            float f10 = f8 + f5 - (float)TileEntityRendererDispatcher.staticPlayerX;
             float f11 = f9 / f10;
             f11 = (float)(x + (double)offset) + f11;
-            GL11.glTranslatef(f11, py, pz);
+            GlStateManager.translate(f11, py, pz);
             GL11.glTexGeni(8192, 9472, 9217);
             GL11.glTexGeni(8193, 9472, 9217);
             GL11.glTexGeni(8194, 9472, 9217);
@@ -469,19 +487,20 @@ public class TileEldritchLockRenderer extends TileEntitySpecialRenderer {
             GL11.glEnable(3169);
             GL11.glEnable(3170);
             GL11.glEnable(3171);
-            GL11.glPopMatrix();
+            GlStateManager.popMatrix();
             GL11.glMatrixMode(5890);
-            GL11.glPushMatrix();
+            GlStateManager.pushMatrix();
             GL11.glLoadIdentity();
-            GL11.glTranslatef(0.0F, (float)(System.currentTimeMillis() % 700000L) / 250000.0F, 0.0F);
-            GL11.glScalef(f6, f6, f6);
-            GL11.glTranslatef(0.5F, 0.5F, 0.0F);
-            GL11.glRotatef((float)(i * i * 4321 + i * 9) * 2.0F, 0.0F, 0.0F, 1.0F);
-            GL11.glTranslatef(-0.5F, -0.5F, 0.0F);
-            GL11.glTranslatef(-pz, -py, -px);
-            GL11.glTranslatef(ActiveRenderInfo.objectZ * f5 / f9, ActiveRenderInfo.objectY * f5 / f9, -px);
-            Tessellator tessellator = Tessellator.instance;
-            tessellator.startDrawingQuads();
+            GlStateManager.translate(0.0F, (float)(System.currentTimeMillis() % 700000L) / 250000.0F, 0.0F);
+            GlStateManager.scale(f6, f6, f6);
+            GlStateManager.translate(0.5F, 0.5F, 0.0F);
+            GlStateManager.rotate((float)(i * i * 4321 + i * 9) * 2.0F, 0.0F, 0.0F, 1.0F);
+            GlStateManager.translate(-0.5F, -0.5F, 0.0F);
+            GlStateManager.translate(-pz, -py, -px);
+            GlStateManager.translate((float)TileEntityRendererDispatcher.staticPlayerZ * f5 / f9, (float)TileEntityRendererDispatcher.staticPlayerY * f5 / f9, -px);
+            Tessellator tessellator = Tessellator.getInstance();
+            BufferBuilder buffer = tessellator.getBuffer();
+            buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX); 
             f11 = random.nextFloat() * 0.5F + 0.1F;
             float f12 = random.nextFloat() * 0.5F + 0.4F;
             float f13 = random.nextFloat() * 0.5F + 0.5F;
@@ -491,37 +510,42 @@ public class TileEldritchLockRenderer extends TileEntitySpecialRenderer {
                f11 = 1.0F;
             }
 
-            tessellator.setBrightness(180);
-            tessellator.setColorRGBA_F(f11 * f7, f12 * f7, f13 * f7, 1.0F);
-            tessellator.addVertex(x + (double)offset, y - (double)2.0F, z - (double)2.0F);
-            tessellator.addVertex(x + (double)offset, y - (double)2.0F, z + (double)3.0F);
-            tessellator.addVertex(x + (double)offset, y + (double)3.0F, z + (double)3.0F);
-            tessellator.addVertex(x + (double)offset, y + (double)3.0F, z - (double)2.0F);
+           
+           
+            buffer.pos(x + (double)offset, y - (double)2.0F, z - (double)2.0F);
+            buffer.pos(x + (double)offset, y - (double)2.0F, z + (double)3.0F);
+            buffer.pos(x + (double)offset, y + (double)3.0F, z + (double)3.0F);
+            buffer.pos(x + (double)offset, y + (double)3.0F, z - (double)2.0F);
             tessellator.draw();
-            GL11.glPopMatrix();
+            GlStateManager.popMatrix();
             GL11.glMatrixMode(5888);
          }
       } else {
-         GL11.glPushMatrix();
+         GlStateManager.pushMatrix();
          UtilsFX.bindTexture(this.t3);
-         Tessellator tessellator = Tessellator.instance;
-         tessellator.startDrawingQuads();
-         tessellator.setBrightness(180);
-         tessellator.setColorRGBA_F(0.5F, 0.5F, 0.5F, 1.0F);
-         tessellator.addVertexWithUV(x + (double)offset, y - (double)2.0F, z - (double)2.0F, 1.0F, 1.0F);
-         tessellator.addVertexWithUV(x + (double)offset, y - (double)2.0F, z + (double)3.0F, 1.0F, 0.0F);
-         tessellator.addVertexWithUV(x + (double)offset, y + (double)3.0F, z + (double)3.0F, 0.0F, 0.0F);
-         tessellator.addVertexWithUV(x + (double)offset, y + (double)3.0F, z - (double)2.0F, 0.0F, 1.0F);
+         Tessellator tessellator = Tessellator.getInstance();
+         BufferBuilder buffer = tessellator.getBuffer();
+         buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX_COLOR); 
+        
+        
+         buffer.pos(x + (double)offset, y - (double)2.0F, z - (double)2.0F).tex(1.0F, 1.0F).color(0.5F, 0.5F, 0.5F, 1.0F)
+        .endVertex();
+         buffer.pos(x + (double)offset, y - (double)2.0F, z + (double)3.0F).tex(1.0F, 0.0F).color(0.5F, 0.5F, 0.5F, 1.0F)
+        .endVertex();
+         buffer.pos(x + (double)offset, y + (double)3.0F, z + (double)3.0F).tex(0.0F, 0.0F).color(0.5F, 0.5F, 0.5F, 1.0F)
+        .endVertex();
+         buffer.pos(x + (double)offset, y + (double)3.0F, z - (double)2.0F).tex(0.0F, 1.0F).color(0.5F, 0.5F, 0.5F, 1.0F)
+        .endVertex();
          tessellator.draw();
-         GL11.glPopMatrix();
+         GlStateManager.popMatrix();
       }
 
-      GL11.glDisable(GL11.GL_BLEND);
+      GlStateManager.disableBlend();
       GL11.glDisable(3168);
       GL11.glDisable(3169);
       GL11.glDisable(3170);
       GL11.glDisable(3171);
-      GL11.glEnable(2896);
+      GlStateManager.enableLighting();
    }
 
    private FloatBuffer calcFloatBuffer(float f, float f1, float f2, float f3) {

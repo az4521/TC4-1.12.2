@@ -25,7 +25,6 @@ import thaumcraft.common.lib.utils.Utils;
 
 import javax.annotation.Nonnull;
 
-import static baubles.api.expanded.BaubleExpandedSlots.getTypeFromBaubleType;
 import static simpleutils.bauble.BaubleUtils.forEachBaubleWithBaubleType;
 
 public class Hover {
@@ -36,8 +35,8 @@ public class Hover {
     public static boolean toggleHover(EntityPlayer player, int playerId, @Nonnull ItemStack armor) {
         boolean hover = hovering.get(playerId) != null && hovering.get(playerId);
         short fuel = 0;
-        if (armor.hasTagCompound() && armor.stackTagCompound.hasKey("jar")) {
-            ItemStack jar = ItemStack.loadItemStackFromNBT(armor.stackTagCompound.getCompoundTag("jar"));
+        if (armor.hasTagCompound() && armor.getTagCompound().hasKey("jar")) {
+            ItemStack jar = new ItemStack(armor.getTagCompound().getCompoundTag("jar"));
             if (jar != null && jar.getItem() instanceof ItemJarFilled && jar.hasTagCompound()) {
                 AspectList aspects = ((ItemJarFilled) jar.getItem()).getAspects(jar);
                 if (aspects != null && aspects.size() > 0 && aspects.getAmount(Aspect.ENERGY) > 0) {
@@ -50,9 +49,9 @@ public class Hover {
             return false;
         } else {
             hovering.put(playerId, !hover);
-            if (player.worldObj.isRemote) {
+            if (player.world.isRemote) {
                 PacketHandler.INSTANCE.sendToServer(new PacketFlyToServer(player, !hover));
-                player.worldObj.playSound(player.posX, player.posY, player.posZ, !hover ? "thaumcraft:hhon" : "thaumcraft:hhoff", 0.33F, 1.0F, false);
+                { net.minecraft.util.SoundEvent _snd = net.minecraft.util.SoundEvent.REGISTRY.getObject(new net.minecraft.util.ResourceLocation(!hover ? "thaumcraft:hhon" : "thaumcraft:hhoff")); if (_snd != null) player.world.playSound(null, player.posX, player.posY, player.posZ, _snd, net.minecraft.util.SoundCategory.PLAYERS, 0.33F, 1.0F); }
             }
 
             return !hover;
@@ -68,15 +67,15 @@ public class Hover {
     }
 
     public static void handleHoverArmor(EntityPlayer player, ItemStack armor) {
-        if (hovering.get(player.getEntityId()) == null && armor.hasTagCompound() && armor.stackTagCompound.hasKey("hover")) {
-            hovering.put(player.getEntityId(), armor.stackTagCompound.getByte("hover") == 1);
-            if (player.worldObj.isRemote) {
-                PacketHandler.INSTANCE.sendToServer(new PacketFlyToServer(player, armor.stackTagCompound.getByte("hover") == 1));
+        if (hovering.get(player.getEntityId()) == null && armor.hasTagCompound() && armor.getTagCompound().hasKey("hover")) {
+            hovering.put(player.getEntityId(), armor.getTagCompound().getByte("hover") == 1);
+            if (player.world.isRemote) {
+                PacketHandler.INSTANCE.sendToServer(new PacketFlyToServer(player, armor.getTagCompound().getByte("hover") == 1));
             }
         }
 
         boolean hover = hovering.get(player.getEntityId()) != null && hovering.get(player.getEntityId());
-        World world = player.worldObj;
+        World world = player.world;
         player.capabilities.isFlying = hover;
         if (world.isRemote && player instanceof EntityPlayerSP) {
             if (hover && expendCharge(player, armor)) {
@@ -89,25 +88,21 @@ public class Hover {
                 if (time < currenttime) {
                     time = currenttime + 1200L;
                     timing.put(player.getEntityId(), time);
-                    player.worldObj.playSound(player.posX, player.posY, player.posZ, "thaumcraft:jacobs", 0.05F, 1.0F + player.worldObj.rand.nextFloat() * 0.05F, false);
+                    { net.minecraft.util.SoundEvent _snd = net.minecraft.util.SoundEvent.REGISTRY.getObject(new net.minecraft.util.ResourceLocation("thaumcraft:jacobs")); if (_snd != null) player.world.playSound(null, player.posX, player.posY, player.posZ, _snd, net.minecraft.util.SoundCategory.PLAYERS, 0.05F, 1.0F + player.world.rand.nextFloat() * 0.05F); }
                 }
 
-                int haste = EnchantmentHelper.getEnchantmentLevel(Config.enchHaste.effectId, armor);
+                int haste = EnchantmentHelper.getEnchantmentLevel(Config.enchHaste, armor);
                 final float[] mod = {0.7F + 0.075F * (float) haste};
-                if (!forEachBaubleWithBaubleType(getTypeFromBaubleType(BaubleType.AMULET), player, ItemGirdleHover.class,
+                if (!forEachBaubleWithBaubleType(BaubleType.AMULET, player, ItemGirdleHover.class,
                         (slot, stack, item) -> {
                             mod[0] += 0.21F;
                             return true;
                         })) {
-                    try {
-                        forEachBaubleWithBaubleType(getTypeFromBaubleType(BaubleType.UNIVERSAL), player, ItemGirdleHover.class,
-                                (slot, stack, item) -> {
-                                    mod[0] += 0.21F;
-                                    return true;
-                                });
-                    }catch (Exception ignore) {
-                        //BaubleType.UNIVERSAL may not defined,it's defined in GTNH ver
-                    }
+                    forEachBaubleWithBaubleType(BaubleType.TRINKET, player, ItemGirdleHover.class,
+                            (slot, stack, item) -> {
+                                mod[0] += 0.21F;
+                                return true;
+                            });
                 }
                 if (mod[0] > 1.0F) {
                     mod[0] = 1.0F;
@@ -119,7 +114,7 @@ public class Hover {
                 toggleHover(player, player.getEntityId(), armor);
             }
         } else {
-            if (armor.hasTagCompound() && !armor.stackTagCompound.hasKey("hover")) {
+            if (armor.hasTagCompound() && !armor.getTagCompound().hasKey("hover")) {
                 armor.setTagInfo("hover", new NBTTagByte((byte) (hover ? 1 : 0)));
             }
 
@@ -130,8 +125,8 @@ public class Hover {
 
                 player.fallDistance = 0.0F;
                 if (armor.hasTagCompound()
-                        && armor.stackTagCompound.hasKey("hover")
-                        && armor.stackTagCompound.getByte("hover") != 1) {
+                        && armor.getTagCompound().hasKey("hover")
+                        && armor.getTagCompound().getByte("hover") != 1) {
                     armor.setTagInfo("hover", new NBTTagByte((byte) 1));
                 }
             } else {
@@ -140,7 +135,7 @@ public class Hover {
                 }
 
                 player.fallDistance *= 0.75F;
-                if (armor.hasTagCompound() && armor.stackTagCompound.hasKey("hover") && armor.stackTagCompound.getByte("hover") == 1) {
+                if (armor.hasTagCompound() && armor.getTagCompound().hasKey("hover") && armor.getTagCompound().getByte("hover") == 1) {
                     armor.setTagInfo("hover", new NBTTagByte((byte) (hover ? 1 : 0)));
                 }
             }
@@ -149,8 +144,8 @@ public class Hover {
     }
 
     public static boolean expendCharge(EntityPlayer player, ItemStack is) {
-        if (is.hasTagCompound() && is.stackTagCompound.hasKey("jar")) {
-            ItemStack jar = ItemStack.loadItemStackFromNBT(is.stackTagCompound.getCompoundTag("jar"));
+        if (is.hasTagCompound() && is.getTagCompound().hasKey("jar")) {
+            ItemStack jar = new ItemStack(is.getTagCompound().getCompoundTag("jar"));
             short fuel = 0;
             if (jar != null && jar.getItem() instanceof ItemJarFilled && jar.hasTagCompound()) {
                 AspectList aspects = ((ItemJarFilled) jar.getItem()).getAspects(jar);
@@ -160,16 +155,16 @@ public class Hover {
             }
 
             float mod = 1.0F;
-            if (BaublesApi.getBaubles(player).getStackInSlot(3) != null && BaublesApi.getBaubles(player).getStackInSlot(3).getItem() instanceof ItemGirdleHover) {
+            if (!BaublesApi.getBaubles(player).getStackInSlot(3).isEmpty() && BaublesApi.getBaubles(player).getStackInSlot(3).getItem() instanceof ItemGirdleHover) {
                 mod = 0.8F;
             }
 
-            if (!is.stackTagCompound.hasKey("charge")) {
+            if (!is.getTagCompound().hasKey("charge")) {
                 is.setTagInfo("charge", new NBTTagShort((short) 0));
             }
 
-            if (fuel > 0 && is.stackTagCompound.hasKey("charge")) {
-                short charge = is.stackTagCompound.getShort("charge");
+            if (fuel > 0 && is.getTagCompound().hasKey("charge")) {
+                short charge = is.getTagCompound().getShort("charge");
                 if ((float) charge < 360.0F * mod) {
                     is.setTagInfo("charge", new NBTTagShort((short) (charge + 1)));
                     return true;

@@ -1,7 +1,7 @@
 package thaumcraft.client.lib;
 
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
@@ -18,6 +18,9 @@ import net.minecraft.client.renderer.texture.TextureManager;
 import net.minecraft.client.settings.GameSettings;
 import net.minecraft.util.ResourceLocation;
 import org.lwjgl.opengl.GL11;
+import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.client.renderer.BufferBuilder;
+import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 
 @SideOnly(Side.CLIENT)
 public class TCFontRenderer {
@@ -35,10 +38,10 @@ public class TCFontRenderer {
    private float posY;
    private boolean unicodeFlag;
    private boolean bidiFlag;
-   private float red;
-   private float blue;
-   private float green;
-   private float alpha;
+   private float red = 0.0F;
+   private float green = 0.0F;
+   private float blue = 0.0F;
+   private float alpha = 1.0F;
    private int textColor;
    private boolean randomStyle = false;
    private boolean boldStyle = false;
@@ -312,7 +315,7 @@ public class TCFontRenderer {
 
                int k = this.colorCode[j];
                this.textColor = k;
-               GL11.glColor4f((float)(k >> 16) / 255.0F, (float)(k >> 8 & 255) / 255.0F, (float)(k & 255) / 255.0F, this.alpha);
+               GlStateManager.color((float)(k >> 16) / 255.0F, (float)(k >> 8 & 255) / 255.0F, (float)(k & 255) / 255.0F, this.alpha);
             } else if (j == 16) {
                this.randomStyle = true;
             } else if (j == 17) {
@@ -329,7 +332,8 @@ public class TCFontRenderer {
                this.strikethroughStyle = false;
                this.underlineStyle = false;
                this.italicStyle = false;
-               GL11.glColor4f(this.red, this.blue, this.green, this.alpha);
+               GlStateManager.color(this.red, this.green, this.blue, this.alpha);
+         GL11.glColor4f(this.red, this.green, this.blue, this.alpha);
             }
 
             ++i;
@@ -375,28 +379,30 @@ public class TCFontRenderer {
             }
 
             if (this.strikethroughStyle) {
-               Tessellator tessellator = Tessellator.instance;
-               GL11.glDisable(3553);
-               tessellator.startDrawingQuads();
-               tessellator.addVertex(this.posX, this.posY + (float)(this.FONT_HEIGHT / 2), 0.0F);
-               tessellator.addVertex(this.posX + f1, this.posY + (float)(this.FONT_HEIGHT / 2), 0.0F);
-               tessellator.addVertex(this.posX + f1, this.posY + (float)(this.FONT_HEIGHT / 2) - 1.0F, 0.0F);
-               tessellator.addVertex(this.posX, this.posY + (float)(this.FONT_HEIGHT / 2) - 1.0F, 0.0F);
+               Tessellator tessellator = Tessellator.getInstance();
+               BufferBuilder buffer = tessellator.getBuffer();
+               GlStateManager.disableTexture2D();
+               buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION);
+               buffer.pos(this.posX, this.posY + (float)(this.FONT_HEIGHT / 2), 0.0F).endVertex();
+               buffer.pos(this.posX + f1, this.posY + (float)(this.FONT_HEIGHT / 2), 0.0F).endVertex();
+               buffer.pos(this.posX + f1, this.posY + (float)(this.FONT_HEIGHT / 2) - 1.0F, 0.0F).endVertex();
+               buffer.pos(this.posX, this.posY + (float)(this.FONT_HEIGHT / 2) - 1.0F, 0.0F).endVertex();
                tessellator.draw();
-               GL11.glEnable(3553);
+               GlStateManager.enableTexture2D();
             }
 
             if (this.underlineStyle) {
-               Tessellator tessellator = Tessellator.instance;
-               GL11.glDisable(3553);
-               tessellator.startDrawingQuads();
+               Tessellator tessellator = Tessellator.getInstance();
+               BufferBuilder buffer = tessellator.getBuffer();
+               GlStateManager.disableTexture2D();
+               buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION);
                int l = this.underlineStyle ? -1 : 0;
-               tessellator.addVertex(this.posX + (float)l, this.posY + (float)this.FONT_HEIGHT, 0.0F);
-               tessellator.addVertex(this.posX + f1, this.posY + (float)this.FONT_HEIGHT, 0.0F);
-               tessellator.addVertex(this.posX + f1, this.posY + (float)this.FONT_HEIGHT - 1.0F, 0.0F);
-               tessellator.addVertex(this.posX + (float)l, this.posY + (float)this.FONT_HEIGHT - 1.0F, 0.0F);
+               buffer.pos(this.posX + (float)l, this.posY + (float)this.FONT_HEIGHT, 0.0F).endVertex();
+               buffer.pos(this.posX + f1, this.posY + (float)this.FONT_HEIGHT, 0.0F).endVertex();
+               buffer.pos(this.posX + f1, this.posY + (float)this.FONT_HEIGHT - 1.0F, 0.0F).endVertex();
+               buffer.pos(this.posX + (float)l, this.posY + (float)this.FONT_HEIGHT - 1.0F, 0.0F).endVertex();
                tessellator.draw();
-               GL11.glEnable(3553);
+               GlStateManager.enableTexture2D();
             }
 
             this.posX += (float)((int)f1);
@@ -428,10 +434,11 @@ public class TCFontRenderer {
          }
 
          this.red = (float)(par4 >> 16 & 255) / 255.0F;
-         this.blue = (float)(par4 >> 8 & 255) / 255.0F;
-         this.green = (float)(par4 & 255) / 255.0F;
+         this.green = (float)(par4 >> 8 & 255) / 255.0F;
+         this.blue = (float)(par4 & 255) / 255.0F;
          this.alpha = (float)(par4 >> 24 & 255) / 255.0F;
-         GL11.glColor4f(this.red, this.blue, this.green, this.alpha);
+         GlStateManager.color(this.red, this.green, this.blue, this.alpha);
+         GL11.glColor4f(this.red, this.green, this.blue, this.alpha);
          this.posX = (float)par2;
          this.posY = (float)par3;
          this.renderStringAtPos(par1Str, par5);
@@ -584,17 +591,23 @@ public class TCFontRenderer {
                         String[] scont = cont.split(":");
                         UtilsFX.bindTexture(scont[0], scont[1]);
                         float scale = Float.parseFloat(scont[6]);
-                        GL11.glPushMatrix();
-                        GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
-                        GL11.glTranslatef((float)(par2 - 3 + par4 / 2) - (float)(Integer.parseInt(scont[4]) / 2) * scale, (float)par3, 0.0F);
-                        GL11.glScalef(scale, scale, scale);
+                        GlStateManager.pushMatrix();
+                        GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
+                        GlStateManager.translate((float)(par2 - 3 + par4 / 2) - (float)(Integer.parseInt(scont[4]) / 2) * scale, (float)par3, 0.0F);
+                        GlStateManager.scale(scale, scale, scale);
                         gui.drawTexturedModalRect(0, 0, Integer.parseInt(scont[2]), Integer.parseInt(scont[3]), Integer.parseInt(scont[4]), Integer.parseInt(scont[5]));
-                        GL11.glPopMatrix();
+                        GlStateManager.popMatrix();
+                        // Reset color after image rendering so subsequent text isn't washed out
+                        GlStateManager.color(this.red, this.green, this.blue, this.alpha);
+         GL11.glColor4f(this.red, this.green, this.blue, this.alpha);
                         par3 = (int)((float)par3 + ((float)Integer.parseInt(scont[5]) * scale - (float)this.FONT_HEIGHT));
                      }
                   } else {
                      UtilsFX.bindTexture("textures/gui/gui_researchbook.png");
                      gui.drawTexturedModalRect(par2 + par4 / 2 - 48, par3 + 2, 24, 184, 96, 4);
+                     // Reset color after line rendering
+                     GlStateManager.color(this.red, this.green, this.blue, this.alpha);
+         GL11.glColor4f(this.red, this.green, this.blue, this.alpha);
                   }
                }
             }

@@ -1,13 +1,14 @@
 package thaumcraft.common.config;
 
-import cpw.mods.fml.common.event.FMLInterModComms;
-import cpw.mods.fml.common.registry.EntityRegistry;
+import net.minecraft.util.ResourceLocation;
+import net.minecraftforge.fml.common.event.FMLInterModComms;
+import net.minecraftforge.fml.common.registry.EntityRegistry;
+import net.minecraftforge.fml.common.registry.ForgeRegistries;
 import java.util.Calendar;
 import java.util.HashMap;
-import java.util.List;
+import java.util.Set;
 import net.minecraft.entity.EnumCreatureType;
-import net.minecraft.world.biome.BiomeGenBase;
-import net.minecraft.world.biome.WorldChunkManager;
+import net.minecraft.world.biome.Biome;
 import net.minecraftforge.common.BiomeDictionary;
 import net.minecraftforge.common.BiomeDictionary.Type;
 import thaumcraft.common.Thaumcraft;
@@ -73,117 +74,127 @@ public class ConfigEntities {
 
    public static void init() {
       int id = 0;
-      EntityRegistry.registerModEntity(EntitySpecialItem.class, "SpecialItem", id++, Thaumcraft.instance, 64, 20, true);
-      EntityRegistry.registerModEntity(EntityPermanentItem.class, "PermanentItem", id++, Thaumcraft.instance, 64, 20, true);
-      EntityRegistry.registerModEntity(EntityFollowingItem.class, "FollowItem", id++, Thaumcraft.instance, 64, 20, false);
-      EntityRegistry.registerModEntity(EntityAspectOrb.class, "AspectOrb", id++, Thaumcraft.instance, 120, 20, true);
-      EntityRegistry.registerModEntity(EntityFallingTaint.class, "FallingTaint", id++, Thaumcraft.instance, 64, 3, true);
-      EntityRegistry.registerModEntity(EntityAlumentum.class, "Alumentum", id++, Thaumcraft.instance, 64, 20, true);
-      EntityRegistry.registerModEntity(EntityPrimalOrb.class, "PrimalOrb", id++, Thaumcraft.instance, 64, 20, true);
-      EntityRegistry.registerModEntity(EntityFrostShard.class, "FrostShard", id++, Thaumcraft.instance, 64, 20, true);
-      EntityRegistry.registerModEntity(EntityDart.class, "Dart", id++, Thaumcraft.instance, 64, 20, false);
-      EntityRegistry.registerModEntity(EntityPrimalArrow.class, "PrimalArrow", id++, Thaumcraft.instance, 64, 20, false);
-      EntityRegistry.registerModEntity(EntityPechBlast.class, "PechBlast", id++, Thaumcraft.instance, 64, 20, true);
-      EntityRegistry.registerModEntity(EntityEldritchOrb.class, "EldritchOrb", id++, Thaumcraft.instance, 64, 20, true);
-      EntityRegistry.registerModEntity(EntityBottleTaint.class, "BottleTaint", id++, Thaumcraft.instance, 64, 20, true);
-      EntityRegistry.registerModEntity(EntityGolemOrb.class, "GolemOrb", id++, Thaumcraft.instance, 64, 20, true);
-      EntityRegistry.registerModEntity(EntityShockOrb.class, "ShockOrb", id++, Thaumcraft.instance, 64, 20, true);
-      EntityRegistry.registerModEntity(EntityExplosiveOrb.class, "ExplosiveOrb", id++, Thaumcraft.instance, 64, 20, true);
-      EntityRegistry.registerModEntity(EntityEmber.class, "Ember", id++, Thaumcraft.instance, 64, 20, true);
-      EntityRegistry.registerModEntity(EntityGolemBase.class, "Golem", id++, Thaumcraft.instance, 64, 3, true);
-      EntityRegistry.registerModEntity(EntityTravelingTrunk.class, "TravelingTrunk", id++, Thaumcraft.instance, 64, 3, true);
-      EntityRegistry.registerModEntity(EntityBrainyZombie.class, "BrainyZombie", id++, Thaumcraft.instance, 64, 3, true);
+      EntityRegistry.registerModEntity(new ResourceLocation("thaumcraft", "specialitem"), EntitySpecialItem.class, "SpecialItem", id++, Thaumcraft.instance, 64, 20, true);
+      EntityRegistry.registerModEntity(new ResourceLocation("thaumcraft", "permanentitem"), EntityPermanentItem.class, "PermanentItem", id++, Thaumcraft.instance, 64, 20, true);
+      EntityRegistry.registerModEntity(new ResourceLocation("thaumcraft", "followitem"), EntityFollowingItem.class, "FollowItem", id++, Thaumcraft.instance, 64, 20, false);
+      EntityRegistry.registerModEntity(new ResourceLocation("thaumcraft", "aspectorb"), EntityAspectOrb.class, "AspectOrb", id++, Thaumcraft.instance, 120, 20, true);
+      EntityRegistry.registerModEntity(new ResourceLocation("thaumcraft", "fallingtaint"), EntityFallingTaint.class, "FallingTaint", id++, Thaumcraft.instance, 64, 3, true);
+      EntityRegistry.registerModEntity(new ResourceLocation("thaumcraft", "alumentum"), EntityAlumentum.class, "Alumentum", id++, Thaumcraft.instance, 64, 20, true);
+      EntityRegistry.registerModEntity(new ResourceLocation("thaumcraft", "primalorb"), EntityPrimalOrb.class, "PrimalOrb", id++, Thaumcraft.instance, 64, 20, true);
+      EntityRegistry.registerModEntity(new ResourceLocation("thaumcraft", "frostshard"), EntityFrostShard.class, "FrostShard", id++, Thaumcraft.instance, 64, 20, true);
+      EntityRegistry.registerModEntity(new ResourceLocation("thaumcraft", "dart"), EntityDart.class, "Dart", id++, Thaumcraft.instance, 64, 20, false);
+      EntityRegistry.registerModEntity(new ResourceLocation("thaumcraft", "primalarrow"), EntityPrimalArrow.class, "PrimalArrow", id++, Thaumcraft.instance, 64, 20, false);
+      EntityRegistry.registerModEntity(new ResourceLocation("thaumcraft", "pechblast"), EntityPechBlast.class, "PechBlast", id++, Thaumcraft.instance, 64, 20, true);
+      EntityRegistry.registerModEntity(new ResourceLocation("thaumcraft", "eldritchorb"), EntityEldritchOrb.class, "EldritchOrb", id++, Thaumcraft.instance, 64, 20, true);
+      EntityRegistry.registerModEntity(new ResourceLocation("thaumcraft", "bottletaint"), EntityBottleTaint.class, "BottleTaint", id++, Thaumcraft.instance, 64, 20, true);
+      EntityRegistry.registerModEntity(new ResourceLocation("thaumcraft", "golemorb"), EntityGolemOrb.class, "GolemOrb", id++, Thaumcraft.instance, 64, 20, true);
+      EntityRegistry.registerModEntity(new ResourceLocation("thaumcraft", "shockorb"), EntityShockOrb.class, "ShockOrb", id++, Thaumcraft.instance, 64, 20, true);
+      EntityRegistry.registerModEntity(new ResourceLocation("thaumcraft", "explosiveorb"), EntityExplosiveOrb.class, "ExplosiveOrb", id++, Thaumcraft.instance, 64, 20, true);
+      EntityRegistry.registerModEntity(new ResourceLocation("thaumcraft", "ember"), EntityEmber.class, "Ember", id++, Thaumcraft.instance, 64, 20, true);
+      EntityRegistry.registerModEntity(new ResourceLocation("thaumcraft", "golem"), EntityGolemBase.class, "Golem", id++, Thaumcraft.instance, 64, 3, true);
+      EntityRegistry.registerModEntity(new ResourceLocation("thaumcraft", "travelingtrunk"), EntityTravelingTrunk.class, "TravelingTrunk", id++, Thaumcraft.instance, 64, 3, true);
+      EntityRegistry.registerModEntity(new ResourceLocation("thaumcraft", "brainyzombie"), EntityBrainyZombie.class, "BrainyZombie", id++, Thaumcraft.instance, 64, 3, true);
       ItemSpawnerEgg.addMapping("BrainyZombie", 16761087, 32768);
-      EntityRegistry.registerModEntity(EntityGiantBrainyZombie.class, "GiantBrainyZombie", id++, Thaumcraft.instance, 64, 3, true);
+      EntityRegistry.registerModEntity(new ResourceLocation("thaumcraft", "giantbrainyzombie"), EntityGiantBrainyZombie.class, "GiantBrainyZombie", id++, Thaumcraft.instance, 64, 3, true);
       ItemSpawnerEgg.addMapping("GiantBrainyZombie", 16761087, 16384);
-      EntityRegistry.registerModEntity(EntityWisp.class, "Wisp", id++, Thaumcraft.instance, 64, 3, true);
+      EntityRegistry.registerModEntity(new ResourceLocation("thaumcraft", "wisp"), EntityWisp.class, "Wisp", id++, Thaumcraft.instance, 64, 3, true);
       ItemSpawnerEgg.addMapping("Wisp", 16761087, 16777215);
-      EntityRegistry.registerModEntity(EntityFireBat.class, "Firebat", id++, Thaumcraft.instance, 64, 3, true);
+      EntityRegistry.registerModEntity(new ResourceLocation("thaumcraft", "firebat"), EntityFireBat.class, "Firebat", id++, Thaumcraft.instance, 64, 3, true);
       ItemSpawnerEgg.addMapping("Firebat", 16761087, 12582912);
-      EntityRegistry.registerModEntity(EntityPech.class, "Pech", id++, Thaumcraft.instance, 64, 3, true);
+      EntityRegistry.registerModEntity(new ResourceLocation("thaumcraft", "pech"), EntityPech.class, "Pech", id++, Thaumcraft.instance, 64, 3, true);
       ItemSpawnerEgg.addMapping("Pech", 16761087, 4194368);
-      EntityRegistry.registerModEntity(EntityMindSpider.class, "MindSpider", id++, Thaumcraft.instance, 64, 3, true);
+      EntityRegistry.registerModEntity(new ResourceLocation("thaumcraft", "mindspider"), EntityMindSpider.class, "MindSpider", id++, Thaumcraft.instance, 64, 3, true);
       ItemSpawnerEgg.addMapping("MindSpider", 11184810, 4210752);
-      EntityRegistry.registerModEntity(EntityEldritchGuardian.class, "EldritchGuardian", id++, Thaumcraft.instance, 64, 3, true);
+      EntityRegistry.registerModEntity(new ResourceLocation("thaumcraft", "eldritchguardian"), EntityEldritchGuardian.class, "EldritchGuardian", id++, Thaumcraft.instance, 64, 3, true);
       ItemSpawnerEgg.addMapping("EldritchGuardian", 2236962, 4210752);
-      EntityRegistry.registerModEntity(EntityEldritchWarden.class, "EldritchWarden", id++, Thaumcraft.instance, 64, 3, true);
+      EntityRegistry.registerModEntity(new ResourceLocation("thaumcraft", "eldritchwarden"), EntityEldritchWarden.class, "EldritchWarden", id++, Thaumcraft.instance, 64, 3, true);
       ItemSpawnerEgg.addMapping("EldritchWarden", 5579298, 4210752);
-      EntityRegistry.registerModEntity(EntityCultistKnight.class, "CultistKnight", id++, Thaumcraft.instance, 64, 3, true);
+      EntityRegistry.registerModEntity(new ResourceLocation("thaumcraft", "cultistknight"), EntityCultistKnight.class, "CultistKnight", id++, Thaumcraft.instance, 64, 3, true);
       ItemSpawnerEgg.addMapping("CultistKnight", 16732245, 128);
-      EntityRegistry.registerModEntity(EntityCultistCleric.class, "CultistCleric", id++, Thaumcraft.instance, 64, 3, true);
+      EntityRegistry.registerModEntity(new ResourceLocation("thaumcraft", "cultistcleric"), EntityCultistCleric.class, "CultistCleric", id++, Thaumcraft.instance, 64, 3, true);
       ItemSpawnerEgg.addMapping("CultistCleric", 16732245, 8388608);
-      EntityRegistry.registerModEntity(EntityCultistLeader.class, "CultistLeader", id++, Thaumcraft.instance, 64, 3, true);
+      EntityRegistry.registerModEntity(new ResourceLocation("thaumcraft", "cultistleader"), EntityCultistLeader.class, "CultistLeader", id++, Thaumcraft.instance, 64, 3, true);
       ItemSpawnerEgg.addMapping("CultistLeader", 16732245, 5263440);
-      EntityRegistry.registerModEntity(EntityCultistPortal.class, "CultistPortal", id++, Thaumcraft.instance, 64, 20, false);
+      EntityRegistry.registerModEntity(new ResourceLocation("thaumcraft", "cultistportal"), EntityCultistPortal.class, "CultistPortal", id++, Thaumcraft.instance, 64, 20, false);
       ItemSpawnerEgg.addMapping("CultistPortal", 16732245, 16732415);
-      EntityRegistry.registerModEntity(EntityEldritchGolem.class, "EldritchGolem", id++, Thaumcraft.instance, 64, 3, true);
+      EntityRegistry.registerModEntity(new ResourceLocation("thaumcraft", "eldritchgolem"), EntityEldritchGolem.class, "EldritchGolem", id++, Thaumcraft.instance, 64, 3, true);
       ItemSpawnerEgg.addMapping("EldritchGolem", 5592405, 4210752);
-      EntityRegistry.registerModEntity(EntityEldritchCrab.class, "EldritchCrab", id++, Thaumcraft.instance, 64, 3, true);
+      EntityRegistry.registerModEntity(new ResourceLocation("thaumcraft", "eldritchcrab"), EntityEldritchCrab.class, "EldritchCrab", id++, Thaumcraft.instance, 64, 3, true);
       ItemSpawnerEgg.addMapping("EldritchCrab", 5592405, 5570560);
-      EntityRegistry.registerModEntity(EntityInhabitedZombie.class, "InhabitedZombie", id++, Thaumcraft.instance, 64, 3, true);
+      EntityRegistry.registerModEntity(new ResourceLocation("thaumcraft", "inhabitedzombie"), EntityInhabitedZombie.class, "InhabitedZombie", id++, Thaumcraft.instance, 64, 3, true);
       ItemSpawnerEgg.addMapping("InhabitedZombie", 5601109, 5570560);
-      EntityRegistry.registerModEntity(EntityThaumicSlime.class, "ThaumSlime", id++, Thaumcraft.instance, 64, 3, true);
+      EntityRegistry.registerModEntity(new ResourceLocation("thaumcraft", "thaumslime"), EntityThaumicSlime.class, "ThaumSlime", id++, Thaumcraft.instance, 64, 3, true);
       ItemSpawnerEgg.addMapping("ThaumSlime", 16761087, 16744703);
-      EntityRegistry.registerModEntity(EntityTaintSpider.class, "TaintSpider", id++, Thaumcraft.instance, 64, 3, true);
+      EntityRegistry.registerModEntity(new ResourceLocation("thaumcraft", "taintspider"), EntityTaintSpider.class, "TaintSpider", id++, Thaumcraft.instance, 64, 3, true);
       ItemSpawnerEgg.addMapping("TaintSpider", 16761087, 4210752);
-      EntityRegistry.registerModEntity(EntityTaintacle.class, "Taintacle", id++, Thaumcraft.instance, 64, 3, false);
+      EntityRegistry.registerModEntity(new ResourceLocation("thaumcraft", "taintacle"), EntityTaintacle.class, "Taintacle", id++, Thaumcraft.instance, 64, 3, false);
       ItemSpawnerEgg.addMapping("Taintacle", 16761087, 8388736);
-      EntityRegistry.registerModEntity(EntityTaintacleSmall.class, "TaintacleTiny", id++, Thaumcraft.instance, 64, 3, false);
+      EntityRegistry.registerModEntity(new ResourceLocation("thaumcraft", "taintacletiny"), EntityTaintacleSmall.class, "TaintacleTiny", id++, Thaumcraft.instance, 64, 3, false);
       ItemSpawnerEgg.addMapping("TaintacleTiny", 16761087, 8388752);
-      EntityRegistry.registerModEntity(EntityTaintSpore.class, "TaintSpore", id++, Thaumcraft.instance, 64, 20, false);
+      EntityRegistry.registerModEntity(new ResourceLocation("thaumcraft", "taintspore"), EntityTaintSpore.class, "TaintSpore", id++, Thaumcraft.instance, 64, 20, false);
       ItemSpawnerEgg.addMapping("TaintSpore", 16761087, 8388720);
-      EntityRegistry.registerModEntity(EntityTaintSporeSwarmer.class, "TaintSwarmer", id++, Thaumcraft.instance, 64, 20, false);
+      EntityRegistry.registerModEntity(new ResourceLocation("thaumcraft", "taintswarmer"), EntityTaintSporeSwarmer.class, "TaintSwarmer", id++, Thaumcraft.instance, 64, 20, false);
       ItemSpawnerEgg.addMapping("TaintSwarmer", 16761087, 8388704);
-      EntityRegistry.registerModEntity(EntityTaintSwarm.class, "TaintSwarm", id++, Thaumcraft.instance, 64, 3, true);
+      EntityRegistry.registerModEntity(new ResourceLocation("thaumcraft", "taintswarm"), EntityTaintSwarm.class, "TaintSwarm", id++, Thaumcraft.instance, 64, 3, true);
       ItemSpawnerEgg.addMapping("TaintSwarm", 16761087, 8388688);
-      EntityRegistry.registerModEntity(EntityTaintChicken.class, "TaintedChicken", id++, Thaumcraft.instance, 64, 3, true);
+      EntityRegistry.registerModEntity(new ResourceLocation("thaumcraft", "taintedchicken"), EntityTaintChicken.class, "TaintedChicken", id++, Thaumcraft.instance, 64, 3, true);
       ItemSpawnerEgg.addMapping("TaintedChicken", 16761087, 12632256);
-      EntityRegistry.registerModEntity(EntityTaintCow.class, "TaintedCow", id++, Thaumcraft.instance, 64, 3, true);
+      EntityRegistry.registerModEntity(new ResourceLocation("thaumcraft", "taintedcow"), EntityTaintCow.class, "TaintedCow", id++, Thaumcraft.instance, 64, 3, true);
       ItemSpawnerEgg.addMapping("TaintedCow", 16761087, 8272443);
-      EntityRegistry.registerModEntity(EntityTaintCreeper.class, "TaintedCreeper", id++, Thaumcraft.instance, 64, 3, true);
+      EntityRegistry.registerModEntity(new ResourceLocation("thaumcraft", "taintedcreeper"), EntityTaintCreeper.class, "TaintedCreeper", id++, Thaumcraft.instance, 64, 3, true);
       ItemSpawnerEgg.addMapping("TaintedCreeper", 16761087, 65280);
-      EntityRegistry.registerModEntity(EntityTaintPig.class, "TaintedPig", id++, Thaumcraft.instance, 64, 3, true);
+      EntityRegistry.registerModEntity(new ResourceLocation("thaumcraft", "taintedpig"), EntityTaintPig.class, "TaintedPig", id++, Thaumcraft.instance, 64, 3, true);
       ItemSpawnerEgg.addMapping("TaintedPig", 16761087, 15702511);
-      EntityRegistry.registerModEntity(EntityTaintSheep.class, "TaintedSheep", id++, Thaumcraft.instance, 64, 3, true);
+      EntityRegistry.registerModEntity(new ResourceLocation("thaumcraft", "taintedsheep"), EntityTaintSheep.class, "TaintedSheep", id++, Thaumcraft.instance, 64, 3, true);
       ItemSpawnerEgg.addMapping("TaintedSheep", 16761087, 8421504);
-      EntityRegistry.registerModEntity(EntityTaintVillager.class, "TaintedVillager", id++, Thaumcraft.instance, 64, 3, true);
+      EntityRegistry.registerModEntity(new ResourceLocation("thaumcraft", "taintedvillager"), EntityTaintVillager.class, "TaintedVillager", id++, Thaumcraft.instance, 64, 3, true);
       ItemSpawnerEgg.addMapping("TaintedVillager", 16761087, 65535);
-      EntityRegistry.registerModEntity(EntityTaintacleGiant.class, "TaintacleGiant", id++, Thaumcraft.instance, 64, 3, false);
+      EntityRegistry.registerModEntity(new ResourceLocation("thaumcraft", "taintaclegiant"), EntityTaintacleGiant.class, "TaintacleGiant", id++, Thaumcraft.instance, 64, 3, false);
       ItemSpawnerEgg.addMapping("TaintacleGiant", 16761087, 8421504);
-      EntityRegistry.registerModEntity(EntityItemGrate.class, "SpecialItemGrate", id++, Thaumcraft.instance, 64, 20, true);
-      EntityRegistry.registerModEntity(EntityGolemBobber.class, "GolemBobber", id++, Thaumcraft.instance, 64, 64, false);
+      EntityRegistry.registerModEntity(new ResourceLocation("thaumcraft", "specialitemgrate"), EntityItemGrate.class, "SpecialItemGrate", id++, Thaumcraft.instance, 64, 20, true);
+      EntityRegistry.registerModEntity(new ResourceLocation("thaumcraft", "golembobber"), EntityGolemBobber.class, "GolemBobber", id++, Thaumcraft.instance, 64, 64, false);
    }
 
    public static void initEntitySpawns() {
-      List<BiomeGenBase> biomes = WorldChunkManager.allowedBiomes;
-      BiomeGenBase[] allBiomes = biomes.toArray(new BiomeGenBase[]{null});
+      // Iterate all registered biomes in 1.12.2 (replaces WorldChunkManager.allowedBiomes)
+      Iterable<Biome> allBiomes = ForgeRegistries.BIOMES.getValuesCollection();
+
       if (Config.spawnAngryZombie) {
-         for(BiomeGenBase bgb : biomes) {
-            if (bgb.getSpawnableList(EnumCreatureType.monster) != null & !bgb.getSpawnableList(EnumCreatureType.monster).isEmpty()) {
-               EntityRegistry.addSpawn(EntityBrainyZombie.class, 10, 1, 1, EnumCreatureType.monster, bgb);
+         for (Biome bgb : allBiomes) {
+            if (bgb.getSpawnableList(EnumCreatureType.MONSTER) != null
+                  && !bgb.getSpawnableList(EnumCreatureType.MONSTER).isEmpty()) {
+               EntityRegistry.addSpawn(EntityBrainyZombie.class, 10, 1, 1, EnumCreatureType.MONSTER, bgb);
             }
          }
       }
 
       if (Config.spawnPech) {
-         for(BiomeGenBase bgb : BiomeDictionary.getBiomesForType(Type.MAGICAL)) {
-            if (bgb.getSpawnableList(EnumCreatureType.monster) != null & !bgb.getSpawnableList(EnumCreatureType.monster).isEmpty()) {
-               EntityRegistry.addSpawn(EntityPech.class, 10, 1, 1, EnumCreatureType.monster, bgb);
+         Set<Biome> magicalBiomes = BiomeDictionary.getBiomes(Type.MAGICAL);
+         for (Biome bgb : magicalBiomes) {
+            if (bgb.getSpawnableList(EnumCreatureType.MONSTER) != null
+                  && !bgb.getSpawnableList(EnumCreatureType.MONSTER).isEmpty()) {
+               EntityRegistry.addSpawn(EntityPech.class, 10, 1, 1, EnumCreatureType.MONSTER, bgb);
             }
          }
       }
 
       if (Config.spawnFireBat) {
-         EntityRegistry.addSpawn(EntityFireBat.class, 10, 1, 2, EnumCreatureType.monster, BiomeDictionary.getBiomesForType(Type.NETHER));
+         Set<Biome> netherBiomes = BiomeDictionary.getBiomes(Type.NETHER);
+         Biome[] netherArray = netherBiomes.toArray(new Biome[0]);
+         EntityRegistry.addSpawn(EntityFireBat.class, 10, 1, 2, EnumCreatureType.MONSTER, netherArray);
          Calendar calendar = Calendar.getInstance();
          calendar.setTimeInMillis(System.currentTimeMillis());
          if (calendar.get(Calendar.MONTH) + 1 == 10 && calendar.get(Calendar.DATE) == 31) {
-            EntityRegistry.addSpawn(EntityFireBat.class, 5, 1, 2, EnumCreatureType.monster, biomes.toArray(allBiomes));
+            // Halloween: spawn in all biomes
+            Biome[] allArray = ((java.util.Collection<Biome>) allBiomes).toArray(new Biome[0]);
+            EntityRegistry.addSpawn(EntityFireBat.class, 5, 1, 2, EnumCreatureType.MONSTER, allArray);
          }
       }
 
       if (Config.spawnWisp) {
-         EntityRegistry.addSpawn(EntityWisp.class, 5, 1, 1, EnumCreatureType.monster, BiomeDictionary.getBiomesForType(Type.NETHER));
+         Set<Biome> netherBiomes = BiomeDictionary.getBiomes(Type.NETHER);
+         Biome[] netherArray = netherBiomes.toArray(new Biome[0]);
+         EntityRegistry.addSpawn(EntityWisp.class, 5, 1, 1, EnumCreatureType.MONSTER, netherArray);
       }
 
       FMLInterModComms.sendMessage("Thaumcraft", "championWhiteList", "Zombie:0");

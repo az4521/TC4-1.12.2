@@ -2,21 +2,21 @@ package thaumcraft.common.items.baubles;
 
 import baubles.api.BaubleType;
 import baubles.api.IBauble;
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import java.util.List;
-import net.minecraft.client.renderer.texture.IIconRegister;
+import thaumcraft.client.renderers.compat.IIconRegister;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.item.EnumRarity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.IIcon;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import thaumcraft.api.ItemRunic;
 import thaumcraft.common.Thaumcraft;
 
 public class ItemRingRunic extends ItemRunic implements IBauble {
-   public IIcon[] icon = new IIcon[5];
+   public TextureAtlasSprite[] icon = new TextureAtlasSprite[5];
 
    public ItemRingRunic() {
       super(5);
@@ -29,27 +29,29 @@ public class ItemRingRunic extends ItemRunic implements IBauble {
 
    @SideOnly(Side.CLIENT)
    public void registerIcons(IIconRegister ir) {
-      this.icon[0] = ir.registerIcon("thaumcraft:runic_ring_lesser");
-      this.icon[1] = ir.registerIcon("thaumcraft:runic_ring");
-      this.icon[2] = ir.registerIcon("thaumcraft:runic_ring_charged");
-      this.icon[3] = ir.registerIcon("thaumcraft:runic_ring_regen");
+      this.icon[0] = ir.registerSprite("thaumcraft:runic_ring_lesser");
+      this.icon[1] = ir.registerSprite("thaumcraft:runic_ring");
+      this.icon[2] = ir.registerSprite("thaumcraft:runic_ring_charged");
+      this.icon[3] = ir.registerSprite("thaumcraft:runic_ring_regen");
    }
 
    @SideOnly(Side.CLIENT)
-   public IIcon getIconFromDamage(int par1) {
+   public TextureAtlasSprite getIconFromDamage(int par1) {
       return this.icon[par1];
    }
 
    public EnumRarity getRarity(ItemStack itemstack) {
-      return itemstack.getItemDamage() == 0 ? EnumRarity.uncommon : EnumRarity.rare;
+      return itemstack.getItemDamage() == 0 ? EnumRarity.UNCOMMON : EnumRarity.RARE;
    }
 
-   public String getUnlocalizedName(ItemStack par1ItemStack) {
-      return super.getUnlocalizedName() + "." + par1ItemStack.getItemDamage();
+   @Override
+   public String getTranslationKey(ItemStack par1ItemStack) {
+      return getTranslationKey() + "." + par1ItemStack.getItemDamage();
    }
 
    @SideOnly(Side.CLIENT)
-   public void getSubItems(Item par1, CreativeTabs par2CreativeTabs, List par3List) {
+   @Override
+   public void getSubItems(CreativeTabs par2CreativeTabs, net.minecraft.util.NonNullList<ItemStack> par3List) {
       par3List.add(new ItemStack(this, 1, 0));
       par3List.add(new ItemStack(this, 1, 1));
       par3List.add(new ItemStack(this, 1, 2));

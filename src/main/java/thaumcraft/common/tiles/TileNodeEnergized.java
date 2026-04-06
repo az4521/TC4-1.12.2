@@ -2,7 +2,7 @@ package thaumcraft.common.tiles;
 
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
-import net.minecraft.util.MathHelper;
+import net.minecraft.util.math.MathHelper;
 import thaumcraft.api.aspects.Aspect;
 import thaumcraft.api.aspects.AspectList;
 import thaumcraft.api.aspects.IAspectContainer;
@@ -10,6 +10,7 @@ import thaumcraft.api.nodes.NodeModifier;
 import thaumcraft.api.nodes.NodeType;
 import thaumcraft.api.visnet.TileVisNode;
 import thaumcraft.common.lib.research.ResearchManager;
+import net.minecraft.util.math.BlockPos;
 
 public class TileNodeEnergized extends TileVisNode implements IAspectContainer {
    private AspectList auraBase;
@@ -29,9 +30,8 @@ public class TileNodeEnergized extends TileVisNode implements IAspectContainer {
    }
 
    public void updateEntity() {
-      super.updateEntity();
-      if (!this.worldObj.isRemote) {
-         if (this.getNodeType() == NodeType.UNSTABLE && this.worldObj.rand.nextInt(500) == 1) {
+            if (!this.world.isRemote) {
+         if (this.getNodeType() == NodeType.UNSTABLE && this.world.rand.nextInt(500) == 1) {
             this.visBase = new AspectList();
          }
 
@@ -42,10 +42,6 @@ public class TileNodeEnergized extends TileVisNode implements IAspectContainer {
          this.vis = this.visBase.copy();
       }
 
-   }
-
-   public boolean canUpdate() {
-       return super.canUpdate();
    }
 
    public void setupNode() {
@@ -66,9 +62,9 @@ public class TileNodeEnergized extends TileVisNode implements IAspectContainer {
             amt = (int)((float)amt * 0.5F);
          }
 
-         amt = MathHelper.floor_double(MathHelper.sqrt_double(amt));
+         amt = MathHelper.floor(MathHelper.sqrt(amt));
          if (this.getNodeType() == NodeType.UNSTABLE) {
-            amt += this.worldObj.rand.nextInt(5) - 2;
+            amt += this.world.rand.nextInt(5) - 2;
          }
 
          if (amt >= 1) {
@@ -77,15 +73,16 @@ public class TileNodeEnergized extends TileVisNode implements IAspectContainer {
       }
 
       this.markDirty();
-      this.worldObj.markBlockForUpdate(this.xCoord, this.yCoord, this.zCoord);
+      { net.minecraft.block.state.IBlockState _bs = this.world.getBlockState(this.pos); this.world.notifyBlockUpdate(this.pos, _bs, _bs, 3); }
    }
 
    public void readFromNBT(NBTTagCompound nbttagcompound) {
       super.readFromNBT(nbttagcompound);
    }
 
-   public void writeToNBT(NBTTagCompound nbttagcompound) {
+   public NBTTagCompound writeToNBT(NBTTagCompound nbttagcompound) {
       super.writeToNBT(nbttagcompound);
+      return nbttagcompound;
    }
 
    public void readCustomNBT(NBTTagCompound nbttagcompound) {

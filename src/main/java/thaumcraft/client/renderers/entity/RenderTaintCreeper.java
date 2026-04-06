@@ -5,18 +5,20 @@ import net.minecraft.client.model.ModelCreeper;
 import net.minecraft.client.renderer.entity.RenderLiving;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.util.MathHelper;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.ResourceLocation;
-import org.lwjgl.opengl.GL11;
-import thaumcraft.common.entities.monster.EntityTaintCreeper;
 
+import thaumcraft.common.entities.monster.EntityTaintCreeper;
+import net.minecraft.client.renderer.GlStateManager;
+
+import net.minecraft.client.renderer.entity.RenderManager;
 public class RenderTaintCreeper extends RenderLiving {
    private ModelBase field_27008_a = new ModelCreeper(2.0F);
    private static final ResourceLocation rl = new ResourceLocation("thaumcraft", "textures/models/creeper.png");
    private static final ResourceLocation armoredCreeperTextures = new ResourceLocation("thaumcraft", "textures/entity/creeper/creeper_armor.png");
 
-   public RenderTaintCreeper() {
-      super(new ModelCreeper(), 0.5F);
+   public RenderTaintCreeper(RenderManager renderManager) {
+      super(renderManager, new ModelCreeper(), 0.5F);
    }
 
    protected ResourceLocation getEntityTexture(Entity entity) {
@@ -38,7 +40,7 @@ public class RenderTaintCreeper extends RenderLiving {
       var4 *= var4;
       float var6 = (1.0F + var4 * 0.4F) * var5;
       float var7 = (1.0F + var4 * 0.1F) / var5;
-      GL11.glScalef(var6, var7, var6);
+      GlStateManager.scale(var6, var7, var6);
    }
 
    protected int updateCreeperColorMultiplier(EntityTaintCreeper par1EntityCreeper, float par2, float par3) {

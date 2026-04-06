@@ -1,19 +1,20 @@
 package thaumcraft.common.tiles;
 
 import net.minecraft.tileentity.TileEntity;
-import net.minecraftforge.common.util.ForgeDirection;
+import net.minecraft.util.EnumFacing;
 import thaumcraft.api.TileThaumcraft;
 import thaumcraft.api.aspects.Aspect;
 import thaumcraft.api.aspects.AspectList;
 import thaumcraft.api.aspects.IAspectContainer;
 import thaumcraft.api.aspects.IEssentiaTransport;
+import net.minecraft.util.math.BlockPos;
 
 public class TileAlchemyFurnaceAdvancedNozzle extends TileThaumcraft implements IAspectContainer, IEssentiaTransport {
-   ForgeDirection facing;
+   EnumFacing facing;
    public TileAlchemyFurnaceAdvanced furnace;
 
    public TileAlchemyFurnaceAdvancedNozzle() {
-      this.facing = ForgeDirection.UNKNOWN;
+      this.facing = EnumFacing.UP; // sentinel: "not yet initialized"
       this.furnace = null;
    }
 
@@ -22,11 +23,11 @@ public class TileAlchemyFurnaceAdvancedNozzle extends TileThaumcraft implements 
    }
 
    public void updateEntity() {
-      if (this.facing == ForgeDirection.UNKNOWN && this.furnace == null) {
+      if (this.facing == EnumFacing.UP && this.furnace == null) {
          this.facing = null;
 
-         for(ForgeDirection dir : ForgeDirection.VALID_DIRECTIONS) {
-            TileEntity tile = this.worldObj.getTileEntity(this.xCoord + dir.offsetX, this.yCoord + dir.offsetY, this.zCoord + dir.offsetZ);
+         for(EnumFacing dir : EnumFacing.values()) {
+            TileEntity tile = this.world.getTileEntity(new BlockPos(this.getPos().getX() + dir.getXOffset(), this.getPos().getY() + dir.getYOffset(), this.getPos().getZ() + dir.getZOffset()));
             if (tile instanceof TileAlchemyFurnaceAdvanced) {
                this.facing = dir.getOpposite();
                this.furnace = (TileAlchemyFurnaceAdvanced)tile;
@@ -55,7 +56,7 @@ public class TileAlchemyFurnaceAdvancedNozzle extends TileThaumcraft implements 
          this.furnace.aspects.remove(tt, am);
          this.furnace.markDirty();
          this.furnace.vis = this.furnace.aspects.visSize();
-         this.worldObj.markBlockForUpdate(this.furnace.xCoord, this.furnace.yCoord, this.furnace.zCoord);
+         { net.minecraft.block.state.IBlockState _bs = this.world.getBlockState(this.furnace.getPos()); this.world.notifyBlockUpdate(this.furnace.getPos(), _bs, _bs, 3); }
          return true;
       } else {
          return false;
@@ -86,15 +87,15 @@ public class TileAlchemyFurnaceAdvancedNozzle extends TileThaumcraft implements 
       return false;
    }
 
-   public boolean isConnectable(ForgeDirection face) {
+   public boolean isConnectable(EnumFacing face) {
       return face == this.facing;
    }
 
-   public boolean canInputFrom(ForgeDirection face) {
+   public boolean canInputFrom(EnumFacing face) {
       return false;
    }
 
-   public boolean canOutputTo(ForgeDirection face) {
+   public boolean canOutputTo(EnumFacing face) {
       return face == this.facing;
    }
 
@@ -109,27 +110,27 @@ public class TileAlchemyFurnaceAdvancedNozzle extends TileThaumcraft implements 
       return 0;
    }
 
-   public Aspect getSuctionType(ForgeDirection face) {
+   public Aspect getSuctionType(EnumFacing face) {
       return null;
    }
 
-   public int getSuctionAmount(ForgeDirection face) {
+   public int getSuctionAmount(EnumFacing face) {
       return 0;
    }
 
-   public Aspect getEssentiaType(ForgeDirection loc) {
+   public Aspect getEssentiaType(EnumFacing loc) {
       return this.furnace != null ? this.furnace.aspects.getAspects()[0] : null;
    }
 
-   public int getEssentiaAmount(ForgeDirection loc) {
+   public int getEssentiaAmount(EnumFacing loc) {
       return this.furnace != null ? this.furnace.aspects.getAmount(this.furnace.aspects.getAspects()[0]) : null;
    }
 
-   public int takeEssentia(Aspect aspect, int amount, ForgeDirection facing) {
+   public int takeEssentia(Aspect aspect, int amount, EnumFacing facing) {
       return this.canOutputTo(facing) && this.takeFromContainer(aspect, amount) ? amount : 0;
    }
 
-   public int addEssentia(Aspect aspect, int amount, ForgeDirection facing) {
+   public int addEssentia(Aspect aspect, int amount, EnumFacing facing) {
       return 0;
    }
 }

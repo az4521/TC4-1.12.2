@@ -1,8 +1,8 @@
 package thaumcraft.common.lib.network.fx;
 
-import cpw.mods.fml.common.network.simpleimpl.IMessage;
-import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
-import cpw.mods.fml.common.network.simpleimpl.MessageContext;
+import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
+import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
+import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.entity.Entity;
 import thaumcraft.common.Thaumcraft;
@@ -50,7 +50,7 @@ public class PacketFXBlockArc implements IMessage, IMessageHandler<PacketFXBlock
             b = 0.0F;
          }
 
-         Thaumcraft.proxy.arcLightning(Thaumcraft.proxy.getClientWorld(), p.posX, p.boundingBox.minY + (double)(p.height / 2.0F), p.posZ, (double)message.x + (double)0.5F, message.y + 1, (double)message.z + (double)0.5F, r, g, b, 0.5F);
+         Thaumcraft.proxy.arcLightning(Thaumcraft.proxy.getClientWorld(), p.posX, p.getEntityBoundingBox().minY + (double)(p.height / 2.0F), p.posZ, (double)message.x + (double)0.5F, message.y + 1, (double)message.z + (double)0.5F, r, g, b, 0.5F);
       }
 
       return null;

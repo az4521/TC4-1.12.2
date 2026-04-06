@@ -5,8 +5,9 @@ import net.minecraft.client.model.ModelRenderer;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.item.ItemStack;
-import org.lwjgl.opengl.GL11;
+
 import thaumcraft.common.entities.golems.EntityGolemBase;
+import net.minecraft.client.renderer.GlStateManager;
 
 public class ModelGolem extends ModelBase {
    public ModelRenderer golemHead;
@@ -47,27 +48,27 @@ public class ModelGolem extends ModelBase {
 
    public void render(Entity e, float par2, float par3, float par4, float par5, float par6, float par7) {
       this.setRotationAngles(e, par2, par3, par4, par5, par6, par7);
-      GL11.glPushMatrix();
+      GlStateManager.pushMatrix();
       if (this.pass == 2) {
-         GL11.glEnable(GL11.GL_BLEND);
-         GL11.glBlendFunc(770, 771);
-         GL11.glAlphaFunc(516, 0.003921569F);
+         GlStateManager.enableBlend();
+         GlStateManager.blendFunc(770, 771);
+         GlStateManager.alphaFunc(516, 0.003921569F);
       }
 
-      GL11.glScaled(0.4, 0.4, 0.4);
+      GlStateManager.scale(0.4, 0.4, 0.4);
       this.golemHead.render(par7);
       this.golemBody.render(par7);
       this.golemRightLeg.render(par7);
       this.golemLeftLeg.render(par7);
       this.golemRightArm.render(par7);
       this.golemLeftArm.render(par7);
-      GL11.glScaled(1.0F, 1.0F, 1.0F);
+      GlStateManager.scale(1.0F, 1.0F, 1.0F);
       if (this.pass == 2) {
-         GL11.glAlphaFunc(516, 0.1F);
-         GL11.glDisable(GL11.GL_BLEND);
+         GlStateManager.alphaFunc(516, 0.1F);
+         GlStateManager.disableBlend();
       }
 
-      GL11.glPopMatrix();
+      GlStateManager.popMatrix();
    }
 
    public void setRotationAngles(Entity en, float par1, float par2, float par3, float par4, float par5, float par6) {
@@ -81,7 +82,7 @@ public class ModelGolem extends ModelBase {
          if (this.pass == 0 && ((EntityGolemBase)en).healing > 0) {
             float h1 = (float)((EntityGolemBase)en).healing / 10.0F;
             float h2 = (float)((EntityGolemBase)en).healing / 5.0F;
-            GL11.glColor3f(0.5F + h1, 0.9F + h2, 0.5F + h1);
+            GlStateManager.color(0.5F + h1, 0.9F + h2, 0.5F + h1);
          }
       }
 
@@ -97,8 +98,8 @@ public class ModelGolem extends ModelBase {
             this.golemHead.rotateAngleX = par5 / (180F / (float)Math.PI);
          }
 
-         this.golemRightLeg.rotateAngleX = -1.5F * this.func_78172_a(par1, 13.0F) * par2;
-         this.golemLeftLeg.rotateAngleX = 1.5F * this.func_78172_a(par1, 13.0F) * par2;
+         this.golemRightLeg.rotateAngleX = -1.5F * this.triangleWave(par1, 13.0F) * par2;
+         this.golemLeftLeg.rotateAngleX = 1.5F * this.triangleWave(par1, 13.0F) * par2;
          this.golemRightLeg.rotateAngleY = 0.0F;
          this.golemLeftLeg.rotateAngleY = 0.0F;
          this.golemLeftArm.rotateAngleZ = 0.0F;
@@ -140,29 +141,29 @@ public class ModelGolem extends ModelBase {
       }
 
       if (var6 > 0) {
-         this.golemRightArm.rotateAngleX = -2.0F + 1.5F * this.func_78172_a((float)var6 - par4, 5.0F);
-         this.golemLeftArm.rotateAngleX = -2.0F + 1.5F * this.func_78172_a((float)var6 - par4, 5.0F);
+         this.golemRightArm.rotateAngleX = -2.0F + 1.5F * this.triangleWave((float)var6 - par4, 5.0F);
+         this.golemLeftArm.rotateAngleX = -2.0F + 1.5F * this.triangleWave((float)var6 - par4, 5.0F);
       } else if (leftarm <= 0 && rightarm <= 0) {
          if (carried == null && !bucket) {
-            this.golemRightArm.rotateAngleX = (-0.2F + 1.5F * this.func_78172_a(par2, 13.0F)) * par3;
-            this.golemLeftArm.rotateAngleX = (-0.2F - 1.5F * this.func_78172_a(par2, 13.0F)) * par3;
+            this.golemRightArm.rotateAngleX = (-0.2F + 1.5F * this.triangleWave(par2, 13.0F)) * par3;
+            this.golemLeftArm.rotateAngleX = (-0.2F - 1.5F * this.triangleWave(par2, 13.0F)) * par3;
          } else {
             this.golemRightArm.rotateAngleX = -1.0F;
             this.golemLeftArm.rotateAngleX = -1.0F;
          }
       } else {
          if (leftarm > 0) {
-            this.golemLeftArm.rotateAngleX = -2.0F + 1.5F * this.func_78172_a((float)leftarm - par4, 20.0F);
+            this.golemLeftArm.rotateAngleX = -2.0F + 1.5F * this.triangleWave((float)leftarm - par4, 20.0F);
          }
 
          if (rightarm > 0) {
-            this.golemRightArm.rotateAngleX = -2.0F + 1.5F * this.func_78172_a((float)rightarm - par4, 20.0F);
+            this.golemRightArm.rotateAngleX = -2.0F + 1.5F * this.triangleWave((float)rightarm - par4, 20.0F);
          }
       }
 
    }
 
-   private float func_78172_a(float par1, float par2) {
+   private float triangleWave(float par1, float par2) {
       return (Math.abs(par1 % par2 - par2 * 0.5F) - par2 * 0.25F) / (par2 * 0.25F);
    }
 }

@@ -1,9 +1,9 @@
 package thaumcraft.common.entities.golems;
 
-import cpw.mods.fml.common.FMLCommonHandler;
-import cpw.mods.fml.common.registry.IEntityAdditionalSpawnData;
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
+import net.minecraftforge.fml.common.FMLCommonHandler;
+import net.minecraftforge.fml.common.registry.IEntityAdditionalSpawnData;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import fromhodgepodge.mixins.hooks.ThaumcraftMixinMethods;
 import io.netty.buffer.ByteBuf;
 import java.util.ArrayList;
@@ -26,15 +26,22 @@ import net.minecraft.entity.passive.IAnimals;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
 import net.minecraft.init.Items;
-import net.minecraft.item.Item;
+import net.minecraft.init.SoundEvents;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
+import net.minecraft.network.datasync.DataParameter;
+import net.minecraft.network.datasync.DataSerializers;
+import net.minecraft.network.datasync.EntityDataManager;
 import net.minecraft.potion.Potion;
 import net.minecraft.potion.PotionEffect;
 import net.minecraft.util.DamageSource;
-import net.minecraft.util.MathHelper;
-import net.minecraft.util.StatCollector;
+import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.SoundCategory;
+import net.minecraft.util.SoundEvent;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.text.translation.I18n;
 import net.minecraft.world.World;
 import net.minecraftforge.fluids.FluidStack;
 import org.apache.logging.log4j.Level;
@@ -83,6 +90,27 @@ import thaumcraft.common.lib.utils.InventoryUtils;
 import thaumcraft.common.lib.utils.Utils;
 
 public class EntityGolemBase extends EntityGolem implements IEntityAdditionalSpawnData {
+
+   // DataParameters replacing the old dataWatcher integer-keyed slots
+   private static final DataParameter<ItemStack> DW_CARRIED =
+         EntityDataManager.createKey(EntityGolemBase.class, DataSerializers.ITEM_STACK);
+   private static final DataParameter<String>  DW_OWNER      =
+         EntityDataManager.createKey(EntityGolemBase.class, DataSerializers.STRING);
+   private static final DataParameter<Byte>    DW_TOGGLES    =
+         EntityDataManager.createKey(EntityGolemBase.class, DataSerializers.BYTE);
+   private static final DataParameter<Byte>    DW_GOLEM_TYPE =
+         EntityDataManager.createKey(EntityGolemBase.class, DataSerializers.BYTE);
+   private static final DataParameter<String>  DW_DECORATION =
+         EntityDataManager.createKey(EntityGolemBase.class, DataSerializers.STRING);
+   private static final DataParameter<Byte>    DW_CORE       =
+         EntityDataManager.createKey(EntityGolemBase.class, DataSerializers.BYTE);
+   private static final DataParameter<String>  DW_COLORS     =
+         EntityDataManager.createKey(EntityGolemBase.class, DataSerializers.STRING);
+   private static final DataParameter<String>  DW_UPGRADES   =
+         EntityDataManager.createKey(EntityGolemBase.class, DataSerializers.STRING);
+   private static final DataParameter<Byte>    DW_HEALTH_PCT =
+         EntityDataManager.createKey(EntityGolemBase.class, DataSerializers.BYTE);
+
    public InventoryMob inventory;
    public ItemStack itemCarried;
    public FluidStack fluidCarried;
@@ -128,24 +156,27 @@ public class EntityGolemBase extends EntityGolem implements IEntityAdditionalSpa
       this.leftArm = 0;
       this.rightArm = 0;
       this.healing = 0;
-      this.dataWatcher.addObject(30, (byte)((int)this.getMaxHealth()));
+      this.dataManager.set(DW_HEALTH_PCT, (byte)((int)this.getMaxHealth()));
       this.stepHeight = 1.0F;
       this.colors = new byte[]{-1};
       this.upgrades = new byte[]{-1};
       this.setSize(0.4F, 0.95F);
-      this.getNavigator().setBreakDoors(true);
-      this.getNavigator().setEnterDoors(true);
-      this.getNavigator().setCanSwim(true);
-      this.func_110163_bv();
+      if (this.getNavigator() instanceof net.minecraft.pathfinding.PathNavigateGround) {
+         net.minecraft.pathfinding.PathNavigateGround nav = (net.minecraft.pathfinding.PathNavigateGround) this.getNavigator();
+         nav.setBreakDoors(true);
+         nav.setEnterDoors(true);
+         nav.setCanSwim(true);
+      }
+      this.enablePersistence();
    }
 
    protected void applyEntityAttributes() {
       super.applyEntityAttributes();
-      this.getEntityAttribute(SharedMonsterAttributes.maxHealth).setBaseValue(20.0F);
-      this.getAttributeMap().registerAttribute(SharedMonsterAttributes.attackDamage);
-      this.getEntityAttribute(SharedMonsterAttributes.attackDamage).setBaseValue(1.0F);
-      this.getEntityAttribute(SharedMonsterAttributes.movementSpeed).setBaseValue(0.6);
-      this.getEntityAttribute(SharedMonsterAttributes.followRange).setBaseValue(32.0F);
+      this.getEntityAttribute(SharedMonsterAttributes.MAX_HEALTH).setBaseValue(20.0F);
+      this.getAttributeMap().registerAttribute(SharedMonsterAttributes.ATTACK_DAMAGE);
+      this.getEntityAttribute(SharedMonsterAttributes.ATTACK_DAMAGE).setBaseValue(1.0F);
+      this.getEntityAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).setBaseValue(0.6);
+      this.getEntityAttribute(SharedMonsterAttributes.FOLLOW_RANGE).setBaseValue(32.0F);
    }
 
    public EntityGolemBase(World par0World, EnumGolemType type, boolean adv) {
@@ -201,11 +232,15 @@ public class EntityGolemBase extends EntityGolem implements IEntityAdditionalSpa
    }
 
    public boolean setupGolem() {
-      if (!this.worldObj.isRemote) {
-         this.dataWatcher.updateObject(19, (byte)this.golemType.ordinal());
+      if (!this.world.isRemote) {
+         this.dataManager.set(DW_GOLEM_TYPE, (byte)this.golemType.ordinal());
       }
 
-       this.getNavigator().setAvoidsWater(this.getGolemType() != EnumGolemType.STONE && this.getGolemType() != EnumGolemType.IRON && this.getGolemType() != EnumGolemType.THAUMIUM);
+      // Stone/Iron/Thaumium golems don't avoid water; others do (high path penalty)
+      boolean avoidsWater = this.getGolemType() != EnumGolemType.STONE
+            && this.getGolemType() != EnumGolemType.IRON
+            && this.getGolemType() != EnumGolemType.THAUMIUM;
+      this.setPathPriority(net.minecraft.pathfinding.PathNodeType.WATER, avoidsWater ? -1.0F : 0.0F);
 
       if (this.getGolemType().fireResist) {
          this.isImmuneToFire = true;
@@ -218,7 +253,7 @@ public class EntityGolemBase extends EntityGolem implements IEntityAdditionalSpa
       } catch (Exception ignored) {
       }
 
-      this.getEntityAttribute(SharedMonsterAttributes.maxHealth).setBaseValue(this.getGolemType().health + bonus);
+      this.getEntityAttribute(SharedMonsterAttributes.MAX_HEALTH).setBaseValue(this.getGolemType().health + bonus);
       int damage = 2 + this.getGolemStrength() + this.getUpgradeAmount(1);
 
       try {
@@ -228,7 +263,7 @@ public class EntityGolemBase extends EntityGolem implements IEntityAdditionalSpa
       } catch (Exception ignored) {
       }
 
-      this.getEntityAttribute(SharedMonsterAttributes.attackDamage).setBaseValue(damage);
+      this.getEntityAttribute(SharedMonsterAttributes.ATTACK_DAMAGE).setBaseValue(damage);
       this.tasks.taskEntries.clear();
       if (this.getCore() > -1) {
          this.tasks.addTask(0, new AIAvoidCreeperSwell(this));
@@ -314,7 +349,7 @@ public class EntityGolemBase extends EntityGolem implements IEntityAdditionalSpa
 
    public int getCarryLimit() {
       int base = this.golemType.carry;
-      if (this.worldObj.isRemote) {
+      if (this.world.isRemote) {
          base = this.getGolemType().carry;
       }
 
@@ -323,7 +358,7 @@ public class EntityGolemBase extends EntityGolem implements IEntityAdditionalSpa
    }
 
    public int getFluidCarryLimit() {
-      return MathHelper.floor_double(Math.sqrt(this.getCarryLimit())) * 1000;
+      return MathHelper.floor(Math.sqrt(this.getCarryLimit())) * 1000;
    }
 
    public float getAIMoveSpeed() {
@@ -356,14 +391,15 @@ public class EntityGolemBase extends EntityGolem implements IEntityAdditionalSpa
 
    protected void entityInit() {
       super.entityInit();
-      this.getDataWatcher().addObjectByDataType(16, 5);
-      this.dataWatcher.addObject(17, "");
-      this.dataWatcher.addObject(18, (byte)0);
-      this.dataWatcher.addObject(19, (byte)0);
-      this.dataWatcher.addObject(20, "");
-      this.dataWatcher.addObject(21, -1);
-      this.dataWatcher.addObject(22, "");
-      this.dataWatcher.addObject(23, "");
+      this.dataManager.register(DW_CARRIED,    ItemStack.EMPTY);
+      this.dataManager.register(DW_OWNER,      "");
+      this.dataManager.register(DW_TOGGLES,    (byte)0);
+      this.dataManager.register(DW_GOLEM_TYPE, (byte)0);
+      this.dataManager.register(DW_DECORATION, "");
+      this.dataManager.register(DW_CORE,       (byte)-1);
+      this.dataManager.register(DW_COLORS,     "");
+      this.dataManager.register(DW_UPGRADES,   "");
+      this.dataManager.register(DW_HEALTH_PCT, (byte)0);
    }
 
    public boolean isAIEnabled() {
@@ -388,12 +424,15 @@ public class EntityGolemBase extends EntityGolem implements IEntityAdditionalSpa
          --this.healing;
       }
 
-      int xx = MathHelper.floor_double(this.posX);
-      int yy = MathHelper.floor_double(this.posY);
-      int zz = MathHelper.floor_double(this.posZ);
-       this.inactive = yy > 0 && this.worldObj.getBlock(xx, yy - 1, zz) == ConfigBlocks.blockCosmeticSolid && this.worldObj.getBlockMetadata(xx, yy - 1, zz) == 10;
+      int xx = MathHelper.floor(this.posX);
+      int yy = MathHelper.floor(this.posY);
+      int zz = MathHelper.floor(this.posZ);
+      BlockPos below = new BlockPos(xx, yy - 1, zz);
+      this.inactive = yy > 0
+            && this.world.getBlockState(below).getBlock() == ConfigBlocks.blockCosmeticSolid
+            && this.world.getBlockState(below).getBlock().getMetaFromState(this.world.getBlockState(below)) == 10;
 
-      if (!this.worldObj.isRemote) {
+      if (!this.world.isRemote) {
          if (this.regenTimer > 0) {
             --this.regenTimer;
          } else {
@@ -402,24 +441,26 @@ public class EntityGolemBase extends EntityGolem implements IEntityAdditionalSpa
                this.regenTimer = (int)((float)this.regenTimer * 0.66F);
             }
 
-            if (!this.worldObj.isRemote && this.getHealth() < this.getMaxHealth()) {
-               this.worldObj.setEntityState(this, (byte)5);
+            if (!this.world.isRemote && this.getHealth() < this.getMaxHealth()) {
+               this.world.setEntityState(this, (byte)5);
                this.heal(1.0F);
             }
          }
 
-         if (this.getDistanceSq(this.getHomePosition().posX, this.getHomePosition().posY, this.getHomePosition().posZ) >= (double)2304.0F || this.isEntityInsideOpaqueBlock()) {
-            int var1 = MathHelper.floor_double(this.getHomePosition().posX);
-            int var2 = MathHelper.floor_double(this.getHomePosition().posZ);
-            int var3 = MathHelper.floor_double(this.getHomePosition().posY);
+         BlockPos homePos = this.getHomePosition();
+         if (this.getDistanceSq(homePos.getX(), homePos.getY(), homePos.getZ()) >= (double)2304.0F || this.isEntityInsideOpaqueBlock()) {
+            int var1 = homePos.getX();
+            int var2 = homePos.getZ();
+            int var3 = homePos.getY();
 
             for(int var0 = 1; var0 >= -1; --var0) {
                for(int var4 = -1; var4 <= 1; ++var4) {
                   for(int var5 = -1; var5 <= 1; ++var5) {
-                     World var10000 = this.worldObj;
-                     if (World.doesBlockHaveSolidTopSurface(this.worldObj, var1 + var4, var3 - 1 + var0, var2 + var5) && !this.worldObj.isBlockNormalCubeDefault(var1 + var4, var3 + var0, var2 + var5, false)) {
+                     BlockPos checkPos = new BlockPos(var1 + var4, var3 - 1 + var0, var2 + var5);
+                     BlockPos standPos = new BlockPos(var1 + var4, var3 + var0, var2 + var5);
+                     if (this.world.isSideSolid(checkPos, net.minecraft.util.EnumFacing.UP) && !this.world.getBlockState(standPos).isNormalCube()) {
                         this.setLocationAndAngles((float)(var1 + var4) + 0.5F, (double)var3 + (double)var0, (float)(var2 + var5) + 0.5F, this.rotationYaw, this.rotationPitch);
-                        this.getNavigator().clearPathEntity();
+                        this.getNavigator().clearPath();
                         return;
                      }
                   }
@@ -428,7 +469,10 @@ public class EntityGolemBase extends EntityGolem implements IEntityAdditionalSpa
          }
       } else if (this.bootup > 0.0F && this.getCore() > -1) {
          this.bootup *= this.bootup / 33.1F;
-         this.worldObj.playSound(this.posX, this.posY, this.posZ, "thaumcraft:cameraticks", this.bootup * 0.2F, this.bootup, false);
+         SoundEvent _snd = SoundEvent.REGISTRY.getObject(new ResourceLocation("thaumcraft:cameraticks"));
+         if (_snd != null) {
+            this.world.playSound(null, new BlockPos(this.posX, this.posY, this.posZ), _snd, SoundCategory.NEUTRAL, this.bootup * 0.2F, this.bootup);
+         }
       }
 
    }
@@ -448,23 +492,29 @@ public class EntityGolemBase extends EntityGolem implements IEntityAdditionalSpa
 
    public boolean isWithinHomeDistance(int par1, int par2, int par3) {
       float dmod = this.getRange();
-      return this.getHomePosition().getDistanceSquared(par1, par2, par3) < dmod * dmod;
+      BlockPos homePos = this.getHomePosition();
+      double dx = par1 - homePos.getX();
+      double dy = par2 - homePos.getY();
+      double dz = par3 - homePos.getZ();
+      return dx*dx + dy*dy + dz*dz < dmod * dmod;
    }
 
-   protected void updateEntityActionState() {
-      ++this.entityAge;
+   // updateEntityActionState() was removed in 1.12.2 -- logic merged into updateAITasks()
+   @Override
+   protected void updateAITasks() {
+      super.updateAITasks();
+      ++this.ticksExisted;
       this.despawnEntity();
       boolean vara = this.isInWater();
-      boolean varb = this.handleLavaMovement();
+      boolean varb = this.isInLava();
       if (vara || varb) {
          this.isJumping = this.rand.nextFloat() < 0.8F;
       }
-
    }
 
    public void onDeath(DamageSource ds) {
-      if (!this.worldObj.isRemote) {
-         FMLCommonHandler.instance().getFMLLogger().log(Level.INFO, "[Thaumcraft] {} was killed by {} ( {} )",this,ds.getSourceOfDamage(),ds.getDamageType());
+      if (!this.world.isRemote) {
+         FMLCommonHandler.instance().getFMLLogger().log(Level.INFO, "[Thaumcraft] {} was killed by {} ( {} )",this,ds.getTrueSource(),ds.getDamageType());
       }
 
       super.onDeath(ds);
@@ -489,7 +539,7 @@ public class EntityGolemBase extends EntityGolem implements IEntityAdditionalSpa
    }
 
    public short getColors(int slot) {
-      char[] chars = this.dataWatcher.getWatchableObjectString(22).toCharArray();
+      char[] chars = this.dataManager.get(DW_COLORS).toCharArray();
       if (slot < chars.length) {
          return ("" + chars[slot]).equals("h") ? -1 : Short.parseShort("" + chars[slot], 16);
       } else {
@@ -509,11 +559,11 @@ public class EntityGolemBase extends EntityGolem implements IEntityAdditionalSpa
          }
       }
 
-      this.dataWatcher.updateObject(22, s.toString());
+      this.dataManager.set(DW_COLORS, s.toString());
    }
 
    public byte getUpgrade(int slot) {
-      char[] chars = this.dataWatcher.getWatchableObjectString(23).toCharArray();
+      char[] chars = this.dataManager.get(DW_UPGRADES).toCharArray();
       if (slot < chars.length) {
          byte t = Byte.parseByte("" + chars[slot], 16);
          return t == 15 ? -1 : t;
@@ -542,7 +592,7 @@ public class EntityGolemBase extends EntityGolem implements IEntityAdditionalSpa
          s.append(Integer.toHexString(c));
       }
 
-      this.dataWatcher.updateObject(23, s.toString());
+      this.dataManager.set(DW_UPGRADES, s.toString());
    }
 
    public ArrayList<Byte> getColorsMatching(ItemStack match) {
@@ -551,7 +601,7 @@ public class EntityGolemBase extends EntityGolem implements IEntityAdditionalSpa
          boolean allNull = true;
 
          for(int a = 0; a < this.inventory.inventory.length; ++a) {
-            if (this.inventory.getStackInSlot(a) != null) {
+            if (!this.inventory.getStackInSlot(a).isEmpty()) {
                allNull = false;
             }
 
@@ -572,9 +622,10 @@ public class EntityGolemBase extends EntityGolem implements IEntityAdditionalSpa
 
    public void writeEntityToNBT(NBTTagCompound nbt) {
       super.writeEntityToNBT(nbt);
-      nbt.setInteger("HomeX", this.getHomePosition().posX);
-      nbt.setInteger("HomeY", this.getHomePosition().posY);
-      nbt.setInteger("HomeZ", this.getHomePosition().posZ);
+      BlockPos homePos = this.getHomePosition();
+      nbt.setInteger("HomeX", homePos.getX());
+      nbt.setInteger("HomeY", homePos.getY());
+      nbt.setInteger("HomeZ", homePos.getZ());
       nbt.setByte("HomeFacing", (byte)this.homeFacing);
       nbt.setByte("GolemType", (byte)this.golemType.ordinal());
       nbt.setByte("Core", this.getCore());
@@ -627,7 +678,7 @@ public class EntityGolemBase extends EntityGolem implements IEntityAdditionalSpa
       int hy = nbt.getInteger("HomeY");
       int hz = nbt.getInteger("HomeZ");
       this.homeFacing = nbt.getByte("HomeFacing");
-      this.setHomeArea(hx, hy, hz, 32);
+      this.setHomePosAndDistance(new BlockPos(hx, hy, hz), 32);
       this.advanced = nbt.getBoolean("advanced");
       this.golemType = EnumGolemType.getType(nbt.getByte("GolemType"));
       this.setCore(nbt.getByte("Core"));
@@ -647,7 +698,7 @@ public class EntityGolemBase extends EntityGolem implements IEntityAdditionalSpa
 
       this.setTogglesValue(nbt.getByte("toggles"));
       NBTTagCompound var4 = nbt.getCompoundTag("ItemCarried");
-      this.itemCarried = ItemStack.loadItemStackFromNBT(var4);
+      this.itemCarried = new ItemStack(var4);
       this.updateCarried();
       this.decoration = nbt.getString("Decoration");
       this.setGolemDecoration(this.decoration);
@@ -656,7 +707,7 @@ public class EntityGolemBase extends EntityGolem implements IEntityAdditionalSpa
          this.setOwner(var2);
       }
 
-      this.dataWatcher.updateObject(30, (byte)((int)this.getHealth()));
+      this.dataManager.set(DW_HEALTH_PCT, (byte)((int)this.getHealth()));
       NBTTagList nbttaglist = nbt.getTagList("Markers", 10);
 
       for(int i = 0; i < nbttaglist.tagCount(); ++i) {
@@ -693,7 +744,7 @@ public class EntityGolemBase extends EntityGolem implements IEntityAdditionalSpa
          st.append(Integer.toHexString(c));
       }
 
-      this.dataWatcher.updateObject(23, st.toString());
+      this.dataManager.set(DW_UPGRADES, st.toString());
       this.setupGolem();
       this.setupGolemInventory();
       NBTTagList nbttaglist2 = nbt.getTagList("Inventory", 10);
@@ -719,18 +770,18 @@ public class EntityGolemBase extends EntityGolem implements IEntityAdditionalSpa
          }
       }
 
-      this.dataWatcher.updateObject(22, st.toString());
+      this.dataManager.set(DW_COLORS, st.toString());
 
       NBTTagList nbtTagList = nbt.getTagList("markers", 10);
       ThaumcraftMixinMethods.overwriteMarkersDimID(nbtTagList, this.markers);
    }
 
    public String getOwnerName() {
-      return this.dataWatcher.getWatchableObjectString(17);
+      return this.dataManager.get(DW_OWNER);
    }
 
    public void setOwner(String par1Str) {
-      this.dataWatcher.updateObject(17, par1Str);
+      this.dataManager.set(DW_OWNER, par1Str);
    }
 
    public void setMarkers(ArrayList markers) {
@@ -746,7 +797,7 @@ public class EntityGolemBase extends EntityGolem implements IEntityAdditionalSpa
       ArrayList<Marker> newMarkers = new ArrayList<>();
 
       for(Marker marker : this.markers) {
-         if (marker.dim == this.worldObj.provider.dimensionId) {
+         if (marker.dim == this.world.provider.getDimension()) {
             newMarkers.add(marker);
          }
       }
@@ -755,18 +806,19 @@ public class EntityGolemBase extends EntityGolem implements IEntityAdditionalSpa
    }
 
    public EntityLivingBase getOwner() {
-      return this.worldObj.getPlayerEntityByName(this.getOwnerName());
+      return this.world.getPlayerEntityByName(this.getOwnerName());
    }
 
    protected void damageEntity(DamageSource ds, float par2) {
       if (!ds.isFireDamage() || !this.golemType.fireResist) {
-         if (ds == DamageSource.inWall || ds == DamageSource.outOfWorld) {
-            this.setLocationAndAngles((double)this.getHomePosition().posX + (double)0.5F, (double)this.getHomePosition().posY + (double)0.5F, (double)this.getHomePosition().posZ + (double)0.5F, 0.0F, 0.0F);
+         if (ds == DamageSource.IN_WALL || ds == DamageSource.OUT_OF_WORLD) {
+            BlockPos hp = this.getHomePosition();
+            this.setLocationAndAngles((double)hp.getX() + 0.5, (double)hp.getY() + 0.5, (double)hp.getZ() + 0.5, 0.0F, 0.0F);
          }
 
          super.damageEntity(ds, par2);
-         if (!this.worldObj.isRemote) {
-            this.dataWatcher.updateObject(30, (byte)((int)this.getHealth()));
+         if (!this.world.isRemote) {
+            this.dataManager.set(DW_HEALTH_PCT, (byte)((int)this.getHealth()));
          }
 
       }
@@ -776,8 +828,8 @@ public class EntityGolemBase extends EntityGolem implements IEntityAdditionalSpa
       super.heal(par1);
 
       try {
-         if (!this.worldObj.isRemote) {
-            this.dataWatcher.updateObject(30, (byte)((int)this.getHealth()));
+         if (!this.world.isRemote) {
+            this.dataManager.set(DW_HEALTH_PCT, (byte)((int)this.getHealth()));
          }
       } catch (Exception ignored) {
       }
@@ -788,8 +840,8 @@ public class EntityGolemBase extends EntityGolem implements IEntityAdditionalSpa
       super.setHealth(par1);
 
       try {
-         if (!this.worldObj.isRemote) {
-            this.dataWatcher.updateObject(30, (byte)((int)this.getHealth()));
+         if (!this.world.isRemote) {
+            this.dataManager.set(DW_HEALTH_PCT, (byte)((int)this.getHealth()));
          }
       } catch (Exception ignored) {
       }
@@ -797,7 +849,7 @@ public class EntityGolemBase extends EntityGolem implements IEntityAdditionalSpa
    }
 
    public float getHealthPercentage() {
-      return (float)this.dataWatcher.getWatchableObjectByte(30) / this.getMaxHealth();
+      return (float)this.dataManager.get(DW_HEALTH_PCT) / this.getMaxHealth();
    }
 
    public void setCarried(ItemStack stack) {
@@ -810,7 +862,7 @@ public class EntityGolemBase extends EntityGolem implements IEntityAdditionalSpa
    }
 
    public ItemStack getCarried() {
-      if (this.itemCarried != null && this.itemCarried.stackSize <= 0) {
+      if (this.itemCarried != null && this.itemCarried.getCount() <= 0) {
          this.setCarried(null);
       }
 
@@ -818,25 +870,25 @@ public class EntityGolemBase extends EntityGolem implements IEntityAdditionalSpa
    }
 
    public int getCarrySpace() {
-      return this.itemCarried == null ? this.getCarryLimit() : Math.min(this.getCarryLimit() - this.itemCarried.stackSize, this.itemCarried.getMaxStackSize() - this.itemCarried.stackSize);
+      return this.itemCarried == null ? this.getCarryLimit() : Math.min(this.getCarryLimit() - this.itemCarried.getCount(), this.itemCarried.getMaxStackSize() - this.itemCarried.getCount());
    }
 
    public boolean[] getToggles() {
-      return Utils.unpack(this.dataWatcher.getWatchableObjectByte(18));
+      return Utils.unpack(this.dataManager.get(DW_TOGGLES));
    }
 
    public byte getTogglesValue() {
-      return this.dataWatcher.getWatchableObjectByte(18);
+      return this.dataManager.get(DW_TOGGLES);
    }
 
    public void setToggle(int index, boolean tog) {
       boolean[] fz = this.getToggles();
       fz[index] = tog;
-      this.dataWatcher.updateObject(18, Utils.pack(fz));
+      this.dataManager.set(DW_TOGGLES, Utils.pack(fz));
    }
 
    public void setTogglesValue(byte tog) {
-      this.dataWatcher.updateObject(18, tog);
+      this.dataManager.set(DW_TOGGLES, tog);
    }
 
    public boolean canAttackHostiles() {
@@ -868,7 +920,7 @@ public class EntityGolemBase extends EntityGolem implements IEntityAdditionalSpa
    }
 
    public EnumGolemType getGolemType() {
-      return EnumGolemType.getType(this.dataWatcher.getWatchableObjectByte(19));
+      return EnumGolemType.getType(this.dataManager.get(DW_GOLEM_TYPE));
    }
 
    public int getGolemStrength() {
@@ -876,50 +928,43 @@ public class EntityGolemBase extends EntityGolem implements IEntityAdditionalSpa
    }
 
    public void setCore(byte core) {
-      this.dataWatcher.updateObject(21, core);
+      this.dataManager.set(DW_CORE, core);
    }
 
    public byte getCore() {
-      try {
-         return this.dataWatcher.getWatchableObjectByte(21);
-      }catch (ClassCastException cce) {//idk why
-         return (byte) this.dataWatcher.getWatchableObjectInt(21);
-      }
+      return this.dataManager.get(DW_CORE);
    }
 
    public String getGolemDecoration() {
-      return this.dataWatcher.getWatchableObjectString(20);
+      return this.dataManager.get(DW_DECORATION);
    }
 
    public void setGolemDecoration(String string) {
-      this.dataWatcher.updateObject(20, String.valueOf(this.decoration));
+      this.dataManager.set(DW_DECORATION, String.valueOf(this.decoration));
    }
 
    public ItemStack getCarriedForDisplay() {
-      return this.dataWatcher.getWatchableObjectItemStack(16) != null ? this.dataWatcher.getWatchableObjectItemStack(16) : null;
+      ItemStack stack = this.dataManager.get(DW_CARRIED);
+      return stack.isEmpty() ? null : stack;
    }
 
    public void updateCarried() {
       if (this.itemCarried != null) {
-         this.getDataWatcher().updateObject(16, this.itemCarried.copy());
-         this.getDataWatcher().setObjectWatched(16);
+         this.dataManager.set(DW_CARRIED, this.itemCarried.copy());
       } else if (this.getCore() == 5 && this.fluidCarried != null) {
-         this.getDataWatcher().updateObject(16, new ItemStack(Item.getItemById(this.fluidCarried.getFluidID()), 1, this.fluidCarried.amount));
-         this.getDataWatcher().setObjectWatched(16);
+         // fluid display: use the fluid's filled bucket
+         ItemStack bucket = net.minecraftforge.fluids.FluidUtil.getFilledBucket(this.fluidCarried);
+         this.dataManager.set(DW_CARRIED, bucket.isEmpty() ? ItemStack.EMPTY : bucket);
       } else if (this.getCore() == 6) {
          ItemStack disp = new ItemStack(ConfigItems.itemJarFilled);
          int amt = (int)(64.0F * ((float)this.essentiaAmount / (float)this.getCarryLimit()));
          if (this.essentia != null && this.essentiaAmount > 0) {
             ((IEssentiaContainerItem)disp.getItem()).setAspects(disp, (new AspectList()).add(this.essentia, amt));
          }
-
-         this.getDataWatcher().updateObject(16, disp);
-         this.getDataWatcher().setObjectWatched(16);
+         this.dataManager.set(DW_CARRIED, disp);
       } else {
-         this.getDataWatcher().addObjectByDataType(16, 5);
-         this.getDataWatcher().setObjectWatched(16);
+         this.dataManager.set(DW_CARRIED, ItemStack.EMPTY);
       }
-
    }
 
    protected float getSoundVolume() {
@@ -931,7 +976,7 @@ public class EntityGolemBase extends EntityGolem implements IEntityAdditionalSpa
    }
 
    public void dropStuff() {
-      if (!this.worldObj.isRemote && this.itemCarried != null) {
+      if (!this.world.isRemote && this.itemCarried != null) {
          this.entityDropItem(this.itemCarried, 0.5F);
       }
 
@@ -944,10 +989,10 @@ public class EntityGolemBase extends EntityGolem implements IEntityAdditionalSpa
          if (!type.equals("G") && !type.equals("V") || !this.decoration.contains("G") && !this.decoration.contains("V")) {
             if (!type.equals("B") && !type.equals("P") || !this.decoration.contains("P") && !this.decoration.contains("B")) {
                this.decoration = this.decoration + type;
-               if (!this.worldObj.isRemote) {
+               if (!this.world.isRemote) {
                   this.setGolemDecoration(this.decoration);
-                  --itemStack.stackSize;
-                  this.worldObj.playSoundAtEntity(this, "thaumcraft:cameraclack", 1.0F, 1.0F);
+                  itemStack.shrink(1);
+                  playSoundAt(this, "thaumcraft:cameraclack", 1.0F, 1.0F);
                }
 
                this.setupGolem();
@@ -963,37 +1008,54 @@ public class EntityGolemBase extends EntityGolem implements IEntityAdditionalSpa
       }
    }
 
+   /** Helper: play a named sound at an entity's position using the 1.12.2 SoundEvent API. */
+   private void playSoundAt(Entity e, String soundName, float vol, float pitch) {
+      SoundEvent snd = SoundEvent.REGISTRY.getObject(new ResourceLocation(soundName));
+      if (snd != null) {
+         this.world.playSound(null, new BlockPos(e.posX, e.posY, e.posZ), snd, SoundCategory.NEUTRAL, vol, pitch);
+      }
+   }
+
    public boolean customInteraction(EntityPlayer player) {
       if (player.inventory.getCurrentItem() != null && player.inventory.getCurrentItem().getItem() == ConfigItems.itemGolemBell) {
          return false;
       } else if (player.inventory.getCurrentItem() != null && player.inventory.getCurrentItem().getItem() == ConfigItems.itemGolemDecoration) {
          this.addDecoration(ItemGolemDecoration.getDecoChar(player.inventory.getCurrentItem().getItemDamage()), player.inventory.getCurrentItem());
-         player.swingItem();
+         player.swingArm(player.getActiveHand());
          return false;
-      } else if (player.inventory.getCurrentItem() != null && player.inventory.getCurrentItem().getItem() == Items.cookie) {
-         player.inventory.consumeInventoryItem(Items.cookie);
-         player.swingItem();
+      } else if (player.inventory.getCurrentItem() != null && player.inventory.getCurrentItem().getItem() == Items.COOKIE) {
+         // consume one cookie from the player's inventory
+         player.inventory.getCurrentItem().shrink(1);
+         if (player.inventory.getCurrentItem().getCount() <= 0) {
+            player.inventory.setInventorySlotContents(player.inventory.currentItem, ItemStack.EMPTY);
+         }
+         player.swingArm(player.getActiveHand());
 
          for(int var3 = 0; var3 < 3; ++var3) {
             double var4 = this.rand.nextGaussian() * 0.02;
             double var6 = this.rand.nextGaussian() * 0.02;
             double var8 = this.rand.nextGaussian() * 0.02;
-            this.worldObj.spawnParticle("heart", this.posX + (double)(this.rand.nextFloat() * this.width * 2.0F) - (double)this.width, this.posY + (double)0.5F + (double)(this.rand.nextFloat() * this.height), this.posZ + (double)(this.rand.nextFloat() * this.width * 2.0F) - (double)this.width, var4, var6, var8);
-            this.worldObj.playSoundAtEntity(this, "random.eat", 0.3F, (this.rand.nextFloat() - this.rand.nextFloat()) * 0.2F + 1.0F);
+            this.world.spawnParticle(net.minecraft.util.EnumParticleTypes.HEART,
+                  this.posX + (double)(this.rand.nextFloat() * this.width * 2.0F) - (double)this.width,
+                  this.posY + (double)0.5F + (double)(this.rand.nextFloat() * this.height),
+                  this.posZ + (double)(this.rand.nextFloat() * this.width * 2.0F) - (double)this.width,
+                  var4, var6, var8);
+            playSoundAt(this, "random.eat", 0.3F, (this.rand.nextFloat() - this.rand.nextFloat()) * 0.2F + 1.0F);
             int duration = 600;
-            if (this.worldObj.isRemote) {
-               if (this.getActivePotionEffect(Potion.moveSpeed) != null && this.getActivePotionEffect(Potion.moveSpeed).getDuration() < 2400) {
-                  duration += this.getActivePotionEffect(Potion.moveSpeed).getDuration();
+            if (this.world.isRemote) {
+               Potion speedEffect = net.minecraft.init.MobEffects.SPEED;
+               if (this.getActivePotionEffect(speedEffect) != null && this.getActivePotionEffect(speedEffect).getDuration() < 2400) {
+                  duration += this.getActivePotionEffect(speedEffect).getDuration();
                }
 
-               this.addPotionEffect(new PotionEffect(Potion.moveSpeed.id, duration, 0));
+               this.addPotionEffect(new PotionEffect(speedEffect, duration, 0));
             }
          }
 
          this.heal(5.0F);
          return false;
-      } else if (this.getCore() > -1 && ItemGolemCore.hasGUI(this.getCore()) && (player.inventory.getCurrentItem() == null || !(player.inventory.getCurrentItem().getItem() instanceof ItemWandCasting)) && !this.worldObj.isRemote) {
-         player.openGui(Thaumcraft.instance, 0, this.worldObj, this.getEntityId(), 0, 0);
+      } else if (this.getCore() > -1 && ItemGolemCore.hasGUI(this.getCore()) && (player.inventory.getCurrentItem() == null || !(player.inventory.getCurrentItem().getItem() instanceof ItemWandCasting)) && !this.world.isRemote) {
+         player.openGui(Thaumcraft.instance, 0, this.world, this.getEntityId(), 0, 0);
          return false;
       } else {
          return false;
@@ -1011,14 +1073,14 @@ public class EntityGolemBase extends EntityGolem implements IEntityAdditionalSpa
             this.setCore((byte)itemstack.getItemDamage());
             this.setupGolem();
             this.setupGolemInventory();
-            --itemstack.stackSize;
-            if (itemstack.stackSize <= 0) {
-               player.inventory.setInventorySlotContents(player.inventory.currentItem, null);
+            itemstack.shrink(1);
+            if (itemstack.getCount() <= 0) {
+               player.inventory.setInventorySlotContents(player.inventory.currentItem, ItemStack.EMPTY);
             }
 
-            this.worldObj.playSoundAtEntity(this, "thaumcraft:upgrade", 0.5F, 1.0F);
-            player.swingItem();
-            this.worldObj.setEntityState(this, (byte)7);
+            playSoundAt(this, "thaumcraft:upgrade", 0.5F, 1.0F);
+            player.swingArm(player.getActiveHand());
+            this.world.setEntityState(this, (byte)7);
             return true;
          } else if (itemstack != null && itemstack.getItem() == ConfigItems.itemGolemUpgrade) {
             for(int a = 0; a < this.upgrades.length; ++a) {
@@ -1026,13 +1088,13 @@ public class EntityGolemBase extends EntityGolem implements IEntityAdditionalSpa
                   this.setUpgrade(a, (byte)itemstack.getItemDamage());
                   this.setupGolem();
                   this.setupGolemInventory();
-                  --itemstack.stackSize;
-                  if (itemstack.stackSize <= 0) {
-                     player.inventory.setInventorySlotContents(player.inventory.currentItem, null);
+                  itemstack.shrink(1);
+                  if (itemstack.getCount() <= 0) {
+                     player.inventory.setInventorySlotContents(player.inventory.currentItem, ItemStack.EMPTY);
                   }
 
-                  this.worldObj.playSoundAtEntity(this, "thaumcraft:upgrade", 0.5F, 1.0F);
-                  player.swingItem();
+                  playSoundAt(this, "thaumcraft:upgrade", 0.5F, 1.0F);
+                  player.swingArm(player.getActiveHand());
                   return true;
                }
             }
@@ -1051,7 +1113,7 @@ public class EntityGolemBase extends EntityGolem implements IEntityAdditionalSpa
    public void startActionTimer() {
       if (this.action == 0) {
          this.action = 6;
-         this.worldObj.setEntityState(this, (byte)4);
+         this.world.setEntityState(this, (byte)4);
       }
 
    }
@@ -1059,7 +1121,7 @@ public class EntityGolemBase extends EntityGolem implements IEntityAdditionalSpa
    public void startLeftArmTimer() {
       if (this.leftArm == 0) {
          this.leftArm = 5;
-         this.worldObj.setEntityState(this, (byte)6);
+         this.world.setEntityState(this, (byte)6);
       }
 
    }
@@ -1067,13 +1129,13 @@ public class EntityGolemBase extends EntityGolem implements IEntityAdditionalSpa
    public void startRightArmTimer() {
       if (this.rightArm == 0) {
          this.rightArm = 5;
-         this.worldObj.setEntityState(this, (byte)8);
+         this.world.setEntityState(this, (byte)8);
       }
 
    }
 
    @SideOnly(Side.CLIENT)
-   public void handleHealthUpdate(byte par1) {
+   public void handleStatusUpdate(byte par1) {
       if (par1 == 4) {
          this.action = 6;
       } else if (par1 == 5) {
@@ -1085,7 +1147,7 @@ public class EntityGolemBase extends EntityGolem implements IEntityAdditionalSpa
          } catch (Exception ignored) {
          }
 
-         this.getEntityAttribute(SharedMonsterAttributes.maxHealth).setBaseValue(this.getGolemType().health + bonus);
+         this.getEntityAttribute(SharedMonsterAttributes.MAX_HEALTH).setBaseValue(this.getGolemType().health + bonus);
       } else if (par1 == 6) {
          this.leftArm = 5;
       } else if (par1 == 8) {
@@ -1093,25 +1155,26 @@ public class EntityGolemBase extends EntityGolem implements IEntityAdditionalSpa
       } else if (par1 == 7) {
          this.bootup = 33.0F;
       } else {
-         super.handleHealthUpdate(par1);
+         super.handleStatusUpdate(par1);
       }
 
    }
 
-   protected void updateFallState(double par1, boolean par3) {
+   protected void updateFallState(double par1, boolean par3, net.minecraft.block.state.IBlockState state, BlockPos pos) {
       if (par3 && this.fallDistance > 0.0F) {
-         int var4 = MathHelper.floor_double(this.posX);
-         int var5 = MathHelper.floor_double(this.posY - (double)0.2F - (double)this.yOffset);
-         int var6 = MathHelper.floor_double(this.posZ);
-         this.worldObj.getBlock(var4, var5, var6);
-         if (this.worldObj.isAirBlock(var4, var5, var6) && this.worldObj.getBlock(var4, var5 - 1, var6) == Blocks.fence) {
-            this.worldObj.getBlock(var4, var5 - 1, var6);
+         int var4 = MathHelper.floor(this.posX);
+         int var5 = MathHelper.floor(this.posY - (double)0.2F - (double)this.getYOffset());
+         int var6 = MathHelper.floor(this.posZ);
+         BlockPos bp = new BlockPos(var4, var5, var6);
+         this.world.getBlockState(bp).getBlock();
+         if (this.world.isAirBlock(bp) && this.world.getBlockState(new BlockPos(var4, var5 - 1, var6)).getBlock() == Blocks.OAK_FENCE) {
+            this.world.getBlockState(new BlockPos(var4, var5 - 1, var6)).getBlock();
          }
       }
 
       if (par3) {
          if (this.fallDistance > 0.0F) {
-            this.fall(this.fallDistance);
+            this.fall(this.fallDistance, 1.0F);
             this.fallDistance = 0.0F;
          }
       } else if (par1 < (double)0.0F) {
@@ -1147,11 +1210,11 @@ public class EntityGolemBase extends EntityGolem implements IEntityAdditionalSpa
    }
 
    public boolean attackEntityAsMob(Entity par1Entity) {
-      float f = (float)this.getEntityAttribute(SharedMonsterAttributes.attackDamage).getAttributeValue();
+      float f = (float)this.getEntityAttribute(SharedMonsterAttributes.ATTACK_DAMAGE).getAttributeValue();
       int i = 0;
       if (par1Entity instanceof EntityLivingBase) {
-         f += EnchantmentHelper.getEnchantmentModifierLiving(this, (EntityLivingBase)par1Entity);
-         i += EnchantmentHelper.getKnockbackModifier(this, (EntityLivingBase)par1Entity);
+         f += EnchantmentHelper.getModifierForCreature(this.getHeldItemMainhand(), ((EntityLivingBase)par1Entity).getCreatureAttribute());
+         i += EnchantmentHelper.getKnockbackModifier(this);
       }
 
       boolean flag = par1Entity.attackEntityFrom(DamageSource.causeMobDamage(this), f);
@@ -1172,10 +1235,10 @@ public class EntityGolemBase extends EntityGolem implements IEntityAdditionalSpa
          }
 
          if (par1Entity instanceof EntityLivingBase) {
-            EnchantmentHelper.func_151384_a((EntityLivingBase)par1Entity, this);
+            EnchantmentHelper.applyThornEnchantments((EntityLivingBase)par1Entity, this);
          }
 
-         EnchantmentHelper.func_151385_b(this, par1Entity);
+         EnchantmentHelper.applyArthropodEnchantments(this, par1Entity);
       }
 
       return flag;
@@ -1183,16 +1246,16 @@ public class EntityGolemBase extends EntityGolem implements IEntityAdditionalSpa
 
    public boolean attackEntityFrom(DamageSource ds, float par2) {
       this.paused = false;
-      if (ds == DamageSource.cactus) {
+      if (ds == DamageSource.CACTUS) {
          return false;
       } else {
-         if (this.getGolemType() == EnumGolemType.THAUMIUM && ds == DamageSource.magic) {
+         if (this.getGolemType() == EnumGolemType.THAUMIUM && ds == DamageSource.MAGIC) {
             par2 *= 0.5F;
          }
 
-         if (ds.getSourceOfDamage() != null && this.getUpgradeAmount(5) > 0 && ds.getSourceOfDamage().getEntityId() != this.getEntityId()) {
-            ds.getSourceOfDamage().attackEntityFrom(DamageSource.causeThornsDamage(this), (float)(this.getUpgradeAmount(5) * 2 + this.rand.nextInt(2 * this.getUpgradeAmount(5))));
-            ds.getSourceOfDamage().playSound("damage.thorns", 0.5F, 1.0F);
+         if (ds.getTrueSource() != null && this.getUpgradeAmount(5) > 0 && ds.getTrueSource().getEntityId() != this.getEntityId()) {
+            ds.getTrueSource().attackEntityFrom(DamageSource.causeThornsDamage(this), (float)(this.getUpgradeAmount(5) * 2 + this.rand.nextInt(2 * this.getUpgradeAmount(5))));
+            playSoundAt(ds.getTrueSource(), "damage.thorns", 0.5F, 1.0F);
          }
 
          return super.attackEntityFrom(ds, par2);
@@ -1206,9 +1269,9 @@ public class EntityGolemBase extends EntityGolem implements IEntityAdditionalSpa
    public boolean isValidTarget(Entity target) {
       if (!target.isEntityAlive()) {
          return false;
-      } else if (target instanceof EntityPlayer && target.getCommandSenderName().equals(this.getOwnerName())) {
+      } else if (target instanceof EntityPlayer && target.getName().equals(this.getOwnerName())) {
          return false;
-      } else if (!this.isWithinHomeDistance(MathHelper.floor_double(target.posX), MathHelper.floor_double(target.posY), MathHelper.floor_double(target.posZ))) {
+      } else if (!this.isWithinHomeDistance(MathHelper.floor(target.posX), MathHelper.floor(target.posY), MathHelper.floor(target.posZ))) {
          return false;
       } else {
          if (this.getCore() == 9) {
@@ -1236,11 +1299,11 @@ public class EntityGolemBase extends EntityGolem implements IEntityAdditionalSpa
    }
 
    public void attackEntityWithRangedAttack(EntityLivingBase par1EntityLiving) {
-      EntityDart var2 = new EntityDart(this.worldObj, this, par1EntityLiving, 1.6F, 7.0F - (float)this.getUpgradeAmount(3) * 1.75F);
-      float f = (float)this.getEntityAttribute(SharedMonsterAttributes.attackDamage).getAttributeValue();
+      EntityDart var2 = new EntityDart(this.world, this, par1EntityLiving, 1.6F, 7.0F - (float)this.getUpgradeAmount(3) * 1.75F);
+      float f = (float)this.getEntityAttribute(SharedMonsterAttributes.ATTACK_DAMAGE).getAttributeValue();
       var2.setDamage(f * 0.4F);
-      this.playSound("thaumcraft:golemironshoot", 0.5F, 1.0F / (this.getRNG().nextFloat() * 0.4F + 0.6F));
-      this.worldObj.spawnEntityInWorld(var2);
+      playSoundAt(this, "thaumcraft:golemironshoot", 0.5F, 1.0F / (this.getRNG().nextFloat() * 0.4F + 0.6F));
+      this.world.spawnEntity(var2);
       this.startLeftArmTimer();
    }
 
@@ -1248,16 +1311,19 @@ public class EntityGolemBase extends EntityGolem implements IEntityAdditionalSpa
       return 20 - (this.advanced ? 2 : 0);
    }
 
-   protected String getLivingSound() {
-      return "thaumcraft:cameraclack";
+   protected SoundEvent getAmbientSound() {
+      SoundEvent snd = SoundEvent.REGISTRY.getObject(new ResourceLocation("thaumcraft:cameraclack"));
+      return snd != null ? snd : SoundEvents.BLOCK_STONE_STEP;
    }
 
-   protected String getHurtSound() {
-      return "thaumcraft:cameraclack";
+   protected SoundEvent getHurtSound(DamageSource source) {
+      SoundEvent snd = SoundEvent.REGISTRY.getObject(new ResourceLocation("thaumcraft:cameraclack"));
+      return snd != null ? snd : SoundEvents.BLOCK_STONE_STEP;
    }
 
-   protected String getDeathSound() {
-      return "thaumcraft:cameraclack";
+   protected SoundEvent getDeathSound() {
+      SoundEvent snd = SoundEvent.REGISTRY.getObject(new ResourceLocation("thaumcraft:cameraclack"));
+      return snd != null ? snd : SoundEvents.BLOCK_STONE_STEP;
    }
 
    public void writeSpawnData(ByteBuf data) {
@@ -1300,13 +1366,13 @@ public class EntityGolemBase extends EntityGolem implements IEntityAdditionalSpa
          } catch (Exception ignored) {
          }
 
-         this.getEntityAttribute(SharedMonsterAttributes.maxHealth).setBaseValue(this.getGolemType().health + bonus);
+         this.getEntityAttribute(SharedMonsterAttributes.MAX_HEALTH).setBaseValue(this.getGolemType().health + bonus);
       } catch (Exception ignored) {
       }
 
    }
 
-   public String getCommandSenderName() {
-      return this.hasCustomNameTag() ? this.getCustomNameTag() : StatCollector.translateToLocal("item.ItemGolemPlacer." + this.getGolemType().ordinal() + ".name");
+   public String getName() {
+      return this.hasCustomName() ? this.getCustomNameTag() : I18n.translateToLocal("item.ItemGolemPlacer." + this.getGolemType().ordinal() + ".name");
    }
 }

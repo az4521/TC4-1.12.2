@@ -1,10 +1,12 @@
 package thaumcraft.common.entities.ai.fluid;
 
 import net.minecraft.entity.ai.EntityAIBase;
+import net.minecraft.init.SoundEvents;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.ChunkCoordinates;
+import net.minecraft.util.SoundCategory;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
-import net.minecraftforge.common.util.ForgeDirection;
+import net.minecraft.util.EnumFacing;
 import thaumcraft.api.aspects.Aspect;
 import thaumcraft.api.aspects.IEssentiaTransport;
 import thaumcraft.common.entities.golems.EntityGolemBase;
@@ -23,26 +25,26 @@ public class AIEssentiaGather extends EntityAIBase {
 
    public AIEssentiaGather(EntityGolemBase par1EntityCreature) {
       this.theGolem = par1EntityCreature;
-      this.theWorld = par1EntityCreature.worldObj;
+      this.theWorld = par1EntityCreature.world;
       this.setMutexBits(3);
    }
 
    public boolean shouldExecute() {
       if (this.theGolem.getNavigator().noPath() && this.delay <= System.currentTimeMillis()) {
-         ChunkCoordinates home = this.theGolem.getHomePosition();
-         ForgeDirection facing = ForgeDirection.getOrientation(this.theGolem.homeFacing);
-         int cX = home.posX - facing.offsetX;
-         int cY = home.posY - facing.offsetY;
-         int cZ = home.posZ - facing.offsetZ;
+         BlockPos home = this.theGolem.getHomePosition();
+         EnumFacing facing = EnumFacing.byIndex(this.theGolem.homeFacing);
+         int cX = home.getX() - facing.getXOffset();
+         int cY = home.getY() - facing.getYOffset();
+         int cZ = home.getZ() - facing.getZOffset();
          if (this.theGolem.getDistanceSq((float)cX + 0.5F, (float)cY + 0.5F, (float)cZ + 0.5F) > (double)6.0F) {
             return false;
          } else {
             this.start = 0;
-            TileEntity te = this.theWorld.getTileEntity(cX, cY, cZ);
+            TileEntity te = this.theWorld.getTileEntity(new BlockPos(cX, cY, cZ));
             if (te != null) {
                if (te instanceof IEssentiaTransport) {
                   IEssentiaTransport etrans = (IEssentiaTransport)te;
-                  if ((te instanceof TileJarFillable || te instanceof TileEssentiaReservoir || etrans.canOutputTo(facing)) && etrans.getEssentiaAmount(facing) > 0 && (this.theGolem.essentiaAmount == 0 || (this.theGolem.essentia == null || this.theGolem.essentia.equals(etrans.getEssentiaType(facing)) || this.theGolem.essentia.equals(etrans.getEssentiaType(ForgeDirection.UNKNOWN))) && this.theGolem.essentiaAmount < this.theGolem.getCarryLimit())) {
+                  if ((te instanceof TileJarFillable || te instanceof TileEssentiaReservoir || etrans.canOutputTo(facing)) && etrans.getEssentiaAmount(facing) > 0 && (this.theGolem.essentiaAmount == 0 || (this.theGolem.essentia == null || this.theGolem.essentia.equals(etrans.getEssentiaType(facing)) || this.theGolem.essentia.equals(etrans.getEssentiaType(null))) && this.theGolem.essentiaAmount < this.theGolem.getCarryLimit())) {
                      this.delay = System.currentTimeMillis() + 1000L;
                      this.start = 0;
                      return true;
@@ -52,7 +54,7 @@ public class AIEssentiaGather extends EntityAIBase {
                   this.start = -1;
 
                   for(int prevTot = -1; a >= 0; --a) {
-                     te = this.theWorld.getTileEntity(cX, cY + a, cZ);
+                     te = this.theWorld.getTileEntity(new BlockPos(cX, cY + a, cZ));
                      if (te instanceof TileAlembic) {
                         TileAlembic ta = (TileAlembic)te;
                         if ((this.theGolem.essentiaAmount == 0 || (this.theGolem.essentia == null || this.theGolem.essentia.equals(ta.aspect)) && this.theGolem.essentiaAmount < this.theGolem.getCarryLimit()) && ta.amount > prevTot) {
@@ -75,15 +77,15 @@ public class AIEssentiaGather extends EntityAIBase {
    }
 
    public void startExecuting() {
-      ChunkCoordinates home = this.theGolem.getHomePosition();
-      ForgeDirection facing = ForgeDirection.getOrientation(this.theGolem.homeFacing);
-      int cX = home.posX - facing.offsetX;
-      int cY = home.posY - facing.offsetY;
-      int cZ = home.posZ - facing.offsetZ;
-      TileEntity te = this.theWorld.getTileEntity(cX, cY + this.start, cZ);
+      BlockPos home = this.theGolem.getHomePosition();
+      EnumFacing facing = EnumFacing.byIndex(this.theGolem.homeFacing);
+      int cX = home.getX() - facing.getXOffset();
+      int cY = home.getY() - facing.getYOffset();
+      int cZ = home.getZ() - facing.getZOffset();
+      TileEntity te = this.theWorld.getTileEntity(new BlockPos(cX, cY + this.start, cZ));
       if (te instanceof IEssentiaTransport) {
          if (te instanceof TileAlembic || te instanceof TileJarFillable) {
-            facing = ForgeDirection.UP;
+            facing = EnumFacing.UP;
          }
 
          if (te instanceof TileEssentiaReservoir) {
@@ -95,10 +97,10 @@ public class AIEssentiaGather extends EntityAIBase {
             return;
          }
 
-         if (ta.canOutputTo(facing) && ta.getEssentiaAmount(facing) > 0 && (this.theGolem.essentiaAmount == 0 || (this.theGolem.essentia == null || this.theGolem.essentia.equals(ta.getEssentiaType(facing)) || this.theGolem.essentia.equals(ta.getEssentiaType(ForgeDirection.UNKNOWN))) && this.theGolem.essentiaAmount < this.theGolem.getCarryLimit())) {
+         if (ta.canOutputTo(facing) && ta.getEssentiaAmount(facing) > 0 && (this.theGolem.essentiaAmount == 0 || (this.theGolem.essentia == null || this.theGolem.essentia.equals(ta.getEssentiaType(facing)) || this.theGolem.essentia.equals(ta.getEssentiaType(null))) && this.theGolem.essentiaAmount < this.theGolem.getCarryLimit())) {
             Aspect a = ta.getEssentiaType(facing);
             if (a == null) {
-               a = ta.getEssentiaType(ForgeDirection.UNKNOWN);
+               a = ta.getEssentiaType(null);
             }
 
             int qq = ta.getEssentiaAmount(facing);
@@ -112,7 +114,7 @@ public class AIEssentiaGather extends EntityAIBase {
             if (taken > 0) {
                EntityGolemBase var10000 = this.theGolem;
                var10000.essentiaAmount += taken;
-               this.theWorld.playSoundAtEntity(this.theGolem, "game.neutral.swim", 0.05F, 1.0F + (this.theWorld.rand.nextFloat() - this.theWorld.rand.nextFloat()) * 0.3F);
+               this.theWorld.playSound(null, this.theGolem.getPosition(), SoundEvents.ENTITY_GENERIC_SWIM, SoundCategory.NEUTRAL, 0.05F, 1.0F + (this.theWorld.rand.nextFloat() - this.theWorld.rand.nextFloat()) * 0.3F);
                this.theGolem.updateCarried();
             } else {
                this.theGolem.essentia = null;

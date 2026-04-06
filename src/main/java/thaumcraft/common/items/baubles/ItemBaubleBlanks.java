@@ -2,25 +2,25 @@ package thaumcraft.common.items.baubles;
 
 import baubles.api.BaubleType;
 import baubles.api.IBauble;
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import java.util.List;
-import net.minecraft.client.renderer.texture.IIconRegister;
+import thaumcraft.client.renderers.compat.IIconRegister;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.EnumChatFormatting;
-import net.minecraft.util.IIcon;
-import net.minecraft.util.StatCollector;
+import net.minecraft.util.text.TextFormatting;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.util.text.translation.I18n;
 import thaumcraft.api.IRunicArmor;
 import thaumcraft.api.IVisDiscountGear;
 import thaumcraft.api.aspects.Aspect;
 import thaumcraft.common.Thaumcraft;
 
 public class ItemBaubleBlanks extends Item implements IBauble, IVisDiscountGear, IRunicArmor {
-   public IIcon[] icon = new IIcon[4];
+   public TextureAtlasSprite[] icon = new TextureAtlasSprite[4];
 
    public ItemBaubleBlanks() {
       this.maxStackSize = 1;
@@ -32,23 +32,25 @@ public class ItemBaubleBlanks extends Item implements IBauble, IVisDiscountGear,
 
    @SideOnly(Side.CLIENT)
    public void registerIcons(IIconRegister ir) {
-      this.icon[0] = ir.registerIcon("thaumcraft:bauble_amulet");
-      this.icon[1] = ir.registerIcon("thaumcraft:bauble_ring");
-      this.icon[2] = ir.registerIcon("thaumcraft:bauble_belt");
-      this.icon[3] = ir.registerIcon("thaumcraft:bauble_ring_iron");
+      this.icon[0] = ir.registerSprite("thaumcraft:bauble_amulet");
+      this.icon[1] = ir.registerSprite("thaumcraft:bauble_ring");
+      this.icon[2] = ir.registerSprite("thaumcraft:bauble_belt");
+      this.icon[3] = ir.registerSprite("thaumcraft:bauble_ring_iron");
    }
 
    @SideOnly(Side.CLIENT)
-   public IIcon getIconFromDamage(int par1) {
+   public TextureAtlasSprite getIconFromDamage(int par1) {
       return par1 <= 2 ? this.icon[par1] : this.icon[3];
    }
 
-   public String getUnlocalizedName(ItemStack par1ItemStack) {
-      return super.getUnlocalizedName() + "." + par1ItemStack.getItemDamage();
+   @Override
+   public String getTranslationKey(ItemStack par1ItemStack) {
+      return getTranslationKey() + "." + par1ItemStack.getItemDamage();
    }
 
    @SideOnly(Side.CLIENT)
-   public void getSubItems(Item par1, CreativeTabs par2CreativeTabs, List par3List) {
+   @Override
+   public void getSubItems(CreativeTabs par2CreativeTabs, net.minecraft.util.NonNullList<ItemStack> par3List) {
       par3List.add(new ItemStack(this, 1, 0));
       par3List.add(new ItemStack(this, 1, 1));
       par3List.add(new ItemStack(this, 1, 2));
@@ -85,22 +87,22 @@ public class ItemBaubleBlanks extends Item implements IBauble, IVisDiscountGear,
    }
 
    public int getColorFromItemStack(ItemStack stack, int par2) {
-      return stack.getItemDamage() >= 3 && stack.getItemDamage() <= 8 ? Aspect.getPrimalAspects().get(stack.getItemDamage() - 3).getColor() : super.getColorFromItemStack(stack, par2);
+      return stack.getItemDamage() >= 3 && stack.getItemDamage() <= 8 ? Aspect.getPrimalAspects().get(stack.getItemDamage() - 3).getColor() : -1;
    }
 
    public String getItemStackDisplayName(ItemStack stack) {
       if (stack.getItemDamage() >= 3 && stack.getItemDamage() <= 8) {
          Aspect aspect = Aspect.getPrimalAspects().get(stack.getItemDamage() - 3);
-         return StatCollector.translateToLocal("item.ItemBaubleBlanks.3.name").replace("%TYPE", aspect.getName());
+         return I18n.translateToLocal("item.ItemBaubleBlanks.3.name").replace("%TYPE", aspect.getName());
       } else {
          return super.getItemStackDisplayName(stack);
       }
    }
 
-   public void addInformation(ItemStack stack, EntityPlayer player, List list, boolean par4) {
+   public void addInformation(ItemStack stack, @javax.annotation.Nullable net.minecraft.world.World worldIn, List list, net.minecraft.client.util.ITooltipFlag flagIn) {
       if (stack.getItemDamage() >= 3 && stack.getItemDamage() <= 8) {
          Aspect aspect = Aspect.getPrimalAspects().get(stack.getItemDamage() - 3);
-         list.add(EnumChatFormatting.DARK_PURPLE + aspect.getName() + " " + StatCollector.translateToLocal("tc.discount") + ": 1%");
+         list.add(TextFormatting.DARK_PURPLE + aspect.getName() + " " + I18n.translateToLocal("tc.discount") + ": 1%");
       }
 
    }

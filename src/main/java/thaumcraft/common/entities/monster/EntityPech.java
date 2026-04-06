@@ -1,7 +1,7 @@
 package thaumcraft.common.entities.monster;
 
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -15,7 +15,7 @@ import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.IEntityLivingData;
 import net.minecraft.entity.IRangedAttackMob;
 import net.minecraft.entity.SharedMonsterAttributes;
-import net.minecraft.entity.ai.EntityAIArrowAttack;
+import net.minecraft.entity.ai.EntityAIAttackRanged;
 import net.minecraft.entity.ai.EntityAIAvoidEntity;
 import net.minecraft.entity.ai.EntityAIHurtByTarget;
 import net.minecraft.entity.ai.EntityAILookIdle;
@@ -28,7 +28,8 @@ import net.minecraft.entity.ai.EntityAIWatchClosest;
 import net.minecraft.entity.ai.EntityAIWatchClosest2;
 import net.minecraft.entity.monster.EntityMob;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.projectile.EntityArrow;
+import net.minecraft.entity.projectile.EntityTippedArrow;
+import net.minecraft.init.Enchantments;
 import net.minecraft.init.Items;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemNameTag;
@@ -36,10 +37,16 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.util.DamageSource;
-import net.minecraft.util.MathHelper;
-import net.minecraft.util.StatCollector;
+import net.minecraft.util.EnumHand;
+import net.minecraft.util.EnumParticleTypes;
+import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.SoundCategory;
+import net.minecraft.util.SoundEvent;
+import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.text.translation.I18n;
+import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.World;
-import net.minecraft.world.biome.BiomeGenBase;
+import net.minecraft.world.biome.Biome;
 import net.minecraftforge.common.BiomeDictionary;
 import net.minecraftforge.common.BiomeDictionary.Type;
 import thaumcraft.api.aspects.Aspect;
@@ -58,11 +65,14 @@ import thaumcraft.common.lib.crafting.ThaumcraftCraftingManager;
 import thaumcraft.common.lib.utils.InventoryUtils;
 
 public class EntityPech extends EntityMob implements IRangedAttackMob {
+   private static final net.minecraft.network.datasync.DataParameter<Byte> PECH_TYPE = net.minecraft.network.datasync.EntityDataManager.createKey(EntityPech.class, net.minecraft.network.datasync.DataSerializers.BYTE);
+   private static final net.minecraft.network.datasync.DataParameter<Integer> ANGER = net.minecraft.network.datasync.EntityDataManager.createKey(EntityPech.class, net.minecraft.network.datasync.DataSerializers.VARINT);
+   private static final net.minecraft.network.datasync.DataParameter<Byte> TAMED = net.minecraft.network.datasync.EntityDataManager.createKey(EntityPech.class, net.minecraft.network.datasync.DataSerializers.BYTE);
    public ItemStack[] loot = new ItemStack[9];
    public boolean trading = false;
    public boolean updateAINextTick = false;
-   private EntityAIArrowAttack aiArrowAttack = new EntityAIArrowAttack(this, 0.6, 20, 50, 15.0F);
-   private EntityAIArrowAttack aiBlastAttack = new EntityAIArrowAttack(this, 0.6, 20, 30, 15.0F);
+   private EntityAIAttackRanged aiArrowAttack = new EntityAIAttackRanged(this, 0.6, 20, 50, 15.0F);
+   private EntityAIAttackRanged aiBlastAttack = new EntityAIAttackRanged(this, 0.6, 20, 30, 15.0F);
    private AIAttackOnCollide aiMeleeAttack = new AIAttackOnCollide(this, EntityLivingBase.class, 0.6, false);
    private EntityAIAvoidEntity aiAvoidPlayer = new EntityAIAvoidEntity(this, EntityPlayer.class, 8.0F, 0.5F, 0.6);
    public float mumble = 0.0F;
@@ -70,17 +80,17 @@ public class EntityPech extends EntityMob implements IRangedAttackMob {
    static HashMap valuedItems = new HashMap<>();
    public static HashMap tradeInventory = new HashMap<>();
 
-   public String getCommandSenderName() {
-      if (this.hasCustomNameTag()) {
+   public String getName() {
+      if (this.hasCustomName()) {
          return this.getCustomNameTag();
       } else {
          switch (this.getPechType()) {
              case 1:
-               return StatCollector.translateToLocal("entity.Thaumcraft.Pech.1.name");
+               return I18n.translateToLocal("entity.Thaumcraft.Pech.1.name");
             case 2:
-               return StatCollector.translateToLocal("entity.Thaumcraft.Pech.2.name");
+               return I18n.translateToLocal("entity.Thaumcraft.Pech.2.name");
             default:
-               return StatCollector.translateToLocal("entity.Thaumcraft.Pech.name");
+               return I18n.translateToLocal("entity.Thaumcraft.Pech.name");
          }
       }
    }
@@ -88,8 +98,8 @@ public class EntityPech extends EntityMob implements IRangedAttackMob {
    public EntityPech(World world) {
       super(world);
       this.setSize(0.6F, 1.8F);
-      this.getNavigator().setBreakDoors(false);
-      this.getNavigator().setAvoidsWater(true);
+
+      this.setPathPriority(net.minecraft.pathfinding.PathNodeType.WATER, 8.0F);
       this.tasks.addTask(0, new EntityAISwimming(this));
       this.tasks.addTask(1, new AIPechTradePlayer(this));
       this.tasks.addTask(3, new AIPechItemEntityGoto(this));
@@ -105,19 +115,22 @@ public class EntityPech extends EntityMob implements IRangedAttackMob {
          this.setCombatTask();
       }
 
-      this.equipmentDropChances[0] = 0.2F;
+      this.setDropChance(net.minecraft.inventory.EntityEquipmentSlot.MAINHAND, 0.2F);
    }
 
-   public void setCurrentItemOrArmor(int par1, ItemStack par2ItemStack) {
-      super.setCurrentItemOrArmor(par1, par2ItemStack);
-      if (!this.worldObj.isRemote && par1 == 0) {
+   @Override
+   public void setItemStackToSlot(net.minecraft.inventory.EntityEquipmentSlot slot, ItemStack par2ItemStack) {
+      super.setItemStackToSlot(slot, par2ItemStack);
+      if (!this.world.isRemote && slot == net.minecraft.inventory.EntityEquipmentSlot.MAINHAND) {
          this.updateAINextTick = true;
       }
-
    }
 
-   protected void addRandomArmor() {
-      super.addRandomArmor();
+   @Override
+   public void setSwingingArms(boolean swinging) {}
+
+   protected void setEquipmentBasedOnDifficulty(DifficultyInstance difficulty) {
+      super.setEquipmentBasedOnDifficulty(difficulty);
       switch (this.rand.nextInt(20)) {
          case 0:
          case 12:
@@ -130,76 +143,75 @@ public class EntityPech extends EntityMob implements IRangedAttackMob {
             ((ItemWandCasting)wand.getItem()).addVis(wand, Aspect.AIR, this.rand.nextInt(4), true);
             ((ItemWandCasting)wand.getItem()).addVis(wand, Aspect.FIRE, this.rand.nextInt(4), true);
             ((ItemWandCasting)wand.getItem()).addVis(wand, Aspect.ORDER, this.rand.nextInt(4), true);
-            this.setCurrentItemOrArmor(0, wand);
+            this.setItemStackToSlot(net.minecraft.inventory.EntityEquipmentSlot.MAINHAND, wand);
             break;
          case 1:
-            this.setCurrentItemOrArmor(0, new ItemStack(Items.stone_sword));
+            this.setItemStackToSlot(net.minecraft.inventory.EntityEquipmentSlot.MAINHAND, new ItemStack(Items.STONE_SWORD));
             break;
          case 2:
          case 4:
          case 10:
          case 11:
          case 13:
-            this.setCurrentItemOrArmor(0, new ItemStack(Items.bow));
+            this.setItemStackToSlot(net.minecraft.inventory.EntityEquipmentSlot.MAINHAND, new ItemStack(Items.BOW));
             break;
          case 3:
-            this.setCurrentItemOrArmor(0, new ItemStack(Items.stone_axe));
+            this.setItemStackToSlot(net.minecraft.inventory.EntityEquipmentSlot.MAINHAND, new ItemStack(Items.STONE_AXE));
             break;
          case 5:
-            this.setCurrentItemOrArmor(0, new ItemStack(Items.iron_sword));
+            this.setItemStackToSlot(net.minecraft.inventory.EntityEquipmentSlot.MAINHAND, new ItemStack(Items.IRON_SWORD));
             break;
          case 6:
-            this.setCurrentItemOrArmor(0, new ItemStack(Items.iron_axe));
+            this.setItemStackToSlot(net.minecraft.inventory.EntityEquipmentSlot.MAINHAND, new ItemStack(Items.IRON_AXE));
             break;
          case 7:
-            this.setCurrentItemOrArmor(0, new ItemStack(Items.fishing_rod));
+            this.setItemStackToSlot(net.minecraft.inventory.EntityEquipmentSlot.MAINHAND, new ItemStack(Items.FISHING_ROD));
             break;
          case 8:
-            this.setCurrentItemOrArmor(0, new ItemStack(Items.stone_pickaxe));
+            this.setItemStackToSlot(net.minecraft.inventory.EntityEquipmentSlot.MAINHAND, new ItemStack(Items.STONE_PICKAXE));
             break;
          case 9:
-            this.setCurrentItemOrArmor(0, new ItemStack(Items.iron_pickaxe));
+            this.setItemStackToSlot(net.minecraft.inventory.EntityEquipmentSlot.MAINHAND, new ItemStack(Items.IRON_PICKAXE));
       }
 
    }
 
-   public IEntityLivingData onSpawnWithEgg(IEntityLivingData par1EntityLivingData) {
-      par1EntityLivingData = super.onSpawnWithEgg(par1EntityLivingData);
-      this.addRandomArmor();
-      ItemStack itemstack = this.getHeldItem();
-      if (itemstack != null && itemstack.getItem() == ConfigItems.itemWandCasting) {
+   @Override
+   public IEntityLivingData onInitialSpawn(DifficultyInstance difficulty, IEntityLivingData par1EntityLivingData) {
+      par1EntityLivingData = super.onInitialSpawn(difficulty, par1EntityLivingData);
+      this.setEquipmentBasedOnDifficulty(difficulty);
+      ItemStack itemstack = this.getHeldItemMainhand();
+      if (!itemstack.isEmpty() && itemstack.getItem() == ConfigItems.itemWandCasting) {
          this.setPechType(1);
-         this.equipmentDropChances[0] = 0.1F;
-      } else if (itemstack != null) {
-         if (itemstack.getItem() == Items.bow) {
+         this.setDropChance(net.minecraft.inventory.EntityEquipmentSlot.MAINHAND, 0.1F);
+      } else if (!itemstack.isEmpty()) {
+         if (itemstack.getItem() == Items.BOW) {
             this.setPechType(2);
          }
-
-         this.enchantEquipment();
+         this.setEnchantmentBasedOnDifficulty(difficulty);
       }
-
-      this.setCanPickUpLoot(this.rand.nextFloat() < 0.75F * this.worldObj.func_147462_b(this.posX, this.posY, this.posZ));
-      return super.onSpawnWithEgg(par1EntityLivingData);
+      this.setCanPickUpLoot(this.rand.nextFloat() < 0.75F);
+      return par1EntityLivingData;
    }
 
    public boolean getCanSpawnHere() {
-      BiomeGenBase biome = this.worldObj.getBiomeGenForCoords(MathHelper.floor_double(this.posX), MathHelper.floor_double(this.posZ));
+      Biome biome = this.world.getBiome(new net.minecraft.util.math.BlockPos(MathHelper.floor(this.posX), 0, MathHelper.floor(this.posZ)));
       boolean magicBiome = false;
       if (biome != null) {
-         magicBiome = BiomeDictionary.isBiomeOfType(biome, Type.MAGICAL) && biome.biomeID != Config.biomeTaintID;
+         magicBiome = BiomeDictionary.hasType(biome, Type.MAGICAL) && net.minecraft.world.biome.Biome.getIdForBiome(biome) != Config.biomeTaintID;
       }
 
       int count = 0;
 
       try {
-         List l = this.worldObj.getEntitiesWithinAABB(EntityPech.class, this.boundingBox.expand(16.0F, 16.0F, 16.0F));
+         List l = this.world.getEntitiesWithinAABB(EntityPech.class, this.getEntityBoundingBox().grow(16.0, 16.0, 16.0));
          if (l != null) {
             count = l.size();
          }
       } catch (Exception ignored) {
       }
 
-      if (this.worldObj.provider.dimensionId != 0 && biome.biomeID != Config.biomeMagicalForestID && biome.biomeID != Config.biomeEerieID) {
+      if (this.world.provider.getDimension() != 0 && net.minecraft.world.biome.Biome.getIdForBiome(biome) != Config.biomeMagicalForestID && net.minecraft.world.biome.Biome.getIdForBiome(biome) != Config.biomeEerieID) {
          magicBiome = false;
       }
 
@@ -216,33 +228,33 @@ public class EntityPech extends EntityMob implements IRangedAttackMob {
 
    protected void entityInit() {
       super.entityInit();
-      this.dataWatcher.addObject(13, (byte) 0);
-      this.dataWatcher.addObject(14, (short) 0);
-      this.dataWatcher.addObject(16, (byte) 0);
+      this.dataManager.register(PECH_TYPE, (byte) 0);
+      this.dataManager.register(ANGER, 0);
+      this.dataManager.register(TAMED, (byte) 0);
    }
 
    public int getPechType() {
-      return this.dataWatcher.getWatchableObjectByte(13);
+      return this.dataManager.get(PECH_TYPE);
    }
 
    public int getAnger() {
-      return this.dataWatcher.getWatchableObjectShort(14);
+      return this.dataManager.get(ANGER);
    }
 
    public boolean isTamed() {
-      return this.dataWatcher.getWatchableObjectByte(16) == 1;
+      return this.dataManager.get(TAMED) == 1;
    }
 
    public void setPechType(int par1) {
-      this.dataWatcher.updateObject(13, (byte)par1);
+      this.dataManager.set(PECH_TYPE, (byte) par1);
    }
 
    public void setAnger(int par1) {
-      this.dataWatcher.updateObject(14, (short)par1);
+      this.dataManager.set(ANGER, par1);
    }
 
    public void setTamed(boolean par1) {
-      this.dataWatcher.updateObject(16, (byte) (par1 ? 1 : 0));
+      this.dataManager.set(TAMED, (byte) (par1 ? 1 : 0));
    }
 
    public boolean isAIEnabled() {
@@ -251,9 +263,9 @@ public class EntityPech extends EntityMob implements IRangedAttackMob {
 
    protected void applyEntityAttributes() {
       super.applyEntityAttributes();
-      this.getEntityAttribute(SharedMonsterAttributes.maxHealth).setBaseValue(30.0F);
-      this.getEntityAttribute(SharedMonsterAttributes.attackDamage).setBaseValue(6.0F);
-      this.getEntityAttribute(SharedMonsterAttributes.movementSpeed).setBaseValue(0.5F);
+      this.getEntityAttribute(SharedMonsterAttributes.MAX_HEALTH).setBaseValue(30.0F);
+      this.getEntityAttribute(SharedMonsterAttributes.ATTACK_DAMAGE).setBaseValue(6.0F);
+      this.getEntityAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).setBaseValue(0.5F);
    }
 
    public void writeEntityToNBT(NBTTagCompound par1NBTTagCompound) {
@@ -288,7 +300,7 @@ public class EntityPech extends EntityMob implements IRangedAttackMob {
          NBTTagList nbttaglist = par1NBTTagCompound.getTagList("Loot", 10);
 
          for(int i = 0; i < this.loot.length; ++i) {
-            this.loot[i] = ItemStack.loadItemStackFromNBT(nbttaglist.getCompoundTagAt(i));
+            this.loot[i] = new ItemStack(nbttaglist.getCompoundTagAt(i));
          }
       }
 
@@ -303,7 +315,7 @@ public class EntityPech extends EntityMob implements IRangedAttackMob {
             int q = 0;
 
             for(ItemStack is : this.loot) {
-               if (is != null && is.stackSize > 0) {
+               if (is != null && is.getCount() > 0) {
                   ++q;
                }
             }
@@ -321,7 +333,7 @@ public class EntityPech extends EntityMob implements IRangedAttackMob {
 
    protected void dropFewItems(boolean flag, int i) {
        for (ItemStack itemStack : this.loot) {
-           if (itemStack != null && this.worldObj.rand.nextFloat() < 0.88F) {
+           if (itemStack != null && this.world.rand.nextFloat() < 0.88F) {
                this.entityDropItem(itemStack.copy(), 1.5F);
            }
        }
@@ -336,7 +348,7 @@ public class EntityPech extends EntityMob implements IRangedAttackMob {
          }
       }
 
-      if (this.worldObj.rand.nextInt(10) < 1 + i) {
+      if (this.world.rand.nextInt(10) < 1 + i) {
          this.entityDropItem(new ItemStack(ConfigItems.itemResource, 1, 18), 1.5F);
       }
 
@@ -348,7 +360,7 @@ public class EntityPech extends EntityMob implements IRangedAttackMob {
    }
 
    @SideOnly(Side.CLIENT)
-   public void handleHealthUpdate(byte par1) {
+   public void handleStatusUpdate(byte par1) {
       if (par1 == 16) {
          this.mumble = (float)Math.PI;
       } else if (par1 == 17) {
@@ -358,7 +370,7 @@ public class EntityPech extends EntityMob implements IRangedAttackMob {
             double d0 = this.rand.nextGaussian() * 0.02;
             double d1 = this.rand.nextGaussian() * 0.02;
             double d2 = this.rand.nextGaussian() * 0.02;
-            this.worldObj.spawnParticle("happyVillager", this.posX + (double)(this.rand.nextFloat() * this.width * 2.0F) - (double)this.width, this.posY + (double)0.5F + (double)(this.rand.nextFloat() * this.height), this.posZ + (double)(this.rand.nextFloat() * this.width * 2.0F) - (double)this.width, d0, d1, d2);
+            this.world.spawnParticle(EnumParticleTypes.VILLAGER_HAPPY, this.posX + (double)(this.rand.nextFloat() * this.width * 2.0F) - (double)this.width, this.posY + (double)0.5F + (double)(this.rand.nextFloat() * this.height), this.posZ + (double)(this.rand.nextFloat() * this.width * 2.0F) - (double)this.width, d0, d1, d2);
          }
       }
 
@@ -367,32 +379,39 @@ public class EntityPech extends EntityMob implements IRangedAttackMob {
             double d0 = this.rand.nextGaussian() * 0.02;
             double d1 = this.rand.nextGaussian() * 0.02;
             double d2 = this.rand.nextGaussian() * 0.02;
-            this.worldObj.spawnParticle("angryVillager", this.posX + (double)(this.rand.nextFloat() * this.width * 2.0F) - (double)this.width, this.posY + (double)0.5F + (double)(this.rand.nextFloat() * this.height), this.posZ + (double)(this.rand.nextFloat() * this.width * 2.0F) - (double)this.width, d0, d1, d2);
+            this.world.spawnParticle(EnumParticleTypes.VILLAGER_ANGRY, this.posX + (double)(this.rand.nextFloat() * this.width * 2.0F) - (double)this.width, this.posY + (double)0.5F + (double)(this.rand.nextFloat() * this.height), this.posZ + (double)(this.rand.nextFloat() * this.width * 2.0F) - (double)this.width, d0, d1, d2);
          }
 
          this.mumble = ((float)Math.PI * 2F);
       } else {
-         super.handleHealthUpdate(par1);
+         super.handleStatusUpdate(par1);
       }
 
    }
 
+   private void playTCSound(String soundName, float volume, float pitch) {
+      SoundEvent snd = SoundEvent.REGISTRY.getObject(new ResourceLocation(soundName));
+      if (snd != null) {
+         this.world.playSound(null, this.getPosition(), snd, SoundCategory.NEUTRAL, volume, pitch);
+      }
+   }
+
    public void playLivingSound() {
-      if (!this.worldObj.isRemote) {
+      if (!this.world.isRemote) {
          if (this.rand.nextInt(3) == 0) {
-            List list = this.worldObj.getEntitiesWithinAABBExcludingEntity(this, this.boundingBox.expand(4.0F, 2.0F, 4.0F));
+            List list = this.world.getEntitiesWithinAABBExcludingEntity(this, this.getEntityBoundingBox().expand(4.0, 2.0, 4.0));
 
              for (Object o : list) {
                  Entity entity1 = (Entity) o;
                  if (entity1 instanceof EntityPech) {
-                     this.worldObj.setEntityState(this, (byte) 17);
-                     this.playSound("thaumcraft:pech_trade", this.getSoundVolume(), this.getSoundPitch());
+                     this.world.setEntityState(this, (byte) 17);
+                     this.playTCSound("thaumcraft:pech_trade", this.getSoundVolume(), this.getSoundPitch());
                      return;
                  }
              }
          }
 
-         this.worldObj.setEntityState(this, (byte)16);
+         this.world.setEntityState(this, (byte)16);
       }
 
       super.playLivingSound();
@@ -406,28 +425,24 @@ public class EntityPech extends EntityMob implements IRangedAttackMob {
       return 0.4F;
    }
 
-   protected String getLivingSound() {
-      return "thaumcraft:pech_idle";
+   protected SoundEvent getLivingSound() {
+      return SoundEvent.REGISTRY.getObject(new ResourceLocation("thaumcraft:pech_idle"));
    }
 
-   protected String getHurtSound() {
-      return "thaumcraft:pech_hit";
+   protected SoundEvent getHurtSound(DamageSource damageSource) {
+      return SoundEvent.REGISTRY.getObject(new ResourceLocation("thaumcraft:pech_hit"));
    }
 
-   protected String getDeathSound() {
-      return "thaumcraft:pech_death";
-   }
-
-   protected Entity findPlayerToAttack() {
-      return this.getAnger() == 0 ? null : super.findPlayerToAttack();
+   protected SoundEvent getDeathSound() {
+      return SoundEvent.REGISTRY.getObject(new ResourceLocation("thaumcraft:pech_death"));
    }
 
    public void setCombatTask() {
       this.tasks.removeTask(this.aiMeleeAttack);
       this.tasks.removeTask(this.aiArrowAttack);
       this.tasks.removeTask(this.aiBlastAttack);
-      ItemStack itemstack = this.getHeldItem();
-      if (itemstack != null && itemstack.getItem() == Items.bow) {
+      ItemStack itemstack = this.getHeldItemMainhand();
+      if (itemstack != null && itemstack.getItem() == Items.BOW) {
          this.tasks.addTask(2, this.aiArrowAttack);
       } else if (itemstack != null && itemstack.getItem() == ConfigItems.itemWandCasting) {
          this.tasks.addTask(2, this.aiBlastAttack);
@@ -445,10 +460,15 @@ public class EntityPech extends EntityMob implements IRangedAttackMob {
 
    public void attackEntityWithRangedAttack(EntityLivingBase entitylivingbase, float f) {
       if (this.getPechType() == 2) {
-         EntityArrow entityarrow = new EntityArrow(this.worldObj, this, entitylivingbase, 1.6F, (float)(14 - this.worldObj.difficultySetting.getDifficultyId() * 4));
-         int i = EnchantmentHelper.getEnchantmentLevel(Enchantment.power.effectId, this.getHeldItem());
-         int j = EnchantmentHelper.getEnchantmentLevel(Enchantment.punch.effectId, this.getHeldItem());
-         entityarrow.setDamage((double)(f * 2.0F) + this.rand.nextGaussian() * (double)0.25F + (double)((float)this.worldObj.difficultySetting.getDifficultyId() * 0.11F));
+         EntityTippedArrow entityarrow = new EntityTippedArrow(this.world, this);
+         double d0 = entitylivingbase.posX - this.posX;
+         double d1 = entitylivingbase.posY + (double)entitylivingbase.getEyeHeight() - 1.1 - (this.posY + (double)this.getEyeHeight());
+         double d2 = entitylivingbase.posZ - this.posZ;
+         float inaccuracy = (float)(14 - this.world.getDifficulty().getId() * 4);
+         entityarrow.shoot(d0, d1 + MathHelper.sqrt((float)(d0 * d0 + d2 * d2)) * 0.2F, d2, 1.6F, inaccuracy);
+         int i = EnchantmentHelper.getEnchantmentLevel(Enchantments.POWER, this.getHeldItemMainhand());
+         int j = EnchantmentHelper.getEnchantmentLevel(Enchantments.PUNCH, this.getHeldItemMainhand());
+         entityarrow.setDamage((double)(f * 2.0F) + this.rand.nextGaussian() * (double)0.25F + (double)((float)this.world.getDifficulty().getId() * 0.11F));
          if (i > 0) {
             entityarrow.setDamage(entityarrow.getDamage() + (double)i * (double)0.5F + (double)0.5F);
          }
@@ -457,27 +477,26 @@ public class EntityPech extends EntityMob implements IRangedAttackMob {
             entityarrow.setKnockbackStrength(j);
          }
 
-         this.playSound("random.bow", 1.0F, 1.0F / (this.getRNG().nextFloat() * 0.4F + 0.8F));
-         this.worldObj.spawnEntityInWorld(entityarrow);
+         this.playTCSound("minecraft:entity.arrow.shoot", 1.0F, 1.0F / (this.getRNG().nextFloat() * 0.4F + 0.8F));
+         this.world.spawnEntity(entityarrow);
       } else if (this.getPechType() == 1) {
-         EntityPechBlast blast = new EntityPechBlast(this.worldObj, this, 1, 0, this.rand.nextFloat() < 0.1F);
+         EntityPechBlast blast = new EntityPechBlast(this.world, this, 1, 0, this.rand.nextFloat() < 0.1F);
          double d0 = entitylivingbase.posX + entitylivingbase.motionX - this.posX;
          double d1 = entitylivingbase.posY + (double)entitylivingbase.getEyeHeight() - 1.500000023841858 - this.posY;
          double d2 = entitylivingbase.posZ + entitylivingbase.motionZ - this.posZ;
-         float f1 = MathHelper.sqrt_double(d0 * d0 + d2 * d2);
-         blast.setThrowableHeading(d0, d1 + (double)(f1 * 0.1F), d2, 1.5F, 4.0F);
-         this.playSound("thaumcraft:ice", 0.4F, 1.0F + this.rand.nextFloat() * 0.1F);
-         this.worldObj.spawnEntityInWorld(blast);
+         float f1 = MathHelper.sqrt(d0 * d0 + d2 * d2);
+         blast.shoot(d0, d1 + (double)(f1 * 0.1F), d2, 1.5F, 4.0F);
+         this.playTCSound("thaumcraft:ice", 0.4F, 1.0F + this.rand.nextFloat() * 0.1F);
+         this.world.spawnEntity(blast);
       }
 
-      this.swingItem();
+      this.swingArm(EnumHand.MAIN_HAND);
    }
 
    private void becomeAngryAt(Entity par1Entity) {
-      this.entityToAttack = par1Entity;
       if (this.getAnger() <= 0) {
-         this.worldObj.setEntityState(this, (byte)19);
-         this.playSound("thaumcraft:pech_charge", this.getSoundVolume(), this.getSoundPitch());
+         this.world.setEntityState(this, (byte)19);
+         this.playTCSound("thaumcraft:pech_charge", this.getSoundVolume(), this.getSoundPitch());
       }
 
       this.setAttackTarget((EntityLivingBase)par1Entity);
@@ -496,12 +515,12 @@ public class EntityPech extends EntityMob implements IRangedAttackMob {
    }
 
    public boolean attackEntityFrom(DamageSource damSource, float par2) {
-      if (this.isEntityInvulnerable()) {
+      if (this.isEntityInvulnerable(damSource)) {
          return false;
       } else {
-         Entity entity = damSource.getEntity();
+         Entity entity = damSource.getTrueSource();
          if (entity instanceof EntityPlayer) {
-            List list = this.worldObj.getEntitiesWithinAABBExcludingEntity(this, this.boundingBox.expand(32.0F, 16.0F, 32.0F));
+            List list = this.world.getEntitiesWithinAABBExcludingEntity(this, this.getEntityBoundingBox().expand(32.0, 16.0, 32.0));
 
              for (Object o : list) {
                  Entity entity1 = (Entity) o;
@@ -527,35 +546,35 @@ public class EntityPech extends EntityMob implements IRangedAttackMob {
          this.setAnger(this.getAnger() - 1);
       }
 
-      if (this.getAnger() > 0 && (this.entityToAttack == null || this.getAttackTarget() == null)) {
-         this.findPlayerToAttack();
-         this.setAttackTarget((EntityLivingBase)this.entityToAttack);
-         if (this.entityToAttack != null) {
+      if (this.getAnger() > 0 && this.getAttackTarget() == null) {
+         EntityPlayer nearestPlayer = this.world.getClosestPlayerToEntity(this, 32.0);
+         if (nearestPlayer != null) {
+            this.setAttackTarget(nearestPlayer);
             if (this.chargecount > 0) {
                --this.chargecount;
             }
 
             if (this.chargecount == 0) {
                this.chargecount = 100;
-               this.playSound("thaumcraft:pech_charge", this.getSoundVolume(), this.getSoundPitch());
+               this.playTCSound("thaumcraft:pech_charge", this.getSoundVolume(), this.getSoundPitch());
             }
 
-            this.worldObj.setEntityState(this, (byte)17);
+            this.world.setEntityState(this, (byte)17);
          }
       }
 
-      if (this.worldObj.isRemote && this.rand.nextInt(15) == 0 && this.getAnger() > 0) {
+      if (this.world.isRemote && this.rand.nextInt(15) == 0 && this.getAnger() > 0) {
          double d0 = this.rand.nextGaussian() * 0.02;
          double d1 = this.rand.nextGaussian() * 0.02;
          double d2 = this.rand.nextGaussian() * 0.02;
-         this.worldObj.spawnParticle("angryVillager", this.posX + (double)(this.rand.nextFloat() * this.width * 2.0F) - (double)this.width, this.posY + (double)0.5F + (double)(this.rand.nextFloat() * this.height), this.posZ + (double)(this.rand.nextFloat() * this.width * 2.0F) - (double)this.width, d0, d1, d2);
+         this.world.spawnParticle(EnumParticleTypes.VILLAGER_ANGRY, this.posX + (double)(this.rand.nextFloat() * this.width * 2.0F) - (double)this.width, this.posY + (double)0.5F + (double)(this.rand.nextFloat() * this.height), this.posZ + (double)(this.rand.nextFloat() * this.width * 2.0F) - (double)this.width, d0, d1, d2);
       }
 
-      if (this.worldObj.isRemote && this.rand.nextInt(25) == 0 && this.isTamed()) {
+      if (this.world.isRemote && this.rand.nextInt(25) == 0 && this.isTamed()) {
          double d0 = this.rand.nextGaussian() * 0.02;
          double d1 = this.rand.nextGaussian() * 0.02;
          double d2 = this.rand.nextGaussian() * 0.02;
-         this.worldObj.spawnParticle("happyVillager", this.posX + (double)(this.rand.nextFloat() * this.width * 2.0F) - (double)this.width, this.posY + (double)0.5F + (double)(this.rand.nextFloat() * this.height), this.posZ + (double)(this.rand.nextFloat() * this.width * 2.0F) - (double)this.width, d0, d1, d2);
+         this.world.spawnParticle(EnumParticleTypes.VILLAGER_HAPPY, this.posX + (double)(this.rand.nextFloat() * this.width * 2.0F) - (double)this.width, this.posY + (double)0.5F + (double)(this.rand.nextFloat() * this.height), this.posZ + (double)(this.rand.nextFloat() * this.width * 2.0F) - (double)this.width, d0, d1, d2);
       }
 
       super.onUpdate();
@@ -581,7 +600,7 @@ public class EntityPech extends EntityMob implements IRangedAttackMob {
          return true;
       } else {
          for(int a = 0; a < this.loot.length; ++a) {
-            if (this.loot[a] != null && this.loot[a].stackSize <= 0) {
+            if (this.loot[a] != null && this.loot[a].getCount() <= 0) {
                this.loot[a] = null;
             }
 
@@ -589,7 +608,7 @@ public class EntityPech extends EntityMob implements IRangedAttackMob {
                return true;
             }
 
-            if (InventoryUtils.areItemStacksEqualStrict(entityItem, this.loot[a]) && entityItem.stackSize + this.loot[a].stackSize <= this.loot[a].getMaxStackSize()) {
+            if (InventoryUtils.areItemStacksEqualStrict(entityItem, this.loot[a]) && entityItem.getCount() + this.loot[a].getCount() <= this.loot[a].getMaxStackSize()) {
                return true;
             }
          }
@@ -605,47 +624,45 @@ public class EntityPech extends EntityMob implements IRangedAttackMob {
          if (this.rand.nextInt(10) < this.getValue(entityItem)) {
             this.setTamed(true);
             this.updateAINextTick = true;
-            this.worldObj.setEntityState(this, (byte)18);
+            this.world.setEntityState(this, (byte)18);
          }
 
-         --entityItem.stackSize;
-         return entityItem.stackSize <= 0 ? null : entityItem;
+         entityItem.shrink(1);
+         return entityItem.getCount() <= 0 ? null : entityItem;
       } else {
          for(int a = 0; a < this.loot.length; ++a) {
-            if (this.loot[a] != null && this.loot[a].stackSize <= 0) {
+            if (this.loot[a] != null && this.loot[a].getCount() <= 0) {
                this.loot[a] = null;
             }
 
-            if (entityItem != null && entityItem.stackSize > 0 && this.loot[a] != null && this.loot[a].stackSize < this.loot[a].getMaxStackSize() && InventoryUtils.areItemStacksEqualStrict(entityItem, this.loot[a])) {
-               if (entityItem.stackSize + this.loot[a].stackSize <= this.loot[a].getMaxStackSize()) {
-                  ItemStack var5 = this.loot[a];
-                  var5.stackSize += entityItem.stackSize;
+            if (entityItem != null && entityItem.getCount() > 0 && this.loot[a] != null && this.loot[a].getCount() < this.loot[a].getMaxStackSize() && InventoryUtils.areItemStacksEqualStrict(entityItem, this.loot[a])) {
+               if (entityItem.getCount() + this.loot[a].getCount() <= this.loot[a].getMaxStackSize()) {
+                  this.loot[a].grow(entityItem.getCount());
                   return null;
                }
 
-               int sz = Math.min(entityItem.stackSize, this.loot[a].getMaxStackSize() - this.loot[a].stackSize);
-               ItemStack var10000 = this.loot[a];
-               var10000.stackSize += sz;
-               entityItem.stackSize -= sz;
+               int sz = Math.min(entityItem.getCount(), this.loot[a].getMaxStackSize() - this.loot[a].getCount());
+               this.loot[a].grow(sz);
+               entityItem.shrink(sz);
             }
 
-            if (entityItem != null && entityItem.stackSize <= 0) {
+            if (entityItem != null && entityItem.getCount() <= 0) {
                entityItem = null;
             }
          }
 
          for(int a = 0; a < this.loot.length; ++a) {
-            if (this.loot[a] != null && this.loot[a].stackSize <= 0) {
+            if (this.loot[a] != null && this.loot[a].getCount() <= 0) {
                this.loot[a] = null;
             }
 
-            if (entityItem != null && entityItem.stackSize > 0 && this.loot[a] == null) {
+            if (entityItem != null && entityItem.getCount() > 0 && this.loot[a] == null) {
                this.loot[a] = entityItem.copy();
                return null;
             }
          }
 
-         if (entityItem != null && entityItem.stackSize <= 0) {
+         if (entityItem != null && entityItem.getCount() <= 0) {
             entityItem = null;
          }
 
@@ -653,13 +670,13 @@ public class EntityPech extends EntityMob implements IRangedAttackMob {
       }
    }
 
-   public boolean interact(EntityPlayer player) {
-      if (!player.isSneaking() && (player.getHeldItem() == null || !(player.getHeldItem().getItem() instanceof ItemNameTag))) {
-         if (!this.worldObj.isRemote && this.isTamed()) {
-            player.openGui(Thaumcraft.instance, 1, this.worldObj, this.getEntityId(), 0, 0);
+   protected boolean processInteract(EntityPlayer player, EnumHand hand) {
+      if (!player.isSneaking() && (player.getHeldItemMainhand().isEmpty() || !(player.getHeldItemMainhand().getItem() instanceof ItemNameTag))) {
+         if (!this.world.isRemote && this.isTamed()) {
+            player.openGui(Thaumcraft.instance, 1, this.world, this.getEntityId(), 0, 0);
             return true;
          } else {
-            return super.interact(player);
+            return super.processInteract(player, hand);
          }
       } else {
          return false;
@@ -700,11 +717,11 @@ public class EntityPech extends EntityMob implements IRangedAttackMob {
 
    static {
       valuedItems.put(Item.getIdFromItem(ConfigItems.itemManaBean), 1);
-      valuedItems.put(Item.getIdFromItem(Items.gold_ingot), 2);
-      valuedItems.put(Item.getIdFromItem(Items.golden_apple), 2);
-      valuedItems.put(Item.getIdFromItem(Items.ender_pearl), 3);
-      valuedItems.put(Item.getIdFromItem(Items.diamond), 4);
-      valuedItems.put(Item.getIdFromItem(Items.emerald), 5);
+      valuedItems.put(Item.getIdFromItem(Items.GOLD_INGOT), 2);
+      valuedItems.put(Item.getIdFromItem(Items.GOLDEN_APPLE), 2);
+      valuedItems.put(Item.getIdFromItem(Items.ENDER_PEARL), 3);
+      valuedItems.put(Item.getIdFromItem(Items.DIAMOND), 4);
+      valuedItems.put(Item.getIdFromItem(Items.EMERALD), 5);
       ArrayList<List> forInv = new ArrayList<>();
       forInv.add(Arrays.asList(1, new ItemStack(ConfigItems.itemManaBean)));
       forInv.add(Arrays.asList(1, new ItemStack(ConfigItems.itemNugget, 1, 16)));
@@ -726,16 +743,16 @@ public class EntityPech extends EntityMob implements IRangedAttackMob {
          forInv.add(Arrays.asList(1, new ItemStack(ConfigItems.itemNugget, 1, 20)));
       }
 
-      forInv.add(Arrays.asList(2, new ItemStack(Items.blaze_rod)));
+      forInv.add(Arrays.asList(2, new ItemStack(Items.BLAZE_ROD)));
       forInv.add(Arrays.asList(2, new ItemStack(ConfigBlocks.blockCustomPlant, 1, 0)));
-      forInv.add(Arrays.asList(2, new ItemStack(Items.potionitem, 1, 8201)));
-      forInv.add(Arrays.asList(2, new ItemStack(Items.potionitem, 1, 8194)));
-      forInv.add(Arrays.asList(3, new ItemStack(Items.experience_bottle)));
+      forInv.add(Arrays.asList(2, new ItemStack(Items.POTIONITEM, 1, 8201)));
+      forInv.add(Arrays.asList(2, new ItemStack(Items.POTIONITEM, 1, 8194)));
+      forInv.add(Arrays.asList(3, new ItemStack(Items.EXPERIENCE_BOTTLE)));
       forInv.add(Arrays.asList(3, new ItemStack(ConfigItems.itemResource, 1, 9)));
-      forInv.add(Arrays.asList(3, new ItemStack(Items.golden_apple, 1, 0)));
-      forInv.add(Arrays.asList(3, new ItemStack(Items.potionitem, 1, 8265)));
-      forInv.add(Arrays.asList(3, new ItemStack(Items.potionitem, 1, 8262)));
-      forInv.add(Arrays.asList(5, new ItemStack(Items.golden_apple, 1, 1)));
+      forInv.add(Arrays.asList(3, new ItemStack(Items.GOLDEN_APPLE, 1, 0)));
+      forInv.add(Arrays.asList(3, new ItemStack(Items.POTIONITEM, 1, 8265)));
+      forInv.add(Arrays.asList(3, new ItemStack(Items.POTIONITEM, 1, 8262)));
+      forInv.add(Arrays.asList(5, new ItemStack(Items.GOLDEN_APPLE, 1, 1)));
       forInv.add(Arrays.asList(4, new ItemStack(ConfigItems.itemPickThaumium)));
       forInv.add(Arrays.asList(5, new ItemStack(ConfigBlocks.blockCustomPlant, 1, 1)));
       forInv.add(Arrays.asList(5, new ItemStack(ConfigBlocks.blockCustomPlant, 1, 1)));
@@ -749,19 +766,19 @@ public class EntityPech extends EntityMob implements IRangedAttackMob {
 
       forMag.add(Arrays.asList(1, new ItemStack(ConfigItems.itemResource, 1, 9)));
       forMag.add(Arrays.asList(2, new ItemStack(ConfigItems.itemResource, 1, 9)));
-      forMag.add(Arrays.asList(2, new ItemStack(Items.potionitem, 1, 8193)));
-      forMag.add(Arrays.asList(2, new ItemStack(Items.potionitem, 1, 8261)));
-      forMag.add(Arrays.asList(3, Items.enchanted_book.getEnchantedItemStack(new EnchantmentData(Config.enchHaste, 1))));
-      forMag.add(Arrays.asList(3, new ItemStack(Items.golden_apple, 1, 0)));
-      forMag.add(Arrays.asList(3, new ItemStack(Items.potionitem, 1, 8225)));
-      forMag.add(Arrays.asList(3, new ItemStack(Items.potionitem, 1, 8229)));
+      forMag.add(Arrays.asList(2, new ItemStack(Items.POTIONITEM, 1, 8193)));
+      forMag.add(Arrays.asList(2, new ItemStack(Items.POTIONITEM, 1, 8261)));
+      forMag.add(Arrays.asList(3, net.minecraft.item.ItemEnchantedBook.getEnchantedItemStack(new EnchantmentData(Config.enchHaste, 1))));
+      forMag.add(Arrays.asList(3, new ItemStack(Items.GOLDEN_APPLE, 1, 0)));
+      forMag.add(Arrays.asList(3, new ItemStack(Items.POTIONITEM, 1, 8225)));
+      forMag.add(Arrays.asList(3, new ItemStack(Items.POTIONITEM, 1, 8229)));
 
       for(int a = 0; a < 7; ++a) {
          forMag.add(Arrays.asList(4, new ItemStack(ConfigBlocks.blockCrystal, 1, a)));
       }
 
-      forMag.add(Arrays.asList(5, new ItemStack(Items.golden_apple, 1, 1)));
-      forMag.add(Arrays.asList(5, Items.enchanted_book.getEnchantedItemStack(new EnchantmentData(Config.enchRepair, 1))));
+      forMag.add(Arrays.asList(5, new ItemStack(Items.GOLDEN_APPLE, 1, 1)));
+      forMag.add(Arrays.asList(5, net.minecraft.item.ItemEnchantedBook.getEnchantedItemStack(new EnchantmentData(Config.enchRepair, 1))));
       forMag.add(Arrays.asList(5, new ItemStack(ConfigItems.itemFocusPouch)));
       forMag.add(Arrays.asList(5, new ItemStack(ConfigItems.itemFocusPech)));
       forMag.add(Arrays.asList(5, new ItemStack(ConfigItems.itemAmuletVis, 1, 0)));
@@ -773,20 +790,20 @@ public class EntityPech extends EntityMob implements IRangedAttackMob {
          forArc.add(Arrays.asList(1, new ItemStack(ConfigBlocks.blockCandle, 1, a)));
       }
 
-      forArc.add(Arrays.asList(2, new ItemStack(Items.ghast_tear)));
-      forArc.add(Arrays.asList(2, new ItemStack(Items.potionitem, 1, 8194)));
-      forArc.add(Arrays.asList(2, new ItemStack(Items.potionitem, 1, 8201)));
-      forArc.add(Arrays.asList(2, Items.enchanted_book.getEnchantedItemStack(new EnchantmentData(Enchantment.power, 1))));
-      forArc.add(Arrays.asList(3, new ItemStack(Items.experience_bottle)));
+      forArc.add(Arrays.asList(2, new ItemStack(Items.GHAST_TEAR)));
+      forArc.add(Arrays.asList(2, new ItemStack(Items.POTIONITEM, 1, 8194)));
+      forArc.add(Arrays.asList(2, new ItemStack(Items.POTIONITEM, 1, 8201)));
+      forArc.add(Arrays.asList(2, net.minecraft.item.ItemEnchantedBook.getEnchantedItemStack(new EnchantmentData(Enchantments.POWER, 1))));
+      forArc.add(Arrays.asList(3, new ItemStack(Items.EXPERIENCE_BOTTLE)));
       forArc.add(Arrays.asList(3, new ItemStack(ConfigItems.itemResource, 1, 9)));
-      forArc.add(Arrays.asList(3, new ItemStack(Items.potionitem, 1, 8270)));
-      forArc.add(Arrays.asList(3, new ItemStack(Items.potionitem, 1, 8225)));
-      forArc.add(Arrays.asList(3, new ItemStack(Items.golden_apple, 1, 0)));
-      forArc.add(Arrays.asList(5, new ItemStack(Items.golden_apple, 1, 1)));
+      forArc.add(Arrays.asList(3, new ItemStack(Items.POTIONITEM, 1, 8270)));
+      forArc.add(Arrays.asList(3, new ItemStack(Items.POTIONITEM, 1, 8225)));
+      forArc.add(Arrays.asList(3, new ItemStack(Items.GOLDEN_APPLE, 1, 0)));
+      forArc.add(Arrays.asList(5, new ItemStack(Items.GOLDEN_APPLE, 1, 1)));
       forArc.add(Arrays.asList(4, new ItemStack(ConfigItems.itemBootsThaumium)));
       forArc.add(Arrays.asList(5, new ItemStack(ConfigItems.itemRingRunic, 1, 0)));
-      forArc.add(Arrays.asList(5, Items.enchanted_book.getEnchantedItemStack(new EnchantmentData(Enchantment.flame, 1))));
-      forArc.add(Arrays.asList(5, Items.enchanted_book.getEnchantedItemStack(new EnchantmentData(Enchantment.infinity, 1))));
+      forArc.add(Arrays.asList(5, net.minecraft.item.ItemEnchantedBook.getEnchantedItemStack(new EnchantmentData(Enchantments.FLAME, 1))));
+      forArc.add(Arrays.asList(5, net.minecraft.item.ItemEnchantedBook.getEnchantedItemStack(new EnchantmentData(Enchantments.INFINITY, 1))));
       tradeInventory.put(2, forArc);
    }
 }

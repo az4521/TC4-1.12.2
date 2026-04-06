@@ -21,7 +21,8 @@ public class SlotLimitedByWand extends Slot {
       return this.limit;
    }
 
-   public void onPickupFromSlot(EntityPlayer par1EntityPlayer, ItemStack par2ItemStack) {
-      super.onPickupFromSlot(par1EntityPlayer, par2ItemStack);
+   @Override
+   public ItemStack onTake(EntityPlayer par1EntityPlayer, ItemStack par2ItemStack) {
+      return super.onTake(par1EntityPlayer, par2ItemStack);
    }
 }

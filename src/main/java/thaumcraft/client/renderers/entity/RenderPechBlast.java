@@ -2,12 +2,14 @@ package thaumcraft.client.renderers.entity;
 
 import net.minecraft.client.entity.AbstractClientPlayer;
 import net.minecraft.client.renderer.entity.Render;
+import net.minecraft.client.renderer.entity.RenderManager;
 import net.minecraft.entity.Entity;
 import net.minecraft.util.ResourceLocation;
 import thaumcraft.common.entities.projectile.EntityPechBlast;
 
 public class RenderPechBlast extends Render {
-   public RenderPechBlast() {
+   public RenderPechBlast(RenderManager renderManager) {
+      super(renderManager);
       this.shadowSize = 0.1F;
    }
 
@@ -19,6 +21,6 @@ public class RenderPechBlast extends Render {
    }
 
    protected ResourceLocation getEntityTexture(Entity entity) {
-      return AbstractClientPlayer.locationStevePng;
+      return new net.minecraft.util.ResourceLocation("textures/entity/steve.png");
    }
 }

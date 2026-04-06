@@ -2,7 +2,7 @@ package thaumcraft.common.entities.monster.mods;
 
 import java.util.UUID;
 import net.minecraft.entity.ai.attributes.AttributeModifier;
-import net.minecraft.util.StatCollector;
+import net.minecraft.util.text.translation.I18n;
 
 public class ChampionModifier {
    String name = "";
@@ -22,6 +22,6 @@ public class ChampionModifier {
    }
 
    public String getModNameLocalized() {
-      return StatCollector.translateToLocal("champion.mod." + this.name);
+      return I18n.translateToLocal("champion.mod." + this.name);
    }
 }

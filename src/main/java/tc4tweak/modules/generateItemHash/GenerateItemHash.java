@@ -1,6 +1,6 @@
 package tc4tweak.modules.generateItemHash;
 
-import cpw.mods.fml.common.registry.GameRegistry;
+import net.minecraftforge.fml.common.registry.GameRegistry;
 import net.minecraft.block.Block;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -108,9 +108,9 @@ public class GenerateItemHash {
             }
         } else {
             for (List<?> l : ThaumcraftApi.objectTags.keySet()) {
-                String name = ((Item) l.get(0)).getUnlocalizedName();
+                String name = Item.REGISTRY.getNameForObject((Item) l.get(0)).toString();
                 // this is probably not correct, but vanilla TC4 does it.
-                if (l.get(1) instanceof int[] && (Item.itemRegistry.getObject(name) == item || Block.blockRegistry.getObject(name) == Block.getBlockFromItem(item))) {
+                if (l.get(1) instanceof int[] && (Item.REGISTRY.getObject(new net.minecraft.util.ResourceLocation(name)) == item || Block.REGISTRY.getObject(new net.minecraft.util.ResourceLocation(name)) == Block.getBlockFromItem(item))) {
                     int[] range = (int[]) l.get(1);
                     Arrays.sort(range);
                     if (Arrays.binarySearch(range, meta) >= 0) {
@@ -146,18 +146,15 @@ public class GenerateItemHash {
 
     private static int getUniqueIdentifierHash(Item item, ItemStack t) {
         if (customItemStacksCache.isEnabled()) {
-            String name = Item.itemRegistry.getNameForObject(item);
+            net.minecraft.util.ResourceLocation rlName = item.getRegistryName(); String name = rlName != null ? rlName.toString() : null;
             if (name == null)
                 return DEFAULT_NAMESPACE_HASH_BASE;
             if (customItemStacksCache.getCache().contains(name))
-                return t.getUnlocalizedName().hashCode();
+                return t.getDisplayName().hashCode();
             return name.hashCode();
         } else {
             try {
-                GameRegistry.UniqueIdentifier ui = GameRegistry.findUniqueIdentifierFor(item);
-                if (ui == null)
-                    return t.getUnlocalizedName().hashCode();
-                return updateHash(updateHashColon(ui.modId.hashCode()), ui.name);
+                net.minecraft.util.ResourceLocation rl = item.getRegistryName(); if (rl == null) return t.getDisplayName().hashCode(); return updateHash(updateHashColon(rl.getNamespace().hashCode()), rl.getPath());
             } catch (Exception e) {
                 return DEFAULT_NAMESPACE_HASH_BASE;
             }

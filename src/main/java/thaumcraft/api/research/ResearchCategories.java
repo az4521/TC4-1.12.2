@@ -3,11 +3,11 @@ package thaumcraft.api.research;
 import java.util.LinkedHashMap;
 
 import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.StatCollector;
+import net.minecraft.util.text.translation.I18n;
 
 import org.apache.logging.log4j.Level;
 
-import cpw.mods.fml.common.FMLLog;
+import net.minecraftforge.fml.common.FMLLog;
 import tc4tweak.modules.getResearch.GetResearch;
 
 public class ResearchCategories {
@@ -29,7 +29,7 @@ public class ResearchCategories {
 	 * Must be stored as localization information in the LanguageRegistry.
 	 */
 	public static String getCategoryName(String key) {
-		return StatCollector.translateToLocal("tc.research_category."+key);
+		return I18n.translateToLocal("tc.research_category."+key);
 	}
 
 	/**

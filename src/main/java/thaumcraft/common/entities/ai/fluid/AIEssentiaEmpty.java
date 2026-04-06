@@ -1,10 +1,12 @@
 package thaumcraft.common.entities.ai.fluid;
 
 import net.minecraft.entity.ai.EntityAIBase;
+import net.minecraft.init.SoundEvents;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.ChunkCoordinates;
+import net.minecraft.util.SoundCategory;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
-import net.minecraftforge.common.util.ForgeDirection;
+import net.minecraft.util.EnumFacing;
 import thaumcraft.api.aspects.IEssentiaTransport;
 import thaumcraft.common.entities.golems.EntityGolemBase;
 import thaumcraft.common.entities.golems.GolemHelper;
@@ -16,27 +18,27 @@ public class AIEssentiaEmpty extends EntityAIBase {
    private int jarX;
    private int jarY;
    private int jarZ;
-   private ForgeDirection markerOrientation;
+   private EnumFacing markerOrientation;
    private World theWorld;
 
    public AIEssentiaEmpty(EntityGolemBase par1EntityCreature) {
       this.theGolem = par1EntityCreature;
-      this.theWorld = par1EntityCreature.worldObj;
+      this.theWorld = par1EntityCreature.world;
       this.setMutexBits(3);
    }
 
    public boolean shouldExecute() {
-      ChunkCoordinates home = this.theGolem.getHomePosition();
+      BlockPos home = this.theGolem.getHomePosition();
       if (this.theGolem.getNavigator().noPath() && this.theGolem.essentia != null && this.theGolem.essentiaAmount != 0) {
-         ChunkCoordinates jarloc = GolemHelper.findJarWithRoom(this.theGolem);
+         BlockPos jarloc = GolemHelper.findJarWithRoom(this.theGolem);
          if (jarloc == null) {
             return false;
-         } else if (this.theGolem.getDistanceSq((double)jarloc.posX + (double)0.5F, (double)jarloc.posY + (double)0.5F, (double)jarloc.posZ + (double)0.5F) > (double)4.0F) {
+         } else if (this.theGolem.getDistanceSq((double)jarloc.getX() + (double)0.5F, (double)jarloc.getY() + (double)0.5F, (double)jarloc.getZ() + (double)0.5F) > (double)4.0F) {
             return false;
          } else {
-            this.jarX = jarloc.posX;
-            this.jarY = jarloc.posY;
-            this.jarZ = jarloc.posZ;
+            this.jarX = jarloc.getX();
+            this.jarY = jarloc.getY();
+            this.jarZ = jarloc.getZ();
             return true;
          }
       } else {
@@ -49,7 +51,7 @@ public class AIEssentiaEmpty extends EntityAIBase {
    }
 
    public void startExecuting() {
-      TileEntity tile = this.theWorld.getTileEntity(this.jarX, this.jarY, this.jarZ);
+      TileEntity tile = this.theWorld.getTileEntity(new BlockPos(this.jarX, this.jarY, this.jarZ));
       if (tile instanceof TileJarFillable) {
          TileJarFillable jar = (TileJarFillable)tile;
          this.theGolem.essentiaAmount = jar.addToContainer(this.theGolem.essentia, this.theGolem.essentiaAmount);
@@ -57,9 +59,9 @@ public class AIEssentiaEmpty extends EntityAIBase {
             this.theGolem.essentia = null;
          }
 
-         this.theWorld.playSoundAtEntity(this.theGolem, "game.neutral.swim", 0.2F, 1.0F + (this.theWorld.rand.nextFloat() - this.theWorld.rand.nextFloat()) * 0.3F);
+         this.theWorld.playSound(null, this.theGolem.getPosition(), SoundEvents.ENTITY_GENERIC_SWIM, SoundCategory.NEUTRAL, 0.2F, 1.0F + (this.theWorld.rand.nextFloat() - this.theWorld.rand.nextFloat()) * 0.3F);
          this.theGolem.updateCarried();
-         this.theWorld.markBlockForUpdate(this.jarX, this.jarY, this.jarZ);
+         { BlockPos _jp = new BlockPos(this.jarX, this.jarY, this.jarZ); net.minecraft.block.state.IBlockState _bs = this.theWorld.getBlockState(_jp); this.theWorld.notifyBlockUpdate(_jp, _bs, _bs, 3); }
       } else if (tile instanceof TileEssentiaReservoir) {
          TileEssentiaReservoir trans = (TileEssentiaReservoir)tile;
          if (trans.getSuctionAmount(trans.facing) > 0 && (trans.getSuctionType(trans.facing) == null || trans.getSuctionType(trans.facing) == this.theGolem.essentia)) {
@@ -71,16 +73,16 @@ public class AIEssentiaEmpty extends EntityAIBase {
                   this.theGolem.essentia = null;
                }
 
-               this.theWorld.playSoundAtEntity(this.theGolem, "game.neutral.swim", 0.2F, 1.0F + (this.theWorld.rand.nextFloat() - this.theWorld.rand.nextFloat()) * 0.3F);
+               this.theWorld.playSound(null, this.theGolem.getPosition(), SoundEvents.ENTITY_GENERIC_SWIM, SoundCategory.NEUTRAL, 0.2F, 1.0F + (this.theWorld.rand.nextFloat() - this.theWorld.rand.nextFloat()) * 0.3F);
                this.theGolem.updateCarried();
-               this.theWorld.markBlockForUpdate(this.jarX, this.jarY, this.jarZ);
+               { BlockPos _jp = new BlockPos(this.jarX, this.jarY, this.jarZ); net.minecraft.block.state.IBlockState _bs = this.theWorld.getBlockState(_jp); this.theWorld.notifyBlockUpdate(_jp, _bs, _bs, 3); }
             }
          }
       } else if (tile instanceof IEssentiaTransport) {
          for(Integer side : GolemHelper.getMarkedSides(this.theGolem, tile, (byte)-1)) {
             IEssentiaTransport trans = (IEssentiaTransport)tile;
-            if (trans.canInputFrom(ForgeDirection.getOrientation(side)) && trans.getSuctionAmount(ForgeDirection.getOrientation(side)) > 0 && (trans.getSuctionType(ForgeDirection.getOrientation(side)) == null || trans.getSuctionType(ForgeDirection.getOrientation(side)) == this.theGolem.essentia)) {
-               int added = trans.addEssentia(this.theGolem.essentia, this.theGolem.essentiaAmount, ForgeDirection.getOrientation(side));
+            if (trans.canInputFrom(EnumFacing.byIndex(side)) && trans.getSuctionAmount(EnumFacing.byIndex(side)) > 0 && (trans.getSuctionType(EnumFacing.byIndex(side)) == null || trans.getSuctionType(EnumFacing.byIndex(side)) == this.theGolem.essentia)) {
+               int added = trans.addEssentia(this.theGolem.essentia, this.theGolem.essentiaAmount, EnumFacing.byIndex(side));
                if (added > 0) {
                   EntityGolemBase var10000 = this.theGolem;
                   var10000.essentiaAmount -= added;
@@ -88,9 +90,9 @@ public class AIEssentiaEmpty extends EntityAIBase {
                      this.theGolem.essentia = null;
                   }
 
-                  this.theWorld.playSoundAtEntity(this.theGolem, "game.neutral.swim", 0.2F, 1.0F + (this.theWorld.rand.nextFloat() - this.theWorld.rand.nextFloat()) * 0.3F);
+                  this.theWorld.playSound(null, this.theGolem.getPosition(), SoundEvents.ENTITY_GENERIC_SWIM, SoundCategory.NEUTRAL, 0.2F, 1.0F + (this.theWorld.rand.nextFloat() - this.theWorld.rand.nextFloat()) * 0.3F);
                   this.theGolem.updateCarried();
-                  this.theWorld.markBlockForUpdate(this.jarX, this.jarY, this.jarZ);
+                  { BlockPos _jp = new BlockPos(this.jarX, this.jarY, this.jarZ); net.minecraft.block.state.IBlockState _bs = this.theWorld.getBlockState(_jp); this.theWorld.notifyBlockUpdate(_jp, _bs, _bs, 3); }
                   break;
                }
             }

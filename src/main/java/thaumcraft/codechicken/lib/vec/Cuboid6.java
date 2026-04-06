@@ -33,7 +33,6 @@ public class Cuboid6 implements Copyable<Cuboid6> {
 
 
    public void setBlockBounds(Block block) {
-      block.setBlockBounds((float)this.min.x, (float)this.min.y, (float)this.min.z, (float)this.max.x, (float)this.max.y, (float)this.max.z);
    }
 
    public String toString() {

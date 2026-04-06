@@ -7,17 +7,17 @@ import net.minecraft.potion.Potion;
 import net.minecraft.util.ResourceLocation;
 import thaumcraft.api.damagesource.DamageSourceThaumcraft;
 import thaumcraft.api.entities.ITaintedMob;
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 
 public class PotionFluxTaint extends Potion
 {
     public static PotionFluxTaint instance = null; // will be instantiated at runtime
     private int statusIconIndex = -1;
     
-    public PotionFluxTaint(int par1, boolean par2, int par3)
+    public PotionFluxTaint(boolean par2, int par3)
     {
-    	super(par1,par2,par3);
+    	super(par2,par3);
     	setIconIndex(0, 0);
     }
     
@@ -25,7 +25,6 @@ public class PotionFluxTaint extends Potion
     {
     	instance.setPotionName("potion.fluxtaint");
     	instance.setIconIndex(3, 1);
-    	instance.setEffectiveness(0.25D);
     }
     
 	@Override

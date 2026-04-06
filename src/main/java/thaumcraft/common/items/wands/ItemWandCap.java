@@ -1,18 +1,18 @@
 package thaumcraft.common.items.wands;
 
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import java.util.List;
-import net.minecraft.client.renderer.texture.IIconRegister;
+import thaumcraft.client.renderers.compat.IIconRegister;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.IIcon;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import thaumcraft.common.Thaumcraft;
 import thaumcraft.common.config.Config;
 
 public class ItemWandCap extends Item {
-   public IIcon[] icon = new IIcon[9];
+   public TextureAtlasSprite[] icon = new TextureAtlasSprite[9];
 
    public ItemWandCap() {
       this.setMaxStackSize(64);
@@ -23,24 +23,25 @@ public class ItemWandCap extends Item {
 
    @SideOnly(Side.CLIENT)
    public void registerIcons(IIconRegister ir) {
-      this.icon[0] = ir.registerIcon("thaumcraft:wand_cap_iron");
-      this.icon[1] = ir.registerIcon("thaumcraft:wand_cap_gold");
-      this.icon[2] = ir.registerIcon("thaumcraft:wand_cap_thaumium");
-      this.icon[3] = ir.registerIcon("thaumcraft:wand_cap_copper");
-      this.icon[4] = ir.registerIcon("thaumcraft:wand_cap_silver");
-      this.icon[5] = ir.registerIcon("thaumcraft:wand_cap_silver_inert");
-      this.icon[6] = ir.registerIcon("thaumcraft:wand_cap_thaumium_inert");
-      this.icon[7] = ir.registerIcon("thaumcraft:wand_cap_void");
-      this.icon[8] = ir.registerIcon("thaumcraft:wand_cap_void_inert");
+      this.icon[0] = ir.registerSprite("thaumcraft:wand_cap_iron");
+      this.icon[1] = ir.registerSprite("thaumcraft:wand_cap_gold");
+      this.icon[2] = ir.registerSprite("thaumcraft:wand_cap_thaumium");
+      this.icon[3] = ir.registerSprite("thaumcraft:wand_cap_copper");
+      this.icon[4] = ir.registerSprite("thaumcraft:wand_cap_silver");
+      this.icon[5] = ir.registerSprite("thaumcraft:wand_cap_silver_inert");
+      this.icon[6] = ir.registerSprite("thaumcraft:wand_cap_thaumium_inert");
+      this.icon[7] = ir.registerSprite("thaumcraft:wand_cap_void");
+      this.icon[8] = ir.registerSprite("thaumcraft:wand_cap_void_inert");
    }
 
    @SideOnly(Side.CLIENT)
-   public IIcon getIconFromDamage(int meta) {
+   public TextureAtlasSprite getIconFromDamage(int meta) {
       return this.icon[meta];
    }
 
    @SideOnly(Side.CLIENT)
-   public void getSubItems(Item par1, CreativeTabs par2CreativeTabs, List par3List) {
+   @Override
+   public void getSubItems(CreativeTabs par2CreativeTabs, net.minecraft.util.NonNullList<ItemStack> par3List) {
       par3List.add(new ItemStack(this, 1, 0));
       par3List.add(new ItemStack(this, 1, 1));
       if (Config.foundCopperIngot) {
@@ -58,7 +59,8 @@ public class ItemWandCap extends Item {
       par3List.add(new ItemStack(this, 1, 8));
    }
 
-   public String getUnlocalizedName(ItemStack par1ItemStack) {
-      return super.getUnlocalizedName() + "." + par1ItemStack.getItemDamage();
+   @Override
+   public String getTranslationKey(ItemStack par1ItemStack) {
+      return getTranslationKey() + "." + par1ItemStack.getItemDamage();
    }
 }

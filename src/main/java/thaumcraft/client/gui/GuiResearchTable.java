@@ -1,9 +1,10 @@
 package thaumcraft.client.gui;
 
-import cpw.mods.fml.client.FMLClientHandler;
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
+import net.minecraftforge.fml.client.FMLClientHandler;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import java.awt.Color;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -13,8 +14,8 @@ import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.client.renderer.RenderHelper;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.util.MathHelper;
-import net.minecraft.util.StatCollector;
+import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.text.translation.I18n;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.GL11;
 import thaumcraft.api.aspects.Aspect;
@@ -35,6 +36,9 @@ import thaumcraft.common.lib.research.ResearchManager;
 import thaumcraft.common.lib.research.ResearchNoteData;
 import thaumcraft.common.lib.utils.HexUtils;
 import thaumcraft.common.tiles.TileResearchTable;
+import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.client.renderer.BufferBuilder;
+import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 
 @SideOnly(Side.CLIENT)
 public class GuiResearchTable extends GuiContainer {
@@ -71,11 +75,11 @@ public class GuiResearchTable extends GuiContainer {
       this.xSize = 255;
       this.ySize = 255;
       this.galFontRenderer = FMLClientHandler.instance().getClient().standardGalacticFontRenderer;
-      this.username = player.getCommandSenderName();
+      this.username = player.getName();
       this.player = player;
-      RESEARCHER_1 = ResearchManager.isResearchComplete(player.getCommandSenderName(), "RESEARCHER1");
-      RESEARCHER_2 = ResearchManager.isResearchComplete(player.getCommandSenderName(), "RESEARCHER2");
-      RESEARCHDUPE = ResearchManager.isResearchComplete(player.getCommandSenderName(), "RESEARCHDUPE");
+      RESEARCHER_1 = ResearchManager.isResearchComplete(player.getName(), "RESEARCHER1");
+      RESEARCHER_2 = ResearchManager.isResearchComplete(player.getName(), "RESEARCHER2");
+      RESEARCHDUPE = ResearchManager.isResearchComplete(player.getName(), "RESEARCHDUPE");
       int count = 0;
 
       for(Aspect aspect : Aspect.aspects.values()) {
@@ -89,9 +93,9 @@ public class GuiResearchTable extends GuiContainer {
       Minecraft mc = Minecraft.getMinecraft();
       long time = System.nanoTime() / 1000000L;
       if (!PlayerNotifications.getListAndUpdate(time).isEmpty()) {
-         GL11.glPushMatrix();
+         GlStateManager.pushMatrix();
          Thaumcraft.instance.renderEventHandler.notifyHandler.renderNotifyHUD(this.width, this.height, time);
-         GL11.glPopMatrix();
+         GlStateManager.popMatrix();
       }
 
    }
@@ -109,10 +113,10 @@ public class GuiResearchTable extends GuiContainer {
          int var8 = my - (gy + 5);
          if (var7 >= 0 && var8 >= 0 && var7 < 24 && var8 < 24) {
             RenderHelper.enableGUIStandardItemLighting();
-            GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+            GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
             ResearchItem rr = ResearchCategories.getResearch(this.note.key);
-            String ss = StatCollector.translateToLocal("tc.research.copy");
-            GL11.glEnable(GL11.GL_BLEND);
+            String ss = I18n.translateToLocal("tc.research.copy");
+            GlStateManager.enableBlend();
             UtilsFX.bindTexture("textures/gui/guiresearchtable2.png");
             this.drawTexturedModalRect(gx + 100, gy + 21, 184, 224, 48, 16);
             AspectList al = rr.tags.copy();
@@ -128,13 +132,13 @@ public class GuiResearchTable extends GuiContainer {
                ++count;
             }
 
-            GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
-            this.fontRendererObj.drawStringWithShadow(ss, gx + 100, gy + 12, -1);
+            GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
+            this.fontRenderer.drawStringWithShadow(ss, gx + 100, gy + 12, -1);
          }
       }
 
       RenderHelper.disableStandardItemLighting();
-      GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+      GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
       if (Mouse.isButtonDown(0)) {
          int sx = gx + 10;
          int sy = gy + 40;
@@ -146,9 +150,9 @@ public class GuiResearchTable extends GuiContainer {
                this.draggedAspect = aspect;
             }
          } else if (this.isMouseButtonDown == 1 && this.draggedAspect != null) {
-            GL11.glEnable(GL11.GL_BLEND);
+            GlStateManager.enableBlend();
             this.drawOrb(mx - 8, my - 8, this.draggedAspect.getColor());
-            GL11.glDisable(GL11.GL_BLEND);
+            GlStateManager.disableBlend();
          }
       } else {
          if (this.isMouseButtonDown == 1 && this.draggedAspect != null) {
@@ -159,7 +163,7 @@ public class GuiResearchTable extends GuiContainer {
                if (this.note.hexEntries.containsKey(hp.toString()) && this.note.hexEntries.get(hp.toString()).type == 0) {
                   this.playButtonCombine();
                   this.playButtonWrite();
-                  PacketHandler.INSTANCE.sendToServer(new PacketAspectPlaceToServer(this.player, (byte)hp.q, (byte)hp.r, this.tileEntity.xCoord, this.tileEntity.yCoord, this.tileEntity.zCoord, this.draggedAspect));
+                  PacketHandler.INSTANCE.sendToServer(new PacketAspectPlaceToServer(this.player, (byte)hp.q, (byte)hp.r, this.tileEntity.getPos().getX(), this.tileEntity.getPos().getY(), this.tileEntity.getPos().getZ(), this.draggedAspect));
                   this.draggedAspect = null;
                }
             }
@@ -200,9 +204,9 @@ public class GuiResearchTable extends GuiContainer {
       }
 
       this.drawAspectText(var5 + 10, var6 + 40, mx, my);
-      if (this.note != null && (this.tileEntity.getStackInSlot(0) == null || this.tileEntity.getStackInSlot(0).getItemDamage() == this.tileEntity.getStackInSlot(0).getMaxDamage())) {
-         int sx = Math.max(this.fontRendererObj.getStringWidth(StatCollector.translateToLocal("tile.researchtable.noink.0")), this.fontRendererObj.getStringWidth(StatCollector.translateToLocal("tile.researchtable.noink.1"))) / 2;
-         UtilsFX.drawCustomTooltip(this, itemRender, this.fontRendererObj, Arrays.asList(StatCollector.translateToLocal("tile.researchtable.noink.0"), StatCollector.translateToLocal("tile.researchtable.noink.1")), gx + 157 - sx, gy + 84, 11);
+      if (this.note != null && (this.tileEntity.getStackInSlot(0).isEmpty() || this.tileEntity.getStackInSlot(0).getItemDamage() == this.tileEntity.getStackInSlot(0).getMaxDamage())) {
+         int sx = Math.max(this.fontRenderer.getStringWidth(I18n.translateToLocal("tile.researchtable.noink.0")), this.fontRenderer.getStringWidth(I18n.translateToLocal("tile.researchtable.noink.1"))) / 2;
+         UtilsFX.drawCustomTooltip(this, itemRender, this.fontRenderer, Arrays.asList(I18n.translateToLocal("tile.researchtable.noink.0"), I18n.translateToLocal("tile.researchtable.noink.1")), gx + 157 - sx, gy + 84, 11);
       }
 
    }
@@ -210,8 +214,8 @@ public class GuiResearchTable extends GuiContainer {
    protected void drawGuiContainerBackgroundLayer(float par1, int par2, int par3) {
       int var5 = this.guiLeft;
       int var6 = this.guiTop;
-      GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
-      GL11.glEnable(GL11.GL_BLEND);
+      GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
+      GlStateManager.enableBlend();
       UtilsFX.bindTexture("textures/gui/guiresearchtable2.png");
       this.drawTexturedModalRect(var5, var6, 0, 0, 255, 167);
       this.drawTexturedModalRect(var5 + 40, var6 + 167, 0, 166, 184, 88);
@@ -236,7 +240,7 @@ public class GuiResearchTable extends GuiContainer {
       }
 
       this.drawAspects(var5 + 10, var6 + 40);
-      GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+      GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
       RenderHelper.disableStandardItemLighting();
       this.drawResearchData(var5, var6, par2, par3);
    }
@@ -261,11 +265,11 @@ public class GuiResearchTable extends GuiContainer {
          }
       }
 
-      if (this.select1 != null && Thaumcraft.proxy.playerKnowledge.getAspectPoolFor(this.player.getCommandSenderName(), this.select1) <= 0 && this.tileEntity.bonusAspects.getAmount(this.select1) <= 0) {
+      if (this.select1 != null && Thaumcraft.proxy.playerKnowledge.getAspectPoolFor(this.player.getName(), this.select1) <= 0 && this.tileEntity.bonusAspects.getAmount(this.select1) <= 0) {
          this.select1 = null;
       }
 
-      if (this.select2 != null && Thaumcraft.proxy.playerKnowledge.getAspectPoolFor(this.player.getCommandSenderName(), this.select2) <= 0 && this.tileEntity.bonusAspects.getAmount(this.select2) <= 0) {
+      if (this.select2 != null && Thaumcraft.proxy.playerKnowledge.getAspectPoolFor(this.player.getName(), this.select2) <= 0 && this.tileEntity.bonusAspects.getAmount(this.select2) <= 0) {
          this.select2 = null;
       }
 
@@ -295,26 +299,26 @@ public class GuiResearchTable extends GuiContainer {
                var7 = mx - (x + xx);
                var8 = my - (y + yy);
                if (var7 >= 0 && var8 >= 0 && var7 < 16 && var8 < 16) {
-                  UtilsFX.drawCustomTooltip(this, itemRender, this.fontRendererObj, Arrays.asList(aspect.getName(), aspect.getLocalizedDescription()), mx, my - 8, 11);
+                  UtilsFX.drawCustomTooltip(this, itemRender, this.fontRenderer, Arrays.asList(aspect.getName(), aspect.getLocalizedDescription()), mx, my - 8, 11);
                   if (RESEARCHER_1 && !aspect.isPrimal()) {
-                     GL11.glPushMatrix();
-                     GL11.glEnable(GL11.GL_BLEND);
-                     GL11.glBlendFunc(770, 771);
+                     GlStateManager.pushMatrix();
+                     GlStateManager.enableBlend();
+                     GlStateManager.blendFunc(770, 771);
                      UtilsFX.bindTexture("textures/aspects/_back.png");
-                     GL11.glPushMatrix();
-                     GL11.glTranslated(mx + 6, my + 6, 0.0F);
-                     GL11.glScaled(1.25F, 1.25F, 0.0F);
+                     GlStateManager.pushMatrix();
+                     GlStateManager.translate(mx + 6, my + 6, 0.0F);
+                     GlStateManager.scale(1.25F, 1.25F, 0.0F);
                      UtilsFX.drawTexturedQuadFull(0, 0, 0.0F);
-                     GL11.glPopMatrix();
-                     GL11.glPushMatrix();
-                     GL11.glTranslated(mx + 24, my + 6, 0.0F);
-                     GL11.glScaled(1.25F, 1.25F, 0.0F);
+                     GlStateManager.popMatrix();
+                     GlStateManager.pushMatrix();
+                     GlStateManager.translate(mx + 24, my + 6, 0.0F);
+                     GlStateManager.scale(1.25F, 1.25F, 0.0F);
                      UtilsFX.drawTexturedQuadFull(0, 0, 0.0F);
-                     GL11.glPopMatrix();
+                     GlStateManager.popMatrix();
                      UtilsFX.drawTag(mx + 26, my + 8, aspect.getComponents()[1], 0.0F, 0, 0.0F);
                      UtilsFX.drawTag(mx + 8, my + 8, aspect.getComponents()[0], 0.0F, 0, 0.0F);
-                     GL11.glDisable(GL11.GL_BLEND);
-                     GL11.glPopMatrix();
+                     GlStateManager.disableBlend();
+                     GlStateManager.popMatrix();
                   }
 
                   return;
@@ -329,7 +333,7 @@ public class GuiResearchTable extends GuiContainer {
          var7 = mx - (x + 3);
          var8 = my - (y + 99);
          if (var7 >= 0 && var8 >= 0 && var7 < 16 && var8 < 16) {
-            UtilsFX.drawCustomTooltip(this, itemRender, this.fontRendererObj, Arrays.asList(this.select1.getName(), this.select1.getLocalizedDescription()), mx, my - 8, 11);
+            UtilsFX.drawCustomTooltip(this, itemRender, this.fontRenderer, Arrays.asList(this.select1.getName(), this.select1.getLocalizedDescription()), mx, my - 8, 11);
             return;
          }
       }
@@ -338,7 +342,7 @@ public class GuiResearchTable extends GuiContainer {
          var7 = mx - (x + 61);
          var8 = my - (y + 99);
          if (var7 >= 0 && var8 >= 0 && var7 < 16 && var8 < 16) {
-            UtilsFX.drawCustomTooltip(this, itemRender, this.fontRendererObj, Arrays.asList(this.select2.getName(), this.select2.getLocalizedDescription()), mx, my - 8, 11);
+            UtilsFX.drawCustomTooltip(this, itemRender, this.fontRenderer, Arrays.asList(this.select2.getName(), this.select2.getLocalizedDescription()), mx, my - 8, 11);
             return;
          }
       }
@@ -346,72 +350,83 @@ public class GuiResearchTable extends GuiContainer {
    }
 
    private void drawResearchData(int x, int y, int mx, int my) {
-      GL11.glPushMatrix();
-      GL11.glEnable(GL11.GL_BLEND);
+      GlStateManager.pushMatrix();
+      GlStateManager.enableBlend();
       this.drawSheet(x, y, mx, my);
-      GL11.glPopMatrix();
+      GlStateManager.popMatrix();
    }
 
    private void drawHex(HexUtils.Hex hex, int x, int y) {
-      GL11.glPushMatrix();
-      GL11.glAlphaFunc(516, 0.003921569F);
-      GL11.glEnable(GL11.GL_BLEND);
+      GlStateManager.pushMatrix();
+      GlStateManager.alphaFunc(516, 0.003921569F);
+      GlStateManager.enableBlend();
       UtilsFX.bindTexture("textures/gui/hex1.png");
-      GL11.glColor4f(1.0F, 1.0F, 1.0F, 0.25F);
+      GlStateManager.color(1.0F, 1.0F, 1.0F, 0.25F);
       HexUtils.Pixel pix = hex.toPixel(9);
-      GL11.glTranslated((double)x + pix.x, (double)y + pix.y, 0.0F);
-      Tessellator tessellator = Tessellator.instance;
-      tessellator.startDrawingQuads();
-      tessellator.setBrightness(240);
-      tessellator.setColorRGBA_F(1.0F, 1.0F, 1.0F, 0.25F);
-      tessellator.addVertexWithUV(-8.0F, 8.0F, this.zLevel, 0.0F, 1.0F);
-      tessellator.addVertexWithUV(8.0F, 8.0F, this.zLevel, 1.0F, 1.0F);
-      tessellator.addVertexWithUV(8.0F, -8.0F, this.zLevel, 1.0F, 0.0F);
-      tessellator.addVertexWithUV(-8.0F, -8.0F, this.zLevel, 0.0F, 0.0F);
+      GlStateManager.translate((double)x + pix.x, (double)y + pix.y, 0.0F);
+      Tessellator tessellator = Tessellator.getInstance();
+      BufferBuilder buffer = tessellator.getBuffer();
+      buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX_COLOR); 
+     
+     
+      buffer.pos(-8.0F, 8.0F, this.zLevel).tex(0.0F, 1.0F).color(1.0f, 1.0f, 1.0f, 0.25F)
+        .endVertex();
+      buffer.pos(8.0F, 8.0F, this.zLevel).tex(1.0F, 1.0F).color(1.0f, 1.0f, 1.0f, 0.25F)
+        .endVertex();
+      buffer.pos(8.0F, -8.0F, this.zLevel).tex(1.0F, 0.0F).color(1.0f, 1.0f, 1.0f, 0.25F)
+        .endVertex();
+      buffer.pos(-8.0F, -8.0F, this.zLevel).tex(0.0F, 0.0F).color(1.0f, 1.0f, 1.0f, 0.25F)
+        .endVertex();
       tessellator.draw();
-      GL11.glAlphaFunc(516, 0.1F);
-      GL11.glPopMatrix();
+      GlStateManager.alphaFunc(516, 0.1F);
+      GlStateManager.popMatrix();
    }
 
    private void drawHexHighlight(HexUtils.Hex hex, int x, int y) {
-      GL11.glPushMatrix();
-      GL11.glAlphaFunc(516, 0.003921569F);
-      GL11.glEnable(GL11.GL_BLEND);
-      GL11.glBlendFunc(770, 1);
+      GlStateManager.pushMatrix();
+      GlStateManager.alphaFunc(516, 0.003921569F);
+      GlStateManager.enableBlend();
+      GlStateManager.blendFunc(770, 1);
       UtilsFX.bindTexture("textures/gui/hex2.png");
-      GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+      GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
       HexUtils.Pixel pix = hex.toPixel(9);
-      GL11.glTranslated((double)x + pix.x, (double)y + pix.y, 0.0F);
-      Tessellator tessellator = Tessellator.instance;
-      tessellator.startDrawingQuads();
-      tessellator.setColorRGBA_F(1.0F, 1.0F, 1.0F, 1.0F);
-      tessellator.addVertexWithUV(-8.0F, 8.0F, this.zLevel, 0.0F, 1.0F);
-      tessellator.addVertexWithUV(8.0F, 8.0F, this.zLevel, 1.0F, 1.0F);
-      tessellator.addVertexWithUV(8.0F, -8.0F, this.zLevel, 1.0F, 0.0F);
-      tessellator.addVertexWithUV(-8.0F, -8.0F, this.zLevel, 0.0F, 0.0F);
+      GlStateManager.translate((double)x + pix.x, (double)y + pix.y, 0.0F);
+      Tessellator tessellator = Tessellator.getInstance();
+      BufferBuilder buffer = tessellator.getBuffer();
+      buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX_COLOR); 
+     
+      buffer.pos(-8.0F, 8.0F, this.zLevel).tex(0.0F, 1.0F).color(1.0f, 1.0f, 1.0f, 1.0f)
+        .endVertex();
+      buffer.pos(8.0F, 8.0F, this.zLevel).tex(1.0F, 1.0F).color(1.0f, 1.0f, 1.0f, 1.0f)
+        .endVertex();
+      buffer.pos(8.0F, -8.0F, this.zLevel).tex(1.0F, 0.0F).color(1.0f, 1.0f, 1.0f, 1.0f)
+        .endVertex();
+      buffer.pos(-8.0F, -8.0F, this.zLevel).tex(0.0F, 0.0F).color(1.0f, 1.0f, 1.0f, 1.0f)
+        .endVertex();
       tessellator.draw();
-      GL11.glBlendFunc(770, 771);
-      GL11.glAlphaFunc(516, 0.1F);
-      GL11.glPopMatrix();
+      GlStateManager.blendFunc(770, 771);
+      GlStateManager.alphaFunc(516, 0.1F);
+      GlStateManager.popMatrix();
    }
 
    private void drawLine(double x, double y, double x2, double y2) {
-      int count = FMLClientHandler.instance().getClient().thePlayer.ticksExisted;
+      int count = this.mc.player.ticksExisted;
       float alpha = 0.3F + MathHelper.sin((float)((double)((float)count) + x)) * 0.3F + 0.3F;
-      Tessellator var12 = Tessellator.instance;
-      GL11.glPushMatrix();
+      Tessellator var12 = Tessellator.getInstance();
+      BufferBuilder var12Buf = var12.getBuffer();
+      GlStateManager.pushMatrix();
       GL11.glLineWidth(3.0F);
-      GL11.glDisable(3553);
-      GL11.glBlendFunc(770, 1);
-      var12.startDrawing(3);
-      var12.setColorRGBA_F(0.0F, 0.6F, 0.8F, alpha);
-      var12.addVertex(x, y, 0.0F);
-      var12.addVertex(x2, y2, 0.0F);
+      GlStateManager.disableTexture2D();
+      GlStateManager.blendFunc(770, 1);
+      var12Buf.begin(GL11.GL_LINE_STRIP, DefaultVertexFormats.POSITION_TEX); 
+     
+      var12Buf.pos(x, y, 0.0F).endVertex();
+      var12Buf.pos(x2, y2, 0.0F).endVertex();
       var12.draw();
-      GL11.glBlendFunc(770, 771);
-      GL11.glDisable(32826);
-      GL11.glEnable(3553);
-      GL11.glPopMatrix();
+      GlStateManager.blendFunc(770, 771);
+      GlStateManager.disableRescaleNormal();
+      GlStateManager.enableTexture2D();
+      GlStateManager.popMatrix();
    }
 
    private void drawSheet(int x, int y, int mx, int my) {
@@ -422,11 +437,11 @@ public class GuiResearchTable extends GuiContainer {
          long time = System.currentTimeMillis();
          if (this.lastRuneCheck < time) {
             this.lastRuneCheck = time + 250L;
-            int k = this.mc.theWorld.rand.nextInt(120) - 60;
-            int l = this.mc.theWorld.rand.nextInt(120) - 60;
+            int k = this.mc.world.rand.nextInt(120) - 60;
+            int l = this.mc.world.rand.nextInt(120) - 60;
             HexUtils.Hex hp = (new HexUtils.Pixel(k, l)).toHex(9);
             if (!this.runes.containsKey(hp.toString()) && !this.note.hexes.containsKey(hp.toString())) {
-               this.runes.put(hp.toString(), new Rune(hp.q, hp.r, time, this.lastRuneCheck + 15000L + (long) this.mc.theWorld.rand.nextInt(10000), this.mc.theWorld.rand.nextInt(16)));
+               this.runes.put(hp.toString(), new Rune(hp.q, hp.r, time, this.lastRuneCheck + 15000L + (long) this.mc.world.rand.nextInt(10000), this.mc.world.rand.nextInt(16)));
             }
          }
 
@@ -471,7 +486,7 @@ public class GuiResearchTable extends GuiContainer {
          }
 
          UtilsFX.bindTexture("textures/gui/hex1.png");
-         GL11.glPushMatrix();
+         GlStateManager.pushMatrix();
          if (!this.note.isComplete()) {
             for(HexUtils.Hex hex : this.note.hexes.values()) {
                if (this.note.hexEntries.get(hex.toString()).type != 1) {
@@ -492,14 +507,14 @@ public class GuiResearchTable extends GuiContainer {
             if (this.note.hexEntries.get(hex.toString()).aspect != null && !Thaumcraft.proxy.getPlayerKnowledge().hasDiscoveredAspect(this.username, this.note.hexEntries.get(hex.toString()).aspect)) {
                HexUtils.Pixel pix = hex.toPixel(9);
                UtilsFX.bindTexture("textures/aspects/_unknown.png");
-               GL11.glPushMatrix();
-               GL11.glColor4f(0.0F, 0.0F, 0.0F, 0.5F);
-               GL11.glEnable(GL11.GL_BLEND);
-               GL11.glBlendFunc(770, 771);
-               GL11.glTranslated((double)(x + 161) + pix.x, (double)(y + 75) + pix.y, 0.0F);
+               GlStateManager.pushMatrix();
+               GlStateManager.color(0.0F, 0.0F, 0.0F, 0.5F);
+               GlStateManager.enableBlend();
+               GlStateManager.blendFunc(770, 771);
+               GlStateManager.translate((double)(x + 161) + pix.x, (double)(y + 75) + pix.y, 0.0F);
                UtilsFX.drawTexturedQuadFull(0, 0, this.zLevel);
-               GL11.glDisable(GL11.GL_BLEND);
-               GL11.glPopMatrix();
+               GlStateManager.disableBlend();
+               GlStateManager.popMatrix();
             } else if (this.note.hexEntries.get(hex.toString()).type != 1 && !this.highlight.contains(hex.toString())) {
                if (this.note.hexEntries.get(hex.toString()).type == 2) {
                   HexUtils.Pixel pix = hex.toPixel(9);
@@ -511,7 +526,7 @@ public class GuiResearchTable extends GuiContainer {
             }
          }
 
-         GL11.glPopMatrix();
+         GlStateManager.popMatrix();
       } else {
          this.runes.clear();
       }
@@ -541,30 +556,35 @@ public class GuiResearchTable extends GuiContainer {
    }
 
    private void drawRune(double x, double y, int rune, float alpha) {
-      GL11.glPushMatrix();
+      GlStateManager.pushMatrix();
       UtilsFX.bindTexture("textures/misc/script.png");
-      GL11.glColor4f(0.0F, 0.0F, 0.0F, alpha);
-      GL11.glTranslated(x, y, 0.0F);
+      GlStateManager.color(0.0F, 0.0F, 0.0F, alpha);
+      GlStateManager.translate(x, y, 0.0F);
       if (rune < 16) {
-         GL11.glRotatef(90.0F, 0.0F, 0.0F, -1.0F);
+         GlStateManager.rotate(90.0F, 0.0F, 0.0F, -1.0F);
       }
 
-      Tessellator tessellator = Tessellator.instance;
+      Tessellator tessellator = Tessellator.getInstance();
+      BufferBuilder buffer = tessellator.getBuffer();
       float var8 = 0.0625F * (float)rune;
       float var9 = var8 + 0.0625F;
       float var10 = 0.0F;
       float var11 = 1.0F;
-      tessellator.startDrawingQuads();
-      tessellator.setColorRGBA_F(0.0F, 0.0F, 0.0F, alpha);
-      tessellator.addVertexWithUV(-5.0F, 5.0F, this.zLevel, var9, var11);
-      tessellator.addVertexWithUV(5.0F, 5.0F, this.zLevel, var9, var10);
-      tessellator.addVertexWithUV(5.0F, -5.0F, this.zLevel, var8, var10);
-      tessellator.addVertexWithUV(-5.0F, -5.0F, this.zLevel, var8, var11);
+      buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX_COLOR); 
+     
+      buffer.pos(-5.0F, 5.0F, this.zLevel).tex(var9, var11).color(0.0F, 0.0F, 0.0F, alpha)
+        .endVertex();
+      buffer.pos(5.0F, 5.0F, this.zLevel).tex(var9, var10).color(0.0F, 0.0F, 0.0F, alpha)
+        .endVertex();
+      buffer.pos(5.0F, -5.0F, this.zLevel).tex(var8, var10).color(0.0F, 0.0F, 0.0F, alpha)
+        .endVertex();
+      buffer.pos(-5.0F, -5.0F, this.zLevel).tex(var8, var11).color(0.0F, 0.0F, 0.0F, alpha)
+        .endVertex();
       tessellator.draw();
-      GL11.glPopMatrix();
+      GlStateManager.popMatrix();
    }
 
-   protected void mouseClicked(int mx, int my, int par3) {
+   protected void mouseClicked(int mx, int my, int par3) throws IOException {
       super.mouseClicked(mx, my, par3);
       if (this.butcount1 <= System.nanoTime() && this.butcount2 <= System.nanoTime()) {
          int gx = (this.width - this.xSize) / 2;
@@ -575,7 +595,7 @@ public class GuiResearchTable extends GuiContainer {
             this.butcount2 = System.nanoTime() + 200000000L;
             this.playButtonClick();
             this.playButtonCombine();
-            PacketHandler.INSTANCE.sendToServer(new PacketAspectCombinationToServer(this.player, this.tileEntity.xCoord, this.tileEntity.yCoord, this.tileEntity.zCoord, this.select1, this.select2, this.tileEntity.bonusAspects.getAmount(this.select1) > 0, this.tileEntity.bonusAspects.getAmount(this.select2) > 0, true));
+            PacketHandler.INSTANCE.sendToServer(new PacketAspectCombinationToServer(this.player, this.tileEntity.getPos().getX(), this.tileEntity.getPos().getY(), this.tileEntity.getPos().getZ(), this.select1, this.select2, this.tileEntity.bonusAspects.getAmount(this.select1) > 0, this.tileEntity.bonusAspects.getAmount(this.select2) > 0, true));
          } else {
             var7 = mx - (gx + 27);
             var8 = my - (gy + 121);
@@ -629,7 +649,7 @@ public class GuiResearchTable extends GuiContainer {
                         if (aspects != null && (aspects.getAmount(aspect.getComponents()[0]) > 0 || this.tileEntity.bonusAspects.getAmount(aspect.getComponents()[0]) > 0) && (aspects.getAmount(aspect.getComponents()[1]) > 0 || this.tileEntity.bonusAspects.getAmount(aspect.getComponents()[1]) > 0)) {
                            this.draggedAspect = null;
                            this.playButtonCombine();
-                           PacketHandler.INSTANCE.sendToServer(new PacketAspectCombinationToServer(this.player, this.tileEntity.xCoord, this.tileEntity.yCoord, this.tileEntity.zCoord, aspect.getComponents()[0], aspect.getComponents()[1], this.tileEntity.bonusAspects.getAmount(aspect.getComponents()[0]) > 0, this.tileEntity.bonusAspects.getAmount(aspect.getComponents()[1]) > 0, true));
+                           PacketHandler.INSTANCE.sendToServer(new PacketAspectCombinationToServer(this.player, this.tileEntity.getPos().getX(), this.tileEntity.getPos().getY(), this.tileEntity.getPos().getZ(), aspect.getComponents()[0], aspect.getComponents()[1], this.tileEntity.bonusAspects.getAmount(aspect.getComponents()[0]) > 0, this.tileEntity.bonusAspects.getAmount(aspect.getComponents()[1]) > 0, true));
                         }
                      }
                   }
@@ -647,7 +667,7 @@ public class GuiResearchTable extends GuiContainer {
       if (this.note.hexes.containsKey(hp.toString()) && this.note.hexEntries.get(hp.toString()).type == 2) {
          this.playButtonCombine();
          this.playButtonErase();
-         PacketHandler.INSTANCE.sendToServer(new PacketAspectPlaceToServer(this.player, (byte)hp.q, (byte)hp.r, this.tileEntity.xCoord, this.tileEntity.yCoord, this.tileEntity.zCoord, null));
+         PacketHandler.INSTANCE.sendToServer(new PacketAspectPlaceToServer(this.player, (byte)hp.q, (byte)hp.r, this.tileEntity.getPos().getX(), this.tileEntity.getPos().getY(), this.tileEntity.getPos().getZ(), null));
       }
    }
 
@@ -677,31 +697,31 @@ public class GuiResearchTable extends GuiContainer {
    }
 
    private void playButtonClick() {
-      this.mc.renderViewEntity.worldObj.playSound(this.mc.renderViewEntity.posX, this.mc.renderViewEntity.posY, this.mc.renderViewEntity.posZ, "thaumcraft:cameraclack", 0.4F, 1.0F, false);
+      { net.minecraft.entity.Entity _rve = this.mc.getRenderViewEntity(); if (_rve != null) { net.minecraft.util.SoundEvent _snd = net.minecraft.util.SoundEvent.REGISTRY.getObject(new net.minecraft.util.ResourceLocation("thaumcraft:cameraclack")); if (_snd != null) _rve.world.playSound(null, new net.minecraft.util.math.BlockPos(_rve.posX, _rve.posY, _rve.posZ), _snd, net.minecraft.util.SoundCategory.MASTER, 0.4F, 1.0F); } };
    }
 
    private void playButtonAspect() {
-      this.mc.renderViewEntity.worldObj.playSound(this.mc.renderViewEntity.posX, this.mc.renderViewEntity.posY, this.mc.renderViewEntity.posZ, "thaumcraft:hhoff", 0.2F, 1.0F + this.mc.renderViewEntity.worldObj.rand.nextFloat() * 0.1F, false);
+      { net.minecraft.entity.Entity _rve = this.mc.getRenderViewEntity(); if (_rve != null) { net.minecraft.util.SoundEvent _snd = net.minecraft.util.SoundEvent.REGISTRY.getObject(new net.minecraft.util.ResourceLocation("thaumcraft:hhoff")); if (_snd != null) _rve.world.playSound(null, new net.minecraft.util.math.BlockPos(_rve.posX, _rve.posY, _rve.posZ), _snd, net.minecraft.util.SoundCategory.MASTER, 0.2F, 1.0F + _rve.world.rand.nextFloat() * 0.1F); } };
    }
 
    private void playButtonCombine() {
-      this.mc.renderViewEntity.worldObj.playSound(this.mc.renderViewEntity.posX, this.mc.renderViewEntity.posY, this.mc.renderViewEntity.posZ, "thaumcraft:hhon", 0.3F, 1.0F, false);
+      { net.minecraft.entity.Entity _rve = this.mc.getRenderViewEntity(); if (_rve != null) { net.minecraft.util.SoundEvent _snd = net.minecraft.util.SoundEvent.REGISTRY.getObject(new net.minecraft.util.ResourceLocation("thaumcraft:hhon")); if (_snd != null) _rve.world.playSound(null, new net.minecraft.util.math.BlockPos(_rve.posX, _rve.posY, _rve.posZ), _snd, net.minecraft.util.SoundCategory.MASTER, 0.3F, 1.0F); } };
    }
 
    private void playButtonWrite() {
-      this.mc.renderViewEntity.worldObj.playSound(this.mc.renderViewEntity.posX, this.mc.renderViewEntity.posY, this.mc.renderViewEntity.posZ, "thaumcraft:write", 0.2F, 1.0F, false);
+      { net.minecraft.entity.Entity _rve = this.mc.getRenderViewEntity(); if (_rve != null) { net.minecraft.util.SoundEvent _snd = net.minecraft.util.SoundEvent.REGISTRY.getObject(new net.minecraft.util.ResourceLocation("thaumcraft:write")); if (_snd != null) _rve.world.playSound(null, new net.minecraft.util.math.BlockPos(_rve.posX, _rve.posY, _rve.posZ), _snd, net.minecraft.util.SoundCategory.MASTER, 0.2F, 1.0F); } };
    }
 
    private void playButtonErase() {
-      this.mc.renderViewEntity.worldObj.playSound(this.mc.renderViewEntity.posX, this.mc.renderViewEntity.posY, this.mc.renderViewEntity.posZ, "thaumcraft:erase", 0.2F, 1.0F + this.mc.renderViewEntity.worldObj.rand.nextFloat() * 0.1F, false);
+      { net.minecraft.entity.Entity _rve = this.mc.getRenderViewEntity(); if (_rve != null) { net.minecraft.util.SoundEvent _snd = net.minecraft.util.SoundEvent.REGISTRY.getObject(new net.minecraft.util.ResourceLocation("thaumcraft:erase")); if (_snd != null) _rve.world.playSound(null, new net.minecraft.util.math.BlockPos(_rve.posX, _rve.posY, _rve.posZ), _snd, net.minecraft.util.SoundCategory.MASTER, 0.2F, 1.0F + _rve.world.rand.nextFloat() * 0.1F); } };
    }
 
    private void playButtonScroll() {
-      this.mc.renderViewEntity.worldObj.playSound(this.mc.renderViewEntity.posX, this.mc.renderViewEntity.posY, this.mc.renderViewEntity.posZ, "thaumcraft:key", 0.3F, 1.0F, false);
+      { net.minecraft.entity.Entity _rve = this.mc.getRenderViewEntity(); if (_rve != null) { net.minecraft.util.SoundEvent _snd = net.minecraft.util.SoundEvent.REGISTRY.getObject(new net.minecraft.util.ResourceLocation("thaumcraft:key")); if (_snd != null) _rve.world.playSound(null, new net.minecraft.util.math.BlockPos(_rve.posX, _rve.posY, _rve.posZ), _snd, net.minecraft.util.SoundCategory.MASTER, 0.3F, 1.0F); } };
    }
 
    private void drawOrb(double x, double y) {
-      int count = FMLClientHandler.instance().getClient().thePlayer.ticksExisted;
+      int count = this.mc.player.ticksExisted;
       float red = 0.7F + MathHelper.sin((float)(((double)((float)count) + x) / (double)10.0F)) * 0.15F + 0.15F;
       float green = 0.7F + MathHelper.sin((float)(((double)((float)count) + x + y) / (double)11.0F)) * 0.15F + 0.15F;
       float blue = 0.7F + MathHelper.sin((float)(((double)((float)count) + y) / (double)12.0F)) * 0.15F + 0.15F;
@@ -710,7 +730,7 @@ public class GuiResearchTable extends GuiContainer {
    }
 
    private void drawOrb(double x, double y, int color) {
-      int count = FMLClientHandler.instance().getClient().thePlayer.ticksExisted;
+      int count = this.mc.player.ticksExisted;
       Color c = new Color(color);
       float red = (float)c.getRed() / 255.0F;
       float green = (float)c.getGreen() / 255.0F;
@@ -721,25 +741,30 @@ public class GuiResearchTable extends GuiContainer {
          blue /= 1.8F;
       }
 
-      GL11.glPushMatrix();
+      GlStateManager.pushMatrix();
       UtilsFX.bindTexture(ParticleEngine.particleTexture);
-      GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
-      GL11.glTranslated(x, y, 0.0F);
-      Tessellator tessellator = Tessellator.instance;
+      GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
+      GlStateManager.translate(x, y, 0.0F);
+      Tessellator tessellator = Tessellator.getInstance();
+      BufferBuilder buffer = tessellator.getBuffer();
       int part = count % 8;
       float var8 = 0.5F + (float)part / 8.0F;
       float var9 = var8 + 0.0624375F;
       float var10 = 0.5F;
       float var11 = var10 + 0.0624375F;
-      tessellator.startDrawingQuads();
-      tessellator.setBrightness(240);
-      tessellator.setColorRGBA_F(red, green, blue, 1.0F);
-      tessellator.addVertexWithUV(0.0F, 16.0F, this.zLevel, var9, var11);
-      tessellator.addVertexWithUV(16.0F, 16.0F, this.zLevel, var9, var10);
-      tessellator.addVertexWithUV(16.0F, 0.0F, this.zLevel, var8, var10);
-      tessellator.addVertexWithUV(0.0F, 0.0F, this.zLevel, var8, var11);
+      buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX_COLOR); 
+     
+     
+      buffer.pos(0.0F, 16.0F, this.zLevel).tex(var9, var11).color(red, green, blue, 1.0F)
+        .endVertex();
+      buffer.pos(16.0F, 16.0F, this.zLevel).tex(var9, var10).color(red, green, blue, 1.0F)
+        .endVertex();
+      buffer.pos(16.0F, 0.0F, this.zLevel).tex(var8, var10).color(red, green, blue, 1.0F)
+        .endVertex();
+      buffer.pos(0.0F, 0.0F, this.zLevel).tex(var8, var11).color(red, green, blue, 1.0F)
+        .endVertex();
       tessellator.draw();
-      GL11.glPopMatrix();
+      GlStateManager.popMatrix();
    }
 
    private static class Rune {
@@ -769,7 +794,7 @@ public class GuiResearchTable extends GuiContainer {
    }
 
    @Override
-   public void handleMouseInput() {
+   public void handleMouseInput() throws IOException {
       super.handleMouseInput();
       ClientProxy.handleMouseInput(this);
    }

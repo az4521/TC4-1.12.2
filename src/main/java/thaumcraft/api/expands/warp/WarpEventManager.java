@@ -76,7 +76,7 @@ public class WarpEventManager {
         if (warpContext.warp <= 0 || warpContext.actualWarp <= 0) {
             return WarpEvent.EMPTY;
         }
-        warpContext.randWithWarp = player.worldObj.rand.nextInt(warpContext.warp);
+        warpContext.randWithWarp = player.world.rand.nextInt(warpContext.warp);
         WarpEvent picked = WarpEvent.EMPTY;
 
         for (WarpEvent pickEvent : warpEventManager.getListeners()) {
@@ -130,13 +130,13 @@ public class WarpEventManager {
     public static void tryTriggerRandomWarpEvent(EntityPlayer player) {
         PlayerKnowledge knowledge = Thaumcraft.proxy.getPlayerKnowledge();
         PickWarpEventContext warpContext = new PickWarpEventContext(
-                knowledge.getWarpTotal(player.getCommandSenderName())
+                knowledge.getWarpTotal(player.getName())
                         + getWarpFromGear(player),
                 null,
                 player,
-                knowledge.getWarpPerm(player.getCommandSenderName())
-                        + knowledge.getWarpSticky(player.getCommandSenderName()),
-                knowledge.getWarpCounter(player.getCommandSenderName())
+                knowledge.getWarpPerm(player.getName())
+                        + knowledge.getWarpSticky(player.getName()),
+                knowledge.getWarpCounter(player.getName())
         );
         for (WarpConditionChecker condition : warpConditionCheckerManager.getListeners()) {
             if (!condition.check(warpContext,player)) {

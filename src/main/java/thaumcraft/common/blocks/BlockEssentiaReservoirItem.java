@@ -4,8 +4,11 @@ import net.minecraft.block.Block;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.EnumActionResult;
+import net.minecraft.util.EnumFacing;
+import net.minecraft.util.EnumHand;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
-import net.minecraftforge.common.util.ForgeDirection;
 import thaumcraft.common.tiles.TileEssentiaReservoir;
 
 public class BlockEssentiaReservoirItem extends ItemBlock {
@@ -19,18 +22,24 @@ public class BlockEssentiaReservoirItem extends ItemBlock {
       return par1;
    }
 
-   public boolean placeBlockAt(ItemStack stack, EntityPlayer player, World world, int x, int y, int z, int side, float hitX, float hitY, float hitZ, int metadata) {
-      boolean placed = super.placeBlockAt(stack, player, world, x, y, z, side, hitX, hitY, hitZ, metadata);
-      if (placed) {
+   @Override
+   public EnumActionResult onItemUse(EntityPlayer player, World world, BlockPos pos,
+                                     EnumHand hand, EnumFacing facing,
+                                     float hitX, float hitY, float hitZ) {
+      EnumActionResult result = super.onItemUse(player, world, pos, hand, facing, hitX, hitY, hitZ);
+      if (result == EnumActionResult.SUCCESS && !world.isRemote) {
+         // The block was placed one step in the facing direction from pos
+         BlockPos placed = pos.offset(facing);
          try {
-            TileEssentiaReservoir ts = (TileEssentiaReservoir)world.getTileEntity(x, y, z);
-            ts.facing = ForgeDirection.getOrientation(side).getOpposite();
-            ts.markDirty();
-            world.markBlockForUpdate(x, y, z);
+            TileEssentiaReservoir ts = (TileEssentiaReservoir) world.getTileEntity(placed);
+            if (ts != null) {
+               ts.facing = facing.getOpposite();
+               ts.markDirty();
+               { net.minecraft.block.state.IBlockState _bs = world.getBlockState(placed); world.notifyBlockUpdate(placed, _bs, _bs, 3); }
+            }
          } catch (Exception ignored) {
          }
       }
-
-      return placed;
+      return result;
    }
 }

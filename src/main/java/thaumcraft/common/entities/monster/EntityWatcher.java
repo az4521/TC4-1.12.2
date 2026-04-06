@@ -1,9 +1,8 @@
 package thaumcraft.common.entities.monster;
 
-import cpw.mods.fml.relauncher.ReflectionHelper;
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
-import net.minecraft.command.IEntitySelector;
+import net.minecraftforge.fml.relauncher.ReflectionHelper;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.EntityLivingBase;
@@ -17,15 +16,25 @@ import net.minecraft.entity.ai.EntityLookHelper;
 import net.minecraft.entity.ai.EntityMoveHelper;
 import net.minecraft.entity.monster.EntityMob;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.init.SoundEvents;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.network.datasync.DataParameter;
+import net.minecraft.network.datasync.DataSerializers;
+import net.minecraft.network.datasync.EntityDataManager;
 import net.minecraft.util.DamageSource;
-import net.minecraft.util.MathHelper;
-import net.minecraft.util.Vec3;
+import net.minecraft.util.EnumParticleTypes;
+import net.minecraft.util.SoundEvent;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.EnumDifficulty;
 import net.minecraft.world.World;
 import thaumcraft.common.entities.ai.misc.AIWander;
 
 public class EntityWatcher extends EntityMob {
+    private static final DataParameter<Integer> WATCHER_FLAGS = EntityDataManager.createKey(EntityWatcher.class, DataSerializers.VARINT);
+    private static final DataParameter<Integer> TARGETED_ENTITY = EntityDataManager.createKey(EntityWatcher.class, DataSerializers.VARINT);
+
     private float field_175482_b;
     private float field_175484_c;
     private float field_175483_bk;
@@ -37,7 +46,6 @@ public class EntityWatcher extends EntityMob {
     private AIWander wander;
     private EntityMoveHelper moveHelper;
     private GuardianLookHelper lookHelper;
-    IEntitySelector mobSelector = ent -> true;
 
     public EntityWatcher(World worldIn) {
         super(worldIn);
@@ -52,7 +60,7 @@ public class EntityWatcher extends EntityMob {
         this.tasks.addTask(9, new EntityAILookIdle(this));
         this.wander.setMutexBits(3);
         entityaimovetowardsrestriction.setMutexBits(3);
-        this.targetTasks.addTask(1, new EntityAINearestAttackableTarget(this, EntityLivingBase.class, 10, true, false));
+        this.targetTasks.addTask(1, new EntityAINearestAttackableTarget<>(this, EntityLivingBase.class, 10, true, false, null));
         this.lookHelper = new GuardianLookHelper(this);
         this.moveHelper = new GuardianMoveHelper();
         this.field_175484_c = this.field_175482_b = this.rand.nextFloat();
@@ -62,10 +70,10 @@ public class EntityWatcher extends EntityMob {
     @Override
     protected void applyEntityAttributes() {
         super.applyEntityAttributes();
-        this.getEntityAttribute(SharedMonsterAttributes.attackDamage).setBaseValue(6.0F);
-        this.getEntityAttribute(SharedMonsterAttributes.movementSpeed).setBaseValue(0.5F);
-        this.getEntityAttribute(SharedMonsterAttributes.followRange).setBaseValue(16.0F);
-        this.getEntityAttribute(SharedMonsterAttributes.maxHealth).setBaseValue(30.0F);
+        this.getEntityAttribute(SharedMonsterAttributes.ATTACK_DAMAGE).setBaseValue(6.0F);
+        this.getEntityAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).setBaseValue(0.5F);
+        this.getEntityAttribute(SharedMonsterAttributes.FOLLOW_RANGE).setBaseValue(16.0F);
+        this.getEntityAttribute(SharedMonsterAttributes.MAX_HEALTH).setBaseValue(30.0F);
     }
 
     @Override
@@ -86,22 +94,21 @@ public class EntityWatcher extends EntityMob {
     @Override
     protected void entityInit() {
         super.entityInit();
-        this.dataWatcher.addObject(16, 0);
-        this.dataWatcher.addObject(17, 0);
+        this.dataManager.register(WATCHER_FLAGS, 0);
+        this.dataManager.register(TARGETED_ENTITY, 0);
     }
 
     private boolean getFlags(int p_175468_1_) {
-        return (this.dataWatcher.getWatchableObjectInt(16) & p_175468_1_) != 0;
+        return (this.dataManager.get(WATCHER_FLAGS) & p_175468_1_) != 0;
     }
 
     private void setFlags(int p_175473_1_, boolean p_175473_2_) {
-        int j = this.dataWatcher.getWatchableObjectInt(16);
+        int j = this.dataManager.get(WATCHER_FLAGS);
         if (p_175473_2_) {
-            this.dataWatcher.updateObject(16, j | p_175473_1_);
+            this.dataManager.set(WATCHER_FLAGS, j | p_175473_1_);
         } else {
-            this.dataWatcher.updateObject(16, j & ~p_175473_1_);
+            this.dataManager.set(WATCHER_FLAGS, j & ~p_175473_1_);
         }
-
     }
 
     public boolean isGazing() {
@@ -121,21 +128,21 @@ public class EntityWatcher extends EntityMob {
     }
 
     private void func_175463_b(int p_175463_1_) {
-        this.dataWatcher.updateObject(17, p_175463_1_);
+        this.dataManager.set(TARGETED_ENTITY, p_175463_1_);
     }
 
     public boolean func_175474_cn() {
-        return this.dataWatcher.getWatchableObjectInt(17) != 0;
+        return this.dataManager.get(TARGETED_ENTITY) != 0;
     }
 
     public EntityLivingBase getTargetedEntity() {
         if (!this.func_175474_cn()) {
             return null;
-        } else if (this.worldObj.isRemote) {
+        } else if (this.world.isRemote) {
             if (this.field_175478_bn != null) {
                 return this.field_175478_bn;
             } else {
-                Entity entity = this.worldObj.getEntityByID(this.dataWatcher.getWatchableObjectInt(17));
+                Entity entity = this.world.getEntityByID(this.dataManager.get(TARGETED_ENTITY));
                 if (entity instanceof EntityLivingBase) {
                     this.field_175478_bn = (EntityLivingBase) entity;
                     return this.field_175478_bn;
@@ -149,17 +156,16 @@ public class EntityWatcher extends EntityMob {
     }
 
     @Override
-    public void func_145781_i(int p_145781_1_) {
-        super.func_145781_i(p_145781_1_);
-        if (p_145781_1_ == 16) {
+    public void notifyDataManagerChange(DataParameter<?> key) {
+        super.notifyDataManagerChange(key);
+        if (WATCHER_FLAGS.equals(key)) {
             if (this.func_175461_cl() && this.width < 1.0F) {
                 this.setSize(1.9975F, 1.9975F);
             }
-        } else if (p_145781_1_ == 17) {
+        } else if (TARGETED_ENTITY.equals(key)) {
             this.field_175479_bo = 0;
             this.field_175478_bn = null;
         }
-
     }
 
     @Override
@@ -168,18 +174,18 @@ public class EntityWatcher extends EntityMob {
     }
 
     @Override
-    protected String getLivingSound() {
-        return !this.isInWater() ? "mob.guardian.land.idle" : (this.func_175461_cl() ? "mob.guardian.elder.idle" : "mob.guardian.idle");
+    protected SoundEvent getAmbientSound() {
+        return null;
     }
 
     @Override
-    protected String getHurtSound() {
-        return !this.isInWater() ? "mob.guardian.land.hit" : (this.func_175461_cl() ? "mob.guardian.elder.hit" : "mob.guardian.hit");
+    protected SoundEvent getHurtSound(DamageSource damageSourceIn) {
+        return null;
     }
 
     @Override
-    protected String getDeathSound() {
-        return !this.isInWater() ? "mob.guardian.land.death" : (this.func_175461_cl() ? "mob.guardian.elder.death" : "mob.guardian.death");
+    protected SoundEvent getDeathSound() {
+        return null;
     }
 
     @Override
@@ -193,13 +199,13 @@ public class EntityWatcher extends EntityMob {
     }
 
     @Override
-    public float getBlockPathWeight(int x, int y, int z) {
-        return this.worldObj.isAirBlock(x, y, z) ? 10.0F : super.getBlockPathWeight(x, y, z);
+    public float getBlockPathWeight(BlockPos pos) {
+        return this.world.isAirBlock(pos) ? 10.0F : super.getBlockPathWeight(pos);
     }
 
     @Override
     public void onLivingUpdate() {
-        if (this.worldObj.isRemote) {
+        if (this.world.isRemote) {
             this.field_175484_c = this.field_175482_b;
             if (this.isGazing()) {
                 if (this.field_175483_bk < 0.5F) {
@@ -220,10 +226,14 @@ public class EntityWatcher extends EntityMob {
             }
 
             if (this.isGazing()) {
-                Vec3 vec3 = this.getLook(0.0F);
+                Vec3d vec3 = this.getLook(0.0F);
 
                 for (int i = 0; i < 2; ++i) {
-                    this.worldObj.spawnParticle("bubble", this.posX + (this.rand.nextDouble() - (double) 0.5F) * (double) this.width - vec3.xCoord * (double) 1.5F, this.posY + this.rand.nextDouble() * (double) this.height - vec3.yCoord * (double) 1.5F, this.posZ + (this.rand.nextDouble() - (double) 0.5F) * (double) this.width - vec3.zCoord * (double) 1.5F, 0.0F, 0.0F, 0.0F);
+                    this.world.spawnParticle(EnumParticleTypes.WATER_BUBBLE,
+                            this.posX + (this.rand.nextDouble() - 0.5D) * (double)this.width - vec3.x * 1.5D,
+                            this.posY + this.rand.nextDouble() * (double)this.height - vec3.y * 1.5D,
+                            this.posZ + (this.rand.nextDouble() - 0.5D) * (double)this.width - vec3.z * 1.5D,
+                            0.0D, 0.0D, 0.0D);
                 }
             }
 
@@ -238,7 +248,7 @@ public class EntityWatcher extends EntityMob {
                     this.getLookHelper().onUpdateLook();
                     double d5 = this.func_175477_p(0.0F);
                     double d0 = entitylivingbase.posX - this.posX;
-                    double d1 = entitylivingbase.posY + (double) (entitylivingbase.height * 0.5F) - (this.posY + (double) this.getEyeHeight());
+                    double d1 = entitylivingbase.posY + (double)(entitylivingbase.height * 0.5F) - (this.posY + (double)this.getEyeHeight());
                     double d2 = entitylivingbase.posZ - this.posZ;
                     double d3 = Math.sqrt(d0 * d0 + d1 * d1 + d2 * d2);
                     d0 /= d3;
@@ -248,7 +258,11 @@ public class EntityWatcher extends EntityMob {
 
                     while (d4 < d3) {
                         d4 += 1.8 - d5 + this.rand.nextDouble() * (1.7 - d5);
-                        this.worldObj.spawnParticle("bubble", this.posX + d0 * d4, this.posY + d1 * d4 + (double) this.getEyeHeight(), this.posZ + d2 * d4, 0.0F, 0.0F, 0.0F);
+                        this.world.spawnParticle(EnumParticleTypes.WATER_BUBBLE,
+                                this.posX + d0 * d4,
+                                this.posY + d1 * d4 + (double)this.getEyeHeight(),
+                                this.posZ + d2 * d4,
+                                0.0D, 0.0D, 0.0D);
                     }
                 }
             }
@@ -272,15 +286,14 @@ public class EntityWatcher extends EntityMob {
     }
 
     public float func_175477_p(float p_175477_1_) {
-        return ((float) this.field_175479_bo + p_175477_1_) / (float) this.func_175464_ck();
+        return ((float)this.field_175479_bo + p_175477_1_) / (float)this.func_175464_ck();
     }
 
     protected void updateAITasks() {
         super.updateAITasks();
         if (this.func_175461_cl() && !this.hasHome()) {
-            this.setHomeArea((int) this.posX, (int) this.posY, (int) this.posZ, 16);
+            this.setHomePosAndDistance(new BlockPos((int)this.posX, (int)this.posY, (int)this.posZ), 16);
         }
-
     }
 
     protected boolean isValidLightLevel() {
@@ -288,11 +301,11 @@ public class EntityWatcher extends EntityMob {
     }
 
     public boolean attackEntityFrom(DamageSource source, float amount) {
-        if (!this.isGazing() && !source.isMagicDamage() && source.getSourceOfDamage() instanceof EntityLivingBase) {
-            EntityLivingBase entitylivingbase = (EntityLivingBase) source.getSourceOfDamage();
+        if (!this.isGazing() && !source.isMagicDamage() && source.getTrueSource() instanceof EntityLivingBase) {
+            EntityLivingBase entitylivingbase = (EntityLivingBase)source.getTrueSource();
             if (!source.isExplosion()) {
                 entitylivingbase.attackEntityFrom(DamageSource.causeThornsDamage(this), 2.0F);
-                entitylivingbase.playSound("damage.thorns", 0.5F, 1.0F);
+                entitylivingbase.playSound(SoundEvents.ENCHANT_THORNS_HIT, 0.5F, 1.0F);
             }
         }
 
@@ -304,9 +317,10 @@ public class EntityWatcher extends EntityMob {
         return 180;
     }
 
-    public void moveEntityWithHeading(float p_70612_1_, float p_70612_2_) {
-        this.moveFlying(p_70612_1_, p_70612_2_, 0.1F);
-        this.moveEntity(this.motionX, this.motionY, this.motionZ);
+    @Override
+    public void travel(float strafe, float up, float forward) {
+        this.moveRelative(strafe, 0.0F, forward, 0.1F);
+        this.move(net.minecraft.entity.MoverType.SELF, this.motionX, this.motionY, this.motionZ);
         this.motionX *= 0.9F;
         this.motionY *= 0.9F;
         this.motionZ *= 0.9F;
@@ -326,15 +340,14 @@ public class EntityWatcher extends EntityMob {
             return entitylivingbase != null && entitylivingbase.isEntityAlive();
         }
 
-        @Override
         public boolean continueExecuting() {
-            return super.continueExecuting() && (this.field_179456_a.func_175461_cl() || this.field_179456_a.getDistanceSqToEntity(this.field_179456_a.getAttackTarget()) > (double) 9.0F);
+            return this.shouldExecute() && (this.field_179456_a.func_175461_cl() || this.field_179456_a.getDistanceSq(this.field_179456_a.getAttackTarget()) > 9.0D);
         }
 
         @Override
         public void startExecuting() {
             this.field_179455_b = -10;
-            this.field_179456_a.getNavigator().clearPathEntity();
+            this.field_179456_a.getNavigator().clearPath();
             this.field_179456_a.getLookHelper().setLookPositionWithEntity(this.field_179456_a.getAttackTarget(), 90.0F, 90.0F);
             this.field_179456_a.isAirBorne = true;
         }
@@ -349,7 +362,7 @@ public class EntityWatcher extends EntityMob {
         @Override
         public void updateTask() {
             EntityLivingBase entitylivingbase = this.field_179456_a.getAttackTarget();
-            this.field_179456_a.getNavigator().clearPathEntity();
+            this.field_179456_a.getNavigator().clearPath();
             this.field_179456_a.getLookHelper().setLookPositionWithEntity(entitylivingbase, 90.0F, 90.0F);
             if (!this.field_179456_a.canEntityBeSeen(entitylivingbase)) {
                 this.field_179456_a.setAttackTarget(null);
@@ -357,10 +370,10 @@ public class EntityWatcher extends EntityMob {
                 ++this.field_179455_b;
                 if (this.field_179455_b == 0) {
                     this.field_179456_a.func_175463_b(this.field_179456_a.getAttackTarget().getEntityId());
-                    this.field_179456_a.worldObj.setEntityState(this.field_179456_a, (byte) 21);
+                    this.field_179456_a.world.setEntityState(this.field_179456_a, (byte)21);
                 } else if (this.field_179455_b >= this.field_179456_a.func_175464_ck()) {
                     float f = 1.0F;
-                    if (this.field_179456_a.worldObj.difficultySetting == EnumDifficulty.HARD) {
+                    if (this.field_179456_a.world.getDifficulty() == EnumDifficulty.HARD) {
                         f += 2.0F;
                     }
 
@@ -369,50 +382,47 @@ public class EntityWatcher extends EntityMob {
                     }
 
                     entitylivingbase.attackEntityFrom(DamageSource.causeIndirectMagicDamage(this.field_179456_a, this.field_179456_a), f);
-                    entitylivingbase.attackEntityFrom(DamageSource.causeMobDamage(this.field_179456_a), (float) this.field_179456_a.getEntityAttribute(SharedMonsterAttributes.attackDamage).getAttributeValue());
+                    entitylivingbase.attackEntityFrom(DamageSource.causeMobDamage(this.field_179456_a), (float)this.field_179456_a.getEntityAttribute(SharedMonsterAttributes.ATTACK_DAMAGE).getAttributeValue());
                     this.field_179456_a.setAttackTarget(null);
                 }
-//                else if (this.field_179455_b >= 60 && this.field_179455_b % 20 == 0) {
-//                }
 
                 super.updateTask();
             }
-
         }
     }
 
     public static class GuardianLookHelper extends EntityLookHelper {
-        public GuardianLookHelper(EntityLiving p_i1613_1_) {
-            super(p_i1613_1_);
+        public GuardianLookHelper(EntityLiving entitylivingIn) {
+            super(entitylivingIn);
         }
 
         double getX() {
             try {
-                return ReflectionHelper.getPrivateValue(GuardianLookHelper.class, this, new String[]{"posX", "field_75656_e"});
+                return (double) ReflectionHelper.getPrivateValue(EntityLookHelper.class, this, "field_75536_c", "posX");
             } catch (Exception var2) {
-                return 0.0F;
+                return 0.0;
             }
         }
 
         double getY() {
             try {
-                return ReflectionHelper.getPrivateValue(GuardianLookHelper.class, this, new String[]{"posY", "field_75653_f"});
+                return (double) ReflectionHelper.getPrivateValue(EntityLookHelper.class, this, "field_75537_d", "posY");
             } catch (Exception var2) {
-                return 0.0F;
+                return 0.0;
             }
         }
 
         double getZ() {
             try {
-                return ReflectionHelper.getPrivateValue(GuardianLookHelper.class, this, new String[]{"posZ", "field_75654_g"});
+                return (double) ReflectionHelper.getPrivateValue(EntityLookHelper.class, this, "field_75538_e", "posZ");
             } catch (Exception var2) {
-                return 0.0F;
+                return 0.0;
             }
         }
 
         boolean getLooking() {
             try {
-                return ReflectionHelper.getPrivateValue(GuardianLookHelper.class, this, new String[]{"isLooking", "field_75655_d"});
+                return (boolean) ReflectionHelper.getPrivateValue(EntityLookHelper.class, this, "field_75535_f", "isLooking");
             } catch (Exception var2) {
                 return false;
             }
@@ -426,27 +436,30 @@ public class EntityWatcher extends EntityMob {
             super(EntityWatcher.this);
         }
 
-        double getX() {
+        @Override
+        public double getX() {
             try {
-                return ReflectionHelper.getPrivateValue(GuardianMoveHelper.class, this, new String[]{"posX", "field_75646_b"});
+                return (double) ReflectionHelper.getPrivateValue(EntityMoveHelper.class, this, "field_75642_d", "posX");
             } catch (Exception var2) {
-                return 0.0F;
+                return 0.0;
             }
         }
 
-        double getY() {
+        @Override
+        public double getY() {
             try {
-                return ReflectionHelper.getPrivateValue(GuardianMoveHelper.class, this, new String[]{"posY", "field_75647_c"});
+                return (double) ReflectionHelper.getPrivateValue(EntityMoveHelper.class, this, "field_75640_e", "posY");
             } catch (Exception var2) {
-                return 0.0F;
+                return 0.0;
             }
         }
 
-        double getZ() {
+        @Override
+        public double getZ() {
             try {
-                return ReflectionHelper.getPrivateValue(GuardianMoveHelper.class, this, new String[]{"posZ", "field_75644_d"});
+                return (double) ReflectionHelper.getPrivateValue(EntityMoveHelper.class, this, "field_75641_f", "posZ");
             } catch (Exception var2) {
-                return 0.0F;
+                return 0.0;
             }
         }
 
@@ -457,28 +470,28 @@ public class EntityWatcher extends EntityMob {
                 double d1 = this.getY() - this.field_179930_g.posY;
                 double d2 = this.getZ() - this.field_179930_g.posZ;
                 double d3 = d0 * d0 + d1 * d1 + d2 * d2;
-                d3 = MathHelper.sqrt_double(d3);
+                d3 = MathHelper.sqrt(d3);
                 d1 /= d3;
-                float f = (float) (Math.atan2(d2, d0) * (double) 180.0F / Math.PI) - 90.0F;
+                float f = (float)(Math.atan2(d2, d0) * 180.0D / Math.PI) - 90.0F;
                 this.field_179930_g.rotationYaw = this.limitAngle(this.field_179930_g.rotationYaw, f, 30.0F);
                 this.field_179930_g.renderYawOffset = this.field_179930_g.rotationYaw;
-                float f1 = (float) (this.getSpeed() * this.field_179930_g.getEntityAttribute(SharedMonsterAttributes.movementSpeed).getAttributeValue());
+                float f1 = (float)(this.getSpeed() * this.field_179930_g.getEntityAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).getAttributeValue());
                 this.field_179930_g.setAIMoveSpeed(this.field_179930_g.getAIMoveSpeed() + (f1 - this.field_179930_g.getAIMoveSpeed()) * 0.125F);
-                double d4 = Math.sin((double) (this.field_179930_g.ticksExisted + this.field_179930_g.getEntityId()) * (double) 0.5F) * 0.05;
-                double d5 = Math.cos(this.field_179930_g.rotationYaw * (float) Math.PI / 180.0F);
-                double d6 = Math.sin(this.field_179930_g.rotationYaw * (float) Math.PI / 180.0F);
+                double d4 = Math.sin((double)(this.field_179930_g.ticksExisted + this.field_179930_g.getEntityId()) * 0.5D) * 0.05D;
+                double d5 = Math.cos(this.field_179930_g.rotationYaw * (float)Math.PI / 180.0F);
+                double d6 = Math.sin(this.field_179930_g.rotationYaw * (float)Math.PI / 180.0F);
                 EntityWatcher watcher = this.field_179930_g;
                 watcher.motionX += d4 * d5;
                 watcher.motionZ += d4 * d6;
-                d4 = Math.sin((double) (this.field_179930_g.ticksExisted + this.field_179930_g.getEntityId()) * (double) 0.75F) * 0.05;
+                d4 = Math.sin((double)(this.field_179930_g.ticksExisted + this.field_179930_g.getEntityId()) * 0.75D) * 0.05D;
                 watcher = this.field_179930_g;
-                watcher.motionY += d4 * (d6 + d5) * (double) 0.25F;
-                watcher.motionY += (double) this.field_179930_g.getAIMoveSpeed() * d1 * 0.1;
+                watcher.motionY += d4 * (d6 + d5) * 0.25D;
+                watcher.motionY += (double)this.field_179930_g.getAIMoveSpeed() * d1 * 0.1D;
 
                 GuardianLookHelper entitylookhelper = this.field_179930_g.getLookHelper();
-                double d7 = this.field_179930_g.posX + d0 / d3 * (double) 2.0F;
-                double d8 = (double) this.field_179930_g.getEyeHeight() + this.field_179930_g.posY + d1 / d3;
-                double d9 = this.field_179930_g.posZ + d2 / d3 * (double) 2.0F;
+                double d7 = this.field_179930_g.posX + d0 / d3 * 2.0D;
+                double d8 = (double)this.field_179930_g.getEyeHeight() + this.field_179930_g.posY + d1 / d3;
+                double d9 = this.field_179930_g.posZ + d2 / d3 * 2.0D;
                 double d10 = entitylookhelper.getX();
                 double d11 = entitylookhelper.getY();
                 double d12 = entitylookhelper.getZ();
@@ -488,26 +501,25 @@ public class EntityWatcher extends EntityMob {
                     d12 = d9;
                 }
 
-                this.field_179930_g.getLookHelper().setLookPosition(d10 + (d7 - d10) * (double) 0.125F, d11 + (d8 - d11) * (double) 0.125F, d12 + (d9 - d12) * (double) 0.125F, 10.0F, 40.0F);
+                this.field_179930_g.getLookHelper().setLookPosition(d10 + (d7 - d10) * 0.125D, d11 + (d8 - d11) * 0.125D, d12 + (d9 - d12) * 0.125D, 10.0F, 40.0F);
                 this.field_179930_g.setGazing(true);
             } else {
                 this.field_179930_g.setAIMoveSpeed(0.0F);
                 this.field_179930_g.setGazing(false);
             }
-
         }
 
-        private float limitAngle(float p_75639_1_, float p_75639_2_, float p_75639_3_) {
-            float f3 = MathHelper.wrapAngleTo180_float(p_75639_2_ - p_75639_1_);
-            if (f3 > p_75639_3_) {
-                f3 = p_75639_3_;
+        public float limitAngle(float sourceAngle, float targetAngle, float maximumChange) {
+            float f3 = MathHelper.wrapDegrees(targetAngle - sourceAngle);
+            if (f3 > maximumChange) {
+                f3 = maximumChange;
             }
 
-            if (f3 < -p_75639_3_) {
-                f3 = -p_75639_3_;
+            if (f3 < -maximumChange) {
+                f3 = -maximumChange;
             }
 
-            return p_75639_1_ + f3;
+            return sourceAngle + f3;
         }
     }
 }

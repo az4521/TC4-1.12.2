@@ -3,7 +3,7 @@ package thaumcraft.common.container;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemStack;
-import net.minecraftforge.fluids.FluidContainerRegistry;
+// import net.minecraftforge.fluids.FluidContainerRegistry;
 
 public class SlotGhostFluid extends SlotGhost {
    public SlotGhostFluid(IInventory par1iInventory, int par2, int par3, int par4) {
@@ -15,7 +15,7 @@ public class SlotGhostFluid extends SlotGhost {
    }
 
    public boolean isItemValid(ItemStack par1ItemStack) {
-      return FluidContainerRegistry.isContainer(par1ItemStack);
+      return !par1ItemStack.isEmpty() && par1ItemStack.hasCapability(net.minecraftforge.fluids.capability.CapabilityFluidHandler.FLUID_HANDLER_ITEM_CAPABILITY, null);
    }
 
    public boolean canTakeStack(EntityPlayer par1EntityPlayer) {

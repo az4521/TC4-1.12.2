@@ -27,7 +27,7 @@ public class SetParentHelper {
     }
 
     public static void setParent(TileVisNode parent, TileVisNode child) {
-        log.trace("Force set parent of {} ({},{},{}) to {} ({},{},{})", child.getClass().getSimpleName(), child.xCoord, child.yCoord, child.zCoord, parent.getClass().getSimpleName(), parent.xCoord, parent.yCoord, parent.zCoord);
+        log.trace("Force set parent of {} ({},{},{}) to {} ({},{},{})", child.getClass().getSimpleName(), child.getPos().getX(), child.getPos().getY(), child.getPos().getZ(), parent.getClass().getSimpleName(), parent.getPos().getX(), parent.getPos().getY(), parent.getPos().getZ());
         WeakReference<TileVisNode> ref = new WeakReference<>(child);
         child.setParent(new WeakReference<>(parent));
         parent.getChildren().add(ref);

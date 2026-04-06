@@ -1,0 +1,22 @@
+{
+  "variants": {
+    "variant=greatwoodsap": {
+      "model": "thaumcraft:blockcustomplant_greatwoodsap"
+    },
+    "variant=silverwoodsap": {
+      "model": "thaumcraft:blockcustomplant_silverwoodsap"
+    },
+    "variant=shimmerleaf": {
+      "model": "thaumcraft:blockcustomplant_shimmerleaf"
+    },
+    "variant=cinderpearl": {
+      "model": "thaumcraft:blockcustomplant_cinderpearl"
+    },
+    "variant=etherealbloom": {
+      "model": "thaumcraft:blockcustomplant_etherealbloom"
+    },
+    "variant=manashroom": {
+      "model": "thaumcraft:blockcustomplant_manashroom"
+    }
+  }
+}

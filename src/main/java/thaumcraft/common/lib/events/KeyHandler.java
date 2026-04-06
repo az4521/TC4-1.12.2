@@ -1,12 +1,12 @@
 package thaumcraft.common.lib.events;
 
-import cpw.mods.fml.client.FMLClientHandler;
-import cpw.mods.fml.client.registry.ClientRegistry;
-import cpw.mods.fml.common.eventhandler.SubscribeEvent;
-import cpw.mods.fml.common.gameevent.TickEvent;
-import cpw.mods.fml.common.gameevent.TickEvent.Phase;
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
+import net.minecraftforge.fml.client.FMLClientHandler;
+import net.minecraftforge.fml.client.registry.ClientRegistry;
+import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import net.minecraftforge.fml.common.gameevent.TickEvent;
+import net.minecraftforge.fml.common.gameevent.TickEvent.Phase;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.entity.player.EntityPlayer;
 import thaumcraft.api.Keys;
@@ -42,7 +42,7 @@ public class KeyHandler {
    public void playerTick(TickEvent.PlayerTickEvent event) {
       if (event.side != Side.SERVER) {
          if (event.phase == Phase.START) {
-            if (this.keyF.getIsKeyPressed()) {
+            if (this.keyF.isKeyDown()) {
                if (FMLClientHandler.instance().getClient().inGameHasFocus) {
                   EntityPlayer player = event.player;
                   if (player != null) {
@@ -51,13 +51,13 @@ public class KeyHandler {
                         radialLock = false;
                      }
 
-                     if (!radialLock && player.getHeldItem() != null && player.getHeldItem().getItem() instanceof ItemWandCasting && !((ItemWandCasting)player.getHeldItem().getItem()).isSceptre(player.getHeldItem())) {
+                     if (!radialLock && player.getHeldItemMainhand() != null && player.getHeldItemMainhand().getItem() instanceof ItemWandCasting && !((ItemWandCasting)player.getHeldItemMainhand().getItem()).isSceptre(player.getHeldItemMainhand())) {
                         if (player.isSneaking()) {
                            PacketHandler.INSTANCE.sendToServer(new PacketFocusChangeToServer(player, "REMOVE"));
                         } else {
                            radialActive = true;
                         }
-                     } else if (player.getHeldItem() != null && player.getHeldItem().getItem() instanceof ItemGolemBell && !this.keyPressedF) {
+                     } else if (player.getHeldItemMainhand() != null && player.getHeldItemMainhand().getItem() instanceof ItemGolemBell && !this.keyPressedF) {
                         PacketHandler.INSTANCE.sendToServer(new PacketItemKeyToServer(player, 0));
                      }
                   }
@@ -73,7 +73,7 @@ public class KeyHandler {
                this.keyPressedF = false;
             }
 
-            if (this.keyH.getIsKeyPressed()) {
+            if (this.keyH.isKeyDown()) {
                if (FMLClientHandler.instance().getClient().inGameHasFocus) {
                   EntityPlayer player = event.player;
                   if (player != null) {
@@ -96,7 +96,7 @@ public class KeyHandler {
                this.keyPressedH = false;
             }
 
-            if (this.keyG.getIsKeyPressed()) {
+            if (this.keyG.isKeyDown()) {
                if (FMLClientHandler.instance().getClient().inGameHasFocus) {
                   EntityPlayer player = event.player;
                   if (player != null && !this.keyPressedG) {

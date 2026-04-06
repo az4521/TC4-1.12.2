@@ -1,143 +1,153 @@
 package thaumcraft.common.blocks;
 
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraft.block.Block;
 import net.minecraft.block.material.Material;
-import net.minecraft.client.particle.EffectRenderer;
-import net.minecraft.client.renderer.texture.IIconRegister;
+import net.minecraft.block.state.IBlockState;
+import net.minecraft.client.particle.ParticleManager;
 import net.minecraft.creativetab.CreativeTabs;
-import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.AxisAlignedBB;
-import net.minecraft.util.IIcon;
-import net.minecraft.util.MathHelper;
-import net.minecraft.util.MovingObjectPosition;
+import net.minecraft.util.EnumFacing;
+import net.minecraft.util.NonNullList;
+import net.minecraft.util.math.BlockPos;
+
+import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
-import net.minecraftforge.common.util.ForgeDirection;
 import thaumcraft.client.lib.UtilsFX;
 import thaumcraft.common.Thaumcraft;
 import thaumcraft.common.config.ConfigBlocks;
 import thaumcraft.common.config.ConfigItems;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Random;
 
 public class BlockCustomOre extends Block {
-   public IIcon[] icon = new IIcon[5];
+   // --- Variant property for 1.12.2 blockstate system ---
+   public static final net.minecraft.block.properties.PropertyEnum<OreVariant> VARIANT =
+         net.minecraft.block.properties.PropertyEnum.create("variant", OreVariant.class);
+
+   public enum OreVariant implements net.minecraft.util.IStringSerializable {
+      CINNABAR(0, "cinnabar"), INFUSEDAIR(1, "infusedair"), INFUSEDFIRE(2, "infusedfire"), INFUSEDWATER(3, "infusedwater"), INFUSEDEARTH(4, "infusedearth"), INFUSEDORDER(5, "infusedorder"), INFUSEDENTROPY(6, "infusedentropy"), AMBER(7, "amber");
+      private final int meta;
+      private final String name;
+      OreVariant(int meta, String name) { this.meta = meta; this.name = name; }
+      public int getMeta() { return meta; }
+      @Override public String getName() { return name; }
+      public static OreVariant byMeta(int m) {
+         for (OreVariant v : values()) if (v.meta == m) return v;
+         return CINNABAR;
+      }
+   }
+
+   @Override
+   protected net.minecraft.block.state.BlockStateContainer createBlockState() {
+      return new net.minecraft.block.state.BlockStateContainer(this, VARIANT);
+   }
+
+   @Override
+   public net.minecraft.block.state.IBlockState getStateFromMeta(int meta) {
+      return this.getDefaultState().withProperty(VARIANT, OreVariant.byMeta(meta));
+   }
+
+   @Override
+   public int getMetaFromState(net.minecraft.block.state.IBlockState state) {
+      return state.getValue(VARIANT).getMeta();
+   }
+   // --- End variant property ---
+
    private Random rand = new Random();
 
    public BlockCustomOre() {
-      super(Material.rock);
+      super(Material.ROCK);
       this.setResistance(5.0F);
       this.setHardness(1.5F);
-      this.setStepSound(Block.soundTypeStone);
       this.setCreativeTab(Thaumcraft.tabTC);
       this.setTickRandomly(true);
    }
 
-   @SideOnly(Side.CLIENT)
-   public void registerBlockIcons(IIconRegister ir) {
-      this.icon[0] = ir.registerIcon("thaumcraft:cinnibar");
-      this.icon[1] = ir.registerIcon("thaumcraft:infusedorestone");
-      this.icon[2] = ir.registerIcon("thaumcraft:infusedore");
-      this.icon[3] = ir.registerIcon("thaumcraft:amberore");
-      this.icon[4] = ir.registerIcon("thaumcraft:frostshard");
+   @Override
+   public net.minecraft.util.BlockRenderLayer getRenderLayer() {
+      return net.minecraft.util.BlockRenderLayer.CUTOUT_MIPPED;
    }
 
-   @SideOnly(Side.CLIENT)
-   public IIcon getIcon(int par1, int par2) {
-      if (par2 == 0) {
-         return this.icon[0];
-      } else if (par2 == 7) {
-         return this.icon[3];
-      } else {
-         return par2 == 15 ? this.icon[4] : this.icon[1];
-      }
-   }
+   // registerBlockIcons removed — textures are handled by JSON models in 1.12.2
+   // getIcon removed — textures are handled by JSON models in 1.12.2
 
-   public boolean canSilkHarvest(World world, EntityPlayer player, int x, int y, int z, int metadata) {
+   @Override
+   public boolean canSilkHarvest(World world, BlockPos pos, IBlockState state, EntityPlayer player) {
       return true;
    }
 
-   public int damageDropped(int par1) {
-      return par1;
+   @Override
+   public int damageDropped(IBlockState state) {
+      return this.getMetaFromState(state);
    }
 
+   @Override
    @SideOnly(Side.CLIENT)
-   public void getSubBlocks(Item par1, CreativeTabs par2CreativeTabs, List par3List) {
-      par3List.add(new ItemStack(par1, 1, 0));
-      par3List.add(new ItemStack(par1, 1, 1));
-      par3List.add(new ItemStack(par1, 1, 2));
-      par3List.add(new ItemStack(par1, 1, 3));
-      par3List.add(new ItemStack(par1, 1, 4));
-      par3List.add(new ItemStack(par1, 1, 5));
-      par3List.add(new ItemStack(par1, 1, 6));
-      par3List.add(new ItemStack(par1, 1, 7));
+   public void getSubBlocks(CreativeTabs tab, NonNullList<ItemStack> list) {
+      list.add(new ItemStack(this, 1, 0));
+      list.add(new ItemStack(this, 1, 1));
+      list.add(new ItemStack(this, 1, 2));
+      list.add(new ItemStack(this, 1, 3));
+      list.add(new ItemStack(this, 1, 4));
+      list.add(new ItemStack(this, 1, 5));
+      list.add(new ItemStack(this, 1, 6));
+      list.add(new ItemStack(this, 1, 7));
    }
 
+   @Override
    @SideOnly(Side.CLIENT)
-   public boolean addHitEffects(World worldObj, MovingObjectPosition target, EffectRenderer effectRenderer) {
-      int md = worldObj.getBlockMetadata(target.blockX, target.blockY, target.blockZ);
+   public boolean addHitEffects(IBlockState state, World world, RayTraceResult target, ParticleManager effectRenderer) {
+      BlockPos pos = target.getBlockPos();
+      int md = this.getMetaFromState(state);
       if (md != 0 && md < 6) {
-         UtilsFX.infusedStoneSparkle(worldObj, target.blockX, target.blockY, target.blockZ, md);
+         UtilsFX.infusedStoneSparkle(world, pos.getX(), pos.getY(), pos.getZ(), md);
       }
-
-      return super.addHitEffects(worldObj, target, effectRenderer);
+      return super.addHitEffects(state, world, target, effectRenderer);
    }
 
-   public boolean addDestroyEffects(World world, int x, int y, int z, int meta, EffectRenderer effectRenderer) {
-      return super.addDestroyEffects(world, x, y, z, meta, effectRenderer);
+   @Override
+   @SideOnly(Side.CLIENT)
+   public boolean addDestroyEffects(World world, BlockPos pos, ParticleManager effectRenderer) {
+      return super.addDestroyEffects(world, pos, effectRenderer);
    }
 
-   public void setBlockBoundsBasedOnState(IBlockAccess par1iBlockAccess, int par2, int par3, int par4) {
-      this.setBlockBounds(0.0F, 0.0F, 0.0F, 1.0F, 1.0F, 1.0F);
-      super.setBlockBoundsBasedOnState(par1iBlockAccess, par2, par3, par4);
-   }
+   // setBlockBoundsBasedOnState removed — full cube is default in 1.12.2
+   // addCollisionBoxesToList — only override if non-standard bounds; full cube is default
 
-   public void addCollisionBoxesToList(World world, int i, int j, int k, AxisAlignedBB axisalignedbb, List arraylist, Entity par7Entity) {
-      this.setBlockBounds(0.0F, 0.0F, 0.0F, 1.0F, 1.0F, 1.0F);
-      super.addCollisionBoxesToList(world, i, j, k, axisalignedbb, arraylist, par7Entity);
-   }
-
-   public ArrayList getDrops(World world, int x, int y, int z, int md, int fortune) {
+   @Override
+   public java.util.List<ItemStack> getDrops(IBlockAccess world, BlockPos pos, IBlockState state, int fortune) {
       ArrayList<ItemStack> ret = new ArrayList<>();
+      int md = this.getMetaFromState(state);
       if (md == 0) {
          ret.add(new ItemStack(ConfigBlocks.blockCustomOre, 1, 0));
       } else if (md == 7) {
-         ret.add(new ItemStack(ConfigItems.itemResource, 1 + world.rand.nextInt(fortune + 1), 6));
+         ret.add(new ItemStack(ConfigItems.itemResource, 1 + ((World) world).rand.nextInt(fortune + 1), 6));
       } else {
-         int q = 1 + world.rand.nextInt(2 + fortune);
-
-         for(int a = 0; a < q; ++a) {
+         int q = 1 + ((World) world).rand.nextInt(2 + fortune);
+         for (int a = 0; a < q; ++a) {
             ret.add(new ItemStack(ConfigItems.itemShard, 1, md - 1));
          }
       }
-
       return ret;
    }
 
-   public int getExpDrop(IBlockAccess world, int md, int fortune) {
-      if (md != 0 && md != 7) {
-         return MathHelper.getRandomIntegerInRange(this.rand, 0, 3);
-      } else {
-         return md == 7 ? MathHelper.getRandomIntegerInRange(this.rand, 1, 4) : super.getExpDrop(world, md, fortune);
-      }
+   public int getExpDrop(IBlockAccess world, IBlockState state, int fortune) {
+      int md = this.getMetaFromState(state);
+      if (md == 0) return 0;
+      if (md == 7) return this.rand.nextInt(4) + 1;
+      return this.rand.nextInt(4);
    }
 
-   public boolean isSideSolid(IBlockAccess world, int x, int y, int z, ForgeDirection side) {
+   @Override
+   public boolean isSideSolid(IBlockState base_state, IBlockAccess world, BlockPos pos, EnumFacing side) {
       return true;
    }
 
-   public boolean renderAsNormalBlock() {
-      return false;
-   }
-
-   public int getRenderType() {
-      return ConfigBlocks.blockCustomOreRI;
-   }
+   // renderAsNormalBlock() removed in 1.12.2
+   // getRenderType() removed — defaults to MODEL in 1.12.2
 }

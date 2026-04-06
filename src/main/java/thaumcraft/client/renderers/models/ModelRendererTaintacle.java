@@ -1,7 +1,7 @@
 package thaumcraft.client.renderers.models;
 
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraft.client.model.ModelBase;
 import net.minecraft.client.model.ModelBox;
 import net.minecraft.client.model.ModelRenderer;
@@ -9,6 +9,9 @@ import net.minecraft.client.renderer.GLAllocation;
 import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.client.renderer.Tessellator;
 import org.lwjgl.opengl.GL11;
+import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.client.renderer.BufferBuilder;
+import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 
 public class ModelRendererTaintacle extends ModelRenderer {
    private int textureOffsetX;
@@ -33,7 +36,7 @@ public class ModelRendererTaintacle extends ModelRenderer {
             this.compileDisplayList(par1);
          }
 
-         GL11.glTranslatef(this.offsetX, this.offsetY, this.offsetZ);
+         GlStateManager.translate(this.offsetX, this.offsetY, this.offsetZ);
          if (this.rotateAngleX == 0.0F && this.rotateAngleY == 0.0F && this.rotateAngleZ == 0.0F) {
             if (this.rotationPointX == 0.0F && this.rotationPointY == 0.0F && this.rotationPointZ == 0.0F) {
                if (this.childModels == null) {
@@ -46,14 +49,14 @@ public class ModelRendererTaintacle extends ModelRenderer {
                GL11.glCallList(this.displayList);
                if (this.childModels != null) {
                    for (Object childModel : this.childModels) {
-                       GL11.glPushMatrix();
-                       GL11.glScalef(scale, scale, scale);
+                       GlStateManager.pushMatrix();
+                       GlStateManager.scale(scale, scale, scale);
                        ((ModelRendererTaintacle) childModel).render(par1, scale);
-                       GL11.glPopMatrix();
+                       GlStateManager.popMatrix();
                    }
                }
             } else {
-               GL11.glTranslatef(this.rotationPointX * par1, this.rotationPointY * par1, this.rotationPointZ * par1);
+               GlStateManager.translate(this.rotationPointX * par1, this.rotationPointY * par1, this.rotationPointZ * par1);
                if (this.childModels == null) {
                   int j = 15728880;
                   int k = j % 65536;
@@ -64,28 +67,28 @@ public class ModelRendererTaintacle extends ModelRenderer {
                GL11.glCallList(this.displayList);
                if (this.childModels != null) {
                    for (Object childModel : this.childModels) {
-                       GL11.glPushMatrix();
-                       GL11.glScalef(scale, scale, scale);
+                       GlStateManager.pushMatrix();
+                       GlStateManager.scale(scale, scale, scale);
                        ((ModelRendererTaintacle) childModel).render(par1, scale);
-                       GL11.glPopMatrix();
+                       GlStateManager.popMatrix();
                    }
                }
 
-               GL11.glTranslatef(-this.rotationPointX * par1, -this.rotationPointY * par1, -this.rotationPointZ * par1);
+               GlStateManager.translate(-this.rotationPointX * par1, -this.rotationPointY * par1, -this.rotationPointZ * par1);
             }
          } else {
-            GL11.glPushMatrix();
-            GL11.glTranslatef(this.rotationPointX * par1, this.rotationPointY * par1, this.rotationPointZ * par1);
+            GlStateManager.pushMatrix();
+            GlStateManager.translate(this.rotationPointX * par1, this.rotationPointY * par1, this.rotationPointZ * par1);
             if (this.rotateAngleZ != 0.0F) {
-               GL11.glRotatef(this.rotateAngleZ * (180F / (float)Math.PI), 0.0F, 0.0F, 1.0F);
+               GlStateManager.rotate(this.rotateAngleZ * (180F / (float)Math.PI), 0.0F, 0.0F, 1.0F);
             }
 
             if (this.rotateAngleY != 0.0F) {
-               GL11.glRotatef(this.rotateAngleY * (180F / (float)Math.PI), 0.0F, 1.0F, 0.0F);
+               GlStateManager.rotate(this.rotateAngleY * (180F / (float)Math.PI), 0.0F, 1.0F, 0.0F);
             }
 
             if (this.rotateAngleX != 0.0F) {
-               GL11.glRotatef(this.rotateAngleX * (180F / (float)Math.PI), 1.0F, 0.0F, 0.0F);
+               GlStateManager.rotate(this.rotateAngleX * (180F / (float)Math.PI), 1.0F, 0.0F, 0.0F);
             }
 
             if (this.childModels == null) {
@@ -98,17 +101,17 @@ public class ModelRendererTaintacle extends ModelRenderer {
             GL11.glCallList(this.displayList);
             if (this.childModels != null) {
                 for (Object childModel : this.childModels) {
-                    GL11.glPushMatrix();
-                    GL11.glScalef(scale, scale, scale);
+                    GlStateManager.pushMatrix();
+                    GlStateManager.scale(scale, scale, scale);
                     ((ModelRendererTaintacle) childModel).render(par1, scale);
-                    GL11.glPopMatrix();
+                    GlStateManager.popMatrix();
                 }
             }
 
-            GL11.glPopMatrix();
+            GlStateManager.popMatrix();
          }
 
-         GL11.glTranslatef(-this.offsetX, -this.offsetY, -this.offsetZ);
+         GlStateManager.translate(-this.offsetX, -this.offsetY, -this.offsetZ);
       }
 
    }
@@ -117,10 +120,11 @@ public class ModelRendererTaintacle extends ModelRenderer {
    private void compileDisplayList(float par1) {
       this.displayList = GLAllocation.generateDisplayLists(1);
       GL11.glNewList(this.displayList, 4864);
-      Tessellator tessellator = Tessellator.instance;
+      Tessellator tessellator = Tessellator.getInstance();
+      BufferBuilder buffer = tessellator.getBuffer();
 
        for (Object o : this.cubeList) {
-           ((ModelBox) o).render(tessellator, par1);
+           ((ModelBox) o).render(buffer, par1);
        }
 
       GL11.glEndList();

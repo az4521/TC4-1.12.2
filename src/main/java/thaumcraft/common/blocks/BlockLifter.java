@@ -1,108 +1,103 @@
 package thaumcraft.common.blocks;
 
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockContainer;
+import net.minecraft.block.SoundType;
 import net.minecraft.block.material.Material;
-import net.minecraft.client.renderer.texture.IIconRegister;
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.IIcon;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
-import net.minecraftforge.common.util.ForgeDirection;
+import net.minecraft.util.EnumFacing;
+import net.minecraft.util.math.BlockPos;
 import thaumcraft.common.Thaumcraft;
-import thaumcraft.common.config.ConfigBlocks;
 import thaumcraft.common.tiles.TileLifter;
 
 import java.util.Random;
 
 public class BlockLifter extends BlockContainer {
    private Random random = new Random();
-   public IIcon iconTop;
-   public IIcon iconBottom;
-   public IIcon iconSide;
-   public IIcon iconGlow;
 
    public BlockLifter() {
-      super(Material.wood);
+      super(Material.WOOD);
       this.setHardness(2.5F);
       this.setResistance(15.0F);
-      this.setStepSound(soundTypeWood);
+      this.setSoundType(SoundType.WOOD);
       this.setCreativeTab(Thaumcraft.tabTC);
    }
 
-   @SideOnly(Side.CLIENT)
-   public void registerBlockIcons(IIconRegister ir) {
-      this.iconTop = ir.registerIcon("thaumcraft:liftertop");
-      this.iconBottom = ir.registerIcon("thaumcraft:arcaneearbottom");
-      this.iconSide = ir.registerIcon("thaumcraft:lifterside");
-      this.iconGlow = ir.registerIcon("thaumcraft:animatedglow");
-   }
+   // registerBlockIcons removed — textures are handled by JSON models in 1.12.2
+   // getIcon removed — textures are handled by JSON models in 1.12.2
 
-   public IIcon getIcon(int par1, int par2) {
-      if (par1 == 0) {
-         return this.iconBottom;
-      } else {
-         return par1 == 1 ? this.iconTop : this.iconSide;
-      }
-   }
-
-   public boolean renderAsNormalBlock() {
+   @Override
+   public boolean isOpaqueCube(IBlockState state) {
       return false;
    }
 
-   public int getRenderType() {
-      return ConfigBlocks.blockLifterRI;
+   @Override
+   public boolean isFullCube(IBlockState state) {
+      return false;
    }
 
    @SideOnly(Side.CLIENT)
-   public void randomDisplayTick(World w, int i, int j, int k, Random r) {
-      TileEntity te = w.getTileEntity(i, j, k);
+   @Override
+   public void randomDisplayTick(IBlockState state, World w, BlockPos pos, Random r) {
+      TileEntity te = w.getTileEntity(pos);
       if (te instanceof TileLifter && !((TileLifter) te).gettingPower() && ((TileLifter) te).rangeAbove > 0) {
+         int i = pos.getX(), j = pos.getY(), k = pos.getZ();
          Thaumcraft.proxy.sparkle((float)i + 0.2F + r.nextFloat() * 0.6F, (float)(j + 1), (float)k + 0.2F + r.nextFloat() * 0.6F, 1.0F, 3, -0.3F);
       }
-
    }
 
-   public boolean isSideSolid(IBlockAccess world, int x, int y, int z, ForgeDirection side) {
-      return side != ForgeDirection.UP && side != ForgeDirection.DOWN;
+   @Override
+   public boolean isSideSolid(IBlockState state, IBlockAccess world, BlockPos pos, EnumFacing side) {
+      return side != EnumFacing.UP && side != EnumFacing.DOWN;
    }
 
-   public boolean canConnectRedstone(IBlockAccess world, int x, int y, int z, int side) {
-      return side > 1;
+   @Override
+   public boolean canConnectRedstone(IBlockState state, IBlockAccess world, BlockPos pos, EnumFacing side) {
+      return side != null && side != EnumFacing.UP && side != EnumFacing.DOWN;
    }
 
-   public void onBlockAdded(World world, int x, int y, int z) {
-      this.updateLifterStack(world, x, y, z);
-      super.onBlockAdded(world, x, y, z);
+   @Override
+   public void onBlockAdded(World world, BlockPos pos, IBlockState state) {
+      this.updateLifterStack(world, pos.getX(), pos.getY(), pos.getZ());
+      super.onBlockAdded(world, pos, state);
    }
 
-   public void breakBlock(World world, int x, int y, int z, Block par5, int par6) {
-      this.updateLifterStack(world, x, y, z);
-      super.breakBlock(world, x, y, z, par5, par6);
+   @Override
+   public void breakBlock(World world, BlockPos pos, IBlockState state) {
+      this.updateLifterStack(world, pos.getX(), pos.getY(), pos.getZ());
+      super.breakBlock(world, pos, state);
    }
 
-   public void onNeighborBlockChange(World world, int x, int y, int z, Block par5) {
-      TileEntity te = world.getTileEntity(x, y, z);
+   @Override
+   public void neighborChanged(IBlockState state, World world, BlockPos pos, Block par5, BlockPos fromPos) {
+      TileEntity te = world.getTileEntity(pos);
       if (te instanceof TileLifter && ((TileLifter) te).gettingPower() != ((TileLifter) te).lastPowerState) {
-         this.updateLifterStack(world, x, y, z);
+         this.updateLifterStack(world, pos.getX(), pos.getY(), pos.getZ());
       }
-
-      super.onNeighborBlockChange(world, x, y, z, par5);
+      super.neighborChanged(state, world, pos, par5, fromPos);
    }
 
-   private void updateLifterStack(World worldObj, int xCoord, int yCoord, int zCoord) {
-      for(int count = 1; worldObj.getBlock(xCoord, yCoord - count, zCoord) == this; ++count) {
-         TileEntity te = worldObj.getTileEntity(xCoord, yCoord - count, zCoord);
+   private void updateLifterStack(World world, int xCoord, int yCoord, int zCoord) {
+      for (int count = 1; world.getBlockState(new BlockPos(xCoord, yCoord - count, zCoord)).getBlock() == this; ++count) {
+         TileEntity te = world.getTileEntity(new BlockPos(xCoord, yCoord - count, zCoord));
          if (te instanceof TileLifter) {
-            ((TileLifter)te).requiresUpdate = true;
+            ((TileLifter) te).requiresUpdate = true;
          }
       }
-
    }
 
-   public TileEntity createNewTileEntity(World var1, int md) {
+   @Override
+   public TileEntity createNewTileEntity(World world, int meta) {
       return new TileLifter();
+   }
+
+   @Override
+   public net.minecraft.util.EnumBlockRenderType getRenderType(net.minecraft.block.state.IBlockState state) {
+      return net.minecraft.util.EnumBlockRenderType.MODEL;
    }
 }

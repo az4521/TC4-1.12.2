@@ -1,7 +1,7 @@
 package thaumcraft.client.gui;
 
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import java.awt.Color;
 import java.util.ArrayList;
 import java.util.List;
@@ -16,9 +16,9 @@ import net.minecraft.client.renderer.entity.RenderManager;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.IIcon;
-import net.minecraft.util.StatCollector;
-import net.minecraftforge.fluids.FluidContainerRegistry;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.util.text.translation.I18n;
+import net.minecraftforge.fluids.FluidUtil;
 import net.minecraftforge.fluids.FluidStack;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.util.glu.GLU;
@@ -30,6 +30,7 @@ import thaumcraft.common.entities.golems.ContainerGolem;
 import thaumcraft.common.entities.golems.EntityGolemBase;
 import thaumcraft.common.entities.golems.ItemGolemCore;
 import thaumcraft.common.lib.utils.Utils;
+import net.minecraft.client.renderer.GlStateManager;
 
 @SideOnly(Side.CLIENT)
 public class GuiGolem extends GuiContainer {
@@ -37,33 +38,33 @@ public class GuiGolem extends GuiContainer {
    private float ySize_lo;
    private final EntityGolemBase golem;
    private int threat = -1;
-   RenderLiving rgb = new RenderGolemBase(new ModelGolem(false));
+   RenderLiving rgb = new RenderGolemBase(net.minecraft.client.Minecraft.getMinecraft().getRenderManager(), new ModelGolem(false));
    private static final ModelGolem model = new ModelGolem(true);
    private Slot theSlot;
 
    public GuiGolem(EntityPlayer player, EntityGolemBase e) {
       super(new ContainerGolem(player.inventory, e.inventory));
       this.golem = e;
-      if (this.golem.advanced && this.golem.worldObj.rand.nextInt(4) == 0) {
-         this.threat = this.golem.worldObj.rand.nextInt(9);
+      if (this.golem.advanced && this.golem.world.rand.nextInt(4) == 0) {
+         this.threat = this.golem.world.rand.nextInt(9);
       }
 
    }
 
    protected void drawGuiContainerForegroundLayer(int par1, int par2) {
-      GL11.glPushMatrix();
-      GL11.glScaled(0.5F, 0.5F, 0.5F);
+      GlStateManager.pushMatrix();
+      GlStateManager.scale(0.5F, 0.5F, 0.5F);
       if (this.threat >= 0) {
-         this.fontRendererObj.drawSplitString(StatCollector.translateToLocal("golemthreat." + this.threat + ".text"), 80, 22, 110, 14540253);
+         this.fontRenderer.drawSplitString(I18n.translateToLocal("golemthreat." + this.threat + ".text"), 80, 22, 110, 14540253);
       } else {
-         this.fontRendererObj.drawSplitString(StatCollector.translateToLocal("golemblurb." + this.golem.getCore() + ".text"), 80, 22, 110, 14540253);
+         this.fontRenderer.drawSplitString(I18n.translateToLocal("golemblurb." + this.golem.getCore() + ".text"), 80, 22, 110, 14540253);
       }
 
       if (((ContainerGolem)this.inventorySlots).maxScroll > 0) {
-         this.fontRendererObj.drawString(((ContainerGolem)this.inventorySlots).currentScroll + 1 + "/" + (((ContainerGolem)this.inventorySlots).maxScroll + 1), 323, 140, 14540253);
+         this.fontRenderer.drawString(((ContainerGolem)this.inventorySlots).currentScroll + 1 + "/" + (((ContainerGolem)this.inventorySlots).maxScroll + 1), 323, 140, 14540253);
       }
 
-      GL11.glPopMatrix();
+      GlStateManager.popMatrix();
    }
 
    public void drawScreen(int par1, int par2, float par3) {
@@ -84,8 +85,8 @@ public class GuiGolem extends GuiContainer {
                   text = Utils.colorNames[this.golem.getColors(a + ((ContainerGolem)this.inventorySlots).currentScroll * 6)];
                }
 
-               int size = this.fontRendererObj.getStringWidth(text);
-               this.fontRendererObj.drawString(text, baseX + 133 - size / 2, baseY - 6, 16645629);
+               int size = this.fontRenderer.getStringWidth(text);
+               this.fontRenderer.drawString(text, baseX + 133 - size / 2, baseY - 6, 16645629);
             }
          }
       }
@@ -97,14 +98,14 @@ public class GuiGolem extends GuiContainer {
       int baseY = this.guiTop;
       int var10000 = par2 - (baseX + 139);
       var10000 = par3 - (baseY + 10);
-      GL11.glPushMatrix();
-      GL11.glEnable(GL11.GL_BLEND);
+      GlStateManager.pushMatrix();
+      GlStateManager.enableBlend();
       UtilsFX.bindTexture("textures/gui/guigolem.png");
-      GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+      GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
       this.drawTexturedModalRect(baseX, baseY, 0, 0, this.xSize, this.ySize);
       int slots = this.golem.inventory.slotCount;
       int typeLoc = this.golem.getGolemType().ordinal() * 24;
-      IIcon icon = null;
+      TextureAtlasSprite icon = null;
       if (this.golem.getCore() > -1 && ItemGolemCore.hasInventory(this.golem.getCore())) {
          for(int a = 0; a < Math.min(6, slots); ++a) {
             this.drawTexturedModalRect(baseX + 96 + a / 2 * 28, baseY + 12 + a % 2 * 31, 184, typeLoc, 24, 24);
@@ -116,21 +117,22 @@ public class GuiGolem extends GuiContainer {
                   float r = (float)c.getRed() / 255.0F;
                   float g = (float)c.getGreen() / 255.0F;
                   float b = (float)c.getBlue() / 255.0F;
-                  GL11.glColor4f(r, g, b, 1.0F);
+                  GlStateManager.color(r, g, b, 1.0F);
                   this.drawTexturedModalRect(baseX + 105 + a / 2 * 28, baseY + 7 + a % 2 * 31, 0, 176, 6, 6);
-                  GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+                  GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
                }
             }
 
             if (this.golem.getCore() == 5) {
-               FluidStack fluid = FluidContainerRegistry.getFluidForFilledItem(this.golem.inventory.getStackInSlot(a + ((ContainerGolem)this.inventorySlots).currentScroll * 6));
+               FluidStack fluid = FluidUtil.getFluidContained(this.golem.inventory.getStackInSlot(a + ((ContainerGolem)this.inventorySlots).currentScroll * 6));
                if (fluid != null) {
-                  icon = fluid.getFluid().getIcon();
+                  net.minecraft.util.ResourceLocation stillRL = fluid.getFluid().getStill(fluid);
+                  icon = stillRL != null ? net.minecraft.client.Minecraft.getMinecraft().getTextureMapBlocks().getAtlasSprite(stillRL.toString()) : null;
                   if (icon != null) {
-                     GL11.glPushMatrix();
-                     GL11.glTranslatef((float)(baseX + 108 + a / 2 * 28), (float)(baseY + 24 + a % 2 * 31), 0.0F);
+                     GlStateManager.pushMatrix();
+                     GlStateManager.translate((float)(baseX + 108 + a / 2 * 28), (float)(baseY + 24 + a % 2 * 31), 0.0F);
                      UtilsFX.renderQuadCenteredFromIcon(true, icon, 16.0F, 1.0F, 1.0F, 1.0F, 200, 771, 1.0F);
-                     GL11.glPopMatrix();
+                     GlStateManager.popMatrix();
                      UtilsFX.bindTexture("textures/gui/guigolem.png");
                   }
                }
@@ -173,11 +175,11 @@ public class GuiGolem extends GuiContainer {
             this.drawTexturedModalRect(baseX + 104, baseY + 53, 8, 176, 8, 8);
          }
 
-         this.fontRendererObj.drawString("Monsters", baseX + 122, baseY + 6, 16764108);
-         this.fontRendererObj.drawString("Animals", baseX + 122, baseY + 22, 16777164);
-         this.fontRendererObj.drawString("Players", baseX + 122, baseY + 38, 13421823);
-         this.fontRendererObj.drawString("Creepers", baseX + 122, baseY + 54, 13434828);
-         GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+         this.fontRenderer.drawString("Monsters", baseX + 122, baseY + 6, 16764108);
+         this.fontRenderer.drawString("Animals", baseX + 122, baseY + 22, 16777164);
+         this.fontRenderer.drawString("Players", baseX + 122, baseY + 38, 13421823);
+         this.fontRenderer.drawString("Creepers", baseX + 122, baseY + 54, 13434828);
+         GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
       }
 
       if (this.golem.getCore() == 0) {
@@ -189,13 +191,13 @@ public class GuiGolem extends GuiContainer {
             text = "Any amount";
          }
 
-         GL11.glPushMatrix();
-         GL11.glTranslatef((float)(baseX + 66), (float)(baseY + 48), 0.0F);
-         GL11.glScalef(0.5F, 0.5F, 0.0F);
-         int size = this.fontRendererObj.getStringWidth(text);
-         this.fontRendererObj.drawString(text, -size / 2, 0, 16645629);
-         GL11.glScalef(1.0F, 1.0F, 1.0F);
-         GL11.glPopMatrix();
+         GlStateManager.pushMatrix();
+         GlStateManager.translate((float)(baseX + 66), (float)(baseY + 48), 0.0F);
+         GlStateManager.scale(0.5F, 0.5F, 0.0F);
+         int size = this.fontRenderer.getStringWidth(text);
+         this.fontRenderer.drawString(text, -size / 2, 0, 16645629);
+         GlStateManager.scale(1.0F, 1.0F, 1.0F);
+         GlStateManager.popMatrix();
       }
 
       if (this.golem.getCore() == 8) {
@@ -223,14 +225,14 @@ public class GuiGolem extends GuiContainer {
             text3 = "Sneaking";
          }
 
-         GL11.glPushMatrix();
-         GL11.glTranslatef((float)(baseX + 53), (float)(baseY + 42), 0.0F);
-         GL11.glScalef(0.5F, 0.5F, 0.0F);
-         this.fontRendererObj.drawString(text1, 0, 0, 16645629);
-         this.fontRendererObj.drawString(text2, 0, 20, 16645629);
-         this.fontRendererObj.drawString(text3, 0, 40, 16645629);
-         GL11.glScalef(1.0F, 1.0F, 1.0F);
-         GL11.glPopMatrix();
+         GlStateManager.pushMatrix();
+         GlStateManager.translate((float)(baseX + 53), (float)(baseY + 42), 0.0F);
+         GlStateManager.scale(0.5F, 0.5F, 0.0F);
+         this.fontRenderer.drawString(text1, 0, 0, 16645629);
+         this.fontRenderer.drawString(text2, 0, 20, 16645629);
+         this.fontRenderer.drawString(text3, 0, 40, 16645629);
+         GlStateManager.scale(1.0F, 1.0F, 1.0F);
+         GlStateManager.popMatrix();
       }
 
       if (this.golem.getUpgradeAmount(5) > 0 && ItemGolemCore.canSort(this.golem.getCore())) {
@@ -254,41 +256,41 @@ public class GuiGolem extends GuiContainer {
             this.drawTexturedModalRect(baseX + shiftx, baseY + 44 + shifty, 8, 176, 8, 8);
          }
 
-         GL11.glPushMatrix();
-         GL11.glTranslatef((float)(baseX + shiftx + 10), (float)(baseY + 26 + shifty), 0.0F);
-         GL11.glScalef(0.5F, 0.5F, 0.0F);
-         this.fontRendererObj.drawString(text1, 0, 0, this.golem.checkOreDict() ? 16645629 : 6710886);
-         this.fontRendererObj.drawString(text2, 0, 20, this.golem.ignoreDamage() ? 16645629 : 6710886);
-         this.fontRendererObj.drawString(text3, 0, 40, this.golem.ignoreNBT() ? 16645629 : 6710886);
-         GL11.glScalef(1.0F, 1.0F, 1.0F);
-         GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
-         GL11.glPopMatrix();
+         GlStateManager.pushMatrix();
+         GlStateManager.translate((float)(baseX + shiftx + 10), (float)(baseY + 26 + shifty), 0.0F);
+         GlStateManager.scale(0.5F, 0.5F, 0.0F);
+         this.fontRenderer.drawString(text1, 0, 0, this.golem.checkOreDict() ? 16645629 : 6710886);
+         this.fontRenderer.drawString(text2, 0, 20, this.golem.ignoreDamage() ? 16645629 : 6710886);
+         this.fontRenderer.drawString(text3, 0, 40, this.golem.ignoreNBT() ? 16645629 : 6710886);
+         GlStateManager.scale(1.0F, 1.0F, 1.0F);
+         GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
+         GlStateManager.popMatrix();
       }
 
-      GL11.glDisable(GL11.GL_BLEND);
-      GL11.glPopMatrix();
+      GlStateManager.disableBlend();
+      GlStateManager.popMatrix();
       this.drawGolem(this.mc, baseX + 51, baseY + 75, 30, (float)(baseX + 51) - this.xSize_lo, (float)(baseY + 75 - 50) - this.ySize_lo);
-      GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+      GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
    }
 
    public void drawGolem(Minecraft mc, int par1, int par2, int par3, float par4, float par5) {
-      GL11.glEnable(2903);
-      GL11.glPushMatrix();
+      GlStateManager.enableColorMaterial();
+      GlStateManager.pushMatrix();
       GL11.glMatrixMode(5889);
-      GL11.glPushMatrix();
+      GlStateManager.pushMatrix();
       GL11.glLoadIdentity();
-      ScaledResolution var7 = new ScaledResolution(Minecraft.getMinecraft(), this.mc.displayWidth, this.mc.displayHeight);
+      ScaledResolution var7 = new ScaledResolution(Minecraft.getMinecraft());
       GL11.glViewport((var7.getScaledWidth() - 320) / 2 * var7.getScaleFactor(), (var7.getScaledHeight() - 240) / 2 * var7.getScaleFactor(), 320 * var7.getScaleFactor(), 240 * var7.getScaleFactor());
-      GL11.glTranslatef(-0.34F, 0.23F, 0.0F);
+      GlStateManager.translate(-0.34F, 0.23F, 0.0F);
       GLU.gluPerspective(90.0F, 1.3333334F, 9.0F, 80.0F);
       float var8 = 1.0F;
       GL11.glMatrixMode(5888);
       GL11.glLoadIdentity();
       RenderHelper.enableStandardItemLighting();
-      GL11.glTranslatef(-1.5F, -1.0F, -12.0F);
-      GL11.glScalef(var8, var8, var8);
+      GlStateManager.translate(-1.5F, -1.0F, -12.0F);
+      GlStateManager.scale(var8, var8, var8);
       float var9 = 5.0F;
-      GL11.glScalef(var9, var9, var9);
+      GlStateManager.scale(var9, var9, var9);
       float f2 = this.golem.renderYawOffset;
       float f3 = this.golem.rotationYaw;
       float f4 = this.golem.rotationPitch;
@@ -299,27 +301,27 @@ public class GuiGolem extends GuiContainer {
       this.golem.rotationPitch = 0.0F;
       this.golem.prevRotationYawHead = -5.0F;
       this.golem.rotationYawHead = -5.0F;
-      RenderManager.instance.renderEntityWithPosYaw(this.golem, 0.0F, 0.0F, 0.0F, 0.0F, 1.0F);
+      Minecraft.getMinecraft().getRenderManager().renderEntity(this.golem, 0.0, 0.0, 0.0, 0.0F, 1.0F, false);
       this.golem.renderYawOffset = f2;
       this.golem.rotationYaw = f3;
       this.golem.rotationPitch = f4;
       this.golem.prevRotationYawHead = f5;
       this.golem.rotationYawHead = f6;
-      GL11.glDisable(32826);
+      GlStateManager.disableRescaleNormal();
       RenderHelper.disableStandardItemLighting();
       GL11.glMatrixMode(5889);
       GL11.glViewport(0, 0, this.mc.displayWidth, this.mc.displayHeight);
-      GL11.glPopMatrix();
+      GlStateManager.popMatrix();
       GL11.glMatrixMode(5888);
       RenderHelper.disableStandardItemLighting();
-      GL11.glPopMatrix();
-      GL11.glDisable(32826);
+      GlStateManager.popMatrix();
+      GlStateManager.disableRescaleNormal();
       OpenGlHelper.setActiveTexture(OpenGlHelper.lightmapTexUnit);
-      GL11.glDisable(3553);
+      GlStateManager.disableTexture2D();
       OpenGlHelper.setActiveTexture(OpenGlHelper.defaultTexUnit);
    }
 
-   protected void mouseClicked(int par1, int par2, int par3) {
+   protected void mouseClicked(int par1, int par2, int par3) throws java.io.IOException {
       super.mouseClicked(par1, par2, par3);
       int baseX = (this.width - this.xSize) / 2;
       int baseY = (this.height - this.ySize) / 2;
@@ -427,11 +429,11 @@ public class GuiGolem extends GuiContainer {
    protected void renderToolTip(ItemStack par1ItemStack, int par2, int par3) {
       if (this.golem.getCore() == 5 && this.theSlot instanceof SlotGhostFluid) {
          List<String> list = new ArrayList<>();
-         FluidStack fluid = FluidContainerRegistry.getFluidForFilledItem(par1ItemStack);
+         FluidStack fluid = FluidUtil.getFluidContained(par1ItemStack);
          if (fluid != null) {
             list.add(fluid.getFluid().getLocalizedName(fluid));
             FontRenderer font = par1ItemStack.getItem().getFontRenderer(par1ItemStack);
-            this.drawHoveringText(list, par2, par3, font == null ? this.fontRendererObj : font);
+            this.drawHoveringText(list, par2, par3, font == null ? this.fontRenderer : font);
          }
       } else {
          super.renderToolTip(par1ItemStack, par2, par3);

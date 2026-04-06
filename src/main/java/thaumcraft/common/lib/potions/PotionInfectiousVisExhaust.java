@@ -1,7 +1,7 @@
 package thaumcraft.common.lib.potions;
 
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import java.util.List;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.EntityLivingBase;
@@ -15,8 +15,8 @@ public class PotionInfectiousVisExhaust extends Potion {
    private int statusIconIndex = -1;
    static final ResourceLocation rl = new ResourceLocation("thaumcraft", "textures/misc/potions.png");
 
-   public PotionInfectiousVisExhaust(int par1, boolean par2, int par3) {
-      super(par1, par2, par3);
+   public PotionInfectiousVisExhaust(boolean par2, int par3) {
+      super(par2, par3);
       this.setIconIndex(0, 0);
    }
 
@@ -37,14 +37,14 @@ public class PotionInfectiousVisExhaust extends Potion {
    }
 
    public void performEffect(EntityLivingBase target, int par2) {
-      List<EntityLivingBase> targets = target.worldObj.getEntitiesWithinAABB(EntityLivingBase.class, target.boundingBox.expand(4.0F, 4.0F, 4.0F));
+      List<EntityLivingBase> targets = target.world.getEntitiesWithinAABB(EntityLivingBase.class, target.getEntityBoundingBox().expand(4.0F, 4.0F, 4.0F));
       if (!targets.isEmpty()) {
          for(EntityLivingBase e : targets) {
-            if (!e.isPotionActive(Config.potionInfVisExhaustID)) {
+            if (!e.isPotionActive(Potion.getPotionById(Config.potionInfVisExhaustID))) {
                if (par2 > 0) {
-                  e.addPotionEffect(new PotionEffect(Config.potionInfVisExhaustID, 6000, par2 - 1, false));
+                  e.addPotionEffect(new PotionEffect(Potion.getPotionById(Config.potionInfVisExhaustID), 6000, par2 - 1, false, false));
                } else {
-                  e.addPotionEffect(new PotionEffect(Config.potionVisExhaustID, 6000, 0, false));
+                  e.addPotionEffect(new PotionEffect(Potion.getPotionById(Config.potionVisExhaustID), 6000, 0, false, false));
                }
             }
          }

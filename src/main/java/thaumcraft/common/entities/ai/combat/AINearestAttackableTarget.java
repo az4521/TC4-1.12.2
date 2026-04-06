@@ -1,7 +1,7 @@
 package thaumcraft.common.entities.ai.combat;
 
 import java.util.List;
-import net.minecraft.command.IEntitySelector;
+import java.util.function.Predicate;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.ai.EntityAITarget;
@@ -11,7 +11,7 @@ public class AINearestAttackableTarget extends EntityAITarget {
    EntityGolemBase theGolem;
    EntityLivingBase target;
    int targetChance;
-   private final IEntitySelector entitySelector;
+   private final Predicate<Entity> entitySelector;
    private float targetDistance;
    private AINearestAttackableTargetSorter theNearestAttackableTargetSorter;
 
@@ -19,7 +19,7 @@ public class AINearestAttackableTarget extends EntityAITarget {
       this(par1EntityLiving, 0.0F, par4, par5, false, null);
    }
 
-   public AINearestAttackableTarget(EntityGolemBase par1, float par3, int par4, boolean par5, boolean par6, IEntitySelector par7IEntitySelector) {
+   public AINearestAttackableTarget(EntityGolemBase par1, float par3, int par4, boolean par5, boolean par6, Predicate<Entity> par7IEntitySelector) {
       super(par1, par5, par6);
       this.targetDistance = 0.0F;
       this.theGolem = par1;
@@ -35,12 +35,11 @@ public class AINearestAttackableTarget extends EntityAITarget {
       if (this.targetChance > 0 && this.taskOwner.getRNG().nextInt(this.targetChance) != 0) {
          return false;
       } else {
-         List<Entity> var5 = (List<Entity>)this.taskOwner.worldObj.selectEntitiesWithinAABB(EntityLivingBase.class, this.taskOwner.boundingBox.expand(this.targetDistance, 4.0F, this.targetDistance), this.entitySelector);
+         List<EntityLivingBase> var5 = this.taskOwner.world.getEntitiesWithinAABB(EntityLivingBase.class, this.taskOwner.getEntityBoundingBox().expand(this.targetDistance, 4.0F, this.targetDistance), e -> this.entitySelector == null || this.entitySelector.test(e));
          var5.sort(this.theNearestAttackableTargetSorter);
 
-         for(Entity var3 : var5) {
-            EntityLivingBase var4 = (EntityLivingBase)var3;
-            if (this.theGolem.isValidTarget(var3)) {
+         for(EntityLivingBase var4 : var5) {
+            if (this.theGolem.isValidTarget(var4)) {
                this.target = var4;
                return true;
             }

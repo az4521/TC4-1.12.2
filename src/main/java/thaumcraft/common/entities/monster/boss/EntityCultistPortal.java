@@ -1,12 +1,12 @@
 package thaumcraft.common.entities.monster.boss;
 
-import cpw.mods.fml.common.network.NetworkRegistry;
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
+import net.minecraftforge.fml.common.network.NetworkRegistry;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import java.util.List;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.SharedMonsterAttributes;
-import net.minecraft.entity.boss.IBossDisplayData;
+
 import net.minecraft.entity.monster.EntityMob;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
@@ -15,8 +15,11 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.potion.PotionEffect;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.DamageSource;
+import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.SoundEvent;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
-import net.minecraftforge.common.util.ForgeDirection;
+import net.minecraft.util.EnumFacing;
 import thaumcraft.common.config.ConfigBlocks;
 import thaumcraft.common.config.ConfigItems;
 import thaumcraft.common.entities.monster.EntityCultist;
@@ -28,7 +31,7 @@ import thaumcraft.common.lib.utils.EntityUtils;
 import thaumcraft.common.lib.world.WorldGenEldritchRing;
 import thaumcraft.common.tiles.TileBanner;
 
-public class EntityCultistPortal extends EntityMob implements IBossDisplayData {
+public class EntityCultistPortal extends EntityMob  {
    int stage = 0;
    int stagecounter = 200;
    public int pulse = 0;
@@ -60,9 +63,9 @@ public class EntityCultistPortal extends EntityMob implements IBossDisplayData {
 
    protected void applyEntityAttributes() {
       super.applyEntityAttributes();
-      this.getEntityAttribute(SharedMonsterAttributes.maxHealth).setBaseValue(500.0F);
-      this.getEntityAttribute(SharedMonsterAttributes.attackDamage).setBaseValue(0.0F);
-      this.getEntityAttribute(SharedMonsterAttributes.knockbackResistance).setBaseValue(1.0F);
+      this.getEntityAttribute(SharedMonsterAttributes.MAX_HEALTH).setBaseValue(500.0F);
+      this.getEntityAttribute(SharedMonsterAttributes.ATTACK_DAMAGE).setBaseValue(0.0F);
+      this.getEntityAttribute(SharedMonsterAttributes.KNOCKBACK_RESISTANCE).setBaseValue(1.0F);
    }
 
    public float getShadowSize() {
@@ -80,9 +83,6 @@ public class EntityCultistPortal extends EntityMob implements IBossDisplayData {
    public void moveEntity(double par1, double par3, double par5) {
    }
 
-   protected void updateEntityActionState() {
-   }
-
    public boolean isInRangeToRenderDist(double par1) {
       return par1 < (double)4096.0F;
    }
@@ -98,10 +98,10 @@ public class EntityCultistPortal extends EntityMob implements IBossDisplayData {
 
    public void onUpdate() {
       super.onUpdate();
-      if (!this.worldObj.isRemote) {
+      if (!this.world.isRemote) {
          if (this.stagecounter <= 0) {
-            if (this.worldObj.getClosestPlayerToEntity(this, 48.0F) != null) {
-               this.worldObj.setEntityState(this, (byte)16);
+            if (this.world.getClosestPlayerToEntity(this, 48.0F) != null) {
+               this.world.setEntityState(this, (byte)16);
                switch (this.stage) {
                   case 0:
                   case 1:
@@ -128,17 +128,16 @@ public class EntityCultistPortal extends EntityMob implements IBossDisplayData {
          } else {
             --this.stagecounter;
             if (this.stagecounter == 160 && this.stage == 0) {
-               this.worldObj.setEntityState(this, (byte)16);
+               this.world.setEntityState(this, (byte)16);
 
                for(int a = 2; a < 6; ++a) {
-                  ForgeDirection dir = ForgeDirection.getOrientation(a);
-                  this.worldObj.setBlock((int)this.posX - dir.offsetX * 6, (int)this.posY, (int)this.posZ + dir.offsetZ * 6, ConfigBlocks.blockWoodenDevice, 8, 3);
-                  TileEntity te = this.worldObj.getTileEntity((int)this.posX - dir.offsetX * 6, (int)this.posY, (int)this.posZ + dir.offsetZ * 6);
+                  EnumFacing dir = EnumFacing.byIndex(a);
+                  BlockPos bannerPos = new BlockPos((int)this.posX - dir.getXOffset() * 6, (int)this.posY, (int)this.posZ + dir.getZOffset() * 6);
+                  this.world.setBlockState(bannerPos, ConfigBlocks.blockWoodenDevice.getStateFromMeta(8), 3);
+                  TileEntity te = this.world.getTileEntity(bannerPos);
                   if (te instanceof TileBanner) {
-
                      ((TileBanner)te).setFacing(WorldGenEldritchRing.bannerFaceFromDirection(a));
-                     PacketHandler.INSTANCE.sendToAllAround(new PacketFXBlockArc((int)this.posX - dir.offsetX * 6, (int)this.posY, (int)this.posZ + dir.offsetZ * 6, this.getEntityId()), new NetworkRegistry.TargetPoint(this.worldObj.provider.dimensionId, this.posX, this.posY, this.posZ, 32.0F));
-                     this.playSound("thaumcraft:wandfail", 1.0F, 1.0F);
+                     PacketHandler.INSTANCE.sendToAllAround(new PacketFXBlockArc(bannerPos.getX(), bannerPos.getY(), bannerPos.getZ(), this.getEntityId()), new NetworkRegistry.TargetPoint(this.world.provider.getDimension(), this.posX, this.posY, this.posZ, 32.0F));
                   }
                }
             }
@@ -146,13 +145,13 @@ public class EntityCultistPortal extends EntityMob implements IBossDisplayData {
             if (this.stagecounter > 20 && this.stagecounter < 150 && this.stage == 0 && this.stagecounter % 13 == 0) {
                int a = (int)this.posX + this.rand.nextInt(5) - this.rand.nextInt(5);
                int b = (int)this.posZ + this.rand.nextInt(5) - this.rand.nextInt(5);
-               if (a != (int)this.posX && b != (int)this.posZ && this.worldObj.isAirBlock(a, (int)this.posY, b)) {
-                  this.worldObj.setEntityState(this, (byte)16);
-                  float rr = this.worldObj.rand.nextFloat();
+               BlockPos cratePos = new BlockPos(a, (int)this.posY, b);
+               if (a != (int)this.posX && b != (int)this.posZ && this.world.isAirBlock(cratePos)) {
+                  this.world.setEntityState(this, (byte)16);
+                  float rr = this.world.rand.nextFloat();
                   int md = rr < 0.05F ? 2 : (rr < 0.2F ? 1 : 0);
-                  this.worldObj.setBlock(a, (int)this.posY, b, ConfigBlocks.blockLootCrate, md, 3);
-                  PacketHandler.INSTANCE.sendToAllAround(new PacketFXBlockArc(a, (int)this.posY, b, this.getEntityId()), new NetworkRegistry.TargetPoint(this.worldObj.provider.dimensionId, this.posX, this.posY, this.posZ, 32.0F));
-                  this.playSound("thaumcraft:wandfail", 1.0F, 1.0F);
+                  this.world.setBlockState(cratePos, ConfigBlocks.blockLootCrate.getStateFromMeta(md), 3);
+                  PacketHandler.INSTANCE.sendToAllAround(new PacketFXBlockArc(a, (int)this.posY, b, this.getEntityId()), new NetworkRegistry.TargetPoint(this.world.provider.getDimension(), this.posX, this.posY, this.posZ, 32.0F));
                }
             }
          }
@@ -169,43 +168,46 @@ public class EntityCultistPortal extends EntityMob implements IBossDisplayData {
    }
 
    int getTiming() {
-      List<Entity> l = EntityUtils.getEntitiesInRange(this.worldObj, this.posX, this.posY, this.posZ, this, EntityCultist.class, 32.0F);
+      List<Entity> l = EntityUtils.getEntitiesInRange(this.world, this.posX, this.posY, this.posZ, this, EntityCultist.class, 32.0F);
       return l.size() * 20;
    }
 
    void spawnMinions() {
       EntityCultist cultist = null;
       if ((double)this.rand.nextFloat() > 0.33) {
-         cultist = new EntityCultistKnight(this.worldObj);
+         cultist = new EntityCultistKnight(this.world);
       } else {
-         cultist = new EntityCultistCleric(this.worldObj);
+         cultist = new EntityCultistCleric(this.world);
       }
 
       cultist.setPosition(this.posX + (double)this.rand.nextFloat() - (double)this.rand.nextFloat(), this.posY + (double)0.25F, this.posZ + (double)this.rand.nextFloat() - (double)this.rand.nextFloat());
-      cultist.onSpawnWithEgg(null);
+      cultist.onInitialSpawn(this.world.getDifficultyForLocation(new net.minecraft.util.math.BlockPos(cultist)), null);
       cultist.spawnExplosionParticle();
-      cultist.setHomeArea((int)this.posX, (int)this.posY, (int)this.posZ, 32);
-      this.worldObj.spawnEntityInWorld(cultist);
-      cultist.playSound("thaumcraft:wandfail", 1.0F, 1.0F);
+      cultist.setHomePosAndDistance(new net.minecraft.util.math.BlockPos((int)this.posX, (int)this.posY, (int)this.posZ), 32);
+      this.world.spawnEntity(cultist);
+      SoundEvent snd = SoundEvent.REGISTRY.getObject(new ResourceLocation("thaumcraft:wandfail"));
+      if (snd != null) cultist.playSound(snd, 1.0F, 1.0F);
       if (this.stage > 12) {
-         this.attackEntityFrom(DamageSource.outOfWorld, (float)(5 + this.rand.nextInt(5)));
+         this.attackEntityFrom(DamageSource.OUT_OF_WORLD, (float)(5 + this.rand.nextInt(5)));
       }
 
    }
 
    void spawnBoss() {
-      EntityCultistLeader cultist = new EntityCultistLeader(this.worldObj);
+      EntityCultistLeader cultist = new EntityCultistLeader(this.world);
       cultist.setPosition(this.posX + (double)this.rand.nextFloat() - (double)this.rand.nextFloat(), this.posY + (double)0.25F, this.posZ + (double)this.rand.nextFloat() - (double)this.rand.nextFloat());
-      cultist.onSpawnWithEgg(null);
-      cultist.setHomeArea((int)this.posX, (int)this.posY, (int)this.posZ, 32);
+      cultist.onInitialSpawn(this.world.getDifficultyForLocation(new net.minecraft.util.math.BlockPos(cultist)), null);
+      cultist.setHomePosAndDistance(new net.minecraft.util.math.BlockPos((int)this.posX, (int)this.posY, (int)this.posZ), 32);
       cultist.spawnExplosionParticle();
-      this.worldObj.spawnEntityInWorld(cultist);
-      cultist.playSound("thaumcraft:wandfail", 1.0F, 1.0F);
+      this.world.spawnEntity(cultist);
+      SoundEvent snd = SoundEvent.REGISTRY.getObject(new ResourceLocation("thaumcraft:wandfail"));
+      if (snd != null) cultist.playSound(snd, 1.0F, 1.0F);
    }
 
    public void onCollideWithPlayer(EntityPlayer p) {
-      if (this.getDistanceSqToEntity(p) < (double)3.0F && p.attackEntityFrom(DamageSource.causeIndirectMagicDamage(this, this), 8.0F)) {
-         this.playSound("thaumcraft:zap", 1.0F, (this.rand.nextFloat() - this.rand.nextFloat()) * 0.1F + 1.0F);
+      if (this.getDistanceSq(p) < (double)3.0F && p.attackEntityFrom(DamageSource.causeIndirectMagicDamage(this, this), 8.0F)) {
+         SoundEvent snd = SoundEvent.REGISTRY.getObject(new ResourceLocation("thaumcraft:zap"));
+         if (snd != null) this.playSound(snd, 1.0F, 1.0F);
       }
 
    }
@@ -218,17 +220,9 @@ public class EntityCultistPortal extends EntityMob implements IBossDisplayData {
       return 540;
    }
 
-   protected String getLivingSound() {
-      return "thaumcraft:monolith";
-   }
-
-   protected String getHurtSound() {
-      return "thaumcraft:zap";
-   }
-
-   protected String getDeathSound() {
-      return "thaumcraft:shock";
-   }
+   @Override protected net.minecraft.util.SoundEvent getAmbientSound() { return net.minecraft.util.SoundEvent.REGISTRY.getObject(new net.minecraft.util.ResourceLocation("thaumcraft:monolith")); }
+   @Override protected net.minecraft.util.SoundEvent getHurtSound(net.minecraft.util.DamageSource source) { return net.minecraft.util.SoundEvent.REGISTRY.getObject(new net.minecraft.util.ResourceLocation("thaumcraft:zap")); }
+   @Override protected net.minecraft.util.SoundEvent getDeathSound() { return net.minecraft.util.SoundEvent.REGISTRY.getObject(new net.minecraft.util.ResourceLocation("thaumcraft:shock")); }
 
    protected Item getDropItem() {
        return super.getDropItem();
@@ -239,27 +233,27 @@ public class EntityCultistPortal extends EntityMob implements IBossDisplayData {
    }
 
    @SideOnly(Side.CLIENT)
-   public void handleHealthUpdate(byte msg) {
+   public void handleStatusUpdate(byte msg) {
       if (msg == 16) {
          this.pulse = 10;
          this.spawnExplosionParticle();
       } else {
-         super.handleHealthUpdate(msg);
+         super.handleStatusUpdate(msg);
       }
 
    }
 
-   public void addPotionEffect(PotionEffect p_70690_1_) {
+   public void addPotionEffect(PotionEffect potioneffectIn) {
    }
 
-   protected void fall(float p_70069_1_) {
+   protected void fall(float distance) {
    }
 
-   public void onDeath(DamageSource p_70645_1_) {
-      if (!this.worldObj.isRemote) {
-         this.worldObj.newExplosion(this, this.posX, this.posY, this.posZ, 2.0F, false, false);
+   public void onDeath(DamageSource cause) {
+      if (!this.world.isRemote) {
+         this.world.newExplosion(this, this.posX, this.posY, this.posZ, 2.0F, false, false);
       }
 
-      super.onDeath(p_70645_1_);
+      super.onDeath(cause);
    }
 }

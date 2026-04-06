@@ -7,6 +7,7 @@ import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.renderer.RenderHelper;
 import net.minecraft.client.renderer.Tessellator;
+
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL12;
 import thaumcraft.common.tiles.TileMagicWorkbench;
@@ -16,6 +17,9 @@ import java.lang.reflect.Field;
 import java.util.List;
 import java.util.WeakHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.client.renderer.BufferBuilder;
+import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 
 public class ClientUtils {
 
@@ -31,12 +35,17 @@ public class ClientUtils {
         // can't just call gui.drawTexturedModalRect, it can't do width scales
         // assume texture is 256x256
         float f = 1f / 256f;
-        Tessellator tessellator = Tessellator.instance;
-        tessellator.startDrawingQuads();
-        tessellator.addVertexWithUV(xmin, ymax, zLevel, umin * f, vmax * f);
-        tessellator.addVertexWithUV(xmax, ymax, zLevel, umax * f, vmax * f);
-        tessellator.addVertexWithUV(xmax, ymin, zLevel, umax * f, vmin * f);
-        tessellator.addVertexWithUV(xmin, ymin, zLevel, umin * f, vmin * f);
+        Tessellator tessellator = Tessellator.getInstance();
+        BufferBuilder buffer = tessellator.getBuffer();
+        buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX_COLOR); // TODO_PORT: verify vertex format
+        buffer.pos(xmin, ymax, zLevel).tex(umin * f, vmax * f).color(1.0f, 1.0f, 1.0f, 1.0f) // TODO_PORT: set actual color
+        .endVertex();
+        buffer.pos(xmax, ymax, zLevel).tex(umax * f, vmax * f).color(1.0f, 1.0f, 1.0f, 1.0f) // TODO_PORT: set actual color
+        .endVertex();
+        buffer.pos(xmax, ymin, zLevel).tex(umax * f, vmin * f).color(1.0f, 1.0f, 1.0f, 1.0f) // TODO_PORT: set actual color
+        .endVertex();
+        buffer.pos(xmin, ymin, zLevel).tex(umin * f, vmin * f).color(1.0f, 1.0f, 1.0f, 1.0f) // TODO_PORT: set actual color
+        .endVertex();
         tessellator.draw();
     }
 
@@ -67,15 +76,15 @@ public class ClientUtils {
 
     public static Dimension displaySize() {
         Minecraft mc = Minecraft.getMinecraft();
-        ScaledResolution res = new ScaledResolution(mc, mc.displayWidth, mc.displayHeight);
+        ScaledResolution res = new ScaledResolution(mc);
         return new Dimension(res.getScaledWidth(), res.getScaledHeight());
     }
 
     public static void drawMultilineTip(FontRenderer font, int x, int y, List<String> list) {
         if (list.isEmpty()) return;
 
-        GL11.glDisable(GL12.GL_RESCALE_NORMAL);
-        GL11.glDisable(GL11.GL_DEPTH_TEST);
+        GlStateManager.disableRescaleNormal();
+        GlStateManager.disableDepth();
         RenderHelper.disableStandardItemLighting();
 
         int w = 0;
@@ -105,8 +114,8 @@ public class ClientUtils {
 
         gui.incZLevel(-300);
 
-        GL11.glEnable(GL11.GL_DEPTH_TEST);
-        GL11.glEnable(GL12.GL_RESCALE_NORMAL);
+        GlStateManager.enableDepth();
+        GlStateManager.enableRescaleNormal();
         RenderHelper.enableGUIStandardItemLighting();
     }
 

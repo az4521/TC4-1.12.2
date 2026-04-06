@@ -5,10 +5,11 @@ import net.minecraft.client.model.ModelRenderer;
 import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.util.MathHelper;
-import org.lwjgl.opengl.GL11;
+import net.minecraft.util.math.MathHelper;
+
 import thaumcraft.common.entities.monster.EntityEldritchGuardian;
 import thaumcraft.common.entities.monster.boss.EntityEldritchWarden;
+import net.minecraft.client.renderer.GlStateManager;
 
 public class ModelEldritchGuardian extends ModelBase {
    ModelRenderer BeltR;
@@ -406,8 +407,8 @@ public class ModelEldritchGuardian extends ModelBase {
       this.Cloak2.addChild(this.Cloak3);
    }
 
-   public void setLivingAnimations(EntityLivingBase p_78086_1_, float p_78086_2_, float p_78086_3_, float p_78086_4_) {
-      this.partialTicks = p_78086_4_;
+   public void setLivingAnimations(EntityLivingBase entitylivingbaseIn, float limbSwing, float limbSwingAmount, float partialTickTime) {
+      this.partialTicks = partialTickTime;
    }
 
    public void render(Entity entity, float f, float f1, float f2, float f3, float f4, float f5) {
@@ -452,17 +453,17 @@ public class ModelEldritchGuardian extends ModelBase {
       this.SidepanelR2.render(f5);
       this.LegpanelC1.render(f5);
       if (entity instanceof EntityEldritchWarden) {
-         GL11.glPushMatrix();
-         GL11.glEnable(GL11.GL_BLEND);
-         GL11.glBlendFunc(770, 1);
-         GL11.glScaled(1.01, 1.01, 1.01);
+         GlStateManager.pushMatrix();
+         GlStateManager.enableBlend();
+         GlStateManager.blendFunc(770, 1);
+         GlStateManager.scale(1.01, 1.01, 1.01);
          int j = (int)(195.0F + MathHelper.sin((float)entity.ticksExisted / 3.0F) * 15.0F + 15.0F);
          int k = j % 65536;
          int l = j / 65536;
          OpenGlHelper.setLightmapTextureCoords(OpenGlHelper.lightmapTexUnit, (float) k, (float) l);
          this.HoodEye.render(f5);
-         GL11.glDisable(GL11.GL_BLEND);
-         GL11.glPopMatrix();
+         GlStateManager.disableBlend();
+         GlStateManager.popMatrix();
       }
 
    }

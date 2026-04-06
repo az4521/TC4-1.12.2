@@ -1,7 +1,7 @@
 package thaumcraft.common.lib.utils;
 
-import cpw.mods.fml.common.ObfuscationReflectionHelper;
-import cpw.mods.fml.relauncher.ReflectionHelper;
+import net.minecraftforge.fml.common.ObfuscationReflectionHelper;
+import net.minecraftforge.fml.relauncher.ReflectionHelper;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -19,10 +19,10 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.AxisAlignedBB;
-import net.minecraft.util.MathHelper;
-import net.minecraft.util.MovingObjectPosition;
-import net.minecraft.util.Vec3;
+import net.minecraft.util.math.AxisAlignedBB;
+import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.RayTraceResult;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import tc4tweak.ConfigurationHandler;
 import thaumcraft.common.entities.EntitySpecialItem;
@@ -34,8 +34,8 @@ public class EntityUtils {
 
     public static class AttributeModifierTweaked extends AttributeModifier{
 
-        public AttributeModifierTweaked(UUID p_i1606_1_, String p_i1606_2_, double p_i1606_3_, int p_i1606_5_) {
-            super(p_i1606_1_, p_i1606_2_, p_i1606_3_, p_i1606_5_);
+        public AttributeModifierTweaked(UUID idIn, String nameIn, double amountIn, int operationIn) {
+            super(idIn, nameIn, amountIn, operationIn);
         }
         @Override
         public double getAmount() {
@@ -43,7 +43,7 @@ public class EntityUtils {
         }
     }
 
-   public static final IAttribute CHAMPION_MOD = (new RangedAttribute("tc.mobmod", -2.0F, -2.0F, 100.0F)).setDescription("Champion modifier").setShouldWatch(true);
+   public static final IAttribute CHAMPION_MOD = (new RangedAttribute(null, "tc.mobmod", -2.0F, -2.0F, 100.0F)).setDescription("Champion modifier").setShouldWatch(true);
    public static final AttributeModifierTweaked CHAMPION_HEALTH = new AttributeModifierTweaked(UUID.fromString("a62bef38-48cc-42a6-ac5e-ef913841c4fd"), "Champion health buff", 30.0F, 0);
    public static final AttributeModifierTweaked CHAMPION_DAMAGE = new AttributeModifierTweaked(UUID.fromString("a340d2db-d881-4c25-ac62-f0ad14cd63b0"), "Champion damage buff", 2.0F, 2);
    public static final AttributeModifierTweaked BOLDBUFF = new AttributeModifierTweaked(UUID.fromString("4b1edd33-caa9-47ae-a702-d86c05701037"), "Bold speed boost", 0.3, 1);
@@ -67,19 +67,19 @@ public class EntityUtils {
 
    public static Entity getPointedEntity(World world, Entity entityplayer, double minrange, double range, float padding, boolean nonCollide) {
       Entity pointedEntity = null;
-      Vec3 vec3d = Vec3.createVectorHelper(entityplayer.posX, entityplayer.posY + (double)entityplayer.getEyeHeight(), entityplayer.posZ);
-      Vec3 vec3d1 = entityplayer.getLookVec();
-      Vec3 vec3d2 = vec3d.addVector(vec3d1.xCoord * range, vec3d1.yCoord * range, vec3d1.zCoord * range);
-      List list = world.getEntitiesWithinAABBExcludingEntity(entityplayer, entityplayer.boundingBox.addCoord(vec3d1.xCoord * range, vec3d1.yCoord * range, vec3d1.zCoord * range).expand(padding, padding, padding));
+      Vec3d vec3d = new Vec3d(entityplayer.posX, entityplayer.posY + (double)entityplayer.getEyeHeight(), entityplayer.posZ);
+      Vec3d vec3d1 = entityplayer.getLookVec();
+      Vec3d vec3d2 = vec3d.add(vec3d1.x * range, vec3d1.y * range, vec3d1.z * range);
+      List list = world.getEntitiesWithinAABBExcludingEntity(entityplayer, entityplayer.getEntityBoundingBox().expand(vec3d1.x * range, vec3d1.y * range, vec3d1.z * range).expand(padding, padding, padding));
       double d2 = 0.0F;
 
        for (Object o : list) {
            Entity entity = (Entity) o;
-           if (!((double) entity.getDistanceToEntity(entityplayer) < minrange) && (entity.canBeCollidedWith() || nonCollide) && world.func_147447_a(Vec3.createVectorHelper(entityplayer.posX, entityplayer.posY + (double) entityplayer.getEyeHeight(), entityplayer.posZ), Vec3.createVectorHelper(entity.posX, entity.posY + (double) entity.getEyeHeight(), entity.posZ), false, true, false) == null) {
+           if (!((double) entity.getDistance(entityplayer) < minrange) && (entity.canBeCollidedWith() || nonCollide) && world.rayTraceBlocks(new Vec3d(entityplayer.posX, entityplayer.posY + (double) entityplayer.getEyeHeight(), entityplayer.posZ), new Vec3d(entity.posX, entity.posY + (double) entity.getEyeHeight(), entity.posZ), false, true, false) == null) {
                float f2 = Math.max(0.8F, entity.getCollisionBorderSize());
-               AxisAlignedBB axisalignedbb = entity.boundingBox.expand(f2, f2, f2);
-               MovingObjectPosition movingobjectposition = axisalignedbb.calculateIntercept(vec3d, vec3d2);
-               if (axisalignedbb.isVecInside(vec3d)) {
+               AxisAlignedBB axisalignedbb = entity.getEntityBoundingBox().expand(f2, f2, f2);
+               RayTraceResult movingobjectposition = axisalignedbb.calculateIntercept(vec3d, vec3d2);
+               if (axisalignedbb.contains(vec3d)) {
                    if ((double) 0.0F < d2 || d2 == (double) 0.0F) {
                        pointedEntity = entity;
                        d2 = 0.0F;
@@ -99,20 +99,20 @@ public class EntityUtils {
 
    public static Entity getPointedEntity(World world, EntityPlayer entityplayer, double range, Class clazz) {
       Entity pointedEntity = null;
-      Vec3 vec3d = Vec3.createVectorHelper(entityplayer.posX, entityplayer.posY + (double)entityplayer.getEyeHeight(), entityplayer.posZ);
-      Vec3 vec3d1 = entityplayer.getLookVec();
-      Vec3 vec3d2 = vec3d.addVector(vec3d1.xCoord * range, vec3d1.yCoord * range, vec3d1.zCoord * range);
+      Vec3d vec3d = new Vec3d(entityplayer.posX, entityplayer.posY + (double)entityplayer.getEyeHeight(), entityplayer.posZ);
+      Vec3d vec3d1 = entityplayer.getLookVec();
+      Vec3d vec3d2 = vec3d.add(vec3d1.x * range, vec3d1.y * range, vec3d1.z * range);
       float f1 = 1.1F;
-      List list = world.getEntitiesWithinAABBExcludingEntity(entityplayer, entityplayer.boundingBox.addCoord(vec3d1.xCoord * range, vec3d1.yCoord * range, vec3d1.zCoord * range).expand(f1, f1, f1));
+      List list = world.getEntitiesWithinAABBExcludingEntity(entityplayer, entityplayer.getEntityBoundingBox().expand(vec3d1.x * range, vec3d1.y * range, vec3d1.z * range).expand(f1, f1, f1));
       double d2 = 0.0F;
 
        for (Object o : list) {
            Entity entity = (Entity) o;
-           if (entity.canBeCollidedWith() && world.func_147447_a(Vec3.createVectorHelper(entityplayer.posX, entityplayer.posY + (double) entityplayer.getEyeHeight(), entityplayer.posZ), Vec3.createVectorHelper(entity.posX, entity.posY + (double) entity.getEyeHeight(), entity.posZ), false, true, false) == null && !clazz.isInstance(entity)) {
+           if (entity.canBeCollidedWith() && world.rayTraceBlocks(new Vec3d(entityplayer.posX, entityplayer.posY + (double) entityplayer.getEyeHeight(), entityplayer.posZ), new Vec3d(entity.posX, entity.posY + (double) entity.getEyeHeight(), entity.posZ), false, true, false) == null && !clazz.isInstance(entity)) {
                float f2 = Math.max(0.8F, entity.getCollisionBorderSize());
-               AxisAlignedBB axisalignedbb = entity.boundingBox.expand(f2, f2, f2);
-               MovingObjectPosition movingobjectposition = axisalignedbb.calculateIntercept(vec3d, vec3d2);
-               if (axisalignedbb.isVecInside(vec3d)) {
+               AxisAlignedBB axisalignedbb = entity.getEntityBoundingBox().expand(f2, f2, f2);
+               RayTraceResult movingobjectposition = axisalignedbb.calculateIntercept(vec3d, vec3d2);
+               if (axisalignedbb.contains(vec3d)) {
                    if ((double) 0.0F < d2 || d2 == (double) 0.0F) {
                        pointedEntity = entity;
                        d2 = 0.0F;
@@ -131,20 +131,20 @@ public class EntityUtils {
    }
 
    public static boolean canEntityBeSeen(Entity entity, TileEntity te) {
-      return te.getWorldObj().rayTraceBlocks(Vec3.createVectorHelper((double)te.xCoord + (double)0.5F, (double)te.yCoord + (double)1.25F, (double)te.zCoord + (double)0.5F), Vec3.createVectorHelper(entity.posX, entity.posY, entity.posZ), false) == null;
+      return te.getWorld().rayTraceBlocks(new Vec3d((double)te.getPos().getX() + (double)0.5F, (double)te.getPos().getY() + (double)1.25F, (double)te.getPos().getZ() + (double)0.5F), new Vec3d(entity.posX, entity.posY, entity.posZ), false) == null;
    }
 
    public static boolean canEntityBeSeen(Entity entity, double x, double y, double z) {
-      return entity.worldObj.rayTraceBlocks(Vec3.createVectorHelper(x, y, z), Vec3.createVectorHelper(entity.posX, entity.posY, entity.posZ), false) == null;
+      return entity.world.rayTraceBlocks(new Vec3d(x, y, z), new Vec3d(entity.posX, entity.posY, entity.posZ), false) == null;
    }
 
    public static boolean canEntityBeSeen(Entity entity, Entity entity2) {
-      return entity.worldObj.rayTraceBlocks(Vec3.createVectorHelper(entity.posX, entity.posY, entity.posZ), Vec3.createVectorHelper(entity2.posX, entity2.posY, entity2.posZ), false) == null;
+      return entity.world.rayTraceBlocks(new Vec3d(entity.posX, entity.posY, entity.posZ), new Vec3d(entity2.posX, entity2.posY, entity2.posZ), false) == null;
    }
 
    public static void setRecentlyHit(EntityLivingBase ent, int hit) {
       try {
-         ObfuscationReflectionHelper.setPrivateValue(EntityLivingBase.class, ent, hit, "recentlyHit", "field_70718_bc");
+         ObfuscationReflectionHelper.setPrivateValue(EntityLivingBase.class, ent, hit, "recentlyHit", "recentlyHit");
       } catch (Exception ignored) {
       }
 
@@ -152,20 +152,20 @@ public class EntityUtils {
 
    public static int getRecentlyHit(EntityLivingBase ent) {
       try {
-         return ReflectionHelper.getPrivateValue(EntityLivingBase.class, ent, new String[]{"recentlyHit", "field_70718_bc"});
+         return ReflectionHelper.getPrivateValue(EntityLivingBase.class, ent, new String[]{"recentlyHit", "recentlyHit"});
       } catch (Exception var2) {
          return 0;
       }
    }
 
-   public static MovingObjectPosition getMovingObjectPositionFromPlayer(World par1World, EntityPlayer par2EntityPlayer, boolean par3) {
+   public static RayTraceResult getMovingObjectPositionFromPlayer(World par1World, EntityPlayer par2EntityPlayer, boolean par3) {
       float f = 1.0F;
       float f1 = par2EntityPlayer.prevRotationPitch + (par2EntityPlayer.rotationPitch - par2EntityPlayer.prevRotationPitch) * f;
       float f2 = par2EntityPlayer.prevRotationYaw + (par2EntityPlayer.rotationYaw - par2EntityPlayer.prevRotationYaw) * f;
       double d0 = par2EntityPlayer.prevPosX + (par2EntityPlayer.posX - par2EntityPlayer.prevPosX) * (double)f;
-      double d1 = par2EntityPlayer.prevPosY + (par2EntityPlayer.posY - par2EntityPlayer.prevPosY) * (double)f + (double)(par1World.isRemote ? par2EntityPlayer.getEyeHeight() - par2EntityPlayer.getDefaultEyeHeight() : par2EntityPlayer.getEyeHeight());
+      double d1 = par2EntityPlayer.prevPosY + (par2EntityPlayer.posY - par2EntityPlayer.prevPosY) * (double)f + (double)par2EntityPlayer.getEyeHeight();
       double d2 = par2EntityPlayer.prevPosZ + (par2EntityPlayer.posZ - par2EntityPlayer.prevPosZ) * (double)f;
-      Vec3 vec3 = Vec3.createVectorHelper(d0, d1, d2);
+      Vec3d vec3 = new Vec3d(d0, d1, d2);
       float f3 = MathHelper.cos(-f2 * ((float)Math.PI / 180F) - (float)Math.PI);
       float f4 = MathHelper.sin(-f2 * ((float)Math.PI / 180F) - (float)Math.PI);
       float f5 = -MathHelper.cos(-f1 * ((float)Math.PI / 180F));
@@ -174,16 +174,17 @@ public class EntityUtils {
       float f8 = f3 * f5;
       double d3 = 5.0F;
       if (par2EntityPlayer instanceof EntityPlayerMP) {
-         d3 = ((EntityPlayerMP)par2EntityPlayer).theItemInWorldManager.getBlockReachDistance();
+         d3 = ((EntityPlayerMP)par2EntityPlayer).interactionManager.getBlockReachDistance();
       }
 
-      Vec3 vec31 = vec3.addVector((double)f7 * d3, (double)f6 * d3, (double)f8 * d3);
-      return par1World.func_147447_a(vec3, vec31, par3, !par3, false);
+      Vec3d vec31 = vec3.add((double)f7 * d3, (double)f6 * d3, (double)f8 * d3);
+      return par1World.rayTraceBlocks(vec3, vec31, par3, !par3, false);
    }
 
    public static ArrayList<Entity> getEntitiesInRange(World world, double x, double y, double z, Entity entity, Class<?> clazz, double range) {
       ArrayList<Entity> out = new ArrayList<>();
-      List<Entity> list = (List<Entity>)world.getEntitiesWithinAABB(clazz, AxisAlignedBB.getBoundingBox(x, y, z, x, y, z).expand(range, range, range));
+      @SuppressWarnings("unchecked")
+      List<Entity> list = (List<Entity>)world.getEntitiesWithinAABB((Class<Entity>)(Class<?>)clazz, new AxisAlignedBB(x, y, z, x, y, z).expand(range, range, range));
       if (!list.isEmpty()) {
          for(Entity e : list) {
              if (entity == null || entity.getEntityId() != e.getEntityId()) {
@@ -196,40 +197,34 @@ public class EntityUtils {
    }
 
    public static boolean isVisibleTo(float fov, Entity ent, Entity ent2, float range) {
-      double[] x = new double[]{ent2.posX, ent2.boundingBox.minY + (double)(ent2.height / 2.0F), ent2.posZ};
-      double[] t = new double[]{ent.posX, ent.boundingBox.minY + (double)ent.getEyeHeight(), ent.posZ};
-      Vec3 q = ent.getLookVec();
-      q.xCoord *= range;
-      q.yCoord *= range;
-      q.zCoord *= range;
-      Vec3 l = q.addVector(ent.posX, ent.boundingBox.minY + (double)ent.getEyeHeight(), ent.posZ);
-      double[] b = new double[]{l.xCoord, l.yCoord, l.zCoord};
+      double[] x = new double[]{ent2.posX, ent2.getEntityBoundingBox().minY + (double)(ent2.height / 2.0F), ent2.posZ};
+      double[] t = new double[]{ent.posX, ent.getEntityBoundingBox().minY + (double)ent.getEyeHeight(), ent.posZ};
+      Vec3d q = ent.getLookVec().scale(range);
+      Vec3d l = q.add(ent.posX, ent.getEntityBoundingBox().minY + (double)ent.getEyeHeight(), ent.posZ);
+      double[] b = new double[]{l.x, l.y, l.z};
       return Utils.isLyingInCone(x, t, b, fov);
    }
 
    public static boolean isVisibleTo(float fov, Entity ent, double xx, double yy, double zz, float range) {
       double[] x = new double[]{xx, yy, zz};
-      double[] t = new double[]{ent.posX, ent.boundingBox.minY + (double)ent.getEyeHeight(), ent.posZ};
-      Vec3 q = ent.getLookVec();
-      q.xCoord *= range;
-      q.yCoord *= range;
-      q.zCoord *= range;
-      Vec3 l = q.addVector(ent.posX, ent.boundingBox.minY + (double)ent.getEyeHeight(), ent.posZ);
-      double[] b = new double[]{l.xCoord, l.yCoord, l.zCoord};
+      double[] t = new double[]{ent.posX, ent.getEntityBoundingBox().minY + (double)ent.getEyeHeight(), ent.posZ};
+      Vec3d q = ent.getLookVec().scale(range);
+      Vec3d l = q.add(ent.posX, ent.getEntityBoundingBox().minY + (double)ent.getEyeHeight(), ent.posZ);
+      double[] b = new double[]{l.x, l.y, l.z};
       return Utils.isLyingInCone(x, t, b, fov);
    }
 
    public static EntityItem entityDropSpecialItem(Entity entity, ItemStack stack, float dropheight) {
-      if (stack.stackSize != 0 && stack.getItem() != null) {
-         EntitySpecialItem entityitem = new EntitySpecialItem(entity.worldObj, entity.posX, entity.posY + (double)dropheight, entity.posZ, stack);
-         entityitem.delayBeforeCanPickup = 10;
+      if (!stack.isEmpty() && stack.getItem() != null) {
+         EntitySpecialItem entityitem = new EntitySpecialItem(entity.world, entity.posX, entity.posY + (double)dropheight, entity.posZ, stack);
+         entityitem.setPickupDelay(10);
          entityitem.motionY = 0.1F;
          entityitem.motionX = 0.0F;
          entityitem.motionZ = 0.0F;
          if (entity.captureDrops) {
             entity.capturedDrops.add(entityitem);
          } else {
-            entity.worldObj.spawnEntityInWorld(entityitem);
+            entity.world.spawnEntity(entityitem);
          }
 
          return entityitem;
@@ -239,7 +234,7 @@ public class EntityUtils {
    }
 
    public static void makeChampion(EntityMob entity, boolean persist) {
-      int type = entity.worldObj.rand.nextInt(ChampionModifier.mods.length);
+      int type = entity.world.rand.nextInt(ChampionModifier.mods.length);
       if (entity instanceof EntityCreeper) {
          type = 0;
       }
@@ -248,35 +243,35 @@ public class EntityUtils {
       modai.removeModifier(ChampionModifier.mods[type].attributeMod);
       modai.applyModifier(ChampionModifier.mods[type].attributeMod);
       if (!(entity instanceof EntityThaumcraftBoss)) {
-         IAttributeInstance iattributeinstance = entity.getEntityAttribute(SharedMonsterAttributes.maxHealth);
+         IAttributeInstance iattributeinstance = entity.getEntityAttribute(SharedMonsterAttributes.MAX_HEALTH);
          iattributeinstance.removeModifier(CHAMPION_HEALTH);
          iattributeinstance.applyModifier(CHAMPION_HEALTH);
-         IAttributeInstance iattributeinstance2 = entity.getEntityAttribute(SharedMonsterAttributes.attackDamage);
+         IAttributeInstance iattributeinstance2 = entity.getEntityAttribute(SharedMonsterAttributes.ATTACK_DAMAGE);
          iattributeinstance2.removeModifier(CHAMPION_DAMAGE);
          iattributeinstance2.applyModifier(CHAMPION_DAMAGE);
          entity.heal(25.0F);
-         entity.setCustomNameTag(ChampionModifier.mods[type].getModNameLocalized() + " " + entity.getCommandSenderName());
+         entity.setCustomNameTag(ChampionModifier.mods[type].getModNameLocalized() + " " + entity.getName());
       } else {
          ((EntityThaumcraftBoss)entity).generateName();
       }
 
       if (persist) {
-         entity.func_110163_bv();
+         entity.enablePersistence();
       }
 
       switch (type) {
          case 0:
-            IAttributeInstance sai = entity.getEntityAttribute(SharedMonsterAttributes.movementSpeed);
+            IAttributeInstance sai = entity.getEntityAttribute(SharedMonsterAttributes.MOVEMENT_SPEED);
             sai.removeModifier(BOLDBUFF);
             sai.applyModifier(BOLDBUFF);
             break;
          case 3:
-            IAttributeInstance mai = entity.getEntityAttribute(SharedMonsterAttributes.attackDamage);
+            IAttributeInstance mai = entity.getEntityAttribute(SharedMonsterAttributes.ATTACK_DAMAGE);
             mai.removeModifier(MIGHTYBUFF);
             mai.applyModifier(MIGHTYBUFF);
             break;
          case 5:
-            int bh = (int)entity.getEntityAttribute(SharedMonsterAttributes.maxHealth).getBaseValue() / 2;
+            int bh = (int)entity.getEntityAttribute(SharedMonsterAttributes.MAX_HEALTH).getBaseValue() / 2;
             entity.setAbsorptionAmount(entity.getAbsorptionAmount() + (float)bh);
       }
 

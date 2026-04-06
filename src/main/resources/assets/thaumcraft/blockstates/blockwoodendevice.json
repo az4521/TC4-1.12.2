@@ -1,0 +1,52 @@
+{
+  "variants": {
+    "meta=0": {
+      "model": "thaumcraft:blockwoodendevice"
+    },
+    "meta=1": {
+      "model": "thaumcraft:blockwoodendevice"
+    },
+    "meta=2": {
+      "model": "thaumcraft:blockwoodendevice"
+    },
+    "meta=3": {
+      "model": "thaumcraft:blockwoodendevice"
+    },
+    "meta=4": {
+      "model": "thaumcraft:blockwoodendevice"
+    },
+    "meta=5": {
+      "model": "thaumcraft:blockwoodendevice"
+    },
+    "meta=6": {
+      "model": "thaumcraft:blockwoodendevice_planks_greatwood"
+    },
+    "meta=7": {
+      "model": "thaumcraft:blockwoodendevice_planks_silverwood"
+    },
+    "meta=8": {
+      "model": "thaumcraft:blockwoodendevice"
+    },
+    "meta=9": {
+      "model": "thaumcraft:blockwoodendevice"
+    },
+    "meta=10": {
+      "model": "thaumcraft:blockwoodendevice"
+    },
+    "meta=11": {
+      "model": "thaumcraft:blockwoodendevice"
+    },
+    "meta=12": {
+      "model": "thaumcraft:blockwoodendevice"
+    },
+    "meta=13": {
+      "model": "thaumcraft:blockwoodendevice"
+    },
+    "meta=14": {
+      "model": "thaumcraft:blockwoodendevice"
+    },
+    "meta=15": {
+      "model": "thaumcraft:blockwoodendevice"
+    }
+  }
+}

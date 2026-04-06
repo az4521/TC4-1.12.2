@@ -1,15 +1,19 @@
 package thaumcraft.client.fx.particles;
 
-import cpw.mods.fml.client.FMLClientHandler;
-import net.minecraft.client.particle.EntityFX;
+import net.minecraftforge.fml.client.FMLClientHandler;
+import net.minecraft.client.particle.Particle;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.util.MathHelper;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
-import org.lwjgl.opengl.GL11;
 
-public class FXSmokeTrail extends EntityFX {
+import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.client.renderer.BufferBuilder;
+import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
+import net.minecraft.util.math.BlockPos;
+
+public class FXSmokeTrail extends Particle {
    private Entity target;
    public int particle = 24;
 
@@ -23,7 +27,7 @@ public class FXSmokeTrail extends EntityFX {
       double dx = target.posX - this.posX;
       double dy = target.posY - this.posY;
       double dz = target.posZ - this.posZ;
-      int base = (int)(MathHelper.sqrt_double(dx * dx + dy * dy + dz * dz) * 3.0F);
+      int base = (int)(MathHelper.sqrt(dx * dx + dy * dy + dz * dz) * 3.0F);
       if (base < 1) {
          base = 1;
       }
@@ -34,8 +38,8 @@ public class FXSmokeTrail extends EntityFX {
       this.motionY = (this.rand.nextFloat() - this.rand.nextFloat()) * f3;
       this.motionZ = (this.rand.nextFloat() - this.rand.nextFloat()) * f3;
       this.particleGravity = 0.2F;
-      this.noClip = false;
-      EntityLivingBase renderentity = FMLClientHandler.instance().getClient().renderViewEntity;
+      this.canCollide = true;
+      EntityLivingBase renderentity = (EntityLivingBase)FMLClientHandler.instance().getClient().getRenderViewEntity();
       int visibleDistance = 64;
       if (!FMLClientHandler.instance().getClient().gameSettings.fancyGraphics) {
          visibleDistance = 32;
@@ -47,9 +51,10 @@ public class FXSmokeTrail extends EntityFX {
 
    }
 
-   public void renderParticle(Tessellator tessellator, float f, float f1, float f2, float f3, float f4, float f5) {
+   public void renderParticle(BufferBuilder buffer, Entity entityIn, float f, float f1, float f2, float f3, float f4, float f5) {
+      Tessellator tessellator = Tessellator.getInstance();
       float bob = MathHelper.sin((float)this.particleAge / 3.0F) * 0.33F + 0.66F;
-      GL11.glColor4f(1.0F, 1.0F, 1.0F, 0.33F);
+      GlStateManager.color(1.0F, 1.0F, 1.0F, 0.33F);
       int part = (int)(1.0F + (float)this.particleAge / (float)this.particleMaxAge * 4.0F);
       float var8 = (float)(part % 16) / 16.0F;
       float var9 = var8 + 0.0624375F;
@@ -60,12 +65,14 @@ public class FXSmokeTrail extends EntityFX {
       float var14 = (float)(this.prevPosY + (this.posY - this.prevPosY) * (double)f - interpPosY);
       float var15 = (float)(this.prevPosZ + (this.posZ - this.prevPosZ) * (double)f - interpPosZ);
       float var16 = 1.0F;
-      tessellator.setBrightness(this.getBrightnessForRender(f));
-      tessellator.setColorRGBA_F(this.particleRed * var16, this.particleGreen * var16, this.particleBlue * var16, 0.33F);
-      tessellator.addVertexWithUV(var13 - f1 * var12 - f4 * var12, var14 - f2 * var12, var15 - f3 * var12 - f5 * var12, var9, var11);
-      tessellator.addVertexWithUV(var13 - f1 * var12 + f4 * var12, var14 + f2 * var12, var15 - f3 * var12 + f5 * var12, var9, var10);
-      tessellator.addVertexWithUV(var13 + f1 * var12 + f4 * var12, var14 + f2 * var12, var15 + f3 * var12 + f5 * var12, var8, var10);
-      tessellator.addVertexWithUV(var13 + f1 * var12 - f4 * var12, var14 - f2 * var12, var15 + f3 * var12 - f5 * var12, var8, var11);
+      buffer.pos(var13 - f1 * var12 - f4 * var12, var14 - f2 * var12, var15 - f3 * var12 - f5 * var12).tex(var9, var11).color(this.particleRed, this.particleGreen, this.particleBlue, 0.33F)
+        .endVertex();
+      buffer.pos(var13 - f1 * var12 + f4 * var12, var14 + f2 * var12, var15 - f3 * var12 + f5 * var12).tex(var9, var10).color(this.particleRed, this.particleGreen, this.particleBlue, 0.33F)
+        .endVertex();
+      buffer.pos(var13 + f1 * var12 + f4 * var12, var14 + f2 * var12, var15 + f3 * var12 + f5 * var12).tex(var8, var10).color(this.particleRed, this.particleGreen, this.particleBlue, 0.33F)
+        .endVertex();
+      buffer.pos(var13 + f1 * var12 - f4 * var12, var14 - f2 * var12, var15 + f3 * var12 - f5 * var12).tex(var8, var11).color(this.particleRed, this.particleGreen, this.particleBlue, 0.33F)
+        .endVertex();
    }
 
    public int getFXLayer() {
@@ -76,12 +83,12 @@ public class FXSmokeTrail extends EntityFX {
       this.prevPosX = this.posX;
       this.prevPosY = this.posY;
       this.prevPosZ = this.posZ;
-      if (this.particleAge++ < this.particleMaxAge && !(this.getDistanceSqToEntity(this.target) < (double)1.0F)) {
-         if (!this.noClip) {
+      if (this.particleAge++ < this.particleMaxAge && !(((this.posX-this.target.posX)*(this.posX-this.target.posX)+(this.posY-this.target.posY)*(this.posY-this.target.posY)+(this.posZ-this.target.posZ)*(this.posZ-this.target.posZ)) < (double)1.0F)) {
+         if (this.canCollide) {
             this.pushOutOfBlocks(this.posX, this.posY, this.posZ);
          }
 
-         this.moveEntity(this.motionX, this.motionY, this.motionZ);
+         this.move(this.motionX, this.motionY, this.motionZ);
          this.motionX *= 0.985;
          this.motionY *= 0.985;
          this.motionZ *= 0.985;
@@ -89,7 +96,7 @@ public class FXSmokeTrail extends EntityFX {
          double dy = this.target.posY - this.posY;
          double dz = this.target.posZ - this.posZ;
          double d13 = 0.3;
-         double d11 = MathHelper.sqrt_double(dx * dx + dy * dy + dz * dz);
+         double d11 = MathHelper.sqrt(dx * dx + dy * dy + dz * dz);
          if (d11 < (double)4.0F) {
             this.particleScale *= 0.9F;
             d13 = 0.6;
@@ -101,11 +108,11 @@ public class FXSmokeTrail extends EntityFX {
          this.motionX += dx * d13;
          this.motionY += dy * d13;
          this.motionZ += dz * d13;
-         this.motionX = MathHelper.clamp_float((float)this.motionX, -0.35F, 0.35F);
-         this.motionY = MathHelper.clamp_float((float)this.motionY, -0.35F, 0.35F);
-         this.motionZ = MathHelper.clamp_float((float)this.motionZ, -0.35F, 0.35F);
+         this.motionX = MathHelper.clamp((float)this.motionX, -0.35F, 0.35F);
+         this.motionY = MathHelper.clamp((float)this.motionY, -0.35F, 0.35F);
+         this.motionZ = MathHelper.clamp((float)this.motionZ, -0.35F, 0.35F);
       } else {
-         this.setDead();
+         this.setExpired();
       }
    }
 
@@ -114,19 +121,19 @@ public class FXSmokeTrail extends EntityFX {
    }
 
    protected boolean pushOutOfBlocks(double par1, double par3, double par5) {
-      int var7 = MathHelper.floor_double(par1);
-      int var8 = MathHelper.floor_double(par3);
-      int var9 = MathHelper.floor_double(par5);
+      int var7 = MathHelper.floor(par1);
+      int var8 = MathHelper.floor(par3);
+      int var9 = MathHelper.floor(par5);
       double var10 = par1 - (double)var7;
       double var12 = par3 - (double)var8;
       double var14 = par5 - (double)var9;
-      if (!this.worldObj.isAirBlock(var7, var8, var9) && !this.worldObj.isAnyLiquid(this.boundingBox)) {
-         boolean var16 = !this.worldObj.isBlockNormalCubeDefault(var7 - 1, var8, var9, true);
-         boolean var17 = !this.worldObj.isBlockNormalCubeDefault(var7 + 1, var8, var9, true);
-         boolean var18 = !this.worldObj.isBlockNormalCubeDefault(var7, var8 - 1, var9, true);
-         boolean var19 = !this.worldObj.isBlockNormalCubeDefault(var7, var8 + 1, var9, true);
-         boolean var20 = !this.worldObj.isBlockNormalCubeDefault(var7, var8, var9 - 1, true);
-         boolean var21 = !this.worldObj.isBlockNormalCubeDefault(var7, var8, var9 + 1, true);
+      if (!this.world.isAirBlock(new BlockPos(var7, var8, var9)) ) {
+         boolean var16 = !this.world.getBlockState(new BlockPos(var7-1,var8,var9)).getMaterial().blocksMovement();
+         boolean var17 = !this.world.getBlockState(new BlockPos(var7+1,var8,var9)).getMaterial().blocksMovement();
+         boolean var18 = !this.world.getBlockState(new BlockPos(var7,var8-1,var9)).getMaterial().blocksMovement();
+         boolean var19 = !this.world.getBlockState(new BlockPos(var7,var8+1,var9)).getMaterial().blocksMovement();
+         boolean var20 = !this.world.getBlockState(new BlockPos(var7,var8,var9-1)).getMaterial().blocksMovement();
+         boolean var21 = !this.world.getBlockState(new BlockPos(var7,var8,var9+1)).getMaterial().blocksMovement();
          byte var22 = -1;
          double var23 = 9999.0F;
          if (var16 && var10 < var23) {
@@ -196,4 +203,6 @@ public class FXSmokeTrail extends EntityFX {
          return false;
       }
    }
+
+   public void setNoClip(boolean v) { this.canCollide = !v; }
 }

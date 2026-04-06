@@ -4,15 +4,19 @@ import net.minecraft.entity.SharedMonsterAttributes;
 import net.minecraft.entity.ai.EntityAILeapAtTarget;
 import net.minecraft.init.Items;
 import net.minecraft.item.ItemStack;
+import net.minecraft.network.datasync.DataParameter;
+import net.minecraft.network.datasync.DataSerializers;
+import net.minecraft.network.datasync.EntityDataManager;
 import net.minecraft.util.DamageSource;
 import net.minecraft.world.World;
 import thaumcraft.common.config.ConfigItems;
 
 public class EntityGiantBrainyZombie extends EntityBrainyZombie {
+   private static final DataParameter<Float> ANGER = EntityDataManager.createKey(EntityGiantBrainyZombie.class, DataSerializers.FLOAT);
+
    public EntityGiantBrainyZombie(World world) {
       super(world);
       this.experienceValue = 15;
-      this.yOffset *= 1.2F + this.getAnger();
       this.setSize(this.width * (1.2F + this.getAnger()), this.height * (1.2F + this.getAnger()));
       this.tasks.addTask(2, new EntityAILeapAtTarget(this, 0.4F));
    }
@@ -24,20 +28,20 @@ public class EntityGiantBrainyZombie extends EntityBrainyZombie {
          this.setSize(0.6F * (1.2F + this.getAnger()), 1.8F * (1.2F + this.getAnger()));
       }
 
-      this.getEntityAttribute(SharedMonsterAttributes.attackDamage).setBaseValue(7.0F + (this.getAnger() - 1.0F) * 5.0F);
+      this.getEntityAttribute(SharedMonsterAttributes.ATTACK_DAMAGE).setBaseValue(7.0F + (this.getAnger() - 1.0F) * 5.0F);
    }
 
    protected void entityInit() {
       super.entityInit();
-      this.dataWatcher.addObject(20, 1.0F);
+      this.dataManager.register(ANGER, 1.0F);
    }
 
    public float getAnger() {
-      return this.dataWatcher.getWatchableObjectFloat(20);
+      return this.dataManager.get(ANGER);
    }
 
    public void setAnger(float par1) {
-      this.dataWatcher.updateObject(20, par1);
+      this.dataManager.set(ANGER, par1);
    }
 
    public boolean attackEntityFrom(DamageSource par1DamageSource, float par2) {
@@ -47,24 +51,24 @@ public class EntityGiantBrainyZombie extends EntityBrainyZombie {
 
    protected void applyEntityAttributes() {
       super.applyEntityAttributes();
-      this.getEntityAttribute(SharedMonsterAttributes.maxHealth).setBaseValue(60.0F);
-      this.getEntityAttribute(SharedMonsterAttributes.attackDamage).setBaseValue(7.0F);
+      this.getEntityAttribute(SharedMonsterAttributes.MAX_HEALTH).setBaseValue(60.0F);
+      this.getEntityAttribute(SharedMonsterAttributes.ATTACK_DAMAGE).setBaseValue(7.0F);
    }
 
    protected void dropFewItems(boolean flag, int i) {
       for(int a = 0; a < 6; ++a) {
-         if (this.worldObj.rand.nextBoolean()) {
-            this.dropItem(Items.rotten_flesh, 2);
+         if (this.world.rand.nextBoolean()) {
+            this.dropItem(Items.ROTTEN_FLESH, 2);
          }
       }
 
       for(int a = 0; a < 6; ++a) {
-         if (this.worldObj.rand.nextBoolean()) {
-            this.dropItem(Items.rotten_flesh, 2);
+         if (this.world.rand.nextBoolean()) {
+            this.dropItem(Items.ROTTEN_FLESH, 2);
          }
       }
 
-      if (this.worldObj.rand.nextInt(10) - i <= 4) {
+      if (this.world.rand.nextInt(10) - i <= 4) {
          this.entityDropItem(new ItemStack(ConfigItems.itemZombieBrain), 2.0F);
       }
 
@@ -76,10 +80,10 @@ public class EntityGiantBrainyZombie extends EntityBrainyZombie {
             this.entityDropItem(new ItemStack(ConfigItems.itemResource, 1, 2), 2.0F);
             break;
          case 1:
-            this.dropItem(Items.carrot, 1);
+            this.dropItem(Items.CARROT, 1);
             break;
          case 2:
-            this.dropItem(Items.potato, 1);
+            this.dropItem(Items.POTATO, 1);
             break;
          case 3:
             this.entityDropItem(new ItemStack(ConfigItems.itemResource, 1, 6), 2.0F);

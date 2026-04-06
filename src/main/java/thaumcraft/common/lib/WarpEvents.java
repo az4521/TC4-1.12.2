@@ -11,9 +11,9 @@ import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.potion.Potion;
 import net.minecraft.potion.PotionEffect;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.util.ChatComponentText;
-import net.minecraft.util.MathHelper;
-import net.minecraft.util.StatCollector;
+import net.minecraft.util.text.TextComponentString;
+import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.text.translation.I18n;
 import net.minecraft.world.World;
 import thaumcraft.api.aspects.Aspect;
 import thaumcraft.common.Thaumcraft;
@@ -34,34 +34,34 @@ public class WarpEvents {
 
    public static void checkWarpEvent(EntityPlayer player) {
       tryTriggerRandomWarpEvent(player);
-//      int warp = Thaumcraft.proxy.getPlayerKnowledge().getWarpTotal(player.getCommandSenderName());
-//      int actualwarp = Thaumcraft.proxy.getPlayerKnowledge().getWarpPerm(player.getCommandSenderName())
-//              + Thaumcraft.proxy.getPlayerKnowledge().getWarpSticky(player.getCommandSenderName());
+//      int warp = Thaumcraft.proxy.getPlayerKnowledge().getWarpTotal(player.getName());
+//      int actualwarp = Thaumcraft.proxy.getPlayerKnowledge().getWarpPerm(player.getName())
+//              + Thaumcraft.proxy.getPlayerKnowledge().getWarpSticky(player.getName());
 //      warp += getWarpFromGear(player);
-//      int warpCounter = Thaumcraft.proxy.getPlayerKnowledge().getWarpCounter(player.getCommandSenderName());
-//      int r = player.worldObj.rand.nextInt(100);
+//      int warpCounter = Thaumcraft.proxy.getPlayerKnowledge().getWarpCounter(player.getName());
+//      int r = player.world.rand.nextInt(100);
 //      if (warpCounter > 0 && warp > 0 && (double)r <= Math.sqrt(warpCounter)) {
 //         warp = Math.min(100, (warp + warp + warpCounter) / 3);
 //         warpCounter = (int)((double)warpCounter - Math.max(5.0F, Math.sqrt(warpCounter) * (double)2.0F));
-//         Thaumcraft.proxy.getPlayerKnowledge().setWarpCounter(player.getCommandSenderName(), warpCounter);
-//         int eff = player.worldObj.rand.nextInt(warp);
-//         ItemStack helm = player.inventory.armorInventory[3];
+//         Thaumcraft.proxy.getPlayerKnowledge().setWarpCounter(player.getName(), warpCounter);
+//         int eff = player.world.rand.nextInt(warp);
+//         ItemStack helm = player.inventory.armorInventory.get(3);
 //         if (helm != null
 //                 && helm.getItem() instanceof ItemFortressArmor
-//                 && helm.hasTagCompound() && helm.stackTagCompound.hasKey("mask")
-//                 && helm.stackTagCompound.getInteger("mask") == 0) {
-//            eff -= 2 + player.worldObj.rand.nextInt(4);
+//                 && helm.hasTagCompound() && helm.getTagCompound().hasKey("mask")
+//                 && helm.getTagCompound().getInteger("mask") == 0) {
+//            eff -= 2 + player.world.rand.nextInt(4);
 //         }
 //
 //         PacketHandler.INSTANCE.sendTo(new PacketMiscEvent((short)0), (EntityPlayerMP)player);
 //         if (eff > 0) {
 //            if (eff <= 4) {
 //               grantResearch(player, 1);
-//               player.addChatMessage(new ChatComponentText("§5§o" + StatCollector.translateToLocal("warp.text.3")));
+//               player.sendMessage(new TextComponentString("§5§o" + I18n.translateToLocal("warp.text.3")));
 //            }
 //            else if (eff > 8) {
 //               if (eff <= 12) {
-//                  player.addChatMessage(new ChatComponentText("§5§o" + StatCollector.translateToLocal("warp.text.11")));
+//                  player.sendMessage(new TextComponentString("§5§o" + I18n.translateToLocal("warp.text.11")));
 //               }
 //               else if (eff <= 16) {
 //                  PotionEffect pe = new PotionEffect(Config.potionVisExhaustID, 5000, Math.min(3, warp / 15), true);
@@ -73,7 +73,7 @@ public class WarpEvents {
 //                     e.printStackTrace();
 //                  }
 //
-//                  player.addChatMessage(new ChatComponentText("§5§o" + StatCollector.translateToLocal("warp.text.1")));
+//                  player.sendMessage(new TextComponentString("§5§o" + I18n.translateToLocal("warp.text.1")));
 //               }
 //               else if (eff <= 20) {
 //                  PotionEffect pe = new PotionEffect(Config.potionThaumarhiaID, Math.min(32000, 10 * warp), 0, true);
@@ -85,12 +85,12 @@ public class WarpEvents {
 //                     e.printStackTrace();
 //                  }
 //
-//                  player.addChatMessage(new ChatComponentText("§5§o" + StatCollector.translateToLocal("warp.text.15")));
+//                  player.sendMessage(new TextComponentString("§5§o" + I18n.translateToLocal("warp.text.15")));
 //               }
 //               else if (eff <= 24) {
 //                  PotionEffect pe = new PotionEffect(Config.potionUnHungerID, 5000, Math.min(3, warp / 15), true);
 //                  pe.getCurativeItems().clear();
-//                  pe.addCurativeItem(new ItemStack(Items.rotten_flesh));
+//                  pe.addCurativeItem(new ItemStack(Items.ROTTEN_FLESH));
 //                  pe.addCurativeItem(new ItemStack(ConfigItems.itemZombieBrain));
 //
 //                  try {
@@ -99,10 +99,10 @@ public class WarpEvents {
 //                     e.printStackTrace();
 //                  }
 //
-//                  player.addChatMessage(new ChatComponentText("§5§o" + StatCollector.translateToLocal("warp.text.2")));
+//                  player.sendMessage(new TextComponentString("§5§o" + I18n.translateToLocal("warp.text.2")));
 //               }
 //               else if (eff <= 28) {
-//                  player.addChatMessage(new ChatComponentText("§5§o" + StatCollector.translateToLocal("warp.text.12")));
+//                  player.sendMessage(new TextComponentString("§5§o" + I18n.translateToLocal("warp.text.12")));
 //               }
 //               else if (eff <= 32) {
 //                  spawnMist(player, warp, 1);
@@ -124,16 +124,16 @@ public class WarpEvents {
 //                     e.printStackTrace();
 //                  }
 //
-//                  player.addChatMessage(new ChatComponentText("§5§o" + StatCollector.translateToLocal("warp.text.5")));
+//                  player.sendMessage(new TextComponentString("§5§o" + I18n.translateToLocal("warp.text.5")));
 //               }
 //               else if (eff <= 44) {
 //                  try {
-//                     player.addPotionEffect(new PotionEffect(Potion.digSlowdown.id, 1200, Math.min(3, warp / 15), true));
+//                     player.addPotionEffect(new PotionEffect(net.minecraft.init.MobEffects.MINING_FATIGUE, 1200, Math.min(3, warp / 15), true));
 //                  } catch (Exception e) {
 //                     e.printStackTrace();
 //                  }
 //
-//                  player.addChatMessage(new ChatComponentText("§5§o" + StatCollector.translateToLocal("warp.text.9")));
+//                  player.sendMessage(new TextComponentString("§5§o" + I18n.translateToLocal("warp.text.9")));
 //               }
 //               else if (eff <= 48) {
 //                  PotionEffect pe = new PotionEffect(Config.potionInfVisExhaustID, 6000, Math.min(3, warp / 15), false);
@@ -145,11 +145,11 @@ public class WarpEvents {
 //                     e.printStackTrace();
 //                  }
 //
-//                  player.addChatMessage(new ChatComponentText("§5§o" + StatCollector.translateToLocal("warp.text.1")));
+//                  player.sendMessage(new TextComponentString("§5§o" + I18n.translateToLocal("warp.text.1")));
 //               }
 //               else if (eff <= 52) {
-//                  player.addPotionEffect(new PotionEffect(Potion.nightVision.id, Math.min(40 * warp, 6000), 0, true));
-//                  player.addChatMessage(new ChatComponentText("§5§o" + StatCollector.translateToLocal("warp.text.10")));
+//                  player.addPotionEffect(new PotionEffect(net.minecraft.init.MobEffects.NIGHT_VISION, Math.min(40 * warp, 6000), 0, true));
+//                  player.sendMessage(new TextComponentString("§5§o" + I18n.translateToLocal("warp.text.10")));
 //               }
 //               else if (eff <= 56) {
 //                  PotionEffect pe = new PotionEffect(Config.potionDeathGazeID, 6000, Math.min(3, warp / 15), true);
@@ -161,37 +161,37 @@ public class WarpEvents {
 //                     e.printStackTrace();
 //                  }
 //
-//                  player.addChatMessage(new ChatComponentText("§5§o" + StatCollector.translateToLocal("warp.text.4")));
+//                  player.sendMessage(new TextComponentString("§5§o" + I18n.translateToLocal("warp.text.4")));
 //               }
 //               else if (eff <= 60) {
 //                  suddenlySpiders(player, warp, false);
 //               }
 //               else if (eff <= 64) {
-//                  player.addChatMessage(new ChatComponentText("§5§o" + StatCollector.translateToLocal("warp.text.13")));
+//                  player.sendMessage(new TextComponentString("§5§o" + I18n.translateToLocal("warp.text.13")));
 //               }
 //               else if (eff <= 68) {
 //                  spawnMist(player, warp, warp / 30);
 //               }
 //               else if (eff <= 72) {
 //                  try {
-//                     player.addPotionEffect(new PotionEffect(Potion.blindness.id, Math.min(32000, 5 * warp), 0, true));
+//                     player.addPotionEffect(new PotionEffect(net.minecraft.init.MobEffects.BLINDNESS, Math.min(32000, 5 * warp), 0, true));
 //                  } catch (Exception e) {
 //                     e.printStackTrace();
 //                  }
 //               }
 //               else if (eff == 76) {//??? "=="?
-//                  if (Thaumcraft.proxy.getPlayerKnowledge().getWarpSticky(player.getCommandSenderName()) > 0) {
-//                     Thaumcraft.proxy.getPlayerKnowledge().addWarpSticky(player.getCommandSenderName(), -1);
+//                  if (Thaumcraft.proxy.getPlayerKnowledge().getWarpSticky(player.getName()) > 0) {
+//                     Thaumcraft.proxy.getPlayerKnowledge().addWarpSticky(player.getName(), -1);
 //                     PacketHandler.INSTANCE.sendTo(new PacketSyncWarp(player, (byte)1), (EntityPlayerMP)player);
 //                     PacketHandler.INSTANCE.sendTo(new PacketWarpMessage(player, (byte)1, -1), (EntityPlayerMP)player);
 //                  }
 //
-//                  player.addChatMessage(new ChatComponentText("§5§o" + StatCollector.translateToLocal("warp.text.14")));
+//                  player.sendMessage(new TextComponentString("§5§o" + I18n.translateToLocal("warp.text.14")));
 //               }
 //               else if (eff <= 80) {
 //                  PotionEffect pe = new PotionEffect(Config.potionUnHungerID, 6000, Math.min(3, warp / 15), true);
 //                  pe.getCurativeItems().clear();
-//                  pe.addCurativeItem(new ItemStack(Items.rotten_flesh));
+//                  pe.addCurativeItem(new ItemStack(Items.ROTTEN_FLESH));
 //                  pe.addCurativeItem(new ItemStack(ConfigItems.itemZombieBrain));
 //
 //                  try {
@@ -200,11 +200,11 @@ public class WarpEvents {
 //                     e.printStackTrace();
 //                  }
 //
-//                  player.addChatMessage(new ChatComponentText("§5§o" + StatCollector.translateToLocal("warp.text.2")));
+//                  player.sendMessage(new TextComponentString("§5§o" + I18n.translateToLocal("warp.text.2")));
 //               }
 //               else if (eff <= 84) {
 //                  grantResearch(player, warp / 10);
-//                  player.addChatMessage(new ChatComponentText("§5§o" + StatCollector.translateToLocal("warp.text.3")));
+//                  player.sendMessage(new TextComponentString("§5§o" + I18n.translateToLocal("warp.text.3")));
 //               }
 //               else if (eff > 88) {
 //                  if (eff <= 92) {
@@ -216,26 +216,26 @@ public class WarpEvents {
 //            }
 //         }
 //
-//         if (actualwarp > 10 && !ThaumcraftApiHelper.isResearchComplete(player.getCommandSenderName(), "BATHSALTS") && !ThaumcraftApiHelper.isResearchComplete(player.getCommandSenderName(), "@BATHSALTS")) {
-//            player.addChatMessage(new ChatComponentText("§5§o" + StatCollector.translateToLocal("warp.text.8")));
+//         if (actualwarp > 10 && !ThaumcraftApiHelper.isResearchComplete(player.getName(), "BATHSALTS") && !ThaumcraftApiHelper.isResearchComplete(player.getName(), "@BATHSALTS")) {
+//            player.sendMessage(new TextComponentString("§5§o" + I18n.translateToLocal("warp.text.8")));
 //            PacketHandler.INSTANCE.sendTo(new PacketResearchComplete("@BATHSALTS"), (EntityPlayerMP)player);
 //            Thaumcraft.proxy.getResearchManager().completeResearch(player, "@BATHSALTS");
 //         }
 //
-//         if (actualwarp > 25 && !ThaumcraftApiHelper.isResearchComplete(player.getCommandSenderName(), "ELDRITCHMINOR")) {
+//         if (actualwarp > 25 && !ThaumcraftApiHelper.isResearchComplete(player.getName(), "ELDRITCHMINOR")) {
 //            grantResearch(player, 10);
 //            PacketHandler.INSTANCE.sendTo(new PacketResearchComplete("ELDRITCHMINOR"), (EntityPlayerMP)player);
 //            Thaumcraft.proxy.getResearchManager().completeResearch(player, "ELDRITCHMINOR");
 //         }
 //
-//         if (actualwarp > 50 && !ThaumcraftApiHelper.isResearchComplete(player.getCommandSenderName(), "ELDRITCHMAJOR")) {
+//         if (actualwarp > 50 && !ThaumcraftApiHelper.isResearchComplete(player.getName(), "ELDRITCHMAJOR")) {
 //            grantResearch(player, 20);
 //            PacketHandler.INSTANCE.sendTo(new PacketResearchComplete("ELDRITCHMAJOR"), (EntityPlayerMP)player);
 //            Thaumcraft.proxy.getResearchManager().completeResearch(player, "ELDRITCHMAJOR");
 //         }
 //      }
 //
-//      Thaumcraft.proxy.getPlayerKnowledge().addWarpTemp(player.getCommandSenderName(), -1);
+//      Thaumcraft.proxy.getPlayerKnowledge().addWarpTemp(player.getName(), -1);
 //      PacketHandler.INSTANCE.sendTo(new PacketSyncWarp(player, (byte)2), (EntityPlayerMP)player);
    }
 
@@ -249,37 +249,36 @@ public class WarpEvents {
          }
       }
 
-      player.addChatMessage(new ChatComponentText("§5§o" + StatCollector.translateToLocal("warp.text.6")));
+      player.sendMessage(new TextComponentString("§5§o" + I18n.translateToLocal("warp.text.6")));
    }
 
    public static void grantResearch(EntityPlayer player, int times) {
-      int amt = 1 + player.worldObj.rand.nextInt(times);
+      int amt = 1 + player.world.rand.nextInt(times);
 
       for(int a = 0; a < amt; ++a) {
-         Aspect aspect = Aspect.getPrimalAspects().get(player.worldObj.rand.nextInt(6));
-         Thaumcraft.proxy.playerKnowledge.addAspectPool(player.getCommandSenderName(), aspect, (short)1);
-         PacketHandler.INSTANCE.sendTo(new PacketAspectPool(aspect.getTag(), (short) 1, Thaumcraft.proxy.playerKnowledge.getAspectPoolFor(player.getCommandSenderName(), aspect)), (EntityPlayerMP)player);
+         Aspect aspect = Aspect.getPrimalAspects().get(player.world.rand.nextInt(6));
+         Thaumcraft.proxy.playerKnowledge.addAspectPool(player.getName(), aspect, (short)1);
+         PacketHandler.INSTANCE.sendTo(new PacketAspectPool(aspect.getTag(), (short) 1, Thaumcraft.proxy.playerKnowledge.getAspectPoolFor(player.getName(), aspect)), (EntityPlayerMP)player);
       }
 
       ResearchManager.scheduleSave(player);
    }
 
    public static void spawnGuardian(EntityPlayer player) {
-      EntityEldritchGuardian eg = new EntityEldritchGuardian(player.worldObj);
-      int i = MathHelper.floor_double(player.posX);
-      int j = MathHelper.floor_double(player.posY);
-      int k = MathHelper.floor_double(player.posZ);
+      EntityEldritchGuardian eg = new EntityEldritchGuardian(player.world);
+      int i = MathHelper.floor(player.posX);
+      int j = MathHelper.floor(player.posY);
+      int k = MathHelper.floor(player.posZ);
 
       for(int l = 0; l < 50; ++l) {
-         int i1 = i + MathHelper.getRandomIntegerInRange(player.worldObj.rand, 7, 24) * MathHelper.getRandomIntegerInRange(player.worldObj.rand, -1, 1);
-         int j1 = j + MathHelper.getRandomIntegerInRange(player.worldObj.rand, 7, 24) * MathHelper.getRandomIntegerInRange(player.worldObj.rand, -1, 1);
-         int k1 = k + MathHelper.getRandomIntegerInRange(player.worldObj.rand, 7, 24) * MathHelper.getRandomIntegerInRange(player.worldObj.rand, -1, 1);
-         if (World.doesBlockHaveSolidTopSurface(player.worldObj, i1, j1 - 1, k1)) {
+         int i1 = i + (7 + player.world.rand.nextInt(24 - 7 + 1)) * (-1 + player.world.rand.nextInt(1 - -1 + 1));
+         int j1 = j + (7 + player.world.rand.nextInt(24 - 7 + 1)) * (-1 + player.world.rand.nextInt(1 - -1 + 1));
+         int k1 = k + (7 + player.world.rand.nextInt(24 - 7 + 1)) * (-1 + player.world.rand.nextInt(1 - -1 + 1));
+         if (player.world.isSideSolid(new net.minecraft.util.math.BlockPos(i1, j1 - 1, k1), net.minecraft.util.EnumFacing.UP)) {
             eg.setPosition(i1, j1, k1);
-            if (player.worldObj.checkNoEntityCollision(eg.boundingBox) && player.worldObj.getCollidingBoundingBoxes(eg, eg.boundingBox).isEmpty() && !player.worldObj.isAnyLiquid(eg.boundingBox)) {
-               eg.setTarget(player);
+            if (player.world.checkNoEntityCollision(eg.getEntityBoundingBox()) && player.world.getCollisionBoxes(eg, eg.getEntityBoundingBox()).isEmpty() && !player.world.containsAnyLiquid(eg.getEntityBoundingBox())) {
                eg.setAttackTarget(player);
-               player.worldObj.spawnEntityInWorld(eg);
+               player.world.spawnEntity(eg);
                break;
             }
          }
@@ -291,22 +290,22 @@ public class WarpEvents {
       int spawns = Math.min(50, warp);
 
       for(int a = 0; a < spawns; ++a) {
-         EntityMindSpider spider = new EntityMindSpider(player.worldObj);
-         int i = MathHelper.floor_double(player.posX);
-         int j = MathHelper.floor_double(player.posY);
-         int k = MathHelper.floor_double(player.posZ);
+         EntityMindSpider spider = new EntityMindSpider(player.world);
+         int i = MathHelper.floor(player.posX);
+         int j = MathHelper.floor(player.posY);
+         int k = MathHelper.floor(player.posZ);
          boolean success = false;
 
          for(int l = 0; l < 50; ++l) {
-            int i1 = i + MathHelper.getRandomIntegerInRange(player.worldObj.rand, 7, 24)
-                    * MathHelper.getRandomIntegerInRange(player.worldObj.rand, -1, 1);
-            int j1 = j + MathHelper.getRandomIntegerInRange(player.worldObj.rand, 7, 24)
-                    * MathHelper.getRandomIntegerInRange(player.worldObj.rand, -1, 1);
-            int k1 = k + MathHelper.getRandomIntegerInRange(player.worldObj.rand, 7, 24)
-                    * MathHelper.getRandomIntegerInRange(player.worldObj.rand, -1, 1);
-            if (World.doesBlockHaveSolidTopSurface(player.worldObj, i1, j1 - 1, k1)) {
+            int i1 = i + (7 + player.world.rand.nextInt(24 - 7 + 1))
+                    * (-1 + player.world.rand.nextInt(1 - -1 + 1));
+            int j1 = j + (7 + player.world.rand.nextInt(24 - 7 + 1))
+                    * (-1 + player.world.rand.nextInt(1 - -1 + 1));
+            int k1 = k + (7 + player.world.rand.nextInt(24 - 7 + 1))
+                    * (-1 + player.world.rand.nextInt(1 - -1 + 1));
+            if (player.world.isSideSolid(new net.minecraft.util.math.BlockPos(i1, j1 - 1, k1), net.minecraft.util.EnumFacing.UP)) {
                spider.setPosition(i1, j1, k1);
-               if (player.worldObj.checkNoEntityCollision(spider.boundingBox) && player.worldObj.getCollidingBoundingBoxes(spider, spider.boundingBox).isEmpty() && !player.worldObj.isAnyLiquid(spider.boundingBox)) {
+               if (player.world.checkNoEntityCollision(spider.getEntityBoundingBox()) && player.world.getCollisionBoxes(spider, spider.getEntityBoundingBox()).isEmpty() && !player.world.containsAnyLiquid(spider.getEntityBoundingBox())) {
                   success = true;
                   break;
                }
@@ -314,26 +313,25 @@ public class WarpEvents {
          }
 
          if (success) {
-            spider.setTarget(player);
             spider.setAttackTarget(player);
             if (!real) {
-               spider.setViewer(player.getCommandSenderName());
+               spider.setViewer(player.getName());
                spider.setHarmless(true);
             }
 
-            player.worldObj.spawnEntityInWorld(spider);
+            player.world.spawnEntity(spider);
          }
       }
 
-      player.addChatMessage(new ChatComponentText("§5§o" + StatCollector.translateToLocal("warp.text.7")));
+      player.sendMessage(new TextComponentString("§5§o" + I18n.translateToLocal("warp.text.7")));
    }
 
    public static void checkDeathGaze(EntityPlayer player) {
-      PotionEffect pe = player.getActivePotionEffect(Potion.potionTypes[Config.potionDeathGazeID]);
+      PotionEffect pe = player.getActivePotionEffect(Potion.getPotionById(Config.potionDeathGazeID));
       if (pe != null) {
          int level = pe.getAmplifier();
          int range = Math.min(8 + level * 3, 24);
-         List<Entity> list = (List<Entity>)player.worldObj.getEntitiesWithinAABBExcludingEntity(player, player.boundingBox.expand(range, range, range));
+         List<Entity> list = (List<Entity>)player.world.getEntitiesWithinAABBExcludingEntity(player, player.getEntityBoundingBox().expand(range, range, range));
 
           for (Entity entity : list) {
               if (entity.canBeCollidedWith()
@@ -342,17 +340,16 @@ public class WarpEvents {
                       && EntityUtils.isVisibleTo(0.75F, player, entity, (float) range)
                       && player.canEntityBeSeen(entity)
                       && (!(entity instanceof EntityPlayer)
-                      || MinecraftServer.getServer().isPVPEnabled())
-                      && !((EntityLivingBase) entity).isPotionActive(Potion.wither.getId()))
+                      || net.minecraftforge.fml.common.FMLCommonHandler.instance().getMinecraftServerInstance().isPVPEnabled())
+                      && !((EntityLivingBase) entity).isPotionActive(net.minecraft.init.MobEffects.WITHER))
               {
                  EntityLivingBase living = (EntityLivingBase) entity;
                   living.setRevengeTarget(player);
-                  living.setLastAttacker(player);
                   if (entity instanceof EntityCreature) {
-                      ((EntityCreature) entity).setTarget(player);
+                      ((EntityCreature) entity).setAttackTarget(player);
                   }
 
-                  living.addPotionEffect(new PotionEffect(Potion.wither.getId(), 80));
+                  living.addPotionEffect(new PotionEffect(net.minecraft.init.MobEffects.WITHER, 80));
               }
           }
 
@@ -360,10 +357,10 @@ public class WarpEvents {
    }
 
    public static int getWarpFromGear(EntityPlayer player) {
-      AtomicInteger w = new AtomicInteger(EventHandlerRunic.getFinalWarp(player.getCurrentEquippedItem(), player));
+      AtomicInteger w = new AtomicInteger(EventHandlerRunic.getFinalWarp(player.getHeldItemMainhand(), player));
 
       for(int a = 0; a < 4; ++a) {
-         w.addAndGet(EventHandlerRunic.getFinalWarp(player.inventory.armorItemInSlot(a), player));
+         w.addAndGet(EventHandlerRunic.getFinalWarp(player.inventory.armorInventory.get(a), player));
       }
       forEachBauble(player,(slot, stack, item) -> {
          w.addAndGet(EventHandlerRunic.getFinalWarp(stack, player));

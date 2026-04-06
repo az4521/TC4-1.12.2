@@ -1,16 +1,16 @@
 package thaumcraft.common.items.relics;
 
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import java.util.List;
-import net.minecraft.client.renderer.texture.IIconRegister;
+import thaumcraft.client.renderers.compat.IIconRegister;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.EnumRarity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.IIcon;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.world.World;
 import thaumcraft.api.aspects.Aspect;
 import thaumcraft.api.research.ResearchCategories;
@@ -25,9 +25,9 @@ import thaumcraft.common.lib.research.ResearchManager;
 
 public class ItemThaumonomicon extends Item {
    @SideOnly(Side.CLIENT)
-   public IIcon icon;
+   public TextureAtlasSprite icon;
    @SideOnly(Side.CLIENT)
-   public IIcon iconCheat;
+   public TextureAtlasSprite iconCheat;
 
    public ItemThaumonomicon() {
       this.setHasSubtypes(true);
@@ -38,17 +38,18 @@ public class ItemThaumonomicon extends Item {
 
    @SideOnly(Side.CLIENT)
    public void registerIcons(IIconRegister ir) {
-      this.icon = ir.registerIcon("thaumcraft:thaumonomicon");
-      this.iconCheat = ir.registerIcon("thaumcraft:thaumonomiconcheat");
+      this.icon = ir.registerSprite("thaumcraft:thaumonomicon");
+      this.iconCheat = ir.registerSprite("thaumcraft:thaumonomiconcheat");
    }
 
    @SideOnly(Side.CLIENT)
-   public IIcon getIconFromDamage(int par1) {
+   public TextureAtlasSprite getIconFromDamage(int par1) {
       return par1 != 42 ? this.icon : this.iconCheat;
    }
 
    @SideOnly(Side.CLIENT)
-   public void getSubItems(Item par1, CreativeTabs par2CreativeTabs, List par3List) {
+   @Override
+   public void getSubItems(CreativeTabs par2CreativeTabs, net.minecraft.util.NonNullList<ItemStack> par3List) {
       par3List.add(new ItemStack(this, 1, 0));
       if (Config.allowCheatSheet) {
          par3List.add(new ItemStack(this, 1, 42));
@@ -56,28 +57,30 @@ public class ItemThaumonomicon extends Item {
 
    }
 
-   public ItemStack onItemRightClick(ItemStack stack, World par2World, EntityPlayer player) {
+   @Override
+   public net.minecraft.util.ActionResult<ItemStack> onItemRightClick(World par2World, EntityPlayer player, net.minecraft.util.EnumHand hand) {
+      ItemStack stack = player.getHeldItem(hand);
       if (!par2World.isRemote) {
          if (Config.allowCheatSheet && stack.getItemDamage() == 42) {
             for(ResearchCategoryList cat : ResearchCategories.researchCategories.values()) {
                for(ResearchItem ri : cat.research.values()) {
-                  if (!ResearchManager.isResearchComplete(player.getCommandSenderName(), ri.key)) {
+                  if (!ResearchManager.isResearchComplete(player.getName(), ri.key)) {
                      Thaumcraft.proxy.getResearchManager().completeResearch(player, ri.key);
                   }
                }
             }
 
             for(Aspect aspect : Aspect.aspects.values()) {
-               if (!Thaumcraft.proxy.getPlayerKnowledge().hasDiscoveredAspect(player.getCommandSenderName(), aspect)) {
+               if (!Thaumcraft.proxy.getPlayerKnowledge().hasDiscoveredAspect(player.getName(), aspect)) {
                   Thaumcraft.proxy.researchManager.completeAspect(player, aspect, (short)50);
                }
             }
          } else {
             for(ResearchCategoryList cat : ResearchCategories.researchCategories.values()) {
                for(ResearchItem ri : cat.research.values()) {
-                  if (ResearchManager.isResearchComplete(player.getCommandSenderName(), ri.key) && ri.siblings != null) {
+                  if (ResearchManager.isResearchComplete(player.getName(), ri.key) && ri.siblings != null) {
                      for(String sib : ri.siblings) {
-                        if (!ResearchManager.isResearchComplete(player.getCommandSenderName(), sib)) {
+                        if (!ResearchManager.isResearchComplete(player.getName(), sib)) {
                            Thaumcraft.proxy.getResearchManager().completeResearch(player, sib);
                         }
                      }
@@ -89,22 +92,24 @@ public class ItemThaumonomicon extends Item {
          PacketHandler.INSTANCE.sendTo(new PacketSyncResearch(player), (EntityPlayerMP)player);
          PacketHandler.INSTANCE.sendTo(new PacketSyncAspects(player), (EntityPlayerMP)player);
       } else {
-         par2World.playSound(player.posX, player.posY, player.posZ, "thaumcraft:page", 1.0F, 1.0F, false);
+         { net.minecraft.util.SoundEvent _snd = net.minecraft.util.SoundEvent.REGISTRY.getObject(new net.minecraft.util.ResourceLocation("thaumcraft:page")); if (_snd != null) par2World.playSound(null, player.posX, player.posY, player.posZ, _snd, net.minecraft.util.SoundCategory.NEUTRAL, 1.0F, 1.0F); };
       }
 
-      player.openGui(Thaumcraft.instance, 12, par2World, 0, 0, 0);
-      return stack;
+      if (par2World.isRemote) {
+         Thaumcraft.proxy.openResearchBrowser();
+      }
+      return new net.minecraft.util.ActionResult<>(net.minecraft.util.EnumActionResult.SUCCESS, stack);
    }
 
    public EnumRarity getRarity(ItemStack itemstack) {
-      return itemstack.getItemDamage() != 42 ? EnumRarity.uncommon : EnumRarity.epic;
+      return itemstack.getItemDamage() != 42 ? EnumRarity.UNCOMMON : EnumRarity.EPIC;
    }
 
-   public void addInformation(ItemStack par1ItemStack, EntityPlayer par2EntityPlayer, List par3List, boolean par4) {
+   public void addInformation(ItemStack par1ItemStack, @javax.annotation.Nullable net.minecraft.world.World worldIn, List par3List, net.minecraft.client.util.ITooltipFlag flagIn) {
       if (par1ItemStack.getItemDamage() == 42) {
          par3List.add("Cheat Sheet");
       }
 
-      super.addInformation(par1ItemStack, par2EntityPlayer, par3List, par4);
+      super.addInformation(par1ItemStack, worldIn, par3List, flagIn);
    }
 }

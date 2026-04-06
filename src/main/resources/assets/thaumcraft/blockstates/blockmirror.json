@@ -1,0 +1,52 @@
+{
+  "variants": {
+    "meta=0": {
+      "model": "thaumcraft:blockmirror"
+    },
+    "meta=1": {
+      "model": "thaumcraft:blockmirror"
+    },
+    "meta=2": {
+      "model": "thaumcraft:blockmirror"
+    },
+    "meta=3": {
+      "model": "thaumcraft:blockmirror"
+    },
+    "meta=4": {
+      "model": "thaumcraft:blockmirror"
+    },
+    "meta=5": {
+      "model": "thaumcraft:blockmirror"
+    },
+    "meta=6": {
+      "model": "thaumcraft:blockmirror"
+    },
+    "meta=7": {
+      "model": "thaumcraft:blockmirror"
+    },
+    "meta=8": {
+      "model": "thaumcraft:blockmirror"
+    },
+    "meta=9": {
+      "model": "thaumcraft:blockmirror"
+    },
+    "meta=10": {
+      "model": "thaumcraft:blockmirror"
+    },
+    "meta=11": {
+      "model": "thaumcraft:blockmirror"
+    },
+    "meta=12": {
+      "model": "thaumcraft:blockmirror"
+    },
+    "meta=13": {
+      "model": "thaumcraft:blockmirror"
+    },
+    "meta=14": {
+      "model": "thaumcraft:blockmirror"
+    },
+    "meta=15": {
+      "model": "thaumcraft:blockmirror"
+    }
+  }
+}

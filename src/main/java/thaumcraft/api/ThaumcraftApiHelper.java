@@ -7,16 +7,17 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.MathHelper;
-import net.minecraft.util.MovingObjectPosition;
-import net.minecraft.util.Vec3;
+import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.RayTraceResult;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
-import net.minecraftforge.common.util.ForgeDirection;
+import net.minecraft.util.EnumFacing;
 import net.minecraftforge.oredict.OreDictionary;
 import thaumcraft.api.aspects.Aspect;
 import thaumcraft.api.aspects.AspectList;
 import thaumcraft.api.aspects.IEssentiaTransport;
+import net.minecraft.util.math.BlockPos;
 
 public class ThaumcraftApiHelper {
 
@@ -113,20 +114,18 @@ public class ThaumcraftApiHelper {
 
     public static boolean areItemStackTagsEqualForCrafting(ItemStack slotItem, ItemStack recipeItem) {
         if (recipeItem == null || slotItem == null) return false;
-        if (recipeItem.stackTagCompound != null && slotItem.stackTagCompound == null) return false;
-        if (recipeItem.stackTagCompound == null) return true;
+        if (recipeItem.hasTagCompound() && !slotItem.hasTagCompound()) return false;
+        if (!recipeItem.hasTagCompound()) return true;
 
-        for (Object o : recipeItem.stackTagCompound.func_150296_c()) {//public Set func_150296_c(){return this.tagMap.keySet();}
-            String s = (String) o;
-            if (slotItem.stackTagCompound.hasKey(s)) {
-                if (!slotItem.stackTagCompound.getTag(s).toString().equals(
-                        recipeItem.stackTagCompound.getTag(s).toString())) {
+        for (String s : recipeItem.getTagCompound().getKeySet()) {
+            if (slotItem.getTagCompound().hasKey(s)) {
+                if (!slotItem.getTagCompound().getTag(s).toString().equals(
+                        recipeItem.getTagCompound().getTag(s).toString())) {
                     return false;
                 }
             } else {
                 return false;
             }
-
         }
         return true;
     }
@@ -140,16 +139,16 @@ public class ThaumcraftApiHelper {
     }
 
 
-    public static TileEntity getConnectableTile(World world, int x, int y, int z, ForgeDirection face) {
-        TileEntity te = world.getTileEntity(x + face.offsetX, y + face.offsetY, z + face.offsetZ);
+    public static TileEntity getConnectableTile(World world, int x, int y, int z, EnumFacing face) {
+        TileEntity te = world.getTileEntity(new BlockPos(x + face.getXOffset(), y + face.getYOffset(), z + face.getZOffset()));
         if (te instanceof IEssentiaTransport && ((IEssentiaTransport) te).isConnectable(face.getOpposite()))
             return te;
         else
             return null;
     }
 
-    public static TileEntity getConnectableTile(IBlockAccess world, int x, int y, int z, ForgeDirection face) {
-        TileEntity te = world.getTileEntity(x + face.offsetX, y + face.offsetY, z + face.offsetZ);
+    public static TileEntity getConnectableTile(IBlockAccess world, int x, int y, int z, EnumFacing face) {
+        TileEntity te = world.getTileEntity(new BlockPos(x + face.getXOffset(), y + face.getYOffset(), z + face.getZOffset()));
         if (te instanceof IEssentiaTransport && ((IEssentiaTransport) te).isConnectable(face.getOpposite()))
             return te;
         else
@@ -251,160 +250,19 @@ public class ThaumcraftApiHelper {
         ThaumcraftApi.internalMethods.addStickyWarpToPlayer(player, amount);
     }
 
-    public static MovingObjectPosition rayTraceIgnoringSource(World world, Vec3 v1, Vec3 v2,
+    /**
+     * Performs a ray trace from v1 to v2, skipping the block the source position is inside.
+     * Delegates to World.rayTraceBlocks() in 1.12.2.
+     *
+     * @param world   the world
+     * @param v1      start position
+     * @param v2      end position
+     * @param bool1   stopOnLiquid
+     * @param bool2   ignoreBlockWithoutBoundingBox
+     * @param bool3   returnLastUncollidableBlock
+     */
+    public static RayTraceResult rayTraceIgnoringSource(World world, Vec3d v1, Vec3d v2,
                                                               boolean bool1, boolean bool2, boolean bool3) {
-        if (!Double.isNaN(v1.xCoord) && !Double.isNaN(v1.yCoord) && !Double.isNaN(v1.zCoord)) {
-            if (!Double.isNaN(v2.xCoord) && !Double.isNaN(v2.yCoord) && !Double.isNaN(v2.zCoord)) {
-                int i = MathHelper.floor_double(v2.xCoord);
-                int j = MathHelper.floor_double(v2.yCoord);
-                int k = MathHelper.floor_double(v2.zCoord);
-                int l = MathHelper.floor_double(v1.xCoord);
-                int i1 = MathHelper.floor_double(v1.yCoord);
-                int j1 = MathHelper.floor_double(v1.zCoord);
-                Block block = world.getBlock(l, i1, j1);
-                int k1 = world.getBlockMetadata(l, i1, j1);
-
-                MovingObjectPosition movingobjectposition2 = null;
-                k1 = 200;
-
-                while (k1-- >= 0) {
-                    if (Double.isNaN(v1.xCoord) || Double.isNaN(v1.yCoord) || Double.isNaN(v1.zCoord)) {
-                        return null;
-                    }
-
-                    if (l == i && i1 == j && j1 == k) {
-                        continue;
-                    }
-
-                    boolean flag6 = true;
-                    boolean flag3 = true;
-                    boolean flag4 = true;
-                    double d0 = 999.0D;
-                    double d1 = 999.0D;
-                    double d2 = 999.0D;
-
-                    if (i > l) {
-                        d0 = (double) l + 1.0D;
-                    } else if (i < l) {
-                        d0 = (double) l + 0.0D;
-                    } else {
-                        flag6 = false;
-                    }
-
-                    if (j > i1) {
-                        d1 = (double) i1 + 1.0D;
-                    } else if (j < i1) {
-                        d1 = (double) i1 + 0.0D;
-                    } else {
-                        flag3 = false;
-                    }
-
-                    if (k > j1) {
-                        d2 = (double) j1 + 1.0D;
-                    } else if (k < j1) {
-                        d2 = (double) j1 + 0.0D;
-                    } else {
-                        flag4 = false;
-                    }
-
-                    double d3 = 999.0D;
-                    double d4 = 999.0D;
-                    double d5 = 999.0D;
-                    double d6 = v2.xCoord - v1.xCoord;
-                    double d7 = v2.yCoord - v1.yCoord;
-                    double d8 = v2.zCoord - v1.zCoord;
-
-                    if (flag6) {
-                        d3 = (d0 - v1.xCoord) / d6;
-                    }
-
-                    if (flag3) {
-                        d4 = (d1 - v1.yCoord) / d7;
-                    }
-
-                    if (flag4) {
-                        d5 = (d2 - v1.zCoord) / d8;
-                    }
-
-                    boolean flag5 = false;
-                    byte b0;
-
-                    if (d3 < d4 && d3 < d5) {
-                        if (i > l) {
-                            b0 = 4;
-                        } else {
-                            b0 = 5;
-                        }
-
-                        v1.xCoord = d0;
-                        v1.yCoord += d7 * d3;
-                        v1.zCoord += d8 * d3;
-                    } else if (d4 < d5) {
-                        if (j > i1) {
-                            b0 = 0;
-                        } else {
-                            b0 = 1;
-                        }
-
-                        v1.xCoord += d6 * d4;
-                        v1.yCoord = d1;
-                        v1.zCoord += d8 * d4;
-                    } else {
-                        if (k > j1) {
-                            b0 = 2;
-                        } else {
-                            b0 = 3;
-                        }
-
-                        v1.xCoord += d6 * d5;
-                        v1.yCoord += d7 * d5;
-                        v1.zCoord = d2;
-                    }
-
-                    Vec3 vec32 = Vec3.createVectorHelper(v1.xCoord, v1.yCoord, v1.zCoord);
-                    l = (int) (vec32.xCoord = MathHelper.floor_double(v1.xCoord));
-
-                    if (b0 == 5) {
-                        --l;
-                        ++vec32.xCoord;
-                    }
-
-                    i1 = (int) (vec32.yCoord = MathHelper.floor_double(v1.yCoord));
-
-                    if (b0 == 1) {
-                        --i1;
-                        ++vec32.yCoord;
-                    }
-
-                    j1 = (int) (vec32.zCoord = MathHelper.floor_double(v1.zCoord));
-
-                    if (b0 == 3) {
-                        --j1;
-                        ++vec32.zCoord;
-                    }
-
-                    Block block1 = world.getBlock(l, i1, j1);
-                    int l1 = world.getBlockMetadata(l, i1, j1);
-
-                    if (!bool2 || block1.getCollisionBoundingBoxFromPool(world, l, i1, j1) != null) {
-                        if (block1.canCollideCheck(l1, bool1)) {
-                            MovingObjectPosition movingobjectposition1 = block1.collisionRayTrace(world, l, i1, j1, v1, v2);
-
-                            if (movingobjectposition1 != null) {
-                                return movingobjectposition1;
-                            }
-                        } else {
-                            movingobjectposition2 = new MovingObjectPosition(l, i1, j1, b0, v1, false);
-                        }
-                    }
-                }
-
-                return bool3 ? movingobjectposition2 : null;
-            } else {
-                return null;
-            }
-        } else {
-            return null;
-        }
+        return world.rayTraceBlocks(v1, v2, bool1, bool2, bool3);
     }
 }

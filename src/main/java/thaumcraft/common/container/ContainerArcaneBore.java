@@ -33,39 +33,39 @@ public class ContainerArcaneBore extends Container {
    }
 
    public boolean canInteractWith(EntityPlayer par1EntityPlayer) {
-      return this.tileEntity.getWorldObj().getTileEntity(this.tileEntity.xCoord, this.tileEntity.yCoord, this.tileEntity.zCoord) == this.tileEntity && par1EntityPlayer.getDistanceSq((double) this.tileEntity.xCoord + (double) 0.5F, (double) this.tileEntity.yCoord + (double) 0.5F, (double) this.tileEntity.zCoord + (double) 0.5F) <= (double) 64.0F;
+      return this.tileEntity.getWorld().getTileEntity(this.tileEntity.getPos()) == this.tileEntity && par1EntityPlayer.getDistanceSq((double) this.tileEntity.getPos().getX() + 0.5D, (double) this.tileEntity.getPos().getY() + 0.5D, (double) this.tileEntity.getPos().getZ() + 0.5D) <= 64.0D;
    }
 
    public ItemStack transferStackInSlot(EntityPlayer par1EntityPlayer, int slot) {
-      ItemStack stack = null;
+      ItemStack stack = ItemStack.EMPTY;
       Slot slotObject = (Slot)this.inventorySlots.get(slot);
       if (slotObject != null && slotObject.getHasStack()) {
          ItemStack stackInSlot = slotObject.getStack();
          stack = stackInSlot.copy();
          if (slot <= 1) {
             if (!this.mergeItemStack(stackInSlot, 2, this.inventorySlots.size(), true)) {
-               return null;
+               return ItemStack.EMPTY;
             }
          } else if (slot > 1) {
             if (stackInSlot.getItem() instanceof ItemFocusExcavation) {
                if (!this.mergeItemStack(stackInSlot, 0, 1, false)) {
-                  return null;
+                  return ItemStack.EMPTY;
                }
             } else if (stackInSlot.getItem() instanceof ItemPickaxe && !this.mergeItemStack(stackInSlot, 1, 2, false)) {
-               return null;
+               return ItemStack.EMPTY;
             }
          } else if (!this.mergeItemStack(stackInSlot, 2, 38, false)) {
-            return null;
+            return ItemStack.EMPTY;
          }
 
-         if (stackInSlot.stackSize == 0) {
-            slotObject.putStack(null);
+         if (stackInSlot.isEmpty()) {
+            slotObject.putStack(ItemStack.EMPTY);
          } else {
             slotObject.onSlotChanged();
          }
 
-         if (stackInSlot.stackSize == stack.stackSize) {
-            return null;
+         if (stackInSlot.getCount() == stack.getCount()) {
+            return ItemStack.EMPTY;
          }
       }
 

@@ -6,7 +6,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.FurnaceRecipes;
 import net.minecraft.item.crafting.IRecipe;
 import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.StatCollector;
+import net.minecraft.util.text.translation.I18n;
 import thaumcraft.api.aspects.AspectList;
 import thaumcraft.api.crafting.CrucibleRecipe;
 import thaumcraft.api.crafting.IArcaneRecipe;
@@ -129,7 +129,7 @@ public class ResearchPage {
 	public ResearchPage(ItemStack input) {
 		this.type = PageType.SMELTING;
 		this.recipe = input;
-		this.recipeOutput = FurnaceRecipes.smelting().getSmeltingResult(input);
+		this.recipeOutput = FurnaceRecipes.instance().getSmeltingResult(input);
 	}
 	
 	/**
@@ -183,7 +183,7 @@ public class ResearchPage {
 	public String getTranslatedText() {
 		String ret="";
 		if (text != null) {
-			ret = StatCollector.translateToLocal(text);
+			ret = I18n.translateToLocal(text);
 			if (ret.isEmpty()) ret = text;
 		}
 		return ret;

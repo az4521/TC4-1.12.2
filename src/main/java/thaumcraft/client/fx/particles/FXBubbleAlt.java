@@ -1,13 +1,17 @@
 package thaumcraft.client.fx.particles;
 
-import cpw.mods.fml.client.FMLClientHandler;
-import net.minecraft.client.particle.EntityFX;
+import net.minecraftforge.fml.client.FMLClientHandler;
+import net.minecraft.client.particle.Particle;
+import net.minecraft.entity.Entity;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.world.World;
-import org.lwjgl.opengl.GL11;
 
-public class FXBubbleAlt extends EntityFX {
+import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.client.renderer.BufferBuilder;
+import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
+
+public class FXBubbleAlt extends Particle {
    public int particle = 25;
    public double bubblespeed = 1.0E-4;
 
@@ -17,14 +21,14 @@ public class FXBubbleAlt extends EntityFX {
       this.particleGreen = 0.0F;
       this.particleBlue = 0.5F;
       this.setSize(0.02F, 0.02F);
-      this.noClip = true;
+      this.canCollide = false;
       this.particleScale *= this.rand.nextFloat() * 0.3F + 0.2F;
       this.motionX = par8 * (double)0.2F + (double)((float)(Math.random() * (double)2.0F - (double)1.0F) * 0.02F);
       this.motionY = par10 * (double)0.2F + (double)((float)Math.random() * 0.02F);
       this.motionZ = par12 * (double)0.2F + (double)((float)(Math.random() * (double)2.0F - (double)1.0F) * 0.02F);
       this.particleMaxAge = (int)((double)(age + 2) + (double)8.0F / (Math.random() * 0.8 + 0.2));
       this.particleAge = 0;
-      EntityLivingBase renderentity = FMLClientHandler.instance().getClient().renderViewEntity;
+      EntityLivingBase renderentity = (EntityLivingBase)FMLClientHandler.instance().getClient().getRenderViewEntity();
       int visibleDistance = 50;
       if (!FMLClientHandler.instance().getClient().gameSettings.fancyGraphics) {
          visibleDistance = 25;
@@ -43,8 +47,8 @@ public class FXBubbleAlt extends EntityFX {
       this.prevPosX = this.posX;
       this.prevPosY = this.posY;
       this.prevPosZ = this.posZ;
-      this.motionX += (this.worldObj.rand.nextFloat() - this.worldObj.rand.nextFloat()) * 0.001F;
-      this.motionZ += (this.worldObj.rand.nextFloat() - this.worldObj.rand.nextFloat()) * 0.001F;
+      this.motionX += (this.world.rand.nextFloat() - this.world.rand.nextFloat()) * 0.001F;
+      this.motionZ += (this.world.rand.nextFloat() - this.world.rand.nextFloat()) * 0.001F;
       this.posX += this.motionX;
       this.posY += this.motionY;
       this.posZ += this.motionZ;
@@ -52,7 +56,7 @@ public class FXBubbleAlt extends EntityFX {
       this.motionY *= 0.85F;
       this.motionZ *= 0.85F;
       if (this.particleAge++ >= this.particleMaxAge) {
-         this.setDead();
+         this.setExpired();
       }
 
       if (this.particleAge == this.particleMaxAge - 2) {
@@ -69,8 +73,8 @@ public class FXBubbleAlt extends EntityFX {
       this.particleBlue = b;
    }
 
-   public void renderParticle(Tessellator tessellator, float f, float f1, float f2, float f3, float f4, float f5) {
-      GL11.glColor4f(1.0F, 1.0F, 1.0F, this.particleAlpha);
+   public void renderParticle(BufferBuilder buffer, Entity entityIn, float f, float f1, float f2, float f3, float f4, float f5) {
+      GlStateManager.color(1.0F, 1.0F, 1.0F, this.particleAlpha);
       float var8 = (float)(this.particle % 16) / 16.0F;
       float var9 = var8 + 0.0624375F;
       float var10 = (float)(this.particle / 16) / 16.0F;
@@ -80,11 +84,13 @@ public class FXBubbleAlt extends EntityFX {
       float var14 = (float)(this.prevPosY + (this.posY - this.prevPosY) * (double)f - interpPosY);
       float var15 = (float)(this.prevPosZ + (this.posZ - this.prevPosZ) * (double)f - interpPosZ);
       float var16 = 1.0F;
-      tessellator.setBrightness(240);
-      tessellator.setColorRGBA_F(this.particleRed * var16, this.particleGreen * var16, this.particleBlue * var16, this.particleAlpha);
-      tessellator.addVertexWithUV(var13 - f1 * var12 - f4 * var12, var14 - f2 * var12, var15 - f3 * var12 - f5 * var12, var9, var11);
-      tessellator.addVertexWithUV(var13 - f1 * var12 + f4 * var12, var14 + f2 * var12, var15 - f3 * var12 + f5 * var12, var9, var10);
-      tessellator.addVertexWithUV(var13 + f1 * var12 + f4 * var12, var14 + f2 * var12, var15 + f3 * var12 + f5 * var12, var8, var10);
-      tessellator.addVertexWithUV(var13 + f1 * var12 - f4 * var12, var14 - f2 * var12, var15 + f3 * var12 - f5 * var12, var8, var11);
+      buffer.pos(var13 - f1 * var12 - f4 * var12, var14 - f2 * var12, var15 - f3 * var12 - f5 * var12).tex(var9, var11).color(this.particleRed, this.particleGreen, this.particleBlue, this.particleAlpha)
+        .endVertex();
+      buffer.pos(var13 - f1 * var12 + f4 * var12, var14 + f2 * var12, var15 - f3 * var12 + f5 * var12).tex(var9, var10).color(this.particleRed, this.particleGreen, this.particleBlue, this.particleAlpha)
+        .endVertex();
+      buffer.pos(var13 + f1 * var12 + f4 * var12, var14 + f2 * var12, var15 + f3 * var12 + f5 * var12).tex(var8, var10).color(this.particleRed, this.particleGreen, this.particleBlue, this.particleAlpha)
+        .endVertex();
+      buffer.pos(var13 + f1 * var12 - f4 * var12, var14 - f2 * var12, var15 + f3 * var12 - f5 * var12).tex(var8, var11).color(this.particleRed, this.particleGreen, this.particleBlue, this.particleAlpha)
+        .endVertex();
    }
 }

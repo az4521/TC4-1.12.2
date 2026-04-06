@@ -1,0 +1,52 @@
+{
+  "variants": {
+    "meta=0": {
+      "model": "thaumcraft:blocktaintfibres_fibres"
+    },
+    "meta=1": {
+      "model": "thaumcraft:blocktaintfibres_grass1"
+    },
+    "meta=2": {
+      "model": "thaumcraft:blocktaintfibres_grass2"
+    },
+    "meta=3": {
+      "model": "thaumcraft:blocktaintfibres_stalk1"
+    },
+    "meta=4": {
+      "model": "thaumcraft:blocktaintfibres_stalk2"
+    },
+    "meta=5": {
+      "model": "thaumcraft:blocktaintfibres_fibres"
+    },
+    "meta=6": {
+      "model": "thaumcraft:blocktaintfibres_fibres"
+    },
+    "meta=7": {
+      "model": "thaumcraft:blocktaintfibres_fibres"
+    },
+    "meta=8": {
+      "model": "thaumcraft:blocktaintfibres_fibres"
+    },
+    "meta=9": {
+      "model": "thaumcraft:blocktaintfibres_fibres"
+    },
+    "meta=10": {
+      "model": "thaumcraft:blocktaintfibres_fibres"
+    },
+    "meta=11": {
+      "model": "thaumcraft:blocktaintfibres_fibres"
+    },
+    "meta=12": {
+      "model": "thaumcraft:blocktaintfibres_fibres"
+    },
+    "meta=13": {
+      "model": "thaumcraft:blocktaintfibres_fibres"
+    },
+    "meta=14": {
+      "model": "thaumcraft:blocktaintfibres_fibres"
+    },
+    "meta=15": {
+      "model": "thaumcraft:blocktaintfibres_fibres"
+    }
+  }
+}

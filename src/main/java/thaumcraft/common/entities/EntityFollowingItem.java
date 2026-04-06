@@ -1,11 +1,11 @@
 package thaumcraft.common.entities;
 
-import cpw.mods.fml.common.registry.IEntityAdditionalSpawnData;
+import net.minecraftforge.fml.common.registry.IEntityAdditionalSpawnData;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.entity.Entity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.util.MathHelper;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
 import thaumcraft.common.Thaumcraft;
 
@@ -28,9 +28,8 @@ public class EntityFollowingItem extends EntitySpecialItem implements IEntityAdd
       this.age = 20;
       this.gravity = 0.04F;
       this.setSize(0.25F, 0.25F);
-      this.yOffset = this.height / 2.0F;
       this.setPosition(par2, par4, par6);
-      this.setEntityItemStack(par8ItemStack);
+      this.setItem(par8ItemStack);
       this.rotationYaw = (float)(Math.random() * (double)360.0F);
    }
 
@@ -38,7 +37,7 @@ public class EntityFollowingItem extends EntitySpecialItem implements IEntityAdd
       this(par1World, par2, par4, par6, par8ItemStack);
       this.target = target;
       this.targetX = target.posX;
-      this.targetY = target.boundingBox.minY + (double)(target.height / 2.0F);
+      this.targetY = target.getEntityBoundingBox().minY + (double)(target.height / 2.0F);
       this.targetZ = target.posZ;
       this.type = t;
       this.noClip = true;
@@ -61,13 +60,12 @@ public class EntityFollowingItem extends EntitySpecialItem implements IEntityAdd
       this.age = 20;
       this.gravity = 0.04F;
       this.setSize(0.25F, 0.25F);
-      this.yOffset = this.height / 2.0F;
    }
 
    public void onUpdate() {
       if (this.target != null) {
          this.targetX = this.target.posX;
-         this.targetY = this.target.boundingBox.minY + (double)(this.target.height / 2.0F);
+         this.targetY = this.target.getEntityBoundingBox().minY + (double)(this.target.height / 2.0F);
          this.targetZ = this.target.posZ;
       }
 
@@ -81,7 +79,7 @@ public class EntityFollowingItem extends EntitySpecialItem implements IEntityAdd
             --this.age;
          }
 
-         double distance = MathHelper.sqrt_float(xd * xd + yd * yd + zd * zd);
+         double distance = MathHelper.sqrt(xd * xd + yd * yd + zd * zd);
          if (distance > (double)0.5F) {
             distance *= this.age;
             this.motionX = (double)xd / distance;
@@ -98,11 +96,11 @@ public class EntityFollowingItem extends EntitySpecialItem implements IEntityAdd
             this.noClip = false;
          }
 
-         if (this.worldObj.isRemote) {
+         if (this.world.isRemote) {
             if (this.type != 10) {
-               Thaumcraft.proxy.sparkle((float)this.prevPosX + (this.rand.nextFloat() - this.rand.nextFloat()) * 0.125F, (float)this.prevPosY + this.yOffset + (this.rand.nextFloat() - this.rand.nextFloat()) * 0.125F, (float)this.prevPosZ + (this.rand.nextFloat() - this.rand.nextFloat()) * 0.125F, this.type);
+               Thaumcraft.proxy.sparkle((float)this.prevPosX + (this.rand.nextFloat() - this.rand.nextFloat()) * 0.125F, (float)this.prevPosY + this.height / 2.0F + (this.rand.nextFloat() - this.rand.nextFloat()) * 0.125F, (float)this.prevPosZ + (this.rand.nextFloat() - this.rand.nextFloat()) * 0.125F, this.type);
             } else {
-               Thaumcraft.proxy.crucibleBubble(this.worldObj, (float)this.prevPosX + (this.rand.nextFloat() - this.rand.nextFloat()) * 0.125F, (float)this.prevPosY + this.yOffset + (this.rand.nextFloat() - this.rand.nextFloat()) * 0.125F, (float)this.prevPosZ + (this.rand.nextFloat() - this.rand.nextFloat()) * 0.125F, 0.33F, 0.33F, 1.0F);
+               Thaumcraft.proxy.crucibleBubble(this.world, (float)this.prevPosX + (this.rand.nextFloat() - this.rand.nextFloat()) * 0.125F, (float)this.prevPosY + this.height / 2.0F + (this.rand.nextFloat() - this.rand.nextFloat()) * 0.125F, (float)this.prevPosZ + (this.rand.nextFloat() - this.rand.nextFloat()) * 0.125F, 0.33F, 0.33F, 1.0F);
             }
          }
       }
@@ -135,7 +133,7 @@ public class EntityFollowingItem extends EntitySpecialItem implements IEntityAdd
       try {
          int ent = data.readInt();
          if (ent > -1) {
-            this.target = this.worldObj.getEntityByID(ent);
+            this.target = this.world.getEntityByID(ent);
          }
 
          this.targetX = data.readDouble();

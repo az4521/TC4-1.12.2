@@ -3,7 +3,7 @@ package thaumcraft.common.entities.ai.misc;
 import net.minecraft.entity.EntityCreature;
 import net.minecraft.entity.ai.EntityAIBase;
 import net.minecraft.entity.ai.RandomPositionGenerator;
-import net.minecraft.util.Vec3;
+import net.minecraft.util.math.Vec3d;
 
 public class AIWander extends EntityAIBase {
    private EntityCreature entity;
@@ -13,15 +13,15 @@ public class AIWander extends EntityAIBase {
    private double speed;
    private boolean field_179482_g;
 
-   public AIWander(EntityCreature p_i1648_1_, double p_i1648_2_) {
-      this.entity = p_i1648_1_;
-      this.speed = p_i1648_2_;
+   public AIWander(EntityCreature creatureIn, double speedIn) {
+      this.entity = creatureIn;
+      this.speed = speedIn;
       this.setMutexBits(1);
    }
 
    public boolean shouldExecute() {
       if (!this.field_179482_g) {
-         if (this.entity.getAge() >= 100) {
+         if (this.entity.ticksExisted >= 100) {
             return false;
          }
 
@@ -30,13 +30,13 @@ public class AIWander extends EntityAIBase {
          }
       }
 
-      Vec3 vec3 = RandomPositionGenerator.findRandomTarget(this.entity, 10, 7);
+      Vec3d vec3 = RandomPositionGenerator.findRandomTarget(this.entity, 10, 7);
       if (vec3 == null) {
          return false;
       } else {
-         this.xPosition = vec3.xCoord;
-         this.yPosition = vec3.yCoord;
-         this.zPosition = vec3.zCoord;
+         this.xPosition = vec3.x;
+         this.yPosition = vec3.y;
+         this.zPosition = vec3.z;
          this.field_179482_g = false;
          return true;
       }

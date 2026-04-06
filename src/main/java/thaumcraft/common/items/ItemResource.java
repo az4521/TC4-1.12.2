@@ -1,11 +1,10 @@
 package thaumcraft.common.items;
 
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import java.util.List;
 import java.util.Random;
 import net.minecraft.block.Block;
-import net.minecraft.client.renderer.texture.IIconRegister;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
@@ -15,11 +14,17 @@ import net.minecraft.init.Blocks;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.potion.Potion;
 import net.minecraft.potion.PotionEffect;
-import net.minecraft.util.ChatComponentTranslation;
-import net.minecraft.util.IIcon;
-import net.minecraft.util.StatCollector;
+import net.minecraft.util.ActionResult;
+import net.minecraft.util.EnumActionResult;
+import net.minecraft.util.EnumFacing;
+import net.minecraft.util.EnumHand;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.text.TextComponentTranslation;
+import net.minecraft.util.text.translation.I18n;
 import net.minecraft.world.World;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import thaumcraft.api.aspects.Aspect;
 import thaumcraft.api.aspects.AspectList;
 import thaumcraft.api.aspects.IEssentiaContainerItem;
@@ -37,8 +42,8 @@ import thaumcraft.common.lib.utils.InventoryUtils;
 import static thaumcraft.api.aspects.AspectList.addAspectDescriptionToList;
 
 public class ItemResource extends Item implements IEssentiaContainerItem {
-   public IIcon[] icon = new IIcon[19];
-   public IIcon iconOverlay;
+   public TextureAtlasSprite[] icon = new TextureAtlasSprite[19];
+   public TextureAtlasSprite iconOverlay;
 
    public ItemResource() {
       this.setMaxStackSize(64);
@@ -48,31 +53,31 @@ public class ItemResource extends Item implements IEssentiaContainerItem {
    }
 
    @SideOnly(Side.CLIENT)
-   public void registerIcons(IIconRegister ir) {
-      this.icon[0] = ir.registerIcon("thaumcraft:alumentum");
-      this.icon[1] = ir.registerIcon("thaumcraft:nitor");
-      this.icon[2] = ir.registerIcon("thaumcraft:thaumiumingot");
-      this.icon[3] = ir.registerIcon("thaumcraft:quicksilver");
-      this.icon[4] = ir.registerIcon("thaumcraft:tallow");
-      this.icon[5] = ir.registerIcon("thaumcraft:brain");
-      this.icon[6] = ir.registerIcon("thaumcraft:amber");
-      this.icon[7] = ir.registerIcon("thaumcraft:cloth");
-      this.icon[8] = ir.registerIcon("thaumcraft:filter");
-      this.icon[9] = ir.registerIcon("thaumcraft:knowledgefragment");
-      this.icon[10] = ir.registerIcon("thaumcraft:mirrorglass");
-      this.icon[11] = ir.registerIcon("thaumcraft:taint_slime");
-      this.icon[12] = ir.registerIcon("thaumcraft:taint_tendril");
-      this.icon[13] = ir.registerIcon("thaumcraft:label");
-      this.iconOverlay = ir.registerIcon("thaumcraft:label_over");
-      this.icon[14] = ir.registerIcon("thaumcraft:dust");
-      this.icon[15] = ir.registerIcon("thaumcraft:charm");
-      this.icon[16] = ir.registerIcon("thaumcraft:voidingot");
-      this.icon[17] = ir.registerIcon("thaumcraft:voidseed");
-      this.icon[18] = ir.registerIcon("thaumcraft:coin");
+   public void registerIcons(thaumcraft.client.renderers.compat.IIconRegister ir) {
+      this.icon[0] = ir.registerSprite("thaumcraft:alumentum");
+      this.icon[1] = ir.registerSprite("thaumcraft:nitor");
+      this.icon[2] = ir.registerSprite("thaumcraft:thaumiumingot");
+      this.icon[3] = ir.registerSprite("thaumcraft:quicksilver");
+      this.icon[4] = ir.registerSprite("thaumcraft:tallow");
+      this.icon[5] = ir.registerSprite("thaumcraft:brain");
+      this.icon[6] = ir.registerSprite("thaumcraft:amber");
+      this.icon[7] = ir.registerSprite("thaumcraft:cloth");
+      this.icon[8] = ir.registerSprite("thaumcraft:filter");
+      this.icon[9] = ir.registerSprite("thaumcraft:knowledgefragment");
+      this.icon[10] = ir.registerSprite("thaumcraft:mirrorglass");
+      this.icon[11] = ir.registerSprite("thaumcraft:taint_slime");
+      this.icon[12] = ir.registerSprite("thaumcraft:taint_tendril");
+      this.icon[13] = ir.registerSprite("thaumcraft:label");
+      this.iconOverlay = ir.registerSprite("thaumcraft:label_over");
+      this.icon[14] = ir.registerSprite("thaumcraft:dust");
+      this.icon[15] = ir.registerSprite("thaumcraft:charm");
+      this.icon[16] = ir.registerSprite("thaumcraft:voidingot");
+      this.icon[17] = ir.registerSprite("thaumcraft:voidseed");
+      this.icon[18] = ir.registerSprite("thaumcraft:coin");
    }
 
    @SideOnly(Side.CLIENT)
-   public IIcon getIconFromDamage(int par1) {
+   public TextureAtlasSprite getIconFromDamage(int par1) {
       return this.icon[par1];
    }
 
@@ -82,7 +87,7 @@ public class ItemResource extends Item implements IEssentiaContainerItem {
    }
 
    @SideOnly(Side.CLIENT)
-   public IIcon getIcon(ItemStack stack, int pass) {
+   public TextureAtlasSprite getIcon(ItemStack stack, int pass) {
       return pass != 0 && this.getAspects(stack) != null ? this.iconOverlay : this.getIconFromDamage(stack.getItemDamage());
    }
 
@@ -97,7 +102,8 @@ public class ItemResource extends Item implements IEssentiaContainerItem {
    }
 
    @SideOnly(Side.CLIENT)
-   public void getSubItems(Item par1, CreativeTabs par2CreativeTabs, List par3List) {
+   @Override
+   public void getSubItems(CreativeTabs par2CreativeTabs, net.minecraft.util.NonNullList<ItemStack> par3List) {
       for(int a = 0; a <= 18; ++a) {
          if (a != 5) {
             par3List.add(new ItemStack(this, 1, a));
@@ -106,23 +112,24 @@ public class ItemResource extends Item implements IEssentiaContainerItem {
 
    }
 
-   public String getUnlocalizedName(ItemStack par1ItemStack) {
-      return super.getUnlocalizedName() + "." + par1ItemStack.getItemDamage();
+   @Override
+   public String getTranslationKey(ItemStack par1ItemStack) {
+      return getTranslationKey() + "." + par1ItemStack.getItemDamage();
    }
 
    public void onUpdate(ItemStack stack, World world, Entity entity, int par4, boolean par5) {
       super.onUpdate(stack, world, entity, par4, par5);
-      if (!entity.worldObj.isRemote && (stack.getItemDamage() == 11 || stack.getItemDamage() == 12) && entity instanceof EntityLivingBase && !((EntityLivingBase)entity).isEntityUndead() && !((EntityLivingBase)entity).isPotionActive(Config.potionTaintPoisonID) && world.rand.nextInt(4321) <= stack.stackSize) {
-         ((EntityLivingBase)entity).addPotionEffect(new PotionEffect(Config.potionTaintPoisonID, 120, 0, false));
+      if (!entity.world.isRemote && (stack.getItemDamage() == 11 || stack.getItemDamage() == 12) && entity instanceof EntityLivingBase && !((EntityLivingBase)entity).isEntityUndead() && !((EntityLivingBase)entity).isPotionActive(Potion.getPotionById(Config.potionTaintPoisonID)) && world.rand.nextInt(4321) <= stack.getCount()) {
+         ((EntityLivingBase)entity).addPotionEffect(new PotionEffect(Potion.getPotionById(Config.potionTaintPoisonID), 120, 0, false, false));
          if (entity instanceof EntityPlayer) {
-            String s = StatCollector.translateToLocal("tc.taint_item_poison").replace("%s", "§5§o" + stack.getDisplayName() + "§r");
-            ((EntityPlayer)entity).addChatMessage(new ChatComponentTranslation(s));
+            String s = I18n.translateToLocal("tc.taint_item_poison").replace("%s", "§5§o" + stack.getDisplayName() + "§r");
+            ((EntityPlayer)entity).sendMessage(new TextComponentTranslation(s));
             InventoryUtils.consumeInventoryItem((EntityPlayer)entity, stack.getItem(), stack.getItemDamage());
          }
-      } else if (!entity.worldObj.isRemote && stack.getItemDamage() == 15) {
+      } else if (!entity.world.isRemote && stack.getItemDamage() == 15) {
          int r = world.rand.nextInt(20000);
-         if (stack.hasTagCompound() && stack.stackTagCompound.hasKey("blurb")) {
-            stack.stackTagCompound.removeTag("blurb");
+         if (stack.hasTagCompound() && stack.getTagCompound().hasKey("blurb")) {
+            stack.getTagCompound().removeTag("blurb");
          }
 
          if (r < 20) {
@@ -149,10 +156,10 @@ public class ItemResource extends Item implements IEssentiaContainerItem {
 
             if (aspect != null) {
                EntityAspectOrb orb = new EntityAspectOrb(world, entity.posX, entity.posY, entity.posZ, aspect, 1);
-               world.spawnEntityInWorld(orb);
+               world.spawnEntity(orb);
             }
-         } else if (r == 42 && entity instanceof EntityPlayer && !ResearchManager.isResearchComplete(entity.getCommandSenderName(), "FOCUSPRIMAL") && !ResearchManager.isResearchComplete(entity.getCommandSenderName(), "@FOCUSPRIMAL")) {
-            ((EntityPlayer)entity).addChatMessage(new ChatComponentTranslation("§5§o" + StatCollector.translateToLocal("tc.primalcharm.trigger")));
+         } else if (r == 42 && entity instanceof EntityPlayer && !ResearchManager.isResearchComplete(entity.getName(), "FOCUSPRIMAL") && !ResearchManager.isResearchComplete(entity.getName(), "@FOCUSPRIMAL")) {
+            ((EntityPlayer)entity).sendMessage(new TextComponentTranslation("§5§o" + I18n.translateToLocal("tc.primalcharm.trigger")));
             PacketHandler.INSTANCE.sendTo(new PacketResearchComplete("@FOCUSPRIMAL"), (EntityPlayerMP)entity);
             Thaumcraft.proxy.getResearchManager().completeResearch((EntityPlayer)entity, "@FOCUSPRIMAL");
          }
@@ -160,14 +167,21 @@ public class ItemResource extends Item implements IEssentiaContainerItem {
 
    }
 
-   public boolean onItemUse(ItemStack itemstack, EntityPlayer player, World world, int x, int y, int z, int par7, float par8, float par9, float par10) {
+   @Override
+   public EnumActionResult onItemUse(EntityPlayer player, World world, BlockPos pos, EnumHand hand, EnumFacing facing, float hitX, float hitY, float hitZ) {
+      ItemStack itemstack = player.getHeldItem(hand);
       if (itemstack.getItemDamage() != 1) {
-         return super.onItemUse(itemstack, player, world, x, y, z, par7, par8, par9, par10);
+         return super.onItemUse(player, world, pos, hand, facing, hitX, hitY, hitZ);
       } else {
-         Block var11 = world.getBlock(x, y, z);
-         if (var11 == Blocks.snow_layer && (world.getBlockMetadata(x, y, z) & 7) < 1) {
+         int x = pos.getX();
+         int y = pos.getY();
+         int z = pos.getZ();
+         int par7 = facing.getIndex();
+
+         Block var11 = world.getBlockState(new BlockPos(x, y, z)).getBlock();
+         if (var11 == Blocks.SNOW_LAYER && (world.getBlockState(new BlockPos(x, y, z)).getBlock().getMetaFromState(world.getBlockState(new BlockPos(x, y, z))) & 7) < 1) {
             par7 = 1;
-         } else if (var11 != Blocks.vine && var11 != Blocks.tallgrass && var11 != Blocks.deadbush && !var11.isReplaceable(world, x, y, z)) {
+         } else if (var11 != Blocks.VINE && var11 != Blocks.TALLGRASS && var11 != Blocks.DEADBUSH && !var11.isReplaceable(world, new BlockPos(x, y, z))) {
             if (par7 == 0) {
                --y;
             }
@@ -193,78 +207,80 @@ public class ItemResource extends Item implements IEssentiaContainerItem {
             }
          }
 
-         if (itemstack.stackSize == 0) {
-            return false;
-         } else if (!player.canPlayerEdit(x, y, z, par7, itemstack)) {
-            return false;
-         } else if (world.canPlaceEntityOnSide(ConfigBlocks.blockAiry, x, y, z, false, par7, player, itemstack)) {
-            if (this.placeBlockAt(itemstack, player, world, x, y, z, par7, par8, par9, par10, ConfigBlocks.blockAiry, itemstack.getItemDamage())) {
-               world.playSoundEffect((float)x + 0.5F, (float)y + 0.5F, (float)z + 0.5F, ConfigBlocks.blockAiry.stepSound.getStepResourcePath(), (ConfigBlocks.blockAiry.stepSound.getVolume() + 1.0F) / 2.0F, ConfigBlocks.blockAiry.stepSound.getPitch() * 0.8F);
-               --itemstack.stackSize;
-               return true;
+         if (itemstack.getCount() == 0) {
+            return EnumActionResult.FAIL;
+         } else if (!player.canPlayerEdit(new BlockPos(x, y, z), facing, itemstack)) {
+            return EnumActionResult.FAIL;
+         } else if (world.mayPlace(ConfigBlocks.blockAiry, new BlockPos(x, y, z), false, facing, player)) {
+            if (this.placeBlockAt(itemstack, player, world, x, y, z, par7, hitX, hitY, hitZ, ConfigBlocks.blockAiry, itemstack.getItemDamage())) {
+               { net.minecraft.util.SoundEvent _snd = net.minecraft.util.SoundEvent.REGISTRY.getObject(new net.minecraft.util.ResourceLocation("minecraft:block.stone.place")); if (_snd != null) world.playSound(null, x + 0.5, y + 0.5, z + 0.5, _snd, net.minecraft.util.SoundCategory.BLOCKS, 0.8F, 0.8F); }
+               itemstack.shrink(1);
+               return EnumActionResult.SUCCESS;
             } else {
-               return false;
+               return EnumActionResult.FAIL;
             }
          } else {
-            return false;
+            return EnumActionResult.FAIL;
          }
       }
    }
 
    public boolean placeBlockAt(ItemStack stack, EntityPlayer player, World world, int x, int y, int z, int side, float hitX, float hitY, float hitZ, Block bid, int metadata) {
-      if (!world.setBlock(x, y, z, bid, metadata, 3)) {
+      if (!world.setBlockState(new BlockPos(x, y, z), (bid).getStateFromMeta(metadata), 3)) {
          return false;
       } else {
-         if (world.getBlock(x, y, z) == bid) {
-            bid.onBlockPlacedBy(world, x, y, z, player, stack);
-            bid.onPostBlockPlaced(world, x, y, z, metadata);
+         if (world.getBlockState(new BlockPos(x, y, z)).getBlock() == bid) {
+            bid.onBlockPlacedBy(world, new BlockPos(x, y, z), bid.getDefaultState(), player, stack);
+            // onPostBlockPlaced removed in 1.12.2
          }
 
          return true;
       }
    }
 
-   public ItemStack onItemRightClick(ItemStack itemstack, World world, EntityPlayer player) {
+   @Override
+   public ActionResult<ItemStack> onItemRightClick(World world, EntityPlayer player, EnumHand hand) {
+      ItemStack itemstack = player.getHeldItem(hand);
       if (itemstack.getItemDamage() == 0) {
          if (!player.capabilities.isCreativeMode) {
-            --itemstack.stackSize;
+            itemstack.shrink(1);
          }
 
-         world.playSoundAtEntity(player, "random.bow", 0.3F, 0.4F / (itemRand.nextFloat() * 0.4F + 0.8F));
+         { net.minecraft.util.SoundEvent _snd = net.minecraft.util.SoundEvent.REGISTRY.getObject(new net.minecraft.util.ResourceLocation("minecraft:random.bow")); if (_snd != null) world.playSound(null, player.posX, player.posY, player.posZ, _snd, net.minecraft.util.SoundCategory.NEUTRAL, 0.3F, 0.4F / (itemRand.nextFloat() * 0.4F + 0.8F)); }
          if (!world.isRemote) {
-            world.spawnEntityInWorld(new EntityAlumentum(world, player));
+            world.spawnEntity(new EntityAlumentum(world, player));
          }
       } else if (itemstack.getItemDamage() == 9) {
          if (!player.capabilities.isCreativeMode) {
-            --itemstack.stackSize;
+            itemstack.shrink(1);
          }
 
          if (!world.isRemote) {
             for(Aspect a : Aspect.getPrimalAspects()) {
                short q = (short)(world.rand.nextInt(2) + 1);
-               Thaumcraft.proxy.playerKnowledge.addAspectPool(player.getCommandSenderName(), a, q);
+               Thaumcraft.proxy.playerKnowledge.addAspectPool(player.getName(), a, q);
                ResearchManager.scheduleSave(player);
-               PacketHandler.INSTANCE.sendTo(new PacketAspectPool(a.getTag(), q, Thaumcraft.proxy.playerKnowledge.getAspectPoolFor(player.getCommandSenderName(), a)), (EntityPlayerMP)player);
+               PacketHandler.INSTANCE.sendTo(new PacketAspectPool(a.getTag(), q, Thaumcraft.proxy.playerKnowledge.getAspectPoolFor(player.getName(), a)), (EntityPlayerMP)player);
             }
          }
       }
 
-      return itemstack;
+      return new ActionResult<>(EnumActionResult.SUCCESS, itemstack);
    }
 
-   public void addInformation(ItemStack stack, EntityPlayer player, List list, boolean par4) {
+   public void addInformation(ItemStack stack, @javax.annotation.Nullable net.minecraft.world.World worldIn, List list, net.minecraft.client.util.ITooltipFlag flagIn) {
       AspectList aspects = this.getAspects(stack);
-      addAspectDescriptionToList(aspects,player,list);
+      addAspectDescriptionToList(aspects, net.minecraft.client.Minecraft.getMinecraft().player, list);
 
       if (stack.getItemDamage() == 15) {
-         Random rand = new Random(stack.hashCode() + player.ticksExisted / 120);
+         Random rand = new Random(stack.hashCode() + (int)(System.currentTimeMillis() / 1000L) / 120);
          int r = rand.nextInt(200);
          if (r < 25) {
-            list.add("§6" + StatCollector.translateToLocal("tc.primalcharm." + rand.nextInt(5)));
+            list.add("§6" + I18n.translateToLocal("tc.primalcharm." + rand.nextInt(5)));
          }
       }
 
-      super.addInformation(stack, player, list, par4);
+      super.addInformation(stack, worldIn, list, flagIn);
    }
 
    public AspectList getAspects(ItemStack itemstack) {

@@ -23,7 +23,7 @@ public class PacketCheck {
     }
 
     public static boolean hasAspect(EntityPlayerMP player, Aspect aspect, int threshold) {
-        return Thaumcraft.proxy.playerKnowledge.getAspectPoolFor(player.getCommandSenderName(), aspect) >= threshold;
+        return Thaumcraft.proxy.playerKnowledge.getAspectPoolFor(player.getName(), aspect) >= threshold;
     }
 
     public static boolean isSecondaryResearch(ResearchItem research) {

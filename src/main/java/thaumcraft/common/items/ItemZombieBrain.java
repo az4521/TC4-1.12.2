@@ -1,37 +1,38 @@
 package thaumcraft.common.items;
 
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
-import net.minecraft.client.renderer.texture.IIconRegister;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
+import thaumcraft.client.renderers.compat.IIconRegister;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemFood;
 import net.minecraft.item.ItemStack;
-import net.minecraft.potion.Potion;
-import net.minecraft.util.IIcon;
+import net.minecraft.init.MobEffects;
+import net.minecraft.potion.PotionEffect;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.world.World;
 import thaumcraft.common.Thaumcraft;
 
 public class ItemZombieBrain extends ItemFood {
-   public IIcon icon;
+   public TextureAtlasSprite icon;
 
    public ItemZombieBrain() {
       super(4, 0.2F, true);
-      this.setPotionEffect(Potion.hunger.id, 30, 0, 0.8F);
+      this.setPotionEffect(new PotionEffect(MobEffects.HUNGER, 600, 0), 0.8F);
       this.setCreativeTab(Thaumcraft.tabTC);
    }
 
    @SideOnly(Side.CLIENT)
    public void registerIcons(IIconRegister ir) {
-      this.icon = ir.registerIcon("thaumcraft:brain");
+      this.icon = ir.registerSprite("thaumcraft:brain");
    }
 
    @SideOnly(Side.CLIENT)
-   public IIcon getIconFromDamage(int meta) {
+   public TextureAtlasSprite getIconFromDamage(int meta) {
       return this.icon;
    }
 
-   public ItemStack onEaten(ItemStack stack, World world, EntityPlayer player) {
+   protected void onFoodEaten(ItemStack stack, World world, EntityPlayer player) {
       if (!world.isRemote && player instanceof EntityPlayerMP) {
          if (world.rand.nextFloat() < 0.1F) {
             Thaumcraft.addStickyWarpToPlayer(player, 1);
@@ -40,6 +41,6 @@ public class ItemZombieBrain extends ItemFood {
          }
       }
 
-      return super.onEaten(stack, world, player);
+      super.onFoodEaten(stack, world, player);
    }
 }

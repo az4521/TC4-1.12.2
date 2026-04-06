@@ -5,15 +5,16 @@ import net.minecraft.client.renderer.entity.RenderLiving;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.util.MathHelper;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.ResourceLocation;
 import thaumcraft.common.entities.monster.EntityTaintChicken;
 
+import net.minecraft.client.renderer.entity.RenderManager;
 public class RenderTaintChicken extends RenderLiving {
    private static final ResourceLocation rl = new ResourceLocation("thaumcraft", "textures/models/chicken.png");
 
-   public RenderTaintChicken(ModelBase par1ModelBase, float par2) {
-      super(par1ModelBase, par2);
+   public RenderTaintChicken(RenderManager renderManager, ModelBase par1ModelBase, float par2) {
+      super(renderManager, par1ModelBase, par2);
    }
 
    protected ResourceLocation getEntityTexture(Entity entity) {

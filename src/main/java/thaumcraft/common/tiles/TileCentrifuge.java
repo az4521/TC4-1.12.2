@@ -1,43 +1,40 @@
 package thaumcraft.common.tiles;
 
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.AxisAlignedBB;
-import net.minecraftforge.common.util.ForgeDirection;
+import net.minecraft.util.math.AxisAlignedBB;
+import net.minecraft.util.EnumFacing;
 import thaumcraft.api.ThaumcraftApiHelper;
 import thaumcraft.api.TileThaumcraft;
 import thaumcraft.api.aspects.Aspect;
 import thaumcraft.api.aspects.AspectList;
 import thaumcraft.api.aspects.IAspectContainer;
 import thaumcraft.api.aspects.IEssentiaTransport;
+import net.minecraft.util.math.BlockPos;
 
 public class TileCentrifuge extends TileThaumcraft implements IAspectContainer, IEssentiaTransport {
    public Aspect aspectOut = null;
    public Aspect aspectIn = null;
-   public ForgeDirection facing;
+   public EnumFacing facing;
    int count;
    int process;
    float rotationSpeed;
    public float rotation;
 
    public TileCentrifuge() {
-      this.facing = ForgeDirection.NORTH;
+      this.facing = EnumFacing.NORTH;
       this.count = 0;
       this.process = 0;
       this.rotationSpeed = 0.0F;
       this.rotation = 0.0F;
    }
 
-   public boolean canUpdate() {
-       return super.canUpdate();
-   }
-
    public void readCustomNBT(NBTTagCompound nbttagcompound) {
       this.aspectIn = Aspect.getAspect(nbttagcompound.getString("aspectIn"));
       this.aspectOut = Aspect.getAspect(nbttagcompound.getString("aspectOut"));
-      this.facing = ForgeDirection.getOrientation(nbttagcompound.getInteger("facing"));
+      this.facing = EnumFacing.byIndex(nbttagcompound.getInteger("facing"));
    }
 
    public void writeCustomNBT(NBTTagCompound nbttagcompound) {
@@ -65,7 +62,7 @@ public class TileCentrifuge extends TileThaumcraft implements IAspectContainer, 
       if (am > 0 && this.aspectOut == null) {
          this.aspectOut = tt;
          this.markDirty();
-         this.worldObj.markBlockForUpdate(this.xCoord, this.yCoord, this.zCoord);
+         { net.minecraft.block.state.IBlockState _bs = this.world.getBlockState(this.pos); this.world.notifyBlockUpdate(this.pos, _bs, _bs, 3); }
          --am;
       }
 
@@ -76,7 +73,7 @@ public class TileCentrifuge extends TileThaumcraft implements IAspectContainer, 
       if (this.aspectOut != null && tt == this.aspectOut) {
          this.aspectOut = null;
          this.markDirty();
-         this.worldObj.markBlockForUpdate(this.xCoord, this.yCoord, this.zCoord);
+         { net.minecraft.block.state.IBlockState _bs = this.world.getBlockState(this.pos); this.world.notifyBlockUpdate(this.pos, _bs, _bs, 3); }
          return true;
       } else {
          return false;
@@ -109,16 +106,16 @@ public class TileCentrifuge extends TileThaumcraft implements IAspectContainer, 
       return true;
    }
 
-   public boolean isConnectable(ForgeDirection face) {
-      return face == ForgeDirection.UP || face == ForgeDirection.DOWN;
+   public boolean isConnectable(EnumFacing face) {
+      return face == EnumFacing.UP || face == EnumFacing.DOWN;
    }
 
-   public boolean canInputFrom(ForgeDirection face) {
-      return face == ForgeDirection.DOWN;
+   public boolean canInputFrom(EnumFacing face) {
+      return face == EnumFacing.DOWN;
    }
 
-   public boolean canOutputTo(ForgeDirection face) {
-      return face == ForgeDirection.UP;
+   public boolean canOutputTo(EnumFacing face) {
+      return face == EnumFacing.UP;
    }
 
    public void setSuction(Aspect aspect, int amount) {
@@ -132,32 +129,32 @@ public class TileCentrifuge extends TileThaumcraft implements IAspectContainer, 
       return 0;
    }
 
-   public Aspect getSuctionType(ForgeDirection face) {
+   public Aspect getSuctionType(EnumFacing face) {
       return null;
    }
 
-   public int getSuctionAmount(ForgeDirection face) {
-      return face == ForgeDirection.DOWN ? (this.gettingPower() ? 0 : (this.aspectIn == null ? 128 : 64)) : 0;
+   public int getSuctionAmount(EnumFacing face) {
+      return face == EnumFacing.DOWN ? (this.gettingPower() ? 0 : (this.aspectIn == null ? 128 : 64)) : 0;
    }
 
-   public Aspect getEssentiaType(ForgeDirection loc) {
+   public Aspect getEssentiaType(EnumFacing loc) {
       return this.aspectOut;
    }
 
-   public int getEssentiaAmount(ForgeDirection loc) {
+   public int getEssentiaAmount(EnumFacing loc) {
       return this.aspectOut != null ? 1 : 0;
    }
 
-   public int takeEssentia(Aspect aspect, int amount, ForgeDirection face) {
+   public int takeEssentia(Aspect aspect, int amount, EnumFacing face) {
       return this.canOutputTo(face) && this.takeFromContainer(aspect, amount) ? amount : 0;
    }
 
-   public int addEssentia(Aspect aspect, int amount, ForgeDirection face) {
+   public int addEssentia(Aspect aspect, int amount, EnumFacing face) {
       if (this.aspectIn == null && !aspect.isPrimal()) {
          this.aspectIn = aspect;
          this.process = 39;
          this.markDirty();
-         this.worldObj.markBlockForUpdate(this.xCoord, this.yCoord, this.zCoord);
+         { net.minecraft.block.state.IBlockState _bs = this.world.getBlockState(this.pos); this.world.notifyBlockUpdate(this.pos, _bs, _bs, 3); }
          return 1;
       } else {
          return 0;
@@ -165,8 +162,7 @@ public class TileCentrifuge extends TileThaumcraft implements IAspectContainer, 
    }
 
    public void updateEntity() {
-      super.updateEntity();
-      if (!this.worldObj.isRemote) {
+      if (!this.world.isRemote) {
          if (!this.gettingPower()) {
             if (this.aspectOut == null && this.aspectIn == null && ++this.count % 5 == 0) {
                this.drawEssentia();
@@ -192,7 +188,7 @@ public class TileCentrifuge extends TileThaumcraft implements IAspectContainer, 
          int pr = (int)this.rotation;
          this.rotation += this.rotationSpeed;
          if (this.rotation % 180.0F <= 20.0F && pr % 180 >= 160 && this.rotationSpeed > 0.0F) {
-            this.worldObj.playSound((double)this.xCoord + (double)0.5F, (double)this.yCoord + (double)0.5F, (double)this.zCoord + (double)0.5F, "thaumcraft:pump", 1.0F, 1.0F, false);
+            this.world.playSound(null, this.getPos(), new net.minecraft.util.SoundEvent(new net.minecraft.util.ResourceLocation("thaumcraft", "pump")), net.minecraft.util.SoundCategory.BLOCKS, 1.0F, 1.0F);
          }
       }
 
@@ -200,30 +196,30 @@ public class TileCentrifuge extends TileThaumcraft implements IAspectContainer, 
 
    void processEssentia() {
       Aspect[] comps = this.aspectIn.getComponents();
-      this.aspectOut = comps[this.worldObj.rand.nextInt(2)];
+      this.aspectOut = comps[this.world.rand.nextInt(2)];
       this.aspectIn = null;
       this.markDirty();
-      this.worldObj.markBlockForUpdate(this.xCoord, this.yCoord, this.zCoord);
+      { net.minecraft.block.state.IBlockState _bs = this.world.getBlockState(this.pos); this.world.notifyBlockUpdate(this.pos, _bs, _bs, 3); }
    }
 
    void drawEssentia() {
-      TileEntity te = ThaumcraftApiHelper.getConnectableTile(this.worldObj, this.xCoord, this.yCoord, this.zCoord, ForgeDirection.DOWN);
+      TileEntity te = ThaumcraftApiHelper.getConnectableTile(this.world, this.getPos().getX(), this.getPos().getY(), this.getPos().getZ(), EnumFacing.DOWN);
       if (te != null) {
          IEssentiaTransport ic = (IEssentiaTransport)te;
-         if (!ic.canOutputTo(ForgeDirection.UP)) {
+         if (!ic.canOutputTo(EnumFacing.UP)) {
             return;
          }
 
          Aspect ta = null;
-         if (ic.getEssentiaAmount(ForgeDirection.UP) > 0 && ic.getSuctionAmount(ForgeDirection.UP) < this.getSuctionAmount(ForgeDirection.DOWN) && this.getSuctionAmount(ForgeDirection.DOWN) >= ic.getMinimumSuction()) {
-            ta = ic.getEssentiaType(ForgeDirection.UP);
+         if (ic.getEssentiaAmount(EnumFacing.UP) > 0 && ic.getSuctionAmount(EnumFacing.UP) < this.getSuctionAmount(EnumFacing.DOWN) && this.getSuctionAmount(EnumFacing.DOWN) >= ic.getMinimumSuction()) {
+            ta = ic.getEssentiaType(EnumFacing.UP);
          }
 
-         if (ta != null && !ta.isPrimal() && ic.getSuctionAmount(ForgeDirection.UP) < this.getSuctionAmount(ForgeDirection.DOWN) && ic.takeEssentia(ta, 1, ForgeDirection.UP) == 1) {
+         if (ta != null && !ta.isPrimal() && ic.getSuctionAmount(EnumFacing.UP) < this.getSuctionAmount(EnumFacing.DOWN) && ic.takeEssentia(ta, 1, EnumFacing.UP) == 1) {
             this.aspectIn = ta;
             this.process = 39;
             this.markDirty();
-            this.worldObj.markBlockForUpdate(this.xCoord, this.yCoord, this.zCoord);
+            { net.minecraft.block.state.IBlockState _bs = this.world.getBlockState(this.pos); this.world.notifyBlockUpdate(this.pos, _bs, _bs, 3); }
          }
       }
 
@@ -234,10 +230,10 @@ public class TileCentrifuge extends TileThaumcraft implements IAspectContainer, 
 
    @SideOnly(Side.CLIENT)
    public AxisAlignedBB getRenderBoundingBox() {
-      return AxisAlignedBB.getBoundingBox(this.xCoord - 1, this.yCoord - 1, this.zCoord - 1, this.xCoord + 1, this.yCoord + 1, this.zCoord + 1);
+      return new AxisAlignedBB(this.getPos().getX() - 1, this.getPos().getY() - 1, this.getPos().getZ() - 1, this.getPos().getX() + 1, this.getPos().getY() + 1, this.getPos().getZ() + 1);
    }
 
    public boolean gettingPower() {
-      return this.worldObj.isBlockIndirectlyGettingPowered(this.xCoord, this.yCoord, this.zCoord);
+      return this.world.isBlockPowered(this.getPos());
    }
 }

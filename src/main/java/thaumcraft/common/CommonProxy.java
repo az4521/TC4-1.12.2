@@ -1,18 +1,18 @@
 package thaumcraft.common;
 
-import cpw.mods.fml.common.FMLCommonHandler;
-import cpw.mods.fml.common.event.FMLInitializationEvent;
-import cpw.mods.fml.common.event.FMLPostInitializationEvent;
-import cpw.mods.fml.common.event.FMLPreInitializationEvent;
-import cpw.mods.fml.common.event.FMLServerStartedEvent;
-import cpw.mods.fml.common.eventhandler.SubscribeEvent;
-import cpw.mods.fml.common.gameevent.PlayerEvent;
-import cpw.mods.fml.common.network.IGuiHandler;
+import net.minecraftforge.fml.common.FMLCommonHandler;
+import net.minecraftforge.fml.common.event.FMLInitializationEvent;
+import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
+import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
+import net.minecraftforge.fml.common.event.FMLServerStartedEvent;
+import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import net.minecraftforge.fml.common.gameevent.PlayerEvent;
+import net.minecraftforge.fml.common.network.IGuiHandler;
 
 import java.util.ArrayList;
 import java.util.Map;
 
-import cpw.mods.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.Side;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockDispenser;
 import net.minecraft.dispenser.BehaviorProjectileDispense;
@@ -25,10 +25,10 @@ import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.EnumFacing;
-import net.minecraft.util.IIcon;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.World;
-import net.minecraftforge.common.util.ForgeDirection;
+import net.minecraft.util.EnumFacing;
 import tc4tweak.ConfigurationHandler;
 import tc4tweak.modules.FlushableCache;
 import tc4tweak.network.MessageSendConfiguration;
@@ -70,11 +70,16 @@ import thaumcraft.common.tiles.TileMagicBox;
 import thaumcraft.common.tiles.TileResearchTable;
 import thaumcraft.common.tiles.TileSpa;
 import thaumcraft.common.tiles.TileThaumatorium;
+import net.minecraft.util.math.BlockPos;
 
 public class CommonProxy implements IGuiHandler {
    public PlayerKnowledge playerKnowledge;
    public ResearchManager researchManager;
    public WandManager wandManager = new WandManager();
+
+   public void openResearchBrowser() {
+      // client-only, overridden in ClientProxy
+   }
 
    public PlayerKnowledge getPlayerKnowledge() {
       return this.playerKnowledge;
@@ -123,29 +128,29 @@ public class CommonProxy implements IGuiHandler {
          case 2:
             return new ContainerTravelingTrunk(player.inventory, world, (EntityTravelingTrunk) world.getEntityByID(x));
          case 3:
-            return new ContainerThaumatorium(player.inventory, (TileThaumatorium)world.getTileEntity(x, y, z));
+            return new ContainerThaumatorium(player.inventory, (TileThaumatorium)world.getTileEntity(new BlockPos(x, y, z)));
          case 5:
             return new ContainerFocusPouch(player.inventory, world, x, y, z);
          case 8:
-            return new ContainerDeconstructionTable(player.inventory, (TileDeconstructionTable)world.getTileEntity(x, y, z));
+            return new ContainerDeconstructionTable(player.inventory, (TileDeconstructionTable)world.getTileEntity(new BlockPos(x, y, z)));
          case 9:
-            return new ContainerAlchemyFurnace(player.inventory, (TileAlchemyFurnace)world.getTileEntity(x, y, z));
+            return new ContainerAlchemyFurnace(player.inventory, (TileAlchemyFurnace)world.getTileEntity(new BlockPos(x, y, z)));
          case 10:
-            return new ContainerResearchTable(player.inventory, (TileResearchTable)world.getTileEntity(x, y, z));
+            return new ContainerResearchTable(player.inventory, (TileResearchTable)world.getTileEntity(new BlockPos(x, y, z)));
          case 13:
-            return new ContainerArcaneWorkbench(player.inventory, (TileArcaneWorkbench)world.getTileEntity(x, y, z));
+            return new ContainerArcaneWorkbench(player.inventory, (TileArcaneWorkbench)world.getTileEntity(new BlockPos(x, y, z)));
          case 15:
-            return new ContainerArcaneBore(player.inventory, (TileArcaneBore)world.getTileEntity(x, y, z));
+            return new ContainerArcaneBore(player.inventory, (TileArcaneBore)world.getTileEntity(new BlockPos(x, y, z)));
          case 16:
             return new ContainerHandMirror(player.inventory, world, x, y, z);
          case 17:
             return new ContainerHoverHarness(player.inventory, world, x, y, z);
          case 18:
-            return new ContainerMagicBox(player.inventory, (TileMagicBox)world.getTileEntity(x, y, z));
+            return new ContainerMagicBox(player.inventory, (TileMagicBox)world.getTileEntity(new BlockPos(x, y, z)));
          case 19:
-            return new ContainerSpa(player.inventory, (TileSpa)world.getTileEntity(x, y, z));
+            return new ContainerSpa(player.inventory, (TileSpa)world.getTileEntity(new BlockPos(x, y, z)));
          case 20:
-            return new ContainerFocalManipulator(player.inventory, (TileFocalManipulator)world.getTileEntity(x, y, z));
+            return new ContainerFocalManipulator(player.inventory, (TileFocalManipulator)world.getTileEntity(new BlockPos(x, y, z)));
          default:
             return null;
       }
@@ -177,19 +182,19 @@ public class CommonProxy implements IGuiHandler {
       return 0;
    }
 
-   public void wispFX(World worldObj, double posX, double posY, double posZ, float f, float g, float h, float i) {
+   public void wispFX(World world, double posX, double posY, double posZ, float f, float g, float h, float i) {
    }
 
-   public void sourceStreamFX(World worldObj, double sx, double sy, double sz, float tx, float ty, float tz, int tag) {
+   public void sourceStreamFX(World world, double sx, double sy, double sz, float tx, float ty, float tz, int tag) {
    }
 
-   public void bolt(World worldObj, Entity sourceEntity, Entity targetedEntity) {
+   public void bolt(World world, Entity sourceEntity, Entity targetedEntity) {
    }
 
-   public void furnaceLavaFx(World worldObj, int x, int y, int z, int facingX, int facingZ) {
+   public void furnaceLavaFx(World world, int x, int y, int z, int facingX, int facingZ) {
    }
 
-   public void wispFX2(World worldObj, double posX, double posY, double posZ, float size, int type, boolean shrink, boolean clip, float gravity) {
+   public void wispFX2(World world, double posX, double posY, double posZ, float size, int type, boolean shrink, boolean clip, float gravity) {
    }
 
    public void crucibleFroth(World world, float x, float y, float z) {
@@ -198,39 +203,39 @@ public class CommonProxy implements IGuiHandler {
    public void crucibleFrothDown(World world, float x, float y, float z) {
    }
 
-   public Object beamCont(World worldObj, EntityPlayer pm, double tx, double ty, double tz, int type, int color, boolean reverse, float endmod, Object input, int impact) {
+   public Object beamCont(World world, EntityPlayer pm, double tx, double ty, double tz, int type, int color, boolean reverse, float endmod, Object input, int impact) {
       return null;
    }
 
    public void excavateFX(int x, int y, int z, EntityPlayer p, int bi, int md, int progress) {
    }
 
-   public void burst(World worldObj, double sx, double sy, double sz, float size) {
+   public void burst(World world, double sx, double sy, double sz, float size) {
    }
 
-   public void wispFX3(World worldObj, double posX, double posY, double posZ, double posX2, double posY2, double posZ2, float size, int type, boolean shrink, float gravity) {
+   public void wispFX3(World world, double posX, double posY, double posZ, double posX2, double posY2, double posZ2, float size, int type, boolean shrink, float gravity) {
    }
 
    public void smokeSpiral(World m, double x, double y, double z, float rad, int start, int miny, int color) {
    }
 
-   public void beam(World worldObj, double sx, double sy, double sz, double tx, double ty, double tz, int type, int color, boolean reverse, float endmod, int impact) {
+   public void beam(World world, double sx, double sy, double sz, double tx, double ty, double tz, int type, int color, boolean reverse, float endmod, int impact) {
    }
 
    public void blockRunes(World world, double x, double y, double z, float r, float g, float b, int dur, float grav) {
    }
 
-   public Object beamBore(World worldObj, double px, double py, double pz, double tx, double ty, double tz, int type, int color, boolean reverse, float endmod, Object input, int impact) {
+   public Object beamBore(World world, double px, double py, double pz, double tx, double ty, double tz, int type, int color, boolean reverse, float endmod, Object input, int impact) {
       return null;
    }
 
-   public void boreDigFx(World worldObj, int x, int y, int z, int x2, int y2, int z2, Block bi, int md) {
+   public void boreDigFx(World world, int x, int y, int z, int x2, int y2, int z2, Block bi, int md) {
    }
 
    public void soulTrail(World world, Entity source, Entity target, float r, float g, float b) {
    }
 
-   public void nodeBolt(World worldObj, float x, float y, float z, Entity targetedEntity) {
+   public void nodeBolt(World world, float x, float y, float z, Entity targetedEntity) {
    }
 
    public void splooshFX(Entity e) {
@@ -248,57 +253,57 @@ public class CommonProxy implements IGuiHandler {
    public void taintLandFX(Entity e) {
    }
 
-   public Object swarmParticleFX(World worldObj, Entity targetedEntity, float f1, float f2, float pg) {
+   public Object swarmParticleFX(World world, Entity targetedEntity, float f1, float f2, float pg) {
       return null;
    }
 
    public void taintsplosionFX(Entity e) {
    }
 
-   public IIcon getIcon(String string) {
+   public TextureAtlasSprite getIcon(String string) {
       return null;
    }
 
    public void registerCustomIcons() {
    }
 
-   public void hungryNodeFX(World worldObj, int tx, int ty, int tz, int xCoord, int yCoord, int zCoord, Block block, int md) {
+   public void hungryNodeFX(World world, int tx, int ty, int tz, int xCoord, int yCoord, int zCoord, Block block, int md) {
    }
 
-   public void essentiaTrailFx(World worldObj, int x, int y, int z, int x2, int y2, int z2, int count, int color, float scale) {
+   public void essentiaTrailFx(World world, int x, int y, int z, int x2, int y2, int z2, int count, int color, float scale) {
    }
 
-   public void splooshFX(World worldObj, int x, int y, int z) {
+   public void splooshFX(World world, int x, int y, int z) {
    }
 
-   public void nodeBolt(World worldObj, float x, float y, float z, float x2, float y2, float z2) {
+   public void nodeBolt(World world, float x, float y, float z, float x2, float y2, float z2) {
    }
 
-   public void drawInfusionParticles1(World worldObj, double x, double y, double z, int x2, int y2, int z2, Item bi, int md) {
+   public void drawInfusionParticles1(World world, double x, double y, double z, int x2, int y2, int z2, Item bi, int md) {
    }
 
-   public void drawInfusionParticles2(World worldObj, double x, double y, double z, int x2, int y2, int z2, Block bi, int md) {
+   public void drawInfusionParticles2(World world, double x, double y, double z, int x2, int y2, int z2, Block bi, int md) {
    }
 
-   public void drawInfusionParticles3(World worldObj, double x, double y, double z, int x2, int y2, int z2) {
+   public void drawInfusionParticles3(World world, double x, double y, double z, int x2, int y2, int z2) {
    }
 
-   public void drawInfusionParticles4(World worldObj, double x, double y, double z, int x2, int y2, int z2) {
+   public void drawInfusionParticles4(World world, double x, double y, double z, int x2, int y2, int z2) {
    }
 
-   public void drawVentParticles(World worldObj, double x, double y, double z, double x2, double y2, double z2, int color) {
+   public void drawVentParticles(World world, double x, double y, double z, double x2, double y2, double z2, int color) {
    }
 
-   public void blockWard(World world, double x, double y, double z, ForgeDirection side, float f, float f1, float f2) {
+   public void blockWard(World world, double x, double y, double z, EnumFacing side, float f, float f1, float f2) {
    }
 
-   public void wispFX4(World worldObj, double posX, double posY, double posZ, Entity target, int type, boolean shrink, float gravity) {
+   public void wispFX4(World world, double posX, double posY, double posZ, Entity target, int type, boolean shrink, float gravity) {
    }
 
    public void registerKeyBindings() {
    }
 
-   public Object beamPower(World worldObj, double px, double py, double pz, double tx, double ty, double tz, float r, float g, float b, boolean pulse, Object input) {
+   public Object beamPower(World world, double px, double py, double pz, double tx, double ty, double tz, float r, float g, float b, boolean pulse, Object input) {
       return null;
    }
 
@@ -306,22 +311,22 @@ public class CommonProxy implements IGuiHandler {
       return false;
    }
 
-   public void wispFXEG(World worldObj, double posX, double posY, double posZ, Entity target) {
+   public void wispFXEG(World world, double posX, double posY, double posZ, Entity target) {
    }
 
-   public void reservoirBubble(World worldObj, int xCoord, int yCoord, int zCoord, int color) {
+   public void reservoirBubble(World world, int xCoord, int yCoord, int zCoord, int color) {
    }
 
    public void spark(float x, float y, float z, float size, float r, float g, float b, float a) {
    }
 
-   public void drawVentParticles(World worldObj, double x, double y, double z, double x2, double y2, double z2, int color, float scale) {
+   public void drawVentParticles(World world, double x, double y, double z, double x2, double y2, double z2, int color, float scale) {
    }
 
    public void bottleTaintBreak(World world, double x, double y, double z) {
    }
 
-   public void drawGenericParticles(World worldObj, double x, double y, double z, double x2, double y2, double z2, float r, float g, float b, float alpha, boolean loop, int start, int num, int inc, int age, int delay, float scale) {
+   public void drawGenericParticles(World world, double x, double y, double z, double x2, double y2, double z2, float r, float g, float b, float alpha, boolean loop, int start, int num, int inc, int age, int delay, float scale) {
    }
 
    public void arcLightning(World world, double x, double y, double z, double tx, double ty, double tz, float r, float g, float b, float h) {
@@ -352,22 +357,22 @@ public class CommonProxy implements IGuiHandler {
    }
 
    public void init(FMLInitializationEvent e) {
-      BlockDispenser.dispenseBehaviorRegistry.putObject(ConfigItems.itemPrimalArrow, new BehaviorProjectileDispense() {
+      BlockDispenser.DISPENSE_BEHAVIOR_REGISTRY.putObject(ConfigItems.itemPrimalArrow, new BehaviorProjectileDispense() {
          @Override
          public ItemStack dispenseStack(IBlockSource dispenser, ItemStack stack) {
-            EnumFacing facing = BlockDispenser.func_149937_b(dispenser.getBlockMetadata());
-            IPosition pos = BlockDispenser.func_149939_a(dispenser);
+            EnumFacing facing = dispenser.getBlockState().getValue(BlockDispenser.FACING);
+            IPosition pos = BlockDispenser.getDispensePosition(dispenser);
             ItemStack toDrop = stack.splitStack(1);
             if (ConfigurationHandler.INSTANCE.isDispenserShootPrimalArrow()) {
                World w = dispenser.getWorld();
-               EntityPrimalArrow e = (EntityPrimalArrow) getProjectileEntity(w, pos);
+               EntityPrimalArrow e = (EntityPrimalArrow) getProjectileEntity(w, pos, toDrop);
                e.type = toDrop.getItemDamage();
                if (e.type == 3)
                   // inherent power of earth arrow
                   // this is unfortunately not done on hit, but at bow draw time, so we must emulate this as well
                   e.setKnockbackStrength(1);
-               e.setThrowableHeading(facing.getFrontOffsetX(), facing.getFrontOffsetY() + 0.1F, facing.getFrontOffsetZ(), this.func_82500_b(), this.func_82498_a());
-               w.spawnEntityInWorld(e);
+               e.shoot(facing.getXOffset(), facing.getYOffset() + 0.1F, facing.getZOffset(), this.getProjectileVelocity(), this.getProjectileInaccuracy());
+               w.spawnEntity(e);
             } else {
                doDispense(dispenser.getWorld(), toDrop, 6, facing, pos);
             }
@@ -375,7 +380,7 @@ public class CommonProxy implements IGuiHandler {
          }
 
          @Override
-         protected IProjectile getProjectileEntity(World w, IPosition iposition) {
+         protected IProjectile getProjectileEntity(World w, IPosition iposition, ItemStack stack) {
             return new EntityPrimalArrow(w, iposition.getX(), iposition.getY(), iposition.getZ());
          }
       });
@@ -396,7 +401,7 @@ public class CommonProxy implements IGuiHandler {
 
    @SubscribeEvent
    public void onPlayerLogin(PlayerEvent.PlayerLoggedInEvent e) {
-      if (e.player instanceof EntityPlayerMP && !((EntityPlayerMP) e.player).playerNetServerHandler.netManager.isLocalChannel()) {
+      if (e.player instanceof EntityPlayerMP && !((EntityPlayerMP) e.player).connection.netManager.isLocalChannel()) {
          // no point sending config over to a local client
          Thaumcraft.instance.CHANNEL.sendTo(new MessageSendConfiguration(), (EntityPlayerMP) e.player);
          Thaumcraft.instance.CHANNEL.sendTo(new MessageSendConfigurationV2(), (EntityPlayerMP) e.player);

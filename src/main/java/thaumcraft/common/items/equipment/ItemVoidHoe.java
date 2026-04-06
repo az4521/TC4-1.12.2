@@ -1,8 +1,8 @@
 package thaumcraft.common.items.equipment;
 
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
-import net.minecraft.client.renderer.texture.IIconRegister;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
+import thaumcraft.client.renderers.compat.IIconRegister;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
@@ -13,7 +13,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.potion.Potion;
 import net.minecraft.potion.PotionEffect;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.util.IIcon;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.world.World;
 import thaumcraft.api.IRepairable;
 import thaumcraft.api.IWarpingGear;
@@ -21,7 +21,7 @@ import thaumcraft.common.Thaumcraft;
 import thaumcraft.common.config.ConfigItems;
 
 public class ItemVoidHoe extends ItemHoe implements IRepairable, IWarpingGear {
-   public IIcon icon;
+   public TextureAtlasSprite icon;
 
    public ItemVoidHoe(Item.ToolMaterial enumtoolmaterial) {
       super(enumtoolmaterial);
@@ -30,11 +30,11 @@ public class ItemVoidHoe extends ItemHoe implements IRepairable, IWarpingGear {
 
    @SideOnly(Side.CLIENT)
    public void registerIcons(IIconRegister ir) {
-      this.icon = ir.registerIcon("thaumcraft:voidhoe");
+      this.icon = ir.registerSprite("thaumcraft:voidhoe");
    }
 
    @SideOnly(Side.CLIENT)
-   public IIcon getIconFromDamage(int par1) {
+   public TextureAtlasSprite getIconFromDamage(int par1) {
       return this.icon;
    }
 
@@ -43,15 +43,15 @@ public class ItemVoidHoe extends ItemHoe implements IRepairable, IWarpingGear {
    }
 
    public EnumRarity getRarity(ItemStack itemstack) {
-      return EnumRarity.uncommon;
+      return EnumRarity.UNCOMMON;
    }
 
    public boolean getIsRepairable(ItemStack par1ItemStack, ItemStack par2ItemStack) {
       return par2ItemStack.isItemEqual(new ItemStack(ConfigItems.itemResource, 1, 15)) || super.getIsRepairable(par1ItemStack, par2ItemStack);
    }
 
-   public void onUpdate(ItemStack stack, World world, Entity entity, int p_77663_4_, boolean p_77663_5_) {
-      super.onUpdate(stack, world, entity, p_77663_4_, p_77663_5_);
+   public void onUpdate(ItemStack stack, World world, Entity entity, int itemSlot, boolean isSelected) {
+      super.onUpdate(stack, world, entity, itemSlot, isSelected);
       if (stack.isItemDamaged() && entity != null && entity.ticksExisted % 20 == 0 && entity instanceof EntityLivingBase) {
          stack.damageItem(-1, (EntityLivingBase)entity);
       }
@@ -59,8 +59,8 @@ public class ItemVoidHoe extends ItemHoe implements IRepairable, IWarpingGear {
    }
 
    public boolean onLeftClickEntity(ItemStack stack, EntityPlayer player, Entity entity) {
-      if (!player.worldObj.isRemote && entity instanceof EntityLivingBase && (!(entity instanceof EntityPlayer) || MinecraftServer.getServer().isPVPEnabled())) {
-         ((EntityLivingBase)entity).addPotionEffect(new PotionEffect(Potion.weakness.getId(), 80));
+      if (!player.world.isRemote && entity instanceof EntityLivingBase && (!(entity instanceof EntityPlayer) || player.world.getMinecraftServer() != null && player.world.getMinecraftServer().isPVPEnabled())) {
+         ((EntityLivingBase)entity).addPotionEffect(new PotionEffect(net.minecraft.init.MobEffects.WEAKNESS, 80));
       }
 
       return super.onLeftClickEntity(stack, player, entity);

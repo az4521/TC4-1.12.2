@@ -1,21 +1,21 @@
 package thaumcraft.common.items.wands.foci;
 
-import cpw.mods.fml.client.FMLClientHandler;
-import cpw.mods.fml.common.network.NetworkRegistry;
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
+import net.minecraftforge.fml.client.FMLClientHandler;
+import net.minecraftforge.fml.common.network.NetworkRegistry;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import java.util.ArrayList;
-import net.minecraft.client.renderer.texture.IIconRegister;
+import thaumcraft.client.renderers.compat.IIconRegister;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.DamageSource;
-import net.minecraft.util.MathHelper;
-import net.minecraft.util.MovingObjectPosition;
+import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.Vec3;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import thaumcraft.api.aspects.Aspect;
 import thaumcraft.api.aspects.AspectList;
@@ -44,7 +44,7 @@ public class ItemFocusShock extends ItemFocusBasic {
 
    @SideOnly(Side.CLIENT)
    public void registerIcons(IIconRegister ir) {
-      this.icon = ir.registerIcon("thaumcraft:focus_shock");
+      this.icon = ir.registerSprite("thaumcraft:focus_shock");
    }
 
    public String getSortingHelper(ItemStack itemstack) {
@@ -71,21 +71,21 @@ public class ItemFocusShock extends ItemFocusBasic {
       double px = entityplayer.posX;
       double py = entityplayer.posY;
       double pz = entityplayer.posZ;
-      if (entityplayer.getEntityId() != FMLClientHandler.instance().getClient().thePlayer.getEntityId()) {
-         py = entityplayer.boundingBox.minY + (double)(entityplayer.height / 2.0F) + (double)0.25F;
+      if (entityplayer.getEntityId() != FMLClientHandler.instance().getClient().player.getEntityId()) {
+         py = entityplayer.getEntityBoundingBox().minY + (double)(entityplayer.height / 2.0F) + (double)0.25F;
       }
 
       px += -MathHelper.cos((float) (entityplayer.rotationYaw / 180.0F * Math.PI)) * 0.06F;
       py -= 0.06F;
       pz += -MathHelper.sin((float) (entityplayer.rotationYaw / 180.0F * Math.PI)) * 0.06F;
-      if (entityplayer.getEntityId() != FMLClientHandler.instance().getClient().thePlayer.getEntityId()) {
-         py = entityplayer.boundingBox.minY + (double)(entityplayer.height / 2.0F) + (double)0.25F;
+      if (entityplayer.getEntityId() != FMLClientHandler.instance().getClient().player.getEntityId()) {
+         py = entityplayer.getEntityBoundingBox().minY + (double)(entityplayer.height / 2.0F) + (double)0.25F;
       }
 
-      Vec3 vec3d = entityplayer.getLook(1.0F);
-      px += vec3d.xCoord * 0.3;
-      py += vec3d.yCoord * 0.3;
-      pz += vec3d.zCoord * 0.3;
+      Vec3d vec3d = entityplayer.getLook(1.0F);
+      px += vec3d.x * 0.3;
+      py += vec3d.y * 0.3;
+      pz += vec3d.z * 0.3;
       FXLightningBolt bolt = new FXLightningBolt(world, px, py, pz, xx, yy, zz, world.rand.nextLong(), 6, 0.5F, 8);
       bolt.defaultFractal();
       bolt.setType(2);
@@ -93,22 +93,22 @@ public class ItemFocusShock extends ItemFocusBasic {
       bolt.finalizeBolt();
    }
 
-   public ItemStack onFocusRightClick(ItemStack itemstack, World world, EntityPlayer p, MovingObjectPosition movingobjectposition) {
+   public ItemStack onFocusRightClick(ItemStack itemstack, World world, EntityPlayer p, RayTraceResult movingobjectposition) {
       ItemWandCasting wand = (ItemWandCasting)itemstack.getItem();
       if (this.isUpgradedWith(wand.getFocusItem(itemstack), earthshock)) {
-         if (wand.consumeAllVis(itemstack, p, this.getVisCost(itemstack), !p.worldObj.isRemote, false)) {
+         if (wand.consumeAllVis(itemstack, p, this.getVisCost(itemstack), !p.world.isRemote, false)) {
             if (!world.isRemote) {
                EntityShockOrb orb = new EntityShockOrb(world, p);
                orb.area += this.getUpgradeLevel(wand.getFocusItem(itemstack), FocusUpgradeType.enlarge) * 2;
                orb.damage = (int)((double)orb.damage + (double)wand.getFocusPotency(itemstack) * 1.33);
-               world.spawnEntityInWorld(orb);
-               world.playSoundAtEntity(orb, "thaumcraft:zap", 1.0F, 1.0F + (world.rand.nextFloat() - world.rand.nextFloat()) * 0.2F);
+               world.spawnEntity(orb);
+               { net.minecraft.util.SoundEvent _snd = net.minecraft.util.SoundEvent.REGISTRY.getObject(new net.minecraft.util.ResourceLocation("thaumcraft:zap")); if (_snd != null) world.playSound(null, orb.posX, orb.posY, orb.posZ, _snd, net.minecraft.util.SoundCategory.NEUTRAL, 1.0F, 1.0F + (world.rand.nextFloat() - world.rand.nextFloat()) * 0.2F); };
             }
 
-            p.swingItem();
+            p.swingArm(net.minecraft.util.EnumHand.MAIN_HAND);
          }
       } else {
-         p.setItemInUse(itemstack, Integer.MAX_VALUE);
+         p.setActiveHand(net.minecraft.util.EnumHand.MAIN_HAND);
          WandManager.setCooldown(p, -1);
       }
 
@@ -121,41 +121,41 @@ public class ItemFocusShock extends ItemFocusBasic {
 
    public void doLightningBolt(ItemStack stack, EntityPlayer p, int count) {
       ItemWandCasting wand = (ItemWandCasting)stack.getItem();
-      if (!wand.consumeAllVis(stack, p, this.getVisCost(stack), !p.worldObj.isRemote, false)) {
-         p.stopUsingItem();
+      if (!wand.consumeAllVis(stack, p, this.getVisCost(stack), !p.world.isRemote, false)) {
+         p.stopActiveHand();
       } else {
          int potency = wand.getFocusPotency(stack);
-         Entity pointedEntity = EntityUtils.getPointedEntity(p.worldObj, p, 0.0F, 20.0F, 1.1F);
-         if (p.worldObj.isRemote) {
-            MovingObjectPosition mop = BlockUtils.getTargetBlock(p.worldObj, p, false);
-            Vec3 v = p.getLook(2.0F);
-            double px = p.posX + v.xCoord * (double)10.0F;
-            double py = p.posY + v.yCoord * (double)10.0F;
-            double pz = p.posZ + v.zCoord * (double)10.0F;
+         Entity pointedEntity = EntityUtils.getPointedEntity(p.world, p, 0.0F, 20.0F, 1.1F);
+         if (p.world.isRemote) {
+            RayTraceResult mop = BlockUtils.getTargetBlock(p.world, p, false);
+            Vec3d v = p.getLook(2.0F);
+            double px = p.posX + v.x * (double)10.0F;
+            double py = p.posY + v.y * (double)10.0F;
+            double pz = p.posZ + v.z * (double)10.0F;
             if (mop != null) {
-               px = mop.hitVec.xCoord;
-               py = mop.hitVec.yCoord;
-               pz = mop.hitVec.zCoord;
+               px = mop.hitVec.x;
+               py = mop.hitVec.y;
+               pz = mop.hitVec.z;
 
                for(int a = 0; a < 5; ++a) {
-                  Thaumcraft.proxy.sparkle((float)px + (p.worldObj.rand.nextFloat() - p.worldObj.rand.nextFloat()) * 0.3F, (float)py + (p.worldObj.rand.nextFloat() - p.worldObj.rand.nextFloat()) * 0.3F, (float)pz + (p.worldObj.rand.nextFloat() - p.worldObj.rand.nextFloat()) * 0.3F, 2.0F + p.worldObj.rand.nextFloat(), 2, 0.05F + p.worldObj.rand.nextFloat() * 0.05F);
+                  Thaumcraft.proxy.sparkle((float)px + (p.world.rand.nextFloat() - p.world.rand.nextFloat()) * 0.3F, (float)py + (p.world.rand.nextFloat() - p.world.rand.nextFloat()) * 0.3F, (float)pz + (p.world.rand.nextFloat() - p.world.rand.nextFloat()) * 0.3F, 2.0F + p.world.rand.nextFloat(), 2, 0.05F + p.world.rand.nextFloat() * 0.05F);
                }
             }
 
             if (pointedEntity != null) {
                px = pointedEntity.posX;
-               py = pointedEntity.boundingBox.minY + (double)(pointedEntity.height / 2.0F);
+               py = pointedEntity.getEntityBoundingBox().minY + (double)(pointedEntity.height / 2.0F);
                pz = pointedEntity.posZ;
 
                for(int a = 0; a < 5; ++a) {
-                  Thaumcraft.proxy.sparkle((float)px + (p.worldObj.rand.nextFloat() - p.worldObj.rand.nextFloat()) * 0.6F, (float)py + (p.worldObj.rand.nextFloat() - p.worldObj.rand.nextFloat()) * 0.6F, (float)pz + (p.worldObj.rand.nextFloat() - p.worldObj.rand.nextFloat()) * 0.6F, 2.0F + p.worldObj.rand.nextFloat(), 2, 0.05F + p.worldObj.rand.nextFloat() * 0.05F);
+                  Thaumcraft.proxy.sparkle((float)px + (p.world.rand.nextFloat() - p.world.rand.nextFloat()) * 0.6F, (float)py + (p.world.rand.nextFloat() - p.world.rand.nextFloat()) * 0.6F, (float)pz + (p.world.rand.nextFloat() - p.world.rand.nextFloat()) * 0.6F, 2.0F + p.world.rand.nextFloat(), 2, 0.05F + p.world.rand.nextFloat() * 0.05F);
                }
             }
 
-            shootLightning(p.worldObj, p, px, py, pz, true);
+            shootLightning(p.world, p, px, py, pz, true);
          } else {
-            p.worldObj.playSoundEffect(p.posX, p.posY, p.posZ, "thaumcraft:shock", 0.25F, 1.0F);
-            if (pointedEntity instanceof EntityLivingBase && (!(pointedEntity instanceof EntityPlayer) || MinecraftServer.getServer().isPVPEnabled())) {
+            { net.minecraft.util.SoundEvent _snd = net.minecraft.util.SoundEvent.REGISTRY.getObject(new net.minecraft.util.ResourceLocation("thaumcraft:shock")); if (_snd != null) p.world.playSound(null, p.posX, p.posY, p.posZ, _snd, net.minecraft.util.SoundCategory.NEUTRAL, 0.25F, 1.0F); }
+            if (pointedEntity instanceof EntityLivingBase && (!(pointedEntity instanceof EntityPlayer) || p.world.getMinecraftServer().isPVPEnabled())) {
                int cl = this.getUpgradeLevel(wand.getFocusItem(stack), chainlightning) * 2;
                pointedEntity.attackEntityFrom(DamageSource.causePlayerDamage(p), (float)((cl > 0 ? 6 : 4) + potency));
                if (cl > 0) {
@@ -166,13 +166,13 @@ public class ItemFocusShock extends ItemFocusBasic {
 
                   while(cl > 0) {
                      --cl;
-                     ArrayList<Entity> list = EntityUtils.getEntitiesInRange(p.worldObj, center.posX, center.posY, center.posZ, p, EntityLivingBase.class, 8.0F);
+                     ArrayList<Entity> list = EntityUtils.getEntitiesInRange(p.world, center.posX, center.posY, center.posZ, p, EntityLivingBase.class, 8.0F);
                      double d = Double.MAX_VALUE;
                      Entity closest = null;
 
                      for(Entity e : list) {
-                        if (!targets.contains(e.getEntityId()) && (!(e instanceof EntityPlayer) || MinecraftServer.getServer().isPVPEnabled())) {
-                           double dd = e.getDistanceSqToEntity(center);
+                        if (!targets.contains(e.getEntityId()) && (!(e instanceof EntityPlayer) || p.world.getMinecraftServer().isPVPEnabled())) {
+                           double dd = e.getDistanceSq(center);
                            if (dd < d) {
                               closest = e;
                               d = dd;
@@ -181,7 +181,7 @@ public class ItemFocusShock extends ItemFocusBasic {
                      }
 
                      if (closest != null) {
-                        PacketHandler.INSTANCE.sendToAllAround(new PacketFXZap(center.getEntityId(), closest.getEntityId()), new NetworkRegistry.TargetPoint(p.worldObj.provider.dimensionId, center.posX, center.posY, center.posZ, 64.0F));
+                        PacketHandler.INSTANCE.sendToAllAround(new PacketFXZap(center.getEntityId(), closest.getEntityId()), new NetworkRegistry.TargetPoint(p.world.provider.getDimension(), center.posX, center.posY, center.posZ, 64.0F));
                         targets.add(closest.getEntityId());
                         closest.attackEntityFrom(DamageSource.causePlayerDamage(p), (float)(4 + potency));
                         center = (EntityLivingBase)closest;

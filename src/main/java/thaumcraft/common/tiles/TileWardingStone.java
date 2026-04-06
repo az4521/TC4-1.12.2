@@ -4,29 +4,28 @@ import java.util.List;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.AxisAlignedBB;
-import net.minecraft.util.MathHelper;
+import net.minecraft.util.math.AxisAlignedBB;
+import net.minecraft.util.math.MathHelper;
 import thaumcraft.common.config.ConfigBlocks;
 
-public class TileWardingStone extends TileEntity {
+public class TileWardingStone extends TileEntity implements net.minecraft.util.ITickable {
    int count = 0;
 
    public boolean gettingPower() {
-      return this.worldObj.isBlockIndirectlyGettingPowered(this.xCoord, this.yCoord, this.zCoord);
+      return this.world.isBlockPowered(this.getPos());
    }
 
-   public boolean canUpdate() {
-       return super.canUpdate();
-   }
+   @Override
+   public void update() { updateEntity(); }
 
    public void updateEntity() {
-      if (!this.worldObj.isRemote) {
+      if (!this.world.isRemote) {
          if (this.count == 0) {
-            this.count = this.worldObj.rand.nextInt(100);
+            this.count = this.world.rand.nextInt(100);
          }
 
          if (this.count % 5 == 0 && !this.gettingPower()) {
-            List<EntityLivingBase> targets = this.worldObj.getEntitiesWithinAABB(EntityLivingBase.class, AxisAlignedBB.getBoundingBox(this.xCoord, this.yCoord, this.zCoord, this.xCoord + 1, this.yCoord + 3, this.zCoord + 1).expand(0.1, 0.1, 0.1));
+            List<EntityLivingBase> targets = this.world.getEntitiesWithinAABB(EntityLivingBase.class, new AxisAlignedBB(this.getPos().getX(), this.getPos().getY(), this.getPos().getZ(), this.getPos().getX() + 1, this.getPos().getY() + 3, this.getPos().getZ() + 1).expand(0.1, 0.1, 0.1));
             if (!targets.isEmpty()) {
                for(EntityLivingBase e : targets) {
                   if (!e.onGround && !(e instanceof EntityPlayer)) {
@@ -37,12 +36,16 @@ public class TileWardingStone extends TileEntity {
          }
 
          if (++this.count % 100 == 0) {
-            if ((this.worldObj.getBlock(this.xCoord, this.yCoord + 1, this.zCoord) != ConfigBlocks.blockAiry || this.worldObj.getBlockMetadata(this.xCoord, this.yCoord + 1, this.zCoord) != 3) && this.worldObj.getBlock(this.xCoord, this.yCoord + 1, this.zCoord).isReplaceable(this.worldObj, this.xCoord, this.yCoord + 1, this.zCoord)) {
-               this.worldObj.setBlock(this.xCoord, this.yCoord + 1, this.zCoord, ConfigBlocks.blockAiry, 4, 3);
+            net.minecraft.util.math.BlockPos posAbove1 = new net.minecraft.util.math.BlockPos(this.getPos().getX(), this.getPos().getY() + 1, this.getPos().getZ());
+            net.minecraft.block.state.IBlockState stateAbove1 = this.world.getBlockState(posAbove1);
+            if ((stateAbove1.getBlock() != ConfigBlocks.blockAiry || stateAbove1.getBlock().getMetaFromState(stateAbove1) != 3) && stateAbove1.getBlock().isReplaceable(this.world, posAbove1)) {
+               this.world.setBlockState(posAbove1, (ConfigBlocks.blockAiry).getStateFromMeta(4), 3);
             }
 
-            if ((this.worldObj.getBlock(this.xCoord, this.yCoord + 2, this.zCoord) != ConfigBlocks.blockAiry || this.worldObj.getBlockMetadata(this.xCoord, this.yCoord + 2, this.zCoord) != 3) && this.worldObj.getBlock(this.xCoord, this.yCoord + 2, this.zCoord).isReplaceable(this.worldObj, this.xCoord, this.yCoord + 2, this.zCoord)) {
-               this.worldObj.setBlock(this.xCoord, this.yCoord + 2, this.zCoord, ConfigBlocks.blockAiry, 4, 3);
+            net.minecraft.util.math.BlockPos posAbove2 = new net.minecraft.util.math.BlockPos(this.getPos().getX(), this.getPos().getY() + 2, this.getPos().getZ());
+            net.minecraft.block.state.IBlockState stateAbove2 = this.world.getBlockState(posAbove2);
+            if ((stateAbove2.getBlock() != ConfigBlocks.blockAiry || stateAbove2.getBlock().getMetaFromState(stateAbove2) != 3) && stateAbove2.getBlock().isReplaceable(this.world, posAbove2)) {
+               this.world.setBlockState(posAbove2, (ConfigBlocks.blockAiry).getStateFromMeta(4), 3);
             }
          }
       }

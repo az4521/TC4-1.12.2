@@ -3,9 +3,10 @@ package thaumcraft.common.entities.ai.inventory;
 import net.minecraft.entity.ai.EntityAIBase;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.inventory.IInventory;
+import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.ChunkCoordinates;
-import net.minecraftforge.common.util.ForgeDirection;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.EnumFacing;
 import thaumcraft.common.config.Config;
 import thaumcraft.common.entities.golems.EntityGolemBase;
 
@@ -21,13 +22,13 @@ public class AIHomeDrop extends EntityAIBase {
    }
 
    public boolean shouldExecute() {
-      ChunkCoordinates home = this.theGolem.getHomePosition();
-      if (this.theGolem.getCarried() != null && this.theGolem.getNavigator().noPath() && !(this.theGolem.getDistanceSq((float)home.posX + 0.5F, (float)home.posY + 0.5F, (float)home.posZ + 0.5F) > (double)5.0F)) {
-         ForgeDirection facing = ForgeDirection.getOrientation(this.theGolem.homeFacing);
-         int cX = home.posX - facing.offsetX;
-         int cY = home.posY - facing.offsetY;
-         int cZ = home.posZ - facing.offsetZ;
-         TileEntity tile = this.theGolem.worldObj.getTileEntity(cX, cY, cZ);
+      BlockPos home = this.theGolem.getHomePosition();
+      if (this.theGolem.getCarried() != null && this.theGolem.getNavigator().noPath() && !(this.theGolem.getDistanceSq((double)home.getX() + 0.5D, (double)home.getY() + 0.5D, (double)home.getZ() + 0.5D) > 5.0D)) {
+         EnumFacing facing = EnumFacing.byIndex(this.theGolem.homeFacing);
+         int cX = home.getX() - facing.getXOffset();
+         int cY = home.getY() - facing.getYOffset();
+         int cZ = home.getZ() - facing.getZOffset();
+         TileEntity tile = this.theGolem.world.getTileEntity(new BlockPos(cX, cY, cZ));
          return !(tile instanceof IInventory);
       } else {
          return false;
@@ -41,7 +42,7 @@ public class AIHomeDrop extends EntityAIBase {
    public void resetTask() {
       try {
          if (this.inv != null && Config.golemChestInteract) {
-            this.inv.closeInventory();
+            this.inv.closeInventory(null);
          }
       } catch (Exception ignored) {
       }
@@ -56,23 +57,23 @@ public class AIHomeDrop extends EntityAIBase {
 
    public void startExecuting() {
       this.count = 200;
-      ChunkCoordinates home = this.theGolem.getHomePosition();
-      ForgeDirection facing = ForgeDirection.getOrientation(this.theGolem.homeFacing);
-      int cX = home.posX - facing.offsetX;
-      int cY = home.posY - facing.offsetY;
-      int cZ = home.posZ - facing.offsetZ;
-      EntityItem item = new EntityItem(this.theGolem.worldObj, this.theGolem.posX, this.theGolem.posY + (double)(this.theGolem.height / 2.0F), this.theGolem.posZ, this.theGolem.itemCarried.copy());
-      if (item != null) {
-         double distance = this.theGolem.getDistance((double)cX + (double)0.5F, (double)cY + (double)0.5F, (double)cZ + (double)0.5F);
-         item.motionX = ((double)cX + (double)0.5F - this.theGolem.posX) * (distance / (double)3.0F);
-         item.motionY = 0.1 + ((double)cY + (double)0.5F - (this.theGolem.posY + (double)(this.theGolem.height / 2.0F))) * (distance / (double)3.0F);
-         item.motionZ = ((double)cZ + (double)0.5F - this.theGolem.posZ) * (distance / (double)3.0F);
-         item.delayBeforeCanPickup = 10;
-         this.theGolem.worldObj.spawnEntityInWorld(item);
-         this.theGolem.itemCarried = null;
+      BlockPos home = this.theGolem.getHomePosition();
+      EnumFacing facing = EnumFacing.byIndex(this.theGolem.homeFacing);
+      int cX = home.getX() - facing.getXOffset();
+      int cY = home.getY() - facing.getYOffset();
+      int cZ = home.getZ() - facing.getZOffset();
+      ItemStack carried = this.theGolem.itemCarried;
+      if (carried != null && !carried.isEmpty()) {
+         EntityItem item = new EntityItem(this.theGolem.world, this.theGolem.posX, this.theGolem.posY + (double)(this.theGolem.height / 2.0F), this.theGolem.posZ, carried.copy());
+         double distance = this.theGolem.getDistance((double)cX + 0.5D, (double)cY + 0.5D, (double)cZ + 0.5D);
+         item.motionX = ((double)cX + 0.5D - this.theGolem.posX) * (distance / 3.0D);
+         item.motionY = 0.1D + ((double)cY + 0.5D - (this.theGolem.posY + (double)(this.theGolem.height / 2.0F))) * (distance / 3.0D);
+         item.motionZ = ((double)cZ + 0.5D - this.theGolem.posZ) * (distance / 3.0D);
+         item.setPickupDelay(10);
+         this.theGolem.world.spawnEntity(item);
+         this.theGolem.itemCarried = ItemStack.EMPTY;
          this.theGolem.startActionTimer();
          this.theGolem.updateCarried();
       }
-
    }
 }

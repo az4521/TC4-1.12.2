@@ -2,21 +2,22 @@ package thaumcraft.common.entities.ai.combat;
 
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.ai.EntityAIBase;
-import net.minecraft.pathfinding.PathEntity;
+import net.minecraft.pathfinding.Path;
+import net.minecraft.util.EnumHand;
 import net.minecraft.world.World;
 import thaumcraft.common.entities.golems.EntityGolemBase;
 
 public class AIGolemAttackOnCollide extends EntityAIBase {
-   World worldObj;
+   World world;
    EntityGolemBase theGolem;
    EntityLivingBase entityTarget;
    int attackTick = 0;
-   PathEntity entityPathEntity;
+   Path entityPathEntity;
    private int counter;
 
    public AIGolemAttackOnCollide(EntityGolemBase par1EntityLiving) {
       this.theGolem = par1EntityLiving;
-      this.worldObj = par1EntityLiving.worldObj;
+      this.world = par1EntityLiving.world;
       this.setMutexBits(3);
    }
 
@@ -45,7 +46,7 @@ public class AIGolemAttackOnCollide extends EntityAIBase {
 
    public void resetTask() {
       this.entityTarget = null;
-      this.theGolem.getNavigator().clearPathEntity();
+      this.theGolem.getNavigator().clearPath();
    }
 
    public void updateTask() {
@@ -57,10 +58,10 @@ public class AIGolemAttackOnCollide extends EntityAIBase {
 
       this.attackTick = Math.max(this.attackTick - 1, 0);
       double attackRange = (double)(this.entityTarget.width * 2.0F * this.entityTarget.width * 2.0F) + (double)1.0F;
-      if (this.theGolem.getDistanceSq(this.entityTarget.posX, this.entityTarget.boundingBox.minY, this.entityTarget.posZ) <= attackRange && this.attackTick <= 0) {
+      if (this.theGolem.getDistanceSq(this.entityTarget.posX, this.entityTarget.getEntityBoundingBox().minY, this.entityTarget.posZ) <= attackRange && this.attackTick <= 0) {
          this.attackTick = this.theGolem.getAttackSpeed();
-         if (this.theGolem.getHeldItem() != null) {
-            this.theGolem.swingItem();
+         if (!this.theGolem.getHeldItemMainhand().isEmpty()) {
+            this.theGolem.swingArm(EnumHand.MAIN_HAND);
          } else {
             this.theGolem.startActionTimer();
          }

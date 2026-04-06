@@ -1,7 +1,7 @@
 package thaumcraft.common.items.wands;
 
 import baubles.api.BaublesApi;
-import cpw.mods.fml.common.network.NetworkRegistry;
+import net.minecraftforge.fml.common.network.NetworkRegistry;
 
 import java.util.HashMap;
 import java.util.List;
@@ -18,7 +18,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.potion.Potion;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.world.World;
-import net.minecraftforge.common.util.ForgeDirection;
+import net.minecraft.util.EnumFacing;
 import net.minecraftforge.oredict.OreDictionary;
 import simpleutils.bauble.BaubleConsumer;
 import thaumcraft.api.IArchitect;
@@ -48,9 +48,9 @@ import thaumcraft.common.tiles.TileNode;
 import thaumcraft.common.tiles.TilePedestal;
 import thaumcraft.common.tiles.TileThaumatorium;
 
-import static baubles.api.expanded.BaubleExpandedSlots.slotLimit;
 import static simpleutils.bauble.BaubleUtils.forEachBauble;
 import static thaumcraft.common.Thaumcraft.log;
+import net.minecraft.util.math.BlockPos;
 
 public class WandManager implements IWandTriggerManager {
     static HashMap<Integer, Long> cooldownServer = new HashMap<>();
@@ -79,15 +79,15 @@ public class WandManager implements IWandTriggerManager {
                 }
             }
 
-            if (player.isPotionActive(Config.potionVisExhaustID) || player.isPotionActive(Config.potionInfVisExhaustID)) {
+            if (player.isPotionActive(net.minecraft.potion.Potion.getPotionById(Config.potionVisExhaustID)) || player.isPotionActive(net.minecraft.potion.Potion.getPotionById(Config.potionInfVisExhaustID))) {
                 int level1 = 0;
                 int level2 = 0;
-                if (player.isPotionActive(Config.potionVisExhaustID)) {
-                    level1 = player.getActivePotionEffect(Potion.potionTypes[Config.potionVisExhaustID]).getAmplifier();
+                if (player.isPotionActive(net.minecraft.potion.Potion.getPotionById(Config.potionVisExhaustID))) {
+                    level1 = player.getActivePotionEffect(net.minecraft.potion.Potion.getPotionById(Config.potionVisExhaustID)).getAmplifier();
                 }
 
-                if (player.isPotionActive(Config.potionInfVisExhaustID)) {
-                    level2 = player.getActivePotionEffect(Potion.potionTypes[Config.potionInfVisExhaustID]).getAmplifier();
+                if (player.isPotionActive(net.minecraft.potion.Potion.getPotionById(Config.potionInfVisExhaustID))) {
+                    level2 = player.getActivePotionEffect(net.minecraft.potion.Potion.getPotionById(Config.potionInfVisExhaustID)).getAmplifier();
                 }
 
                 total.addAndGet((Math.max(level1, level2) + 1) * 10);
@@ -109,7 +109,7 @@ public class WandManager implements IWandTriggerManager {
         return forEachBauble(player, ItemWandCasting.class, wandCastingBaubleConsumer);
 
 //      for(int a = player.inventory.mainInventory.length - 1; a >= 0; --a) {
-//         ItemStack item = player.inventory.mainInventory[a];
+//         ItemStack item = player.inventory.mainInventory.get(a);
 //         if (item != null && item.getItem() instanceof ItemWandCasting) {
 //            boolean done = ((ItemWandCasting)item.getItem()).consumeAllVis(item, player, cost, true, true);
 //            if (done) {
@@ -122,12 +122,12 @@ public class WandManager implements IWandTriggerManager {
     public static boolean createCrucible(ItemStack is, EntityPlayer player, World world, int x, int y, int z) {
         ItemWandCasting wand = (ItemWandCasting) is.getItem();
         if (!world.isRemote) {
-            world.playSoundEffect((double) x + (double) 0.5F, (double) y + (double) 0.5F, (double) z + (double) 0.5F, "thaumcraft:wand", 1.0F, 1.0F);
-            world.setBlockToAir(x, y, z);
-            world.setBlock(x, y, z, ConfigBlocks.blockMetalDevice, 0, 3);
-            world.notifyBlocksOfNeighborChange(x, y, z, world.getBlock(x, y, z));
-            world.markBlockForUpdate(x, y, z);
-            world.addBlockEvent(x, y, z, ConfigBlocks.blockMetalDevice, 1, 1);
+            world.playSound(null, (double) x + 0.5, (double) y + 0.5, (double) z + 0.5, net.minecraft.util.SoundEvent.REGISTRY.getObject(new net.minecraft.util.ResourceLocation("thaumcraft", "wand")), net.minecraft.util.SoundCategory.BLOCKS, 1.0F, 1.0F);
+            world.setBlockToAir(new BlockPos(x, y, z));
+        world.setBlockState(new BlockPos(x, y, z), ConfigBlocks.blockMetalDevice.getStateFromMeta(0), 3);
+            world.notifyNeighborsOfStateChange(new BlockPos(x, y, z), world.getBlockState(new BlockPos(x, y, z)).getBlock(), true);
+            { net.minecraft.block.state.IBlockState _bs = world.getBlockState(new BlockPos(x, y, z)); world.notifyBlockUpdate(new BlockPos(x, y, z), _bs, _bs, 3); }
+            world.addBlockEvent(new BlockPos(x, y, z), ConfigBlocks.blockMetalDevice, 1, 1);
             return true;
         } else {
             return false;
@@ -167,16 +167,17 @@ public class WandManager implements IWandTriggerManager {
                 for (int zz = 0; zz < 3; ++zz) {
                     if (blueprint[yy][xx][zz] == null) {
                         if (xx == 1 && zz == 1 && yy == 2) {
-                            TileEntity t = world.getTileEntity(x + xx, y - yy + 2, z + zz);
+                            TileEntity t = world.getTileEntity(new BlockPos(x + xx, y - yy + 2, z + zz));
                             if (!(t instanceof TilePedestal)) {
                                 return false;
                             }
-                        } else if (!world.isAirBlock(x + xx, y - yy + 2, z + zz)) {
+                        } else if (!world.isAirBlock(new net.minecraft.util.math.BlockPos(x + xx, y - yy + 2, z + zz))) {
                             return false;
                         }
                     } else {
-                        Block block = world.getBlock(x + xx, y - yy + 2, z + zz);
-                        int md = world.getBlockMetadata(x + xx, y - yy + 2, z + zz);
+                        Block block = world.getBlockState(new net.minecraft.util.math.BlockPos(x + xx, y - yy + 2, z + zz)).getBlock();
+                        int md =
+        world.getBlockState(new net.minecraft.util.math.BlockPos(x + xx, y - yy + 2, z + zz)).getBlock().getMetaFromState(world.getBlockState(new net.minecraft.util.math.BlockPos(x + xx, y - yy + 2, z + zz)));
                         if (!(new ItemStack(block, 1, md)).isItemEqual(blueprint[yy][xx][zz])) {
                             return false;
                         }
@@ -196,29 +197,29 @@ public class WandManager implements IWandTriggerManager {
                 for (int zz = 0; zz < 3; ++zz) {
                     if (blueprint[yy][xx][zz] != 0) {
                         if (blueprint[yy][xx][zz] == 1) {
-                            world.setBlock(x + xx, y - yy + 2, z + zz, ConfigBlocks.blockStoneDevice, 4, 3);
-                            world.addBlockEvent(x + xx, y - yy + 2, z + zz, ConfigBlocks.blockStoneDevice, 1, 0);
+        world.setBlockState(new BlockPos(x + xx, y - yy + 2, z + zz), ConfigBlocks.blockStoneDevice.getStateFromMeta(4), 3);
+                            world.addBlockEvent(new BlockPos(x + xx, y - yy + 2, z + zz), ConfigBlocks.blockStoneDevice, 1, 0);
                         }
 
                         if (blueprint[yy][xx][zz] > 1 && blueprint[yy][xx][zz] < 9) {
-                            world.setBlock(x + xx, y - yy + 2, z + zz, ConfigBlocks.blockStoneDevice, 3, 3);
-                            TileInfusionPillar tip = (TileInfusionPillar) world.getTileEntity(x + xx, y - yy + 2, z + zz);
+        world.setBlockState(new BlockPos(x + xx, y - yy + 2, z + zz), ConfigBlocks.blockStoneDevice.getStateFromMeta(3), 3);
+                            TileInfusionPillar tip = (TileInfusionPillar) world.getTileEntity(new BlockPos(x + xx, y - yy + 2, z + zz));
                             tip.orientation = (byte) blueprint[yy][xx][zz];
-                            world.markBlockForUpdate(x + xx, y - yy + 2, z + zz);
-                            world.addBlockEvent(x + xx, y - yy + 2, z + zz, ConfigBlocks.blockStoneDevice, 1, 0);
+                            world.notifyBlockUpdate(new BlockPos(x + xx, y - yy + 2, z + zz), world.getBlockState(new BlockPos(x + xx, y - yy + 2, z + zz)), world.getBlockState(new BlockPos(x + xx, y - yy + 2, z + zz)), 3);
+                            world.addBlockEvent(new BlockPos(x + xx, y - yy + 2, z + zz), ConfigBlocks.blockStoneDevice, 1, 0);
                         }
 
                         if (blueprint[yy][xx][zz] == 9) {
-                            TileInfusionMatrix tis = (TileInfusionMatrix) world.getTileEntity(x + xx, y - yy + 2, z + zz);
+                            TileInfusionMatrix tis = (TileInfusionMatrix) world.getTileEntity(new BlockPos(x + xx, y - yy + 2, z + zz));
                             tis.active = true;
-                            world.markBlockForUpdate(x + xx, y - yy + 2, z + zz);
+                            world.notifyBlockUpdate(new BlockPos(x + xx, y - yy + 2, z + zz), world.getBlockState(new BlockPos(x + xx, y - yy + 2, z + zz)), world.getBlockState(new BlockPos(x + xx, y - yy + 2, z + zz)), 3);
                         }
                     }
                 }
             }
         }
 
-        world.playSoundEffect((double) x + (double) 0.5F, (double) y + (double) 0.5F, (double) z + (double) 0.5F, "thaumcraft:wand", 1.0F, 1.0F);
+        world.playSound(null, (double) x + 0.5, (double) y + 0.5, (double) z + 0.5, net.minecraft.util.SoundEvent.REGISTRY.getObject(new net.minecraft.util.ResourceLocation("thaumcraft", "wand")), net.minecraft.util.SoundCategory.BLOCKS, 1.0F, 1.0F);
     }
 
     public static boolean createNodeJar(ItemStack itemstack, EntityPlayer player, World world, int x, int y, int z) {
@@ -244,8 +245,9 @@ public class WandManager implements IWandTriggerManager {
 
     public static boolean createThaumatorium(ItemStack itemstack, EntityPlayer player, World world, int x, int y, int z, int side) {
         ItemWandCasting wand = (ItemWandCasting) itemstack.getItem();
-        if (world.getBlock(x, y + 1, z) != ConfigBlocks.blockMetalDevice || world.getBlockMetadata(x, y + 1, z) != 9 || world.getBlock(x, y - 1, z) != ConfigBlocks.blockMetalDevice || world.getBlockMetadata(x, y - 1, z) != 0) {
-            if (world.getBlock(x, y - 1, z) != ConfigBlocks.blockMetalDevice || world.getBlockMetadata(x, y - 1, z) != 9 || world.getBlock(x, y - 2, z) != ConfigBlocks.blockMetalDevice || world.getBlockMetadata(x, y - 2, z) != 0) {
+        if (world.getBlockState(new net.minecraft.util.math.BlockPos(x, y + 1, z)).getBlock() != ConfigBlocks.blockMetalDevice ||
+        world.getBlockState(new net.minecraft.util.math.BlockPos(x, y + 1, z)).getBlock().getMetaFromState(world.getBlockState(new net.minecraft.util.math.BlockPos(x, y + 1, z))) != 9 || world.getBlockState(new net.minecraft.util.math.BlockPos(x, y - 1, z)).getBlock() != ConfigBlocks.blockMetalDevice || world.getBlockState(new net.minecraft.util.math.BlockPos(x, y - 1, z)).getBlock().getMetaFromState(world.getBlockState(new net.minecraft.util.math.BlockPos(x, y - 1, z))) != 0) {
+            if (world.getBlockState(new net.minecraft.util.math.BlockPos(x, y - 1, z)).getBlock() != ConfigBlocks.blockMetalDevice || world.getBlockState(new net.minecraft.util.math.BlockPos(x, y - 1, z)).getBlock().getMetaFromState(world.getBlockState(new net.minecraft.util.math.BlockPos(x, y - 1, z))) != 9 || world.getBlockState(new net.minecraft.util.math.BlockPos(x, y - 2, z)).getBlock() != ConfigBlocks.blockMetalDevice || world.getBlockState(new net.minecraft.util.math.BlockPos(x, y - 2, z)).getBlock().getMetaFromState(world.getBlockState(new net.minecraft.util.math.BlockPos(x, y - 2, z))) != 0) {
                 return false;
             }
 
@@ -253,20 +255,20 @@ public class WandManager implements IWandTriggerManager {
         }
 
         if (wand.consumeAllVisCrafting(itemstack, player, (new AspectList()).add(Aspect.FIRE, 15).add(Aspect.ORDER, 30).add(Aspect.WATER, 30), true) && !world.isRemote) {
-            world.setBlock(x, y, z, ConfigBlocks.blockMetalDevice, 10, 0);
-            world.setBlock(x, y + 1, z, ConfigBlocks.blockMetalDevice, 11, 0);
-            TileEntity tile = world.getTileEntity(x, y, z);
+        world.setBlockState(new BlockPos(x, y, z), ConfigBlocks.blockMetalDevice.getStateFromMeta(10), 0);
+        world.setBlockState(new BlockPos(x, y + 1, z), ConfigBlocks.blockMetalDevice.getStateFromMeta(11), 0);
+            TileEntity tile = world.getTileEntity(new BlockPos(x, y, z));
             if (tile instanceof TileThaumatorium) {
-                ((TileThaumatorium) tile).facing = ForgeDirection.getOrientation(side);
+                ((TileThaumatorium) tile).facing = net.minecraft.util.EnumFacing.byIndex(side);
             }
 
-            world.markBlockForUpdate(x, y, z);
-            world.markBlockForUpdate(x, y + 1, z);
-            world.notifyBlockChange(x, y, z, ConfigBlocks.blockMetalDevice);
-            world.notifyBlockChange(x, y + 1, z, ConfigBlocks.blockMetalDevice);
-            PacketHandler.INSTANCE.sendToAllAround(new PacketFXBlockSparkle(x, y, z, -9999), new NetworkRegistry.TargetPoint(world.provider.dimensionId, x, y, z, 32.0F));
-            PacketHandler.INSTANCE.sendToAllAround(new PacketFXBlockSparkle(x, y + 1, z, -9999), new NetworkRegistry.TargetPoint(world.provider.dimensionId, x, y, z, 32.0F));
-            world.playSoundEffect((double) x + (double) 0.5F, (double) y + (double) 0.5F, (double) z + (double) 0.5F, "thaumcraft:wand", 1.0F, 1.0F);
+            { net.minecraft.block.state.IBlockState _bs = world.getBlockState(new BlockPos(x, y, z)); world.notifyBlockUpdate(new BlockPos(x, y, z), _bs, _bs, 3); }
+            world.notifyBlockUpdate(new BlockPos(x, y + 1, z), world.getBlockState(new BlockPos(x, y + 1, z)), world.getBlockState(new BlockPos(x, y + 1, z)), 3);
+            world.notifyNeighborsOfStateChange(new BlockPos(x, y, z), ConfigBlocks.blockMetalDevice, true);
+            world.notifyNeighborsOfStateChange(new BlockPos(x, y + 1, z), ConfigBlocks.blockMetalDevice, true);
+            PacketHandler.INSTANCE.sendToAllAround(new PacketFXBlockSparkle(x, y, z, -9999), new NetworkRegistry.TargetPoint(world.provider.getDimension(), x, y, z, 32.0F));
+            PacketHandler.INSTANCE.sendToAllAround(new PacketFXBlockSparkle(x, y + 1, z, -9999), new NetworkRegistry.TargetPoint(world.provider.getDimension(), x, y, z, 32.0F));
+            world.playSound(null, (double) x + 0.5, (double) y + 0.5, (double) z + 0.5, net.minecraft.util.SoundEvent.REGISTRY.getObject(new net.minecraft.util.ResourceLocation("thaumcraft", "wand")), net.minecraft.util.SoundCategory.BLOCKS, 1.0F, 1.0F);
             return true;
         } else {
             return false;
@@ -291,18 +293,19 @@ public class WandManager implements IWandTriggerManager {
         for (int yy = 0; yy < 4; ++yy) {
             for (int xx = 0; xx < 3; ++xx) {
                 for (int zz = 0; zz < 3; ++zz) {
-                    Block block = world.getBlock(x + xx, y - yy + 2, z + zz);
-                    int md = world.getBlockMetadata(x + xx, y - yy + 2, z + zz);
+                    Block block = world.getBlockState(new net.minecraft.util.math.BlockPos(x + xx, y - yy + 2, z + zz)).getBlock();
+                    int md =
+        world.getBlockState(new net.minecraft.util.math.BlockPos(x + xx, y - yy + 2, z + zz)).getBlock().getMetaFromState(world.getBlockState(new net.minecraft.util.math.BlockPos(x + xx, y - yy + 2, z + zz)));
                     if (blueprint[yy][xx][zz] == 1 && !containsMatch(false, OreDictionary.getOres("slabWood"), new ItemStack(block, 1, md))) {
                         return false;
                     }
 
-                    if (blueprint[yy][xx][zz] == 2 && block != Blocks.glass) {
+                    if (blueprint[yy][xx][zz] == 2 && block != Blocks.GLASS) {
                         return false;
                     }
 
                     if (blueprint[yy][xx][zz] == 3) {
-                        TileEntity tile = world.getTileEntity(x + xx, y - yy + 2, z + zz);
+                        TileEntity tile = world.getTileEntity(new BlockPos(x + xx, y - yy + 2, z + zz));
                         if (!(tile instanceof INode) || tile instanceof TileJarNode) {
                             return false;
                         }
@@ -322,7 +325,7 @@ public class WandManager implements IWandTriggerManager {
                 for (int xx = 0; xx < 3; ++xx) {
                     for (int zz = 0; zz < 3; ++zz) {
                         if (blueprint[yy][xx][zz] == 3) {
-                            TileEntity tile = world.getTileEntity(x + xx, y - yy + 2, z + zz);
+                            TileEntity tile = world.getTileEntity(new BlockPos(x + xx, y - yy + 2, z + zz));
                             INode node = (INode) tile;
                             AspectList na = node.getAspects().copy();
                             int nt = node.getNodeType().ordinal();
@@ -343,9 +346,9 @@ public class WandManager implements IWandTriggerManager {
 
                             String nid = node.getId();
                             node.setAspects(new AspectList());
-                            world.removeTileEntity(x + xx, y - yy + 2, z + zz);
-                            world.setBlock(x + xx, y - yy + 2, z + zz, ConfigBlocks.blockJar, 2, 3);
-                            tile = world.getTileEntity(x + xx, y - yy + 2, z + zz);
+                            world.removeTileEntity(new BlockPos(x + xx, y - yy + 2, z + zz));
+        world.setBlockState(new BlockPos(x + xx, y - yy + 2, z + zz), ConfigBlocks.blockJar.getStateFromMeta(2), 3);
+                            tile = world.getTileEntity(new BlockPos(x + xx, y - yy + 2, z + zz));
                             TileJarNode jar = (TileJarNode) tile;
                             jar.setAspects(na);
                             if (nm >= 0) {
@@ -354,15 +357,15 @@ public class WandManager implements IWandTriggerManager {
 
                             jar.setNodeType(NodeType.values()[nt]);
                             jar.setId(nid);
-                            world.addBlockEvent(x + xx, y - yy + 2, z + zz, ConfigBlocks.blockJar, 9, 0);
+                            world.addBlockEvent(new BlockPos(x + xx, y - yy + 2, z + zz), ConfigBlocks.blockJar, 9, 0);
                         } else {
-                            world.setBlockToAir(x + xx, y - yy + 2, z + zz);
+                            world.setBlockToAir(new BlockPos(x + xx, y - yy + 2, z + zz));
                         }
                     }
                 }
             }
 
-            world.playSoundEffect((double) x + (double) 0.5F, (double) y + (double) 0.5F, (double) z + (double) 0.5F, "thaumcraft:wand", 1.0F, 1.0F);
+            world.playSound(null, (double) x + 0.5, (double) y + 0.5, (double) z + 0.5, net.minecraft.util.SoundEvent.REGISTRY.getObject(new net.minecraft.util.ResourceLocation("thaumcraft", "wand")), net.minecraft.util.SoundCategory.BLOCKS, 1.0F, 1.0F);
         }
     }
 
@@ -388,19 +391,19 @@ public class WandManager implements IWandTriggerManager {
     }
 
     public static boolean fitArcaneFurnace(World world, int x, int y, int z) {
-        Block bo = Blocks.obsidian;
-        Block bn = Blocks.nether_brick;
-        Block bf = Blocks.iron_bars;
-        Block bl = Blocks.lava;
-        Block[][][] blueprint = new Block[][][]{{{bn, bo, bn}, {bo, Blocks.air, bo}, {bn, bo, bn}}, {{bn, bo, bn}, {bo, bl, bo}, {bn, bo, bn}}, {{bn, bo, bn}, {bo, bo, bo}, {bn, bo, bn}}};
+        Block bo = Blocks.OBSIDIAN;
+        Block bn = Blocks.NETHER_BRICK;
+        Block bf = Blocks.IRON_BARS;
+        Block bl = Blocks.LAVA;
+        Block[][][] blueprint = new Block[][][]{{{bn, bo, bn}, {bo, Blocks.AIR, bo}, {bn, bo, bn}}, {{bn, bo, bn}, {bo, bl, bo}, {bn, bo, bn}}, {{bn, bo, bn}, {bo, bo, bo}, {bn, bo, bn}}};
         boolean fencefound = false;
 
         for (int yy = 0; yy < 3; ++yy) {
             for (int xx = 0; xx < 3; ++xx) {
                 for (int zz = 0; zz < 3; ++zz) {
-                    Block block = world.getBlock(x + xx, y - yy + 2, z + zz);
-                    if (world.isAirBlock(x + xx, y - yy + 2, z + zz)) {
-                        block = Blocks.air;
+                    Block block = world.getBlockState(new net.minecraft.util.math.BlockPos(x + xx, y - yy + 2, z + zz)).getBlock();
+                    if (world.isAirBlock(new net.minecraft.util.math.BlockPos(x + xx, y - yy + 2, z + zz))) {
+                        block = Blocks.AIR;
                     }
 
                     if (block != blueprint[yy][xx][zz]) {
@@ -426,17 +429,17 @@ public class WandManager implements IWandTriggerManager {
             for (int zz = 0; zz < 3; ++zz) {
                 for (int xx = 0; xx < 3; ++xx) {
                     int md = step;
-                    if (world.getBlock(x + xx, y + yy, z + zz) == Blocks.lava || world.getBlock(x + xx, y + yy, z + zz) == Blocks.flowing_lava) {
+                    if (world.getBlockState(new net.minecraft.util.math.BlockPos(x + xx, y + yy, z + zz)).getBlock() == Blocks.LAVA || world.getBlockState(new net.minecraft.util.math.BlockPos(x + xx, y + yy, z + zz)).getBlock() == Blocks.FLOWING_LAVA) {
                         md = 0;
                     }
 
-                    if (world.getBlock(x + xx, y + yy, z + zz) == Blocks.iron_bars) {
+                    if (world.getBlockState(new net.minecraft.util.math.BlockPos(x + xx, y + yy, z + zz)).getBlock() == Blocks.IRON_BARS) {
                         md = 10;
                     }
 
-                    if (!world.isAirBlock(x + xx, y + yy, z + zz)) {
-                        world.setBlock(x + xx, y + yy, z + zz, ConfigBlocks.blockArcaneFurnace, md, 0);
-                        world.addBlockEvent(x + xx, y + yy, z + zz, ConfigBlocks.blockArcaneFurnace, 1, 4);
+                    if (!world.isAirBlock(new net.minecraft.util.math.BlockPos(x + xx, y + yy, z + zz))) {
+        world.setBlockState(new BlockPos(x + xx, y + yy, z + zz), ConfigBlocks.blockArcaneFurnace.getStateFromMeta(md), 0);
+                        world.addBlockEvent(new BlockPos(x + xx, y + yy, z + zz), ConfigBlocks.blockArcaneFurnace, 1, 4);
                     }
 
                     ++step;
@@ -447,12 +450,12 @@ public class WandManager implements IWandTriggerManager {
         for (int yy = 0; yy < 3; ++yy) {
             for (int zz = 0; zz < 3; ++zz) {
                 for (int xx = 0; xx < 3; ++xx) {
-                    world.markBlockForUpdate(x + xx, y + yy, z + zz);
+                    world.notifyBlockUpdate(new BlockPos(x + xx, y + yy, z + zz), world.getBlockState(new BlockPos(x + xx, y + yy, z + zz)), world.getBlockState(new BlockPos(x + xx, y + yy, z + zz)), 3);
                 }
             }
         }
 
-        world.playSoundEffect((double) x + (double) 0.5F, (double) y + (double) 0.5F, (double) z + (double) 0.5F, "thaumcraft:wand", 1.0F, 1.0F);
+        world.playSound(null, (double) x + 0.5, (double) y + 0.5, (double) z + 0.5, net.minecraft.util.SoundEvent.REGISTRY.getObject(new net.minecraft.util.ResourceLocation("thaumcraft", "wand")), net.minecraft.util.SoundCategory.BLOCKS, 1.0F, 1.0F);
         return fencefound;
     }
 
@@ -462,14 +465,14 @@ public class WandManager implements IWandTriggerManager {
             if (wand.getFocus(itemstack) != null) {
                 return false;
             } else {
-                world.setBlockToAir(x, y, z);
+                world.setBlockToAir(new BlockPos(x, y, z));
                 EntitySpecialItem entityItem = new EntitySpecialItem(world, (float) x + 0.5F, (float) y + 0.3F, (float) z + 0.5F, new ItemStack(ConfigItems.itemThaumonomicon));
                 entityItem.motionY = 0.0F;
                 entityItem.motionX = 0.0F;
                 entityItem.motionZ = 0.0F;
-                world.spawnEntityInWorld(entityItem);
-                PacketHandler.INSTANCE.sendToAllAround(new PacketFXBlockSparkle(x, y, z, -9999), new NetworkRegistry.TargetPoint(world.provider.dimensionId, x, y, z, 32.0F));
-                world.playSoundEffect((double) x + (double) 0.5F, (double) y + (double) 0.5F, (double) z + (double) 0.5F, "thaumcraft:wand", 1.0F, 1.0F);
+                world.spawnEntity(entityItem);
+                PacketHandler.INSTANCE.sendToAllAround(new PacketFXBlockSparkle(x, y, z, -9999), new NetworkRegistry.TargetPoint(world.provider.getDimension(), x, y, z, 32.0F));
+                world.playSound(null, (double) x + 0.5, (double) y + 0.5, (double) z + 0.5, net.minecraft.util.SoundEvent.REGISTRY.getObject(new net.minecraft.util.ResourceLocation("thaumcraft", "wand")), net.minecraft.util.SoundCategory.BLOCKS, 1.0F, 1.0F);
                 return true;
             }
         } else {
@@ -479,17 +482,17 @@ public class WandManager implements IWandTriggerManager {
 
     private static boolean createOculus(ItemStack itemstack, EntityPlayer player, World world, int x, int y, int z, int side) {
         if (!world.isRemote) {
-            TileEntity tile = world.getTileEntity(x, y, z);
-            TileEntity node = world.getTileEntity(x, y + 1, z);
+            TileEntity tile = world.getTileEntity(new BlockPos(x, y, z));
+            TileEntity node = world.getTileEntity(new BlockPos(x, y + 1, z));
             if (node != null && tile instanceof TileEldritchAltar && ((TileEldritchAltar) tile).getEyes() == 4 && !((TileEldritchAltar) tile).isOpen() && node instanceof TileNode && ((TileNode) node).getNodeType() == NodeType.DARK && ((TileEldritchAltar) tile).checkForMaze()) {
                 ItemWandCasting wand = (ItemWandCasting) itemstack.getItem();
                 if (wand.consumeAllVisCrafting(itemstack, player, (new AspectList()).add(Aspect.AIR, 100).add(Aspect.FIRE, 100).add(Aspect.EARTH, 100).add(Aspect.WATER, 100).add(Aspect.ORDER, 100).add(Aspect.ENTROPY, 100), true)) {
-                    world.playSoundEffect((double) x + (double) 0.5F, (double) y + (double) 0.5F, (double) z + (double) 0.5F, "thaumcraft:wand", 1.0F, 1.0F);
+                    world.playSound(null, (double) x + 0.5, (double) y + 0.5, (double) z + 0.5, net.minecraft.util.SoundEvent.REGISTRY.getObject(new net.minecraft.util.ResourceLocation("thaumcraft", "wand")), net.minecraft.util.SoundCategory.BLOCKS, 1.0F, 1.0F);
                     ((TileEldritchAltar) tile).setOpen(true);
-                    world.setBlockToAir(x, y + 1, z);
-                    world.setBlock(x, y + 1, z, ConfigBlocks.blockEldritchPortal);
+                    world.setBlockToAir(new BlockPos(x, y + 1, z));
+        world.setBlockState(new BlockPos(x, y + 1, z), ConfigBlocks.blockEldritchPortal.getDefaultState());
                     tile.markDirty();
-                    world.markBlockForUpdate(x, y, z);
+                    { net.minecraft.block.state.IBlockState _bs = world.getBlockState(new BlockPos(x, y, z)); world.notifyBlockUpdate(new BlockPos(x, y, z), _bs, _bs, 3); }
                 }
             }
         }
@@ -527,11 +530,11 @@ public class WandManager implements IWandTriggerManager {
         IInventory baubles = BaublesApi.getBaubles(player);
 
         BaubleConsumer<ItemFocusPouch> itemFocusPouchInventoryConsumer = getItemFocusPouchBaubleConsumer(0, pouchcount, pouches, foci);
-        BaubleConsumer<ItemFocusPouch> itemFocusPouchBaubleConsumer = getItemFocusPouchBaubleConsumer(-slotLimit, pouchcount, pouches, foci);
+        BaubleConsumer<ItemFocusPouch> itemFocusPouchBaubleConsumer = getItemFocusPouchBaubleConsumer(-9, pouchcount, pouches, foci);
         forEachBauble(player, ItemFocusPouch.class, itemFocusPouchBaubleConsumer);
 
         for (int a = 0; a < 36; ++a) {
-            item[0] = player.inventory.mainInventory[a];
+            item[0] = player.inventory.mainInventory.get(a);
             if (item[0] != null && item[0].getItem() instanceof ItemFocusBasic) {
                 foci.put(((ItemFocusBasic) item[0].getItem()).getSortingHelper(item[0]), a);
             }
@@ -554,7 +557,7 @@ public class WandManager implements IWandTriggerManager {
                 }
 
                 if (foci.get(newkey) < 1000 && foci.get(newkey) >= 0) {
-                    item[0] = player.inventory.mainInventory[foci.get(newkey)].copy();
+                    item[0] = player.inventory.mainInventory.get(foci.get(newkey)).copy();
                 } else {
                     int pid = foci.get(newkey) / 1000;
                     if (pouches.containsKey(pid)) {
@@ -562,9 +565,9 @@ public class WandManager implements IWandTriggerManager {
                         int focusslot = foci.get(newkey) - pid * 1000;
                         ItemStack tmp = null;
                         if (pouchslot >= 0) {
-                            tmp = player.inventory.mainInventory[pouchslot].copy();
+                            tmp = player.inventory.mainInventory.get(pouchslot).copy();
                         } else {
-                            tmp = baubles.getStackInSlot(pouchslot + slotLimit).copy();
+                            tmp = baubles.getStackInSlot(pouchslot + 9).copy();
                         }
 
                         item[0] = fetchFocusFromPouch(player, focusslot, tmp, pouchslot);
@@ -576,10 +579,10 @@ public class WandManager implements IWandTriggerManager {
                 }
 
                 if (foci.get(newkey) < 1000 && foci.get(newkey) >= 0) {
-                    player.inventory.setInventorySlotContents(foci.get(newkey), null);
+                    player.inventory.setInventorySlotContents(foci.get(newkey), ItemStack.EMPTY);
                 }
 
-                w.playSoundAtEntity(player, "thaumcraft:cameraticks", 0.3F, 1.0F);
+                player.world.playSound(null, player.posX, player.posY, player.posZ, net.minecraft.util.SoundEvent.REGISTRY.getObject(new net.minecraft.util.ResourceLocation("thaumcraft", "cameraticks")), net.minecraft.util.SoundCategory.PLAYERS, 0.3F, 1.0F);
                 if (wand.getFocus(is) != null && (addFocusToPouch(player, wand.getFocusItem(is).copy(), pouches) || player.inventory.addItemStackToInventory(wand.getFocusItem(is).copy()))) {
                     wand.setFocus(is, null);
                 }
@@ -597,7 +600,7 @@ public class WandManager implements IWandTriggerManager {
                     || player.inventory.addItemStackToInventory(wand.getFocusItem(is).copy()))
             ) {
                 wand.setFocus(is, null);
-                w.playSoundAtEntity(player, "thaumcraft:cameraticks", 0.3F, 0.9F);
+                player.world.playSound(null, player.posX, player.posY, player.posZ, net.minecraft.util.SoundEvent.REGISTRY.getObject(new net.minecraft.util.ResourceLocation("thaumcraft", "cameraticks")), net.minecraft.util.SoundCategory.PLAYERS, 0.3F, 0.9F);
             }
 
         }
@@ -630,7 +633,7 @@ public class WandManager implements IWandTriggerManager {
         for (Integer pouchslot : pouches.values()) {
             ItemStack pouch;
             if (pouchslot >= 0) {
-                pouch = player.inventory.mainInventory[pouchslot];
+                pouch = player.inventory.mainInventory.get(pouchslot);
             } else {
                 pouch = baubles.getStackInSlot(pouchslot + 4);
             }
@@ -709,13 +712,13 @@ public class WandManager implements IWandTriggerManager {
     }
 
     public static int getAreaDim(ItemStack stack) {
-        return stack.hasTagCompound() && stack.stackTagCompound.hasKey("aread") ? stack.stackTagCompound.getInteger("aread") : 0;
+        return stack.hasTagCompound() && stack.getTagCompound().hasKey("aread") ? stack.getTagCompound().getInteger("aread") : 0;
     }
 
     public static int getAreaX(ItemStack stack) {
         ItemWandCasting wand = (ItemWandCasting) stack.getItem();
-        if (stack.hasTagCompound() && stack.stackTagCompound.hasKey("areax")) {
-            int a = stack.stackTagCompound.getInteger("areax");
+        if (stack.hasTagCompound() && stack.getTagCompound().hasKey("areax")) {
+            int a = stack.getTagCompound().getInteger("areax");
             if (a > wand.getFocus(stack).getMaxAreaSize(wand.getFocusItem(stack))) {
                 a = wand.getFocus(stack).getMaxAreaSize(wand.getFocusItem(stack));
             }
@@ -728,8 +731,8 @@ public class WandManager implements IWandTriggerManager {
 
     public static int getAreaY(ItemStack stack) {
         ItemWandCasting wand = (ItemWandCasting) stack.getItem();
-        if (stack.hasTagCompound() && stack.stackTagCompound.hasKey("areay")) {
-            int a = stack.stackTagCompound.getInteger("areay");
+        if (stack.hasTagCompound() && stack.getTagCompound().hasKey("areay")) {
+            int a = stack.getTagCompound().getInteger("areay");
             if (a > wand.getFocus(stack).getMaxAreaSize(wand.getFocusItem(stack))) {
                 a = wand.getFocus(stack).getMaxAreaSize(wand.getFocusItem(stack));
             }
@@ -742,8 +745,8 @@ public class WandManager implements IWandTriggerManager {
 
     public static int getAreaZ(ItemStack stack) {
         ItemWandCasting wand = (ItemWandCasting) stack.getItem();
-        if (stack.hasTagCompound() && stack.stackTagCompound.hasKey("areaz")) {
-            int a = stack.stackTagCompound.getInteger("areaz");
+        if (stack.hasTagCompound() && stack.getTagCompound().hasKey("areaz")) {
+            int a = stack.getTagCompound().getInteger("areaz");
             if (a > wand.getFocus(stack).getMaxAreaSize(wand.getFocusItem(stack))) {
                 a = wand.getFocus(stack).getMaxAreaSize(wand.getFocusItem(stack));
             }
@@ -756,36 +759,36 @@ public class WandManager implements IWandTriggerManager {
 
     public static void setAreaX(ItemStack stack, int area) {
         if (stack.hasTagCompound()) {
-            stack.stackTagCompound.setInteger("areax", area);
+            stack.getTagCompound().setInteger("areax", area);
         }
 
     }
 
     public static void setAreaY(ItemStack stack, int area) {
         if (stack.hasTagCompound()) {
-            stack.stackTagCompound.setInteger("areay", area);
+            stack.getTagCompound().setInteger("areay", area);
         }
 
     }
 
     public static void setAreaZ(ItemStack stack, int area) {
         if (stack.hasTagCompound()) {
-            stack.stackTagCompound.setInteger("areaz", area);
+            stack.getTagCompound().setInteger("areaz", area);
         }
 
     }
 
     public static void setAreaDim(ItemStack stack, int dim) {
         if (stack.hasTagCompound()) {
-            stack.stackTagCompound.setInteger("aread", dim);
+            stack.getTagCompound().setInteger("aread", dim);
         }
 
     }
 
     static boolean isOnCooldown(EntityLivingBase entityLiving) {
-        if (entityLiving.worldObj.isRemote && cooldownClient.containsKey(entityLiving.getEntityId())) {
+        if (entityLiving.world.isRemote && cooldownClient.containsKey(entityLiving.getEntityId())) {
             return cooldownClient.get(entityLiving.getEntityId()) > System.currentTimeMillis();
-        } else if (!entityLiving.worldObj.isRemote && cooldownServer.containsKey(entityLiving.getEntityId())) {
+        } else if (!entityLiving.world.isRemote && cooldownServer.containsKey(entityLiving.getEntityId())) {
             return cooldownServer.get(entityLiving.getEntityId()) > System.currentTimeMillis();
         } else {
             return false;
@@ -793,14 +796,14 @@ public class WandManager implements IWandTriggerManager {
     }
 
     public static float getCooldown(EntityLivingBase entityLiving) {
-        return entityLiving.worldObj.isRemote && cooldownClient.containsKey(entityLiving.getEntityId()) ? (float) (cooldownClient.get(entityLiving.getEntityId()) - System.currentTimeMillis()) / 1000.0F : 0.0F;
+        return entityLiving.world.isRemote && cooldownClient.containsKey(entityLiving.getEntityId()) ? (float) (cooldownClient.get(entityLiving.getEntityId()) - System.currentTimeMillis()) / 1000.0F : 0.0F;
     }
 
     public static void setCooldown(EntityLivingBase entityLiving, int cd) {
         if (cd == 0) {
             cooldownClient.remove(entityLiving.getEntityId());
             cooldownServer.remove(entityLiving.getEntityId());
-        } else if (entityLiving.worldObj.isRemote) {
+        } else if (entityLiving.world.isRemote) {
             cooldownClient.put(entityLiving.getEntityId(), System.currentTimeMillis() + (long) cd);
         } else {
             cooldownServer.put(entityLiving.getEntityId(), System.currentTimeMillis() + (long) cd);
@@ -815,32 +818,32 @@ public class WandManager implements IWandTriggerManager {
             case 1:
                 return createCrucible(wand, player, world, x, y, z);
             case 2:
-                if (ResearchManager.isResearchComplete(player.getCommandSenderName(), "INFERNALFURNACE")) {
+                if (ResearchManager.isResearchComplete(player.getName(), "INFERNALFURNACE")) {
                     return createArcaneFurnace(wand, player, world, x, y, z);
                 }
                 break;
             case 3:
-                if (ResearchManager.isResearchComplete(player.getCommandSenderName(), "INFUSION")) {
+                if (ResearchManager.isResearchComplete(player.getName(), "INFUSION")) {
                     return createInfusionAltar(wand, player, world, x, y, z);
                 }
                 break;
             case 4:
-                if (ResearchManager.isResearchComplete(player.getCommandSenderName(), "NODEJAR")) {
+                if (ResearchManager.isResearchComplete(player.getName(), "NODEJAR")) {
                     return createNodeJar(wand, player, world, x, y, z);
                 }
                 break;
             case 5:
-                if (ResearchManager.isResearchComplete(player.getCommandSenderName(), "THAUMATORIUM")) {
+                if (ResearchManager.isResearchComplete(player.getName(), "THAUMATORIUM")) {
                     return createThaumatorium(wand, player, world, x, y, z, side);
                 }
                 break;
             case 6:
-                if (ResearchManager.isResearchComplete(player.getCommandSenderName(), "OCULUS")) {
+                if (ResearchManager.isResearchComplete(player.getName(), "OCULUS")) {
                     return createOculus(wand, player, world, x, y, z, side);
                 }
                 break;
             case 7:
-                if (ResearchManager.isResearchComplete(player.getCommandSenderName(), "ADVALCHEMYFURNACE")) {
+                if (ResearchManager.isResearchComplete(player.getName(), "ADVALCHEMYFURNACE")) {
                     return createAdvancedAlchemicalFurnace(wand, player, world, x, y, z, side);
                 }
         }
@@ -855,16 +858,18 @@ public class WandManager implements IWandTriggerManager {
             for (int a = -1; a <= 1; ++a) {
                 for (int b = -1; b <= 1; ++b) {
                     for (int c = -1; c <= 1; ++c) {
-                        if (world.getBlock(x + a, y + b, z + c) == ConfigBlocks.blockStoneDevice && world.getBlockMetadata(x + a, y + b, z + c) == 0) {
+                        if (world.getBlockState(new net.minecraft.util.math.BlockPos(x + a, y + b, z + c)).getBlock() == ConfigBlocks.blockStoneDevice &&
+        world.getBlockState(new net.minecraft.util.math.BlockPos(x + a, y + b, z + c)).getBlock().getMetaFromState(world.getBlockState(new net.minecraft.util.math.BlockPos(x + a, y + b, z + c))) == 0) {
                             for (int aa = -1; aa <= 1; ++aa) {
                                 for (int bb = 0; bb <= 1; ++bb) {
                                     int cc = -1;
 
                                     while (cc <= 1) {
-                                        if (blueprint[bb][aa + 1][cc + 1] != 1 || world.getBlock(x + a + aa, y + b + bb, z + c + cc) == ConfigBlocks.blockMetalDevice && world.getBlockMetadata(x + a + aa, y + b + bb, z + c + cc) == 1) {
-                                            if (blueprint[bb][aa + 1][cc + 1] != 2 || world.getBlock(x + a + aa, y + b + bb, z + c + cc) == ConfigBlocks.blockMetalDevice && world.getBlockMetadata(x + a + aa, y + b + bb, z + c + cc) == 9) {
-                                                if (blueprint[bb][aa + 1][cc + 1] != 4 || world.getBlock(x + a + aa, y + b + bb, z + c + cc) == ConfigBlocks.blockMetalDevice && world.getBlockMetadata(x + a + aa, y + b + bb, z + c + cc) == 3) {
-                                                    if (blueprint[bb][aa + 1][cc + 1] != 3 || world.getBlock(x + a + aa, y + b + bb, z + c + cc) == ConfigBlocks.blockStoneDevice && world.getBlockMetadata(x + a + aa, y + b + bb, z + c + cc) == 0) {
+                                        if (blueprint[bb][aa + 1][cc + 1] != 1 || world.getBlockState(new net.minecraft.util.math.BlockPos(x + a + aa, y + b + bb, z + c + cc)).getBlock() == ConfigBlocks.blockMetalDevice &&
+        world.getBlockState(new net.minecraft.util.math.BlockPos(x + a + aa, y + b + bb, z + c + cc)).getBlock().getMetaFromState(world.getBlockState(new net.minecraft.util.math.BlockPos(x + a + aa, y + b + bb, z + c + cc))) == 1) {
+                                            if (blueprint[bb][aa + 1][cc + 1] != 2 || world.getBlockState(new net.minecraft.util.math.BlockPos(x + a + aa, y + b + bb, z + c + cc)).getBlock() == ConfigBlocks.blockMetalDevice && world.getBlockState(new net.minecraft.util.math.BlockPos(x + a + aa, y + b + bb, z + c + cc)).getBlock().getMetaFromState(world.getBlockState(new net.minecraft.util.math.BlockPos(x + a + aa, y + b + bb, z + c + cc))) == 9) {
+                                                if (blueprint[bb][aa + 1][cc + 1] != 4 || world.getBlockState(new net.minecraft.util.math.BlockPos(x + a + aa, y + b + bb, z + c + cc)).getBlock() == ConfigBlocks.blockMetalDevice && world.getBlockState(new net.minecraft.util.math.BlockPos(x + a + aa, y + b + bb, z + c + cc)).getBlock().getMetaFromState(world.getBlockState(new net.minecraft.util.math.BlockPos(x + a + aa, y + b + bb, z + c + cc))) == 3) {
+                                                    if (blueprint[bb][aa + 1][cc + 1] != 3 || world.getBlockState(new net.minecraft.util.math.BlockPos(x + a + aa, y + b + bb, z + c + cc)).getBlock() == ConfigBlocks.blockStoneDevice && world.getBlockState(new net.minecraft.util.math.BlockPos(x + a + aa, y + b + bb, z + c + cc)).getBlock().getMetaFromState(world.getBlockState(new net.minecraft.util.math.BlockPos(x + a + aa, y + b + bb, z + c + cc))) == 0) {
                                                         ++cc;
                                                         continue;
                                                     }
@@ -887,30 +892,29 @@ public class WandManager implements IWandTriggerManager {
                             if (!wand.consumeAllVisCrafting(itemstack, player, (new AspectList()).add(Aspect.FIRE, 50).add(Aspect.WATER, 50).add(Aspect.ORDER, 50), true)) {
                                 return false;
                             }
-
-                            world.setBlock(x + a, y + b, z + c, ConfigBlocks.blockAlchemyFurnace);
-                            world.setBlock(x + a - 1, y + b, z + c, ConfigBlocks.blockAlchemyFurnace, 1, 3);
-                            world.setBlock(x + a + 1, y + b, z + c, ConfigBlocks.blockAlchemyFurnace, 1, 3);
-                            world.setBlock(x + a, y + b, z + c - 1, ConfigBlocks.blockAlchemyFurnace, 1, 3);
-                            world.setBlock(x + a, y + b, z + c + 1, ConfigBlocks.blockAlchemyFurnace, 1, 3);
-                            world.setBlock(x + a - 1, y + b, z + c - 1, ConfigBlocks.blockAlchemyFurnace, 4, 3);
-                            world.setBlock(x + a + 1, y + b, z + c + 1, ConfigBlocks.blockAlchemyFurnace, 4, 3);
-                            world.setBlock(x + a + 1, y + b, z + c - 1, ConfigBlocks.blockAlchemyFurnace, 4, 3);
-                            world.setBlock(x + a - 1, y + b, z + c + 1, ConfigBlocks.blockAlchemyFurnace, 4, 3);
-                            world.setBlock(x + a - 1, y + b + 1, z + c, ConfigBlocks.blockAlchemyFurnace, 3, 3);
-                            world.setBlock(x + a + 1, y + b + 1, z + c, ConfigBlocks.blockAlchemyFurnace, 3, 3);
-                            world.setBlock(x + a, y + b + 1, z + c - 1, ConfigBlocks.blockAlchemyFurnace, 3, 3);
-                            world.setBlock(x + a, y + b + 1, z + c + 1, ConfigBlocks.blockAlchemyFurnace, 3, 3);
-                            world.setBlock(x + a - 1, y + b + 1, z + c - 1, ConfigBlocks.blockAlchemyFurnace, 2, 3);
-                            world.setBlock(x + a + 1, y + b + 1, z + c + 1, ConfigBlocks.blockAlchemyFurnace, 2, 3);
-                            world.setBlock(x + a + 1, y + b + 1, z + c - 1, ConfigBlocks.blockAlchemyFurnace, 2, 3);
-                            world.setBlock(x + a - 1, y + b + 1, z + c + 1, ConfigBlocks.blockAlchemyFurnace, 2, 3);
-                            world.playSoundEffect((double) (x + a) + (double) 0.5F, (double) (y + b) + (double) 0.5F, (double) (z + c) + (double) 0.5F, "thaumcraft:wand", 1.0F, 1.0F);
+        world.setBlockState(new BlockPos(x + a, y + b, z + c), ConfigBlocks.blockAlchemyFurnace.getDefaultState());
+        world.setBlockState(new BlockPos(x + a - 1, y + b, z + c), ConfigBlocks.blockAlchemyFurnace.getStateFromMeta(1), 3);
+        world.setBlockState(new BlockPos(x + a + 1, y + b, z + c), ConfigBlocks.blockAlchemyFurnace.getStateFromMeta(1), 3);
+        world.setBlockState(new BlockPos(x + a, y + b, z + c - 1), ConfigBlocks.blockAlchemyFurnace.getStateFromMeta(1), 3);
+        world.setBlockState(new BlockPos(x + a, y + b, z + c + 1), ConfigBlocks.blockAlchemyFurnace.getStateFromMeta(1), 3);
+        world.setBlockState(new BlockPos(x + a - 1, y + b, z + c - 1), ConfigBlocks.blockAlchemyFurnace.getStateFromMeta(4), 3);
+        world.setBlockState(new BlockPos(x + a + 1, y + b, z + c + 1), ConfigBlocks.blockAlchemyFurnace.getStateFromMeta(4), 3);
+        world.setBlockState(new BlockPos(x + a + 1, y + b, z + c - 1), ConfigBlocks.blockAlchemyFurnace.getStateFromMeta(4), 3);
+        world.setBlockState(new BlockPos(x + a - 1, y + b, z + c + 1), ConfigBlocks.blockAlchemyFurnace.getStateFromMeta(4), 3);
+        world.setBlockState(new BlockPos(x + a - 1, y + b + 1, z + c), ConfigBlocks.blockAlchemyFurnace.getStateFromMeta(3), 3);
+        world.setBlockState(new BlockPos(x + a + 1, y + b + 1, z + c), ConfigBlocks.blockAlchemyFurnace.getStateFromMeta(3), 3);
+        world.setBlockState(new BlockPos(x + a, y + b + 1, z + c - 1), ConfigBlocks.blockAlchemyFurnace.getStateFromMeta(3), 3);
+        world.setBlockState(new BlockPos(x + a, y + b + 1, z + c + 1), ConfigBlocks.blockAlchemyFurnace.getStateFromMeta(3), 3);
+        world.setBlockState(new BlockPos(x + a - 1, y + b + 1, z + c - 1), ConfigBlocks.blockAlchemyFurnace.getStateFromMeta(2), 3);
+        world.setBlockState(new BlockPos(x + a + 1, y + b + 1, z + c + 1), ConfigBlocks.blockAlchemyFurnace.getStateFromMeta(2), 3);
+        world.setBlockState(new BlockPos(x + a + 1, y + b + 1, z + c - 1), ConfigBlocks.blockAlchemyFurnace.getStateFromMeta(2), 3);
+        world.setBlockState(new BlockPos(x + a - 1, y + b + 1, z + c + 1), ConfigBlocks.blockAlchemyFurnace.getStateFromMeta(2), 3);
+                            world.playSound(null, (double) (x + a) + (double) 0.5F, (double) (y + b) + (double) 0.5F, (double) (z + c) + (double) 0.5F, net.minecraft.util.SoundEvent.REGISTRY.getObject(new net.minecraft.util.ResourceLocation("thaumcraft", "wand")), net.minecraft.util.SoundCategory.BLOCKS, 1.0F, 1.0F);
 
                             for (int aa = -1; aa <= 1; ++aa) {
                                 for (int bb = 0; bb <= 1; ++bb) {
                                     for (int cc = -1; cc <= 1; ++cc) {
-                                        PacketHandler.INSTANCE.sendToAllAround(new PacketFXBlockSparkle(x + a + aa, y + b + bb, z + c + cc, -9999), new NetworkRegistry.TargetPoint(world.provider.dimensionId, x + a, y + b, z + c, 32.0F));
+                                        PacketHandler.INSTANCE.sendToAllAround(new PacketFXBlockSparkle(x + a + aa, y + b + bb, z + c + cc, -9999), new NetworkRegistry.TargetPoint(world.provider.getDimension(), x + a, y + b, z + c, 32.0F));
                                     }
                                 }
                             }

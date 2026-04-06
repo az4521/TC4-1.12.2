@@ -5,4 +5,4 @@
 )
 package thaumcraft.api;
 
-import cpw.mods.fml.common.API;
+import net.minecraftforge.fml.common.API;

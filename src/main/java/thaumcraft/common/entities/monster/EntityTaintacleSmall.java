@@ -17,14 +17,14 @@ public class EntityTaintacleSmall extends EntityTaintacle implements ITaintedMob
 
    protected void applyEntityAttributes() {
       super.applyEntityAttributes();
-      this.getEntityAttribute(SharedMonsterAttributes.maxHealth).setBaseValue(8.0F);
-      this.getEntityAttribute(SharedMonsterAttributes.attackDamage).setBaseValue(2.0F);
+      this.getEntityAttribute(SharedMonsterAttributes.MAX_HEALTH).setBaseValue(8.0F);
+      this.getEntityAttribute(SharedMonsterAttributes.ATTACK_DAMAGE).setBaseValue(2.0F);
    }
 
    public void onUpdate() {
       super.onUpdate();
       if (this.lifetime-- <= 0) {
-         this.damageEntity(DamageSource.magic, 10.0F);
+         this.damageEntity(DamageSource.MAGIC, 10.0F);
       }
 
    }

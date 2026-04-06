@@ -1,7 +1,6 @@
 package thaumcraft.common.items.armor;
 
 import java.util.ArrayList;
-import net.minecraft.block.BlockColored;
 import net.minecraft.entity.passive.EntitySheep;
 import net.minecraft.init.Items;
 import net.minecraft.inventory.InventoryCrafting;
@@ -9,8 +8,10 @@ import net.minecraft.item.ItemArmor;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.IRecipe;
 import net.minecraft.world.World;
+import net.minecraftforge.registries.IForgeRegistryEntry;
 
-public class RecipesVoidRobeArmorDyes implements IRecipe {
+public class RecipesVoidRobeArmorDyes extends IForgeRegistryEntry.Impl<IRecipe> implements IRecipe {
+   public boolean canFit(int width, int height) { return true; }
    public boolean matches(InventoryCrafting par1InventoryCrafting, World par2World) {
       ItemStack itemstack = null;
       ArrayList arraylist = new ArrayList<>();
@@ -26,7 +27,7 @@ public class RecipesVoidRobeArmorDyes implements IRecipe {
 
                itemstack = itemstack1;
             } else {
-               if (itemstack1.getItem() != Items.dye) {
+               if (itemstack1.getItem() != Items.DYE) {
                   return false;
                }
 
@@ -55,7 +56,7 @@ public class RecipesVoidRobeArmorDyes implements IRecipe {
                }
 
                itemstack = itemstack1.copy();
-               itemstack.stackSize = 1;
+               itemstack.setCount(1);
                if (itemarmor.hasColor(itemstack1)) {
                   int l = itemarmor.getColor(itemstack);
                   float f = (float)(l >> 16 & 255) / 255.0F;
@@ -68,11 +69,11 @@ public class RecipesVoidRobeArmorDyes implements IRecipe {
                   ++j;
                }
             } else {
-               if (itemstack1.getItem() != Items.dye) {
+               if (itemstack1.getItem() != Items.DYE) {
                   return null;
                }
 
-               float[] afloat = EntitySheep.fleeceColorTable[BlockColored.func_150032_b(itemstack1.getItemDamage())];
+               float[] afloat = EntitySheep.getDyeRgb(net.minecraft.item.EnumDyeColor.byDyeDamage(itemstack1.getItemDamage()));
                int j1 = (int)(afloat[0] * 255.0F);
                int k1 = (int)(afloat[1] * 255.0F);
                int i1 = (int)(afloat[2] * 255.0F);
@@ -98,7 +99,7 @@ public class RecipesVoidRobeArmorDyes implements IRecipe {
          l = (int)((float)l * f / f1);
          int i1 = (var16 << 8) + l1;
          i1 = (i1 << 8) + l;
-         itemarmor.func_82813_b(itemstack, i1);
+         itemarmor.setColor(itemstack, i1);
          return itemstack;
       }
    }
@@ -108,6 +109,6 @@ public class RecipesVoidRobeArmorDyes implements IRecipe {
    }
 
    public ItemStack getRecipeOutput() {
-      return null;
+      return ItemStack.EMPTY;
    }
 }

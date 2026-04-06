@@ -2,17 +2,17 @@ package thaumcraft.api.wands;
 
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.IIcon;
-import net.minecraft.util.MovingObjectPosition;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.world.World;
 import thaumcraft.api.aspects.AspectList;
 
 public interface IWandFocus {
    int getFocusColor();
 
-   IIcon getFocusDepthLayerIcon();
+   TextureAtlasSprite getFocusDepthLayerIcon();
 
-   IIcon getOrnament();
+   TextureAtlasSprite getOrnament();
 
    WandFocusAnimation getAnimation();
 
@@ -20,7 +20,7 @@ public interface IWandFocus {
 
    boolean isVisCostPerTick();
 
-   ItemStack onFocusRightClick(ItemStack var1, World var2, EntityPlayer var3, MovingObjectPosition var4);
+   ItemStack onFocusRightClick(ItemStack var1, World var2, EntityPlayer var3, RayTraceResult var4);
 
    void onUsingFocusTick(ItemStack var1, EntityPlayer var2, int var3);
 

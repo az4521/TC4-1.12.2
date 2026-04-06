@@ -12,13 +12,8 @@ public class TileBlockInfoGetter {
         if (tile == null) {
             return null;
         }
-        if (tile.blockType != null) {
-            return tile.blockType;
-        }
-        if (tile.hasWorldObj()) {
-            if (tile.getWorldObj() != null) {
-                return tile.getBlockType();
-            }
+        if (tile.hasWorld()) {
+            return tile.getBlockType();
         }
         return null;
     }
@@ -27,13 +22,8 @@ public class TileBlockInfoGetter {
         if (tile == null) {
             return -1;
         }
-        if (tile.blockMetadata != -1) {
-            return tile.blockMetadata;
-        }
-        if  (tile.hasWorldObj()) {
-            if (tile.getWorldObj() != null) {
-                return tile.getBlockMetadata();
-            }
+        if (tile.hasWorld()) {
+            return tile.getBlockMetadata();
         }
         return -1;
     }

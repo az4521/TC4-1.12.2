@@ -1,0 +1,52 @@
+{
+  "variants": {
+    "meta=0": {
+      "model": "thaumcraft:blockjar"
+    },
+    "meta=1": {
+      "model": "thaumcraft:blockjar"
+    },
+    "meta=2": {
+      "model": "thaumcraft:blockjar"
+    },
+    "meta=3": {
+      "model": "thaumcraft:blockjar"
+    },
+    "meta=4": {
+      "model": "thaumcraft:blockjar"
+    },
+    "meta=5": {
+      "model": "thaumcraft:blockjar"
+    },
+    "meta=6": {
+      "model": "thaumcraft:blockjar"
+    },
+    "meta=7": {
+      "model": "thaumcraft:blockjar"
+    },
+    "meta=8": {
+      "model": "thaumcraft:blockjar"
+    },
+    "meta=9": {
+      "model": "thaumcraft:blockjar"
+    },
+    "meta=10": {
+      "model": "thaumcraft:blockjar"
+    },
+    "meta=11": {
+      "model": "thaumcraft:blockjar"
+    },
+    "meta=12": {
+      "model": "thaumcraft:blockjar"
+    },
+    "meta=13": {
+      "model": "thaumcraft:blockjar"
+    },
+    "meta=14": {
+      "model": "thaumcraft:blockjar"
+    },
+    "meta=15": {
+      "model": "thaumcraft:blockjar"
+    }
+  }
+}

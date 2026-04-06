@@ -7,39 +7,36 @@ import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.passive.EntityAnimal;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.NetworkManager;
-import net.minecraft.network.play.server.S35PacketUpdateTileEntity;
+import net.minecraft.network.play.server.SPacketUpdateTileEntity;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.AxisAlignedBB;
+import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.world.EnumSkyBlock;
-import net.minecraftforge.common.util.ForgeDirection;
+import net.minecraft.util.EnumFacing;
 import thaumcraft.api.ThaumcraftApiHelper;
 import thaumcraft.api.TileThaumcraft;
 import thaumcraft.api.aspects.Aspect;
 import thaumcraft.api.aspects.IEssentiaTransport;
+import net.minecraft.util.math.BlockPos;
 
 public class TileArcaneLampFertility extends TileThaumcraft implements IEssentiaTransport {
-   public ForgeDirection facing = ForgeDirection.getOrientation(0);
+   public EnumFacing facing = EnumFacing.byIndex(0);
    public int charges = 0;
    int count = 0;
    int drawDelay = 0;
 
-   public boolean canUpdate() {
-       return super.canUpdate();
-   }
-
-   public void onDataPacket(NetworkManager net, S35PacketUpdateTileEntity pkt) {
+   public void onDataPacket(NetworkManager net, SPacketUpdateTileEntity pkt) {
       super.onDataPacket(net, pkt);
-      if (this.worldObj != null && this.worldObj.isRemote) {
-         this.worldObj.updateLightByType(EnumSkyBlock.Block, this.xCoord, this.yCoord, this.zCoord);
+      if (this.world != null && this.world.isRemote) {
+         this.world.checkLightFor(EnumSkyBlock.BLOCK, this.getPos());
       }
 
    }
 
    public void updateEntity() {
-      if (!this.worldObj.isRemote) {
+      if (!this.world.isRemote) {
          if (this.charges < 4 && this.drawEssentia()) {
             ++this.charges;
-            this.worldObj.markBlockForUpdate(this.xCoord, this.yCoord, this.zCoord);
+            { net.minecraft.block.state.IBlockState _bs = this.world.getBlockState(this.pos); this.world.notifyBlockUpdate(this.pos, _bs, _bs, 3); }
          }
 
          if (this.charges > 1 && this.count++ % 300 == 0) {
@@ -51,7 +48,7 @@ public class TileArcaneLampFertility extends TileThaumcraft implements IEssentia
 
    private void updateAnimals() {
       int distance = 7;
-      List<EntityAnimal> var5 = this.worldObj.getEntitiesWithinAABB(EntityAnimal.class, AxisAlignedBB.getBoundingBox(this.xCoord, this.yCoord, this.zCoord, this.xCoord + 1, this.yCoord + 1, this.zCoord + 1).expand(distance, distance, distance));
+      List<EntityAnimal> var5 = this.world.getEntitiesWithinAABB(EntityAnimal.class, new AxisAlignedBB(this.getPos().getX(), this.getPos().getY(), this.getPos().getZ(), this.getPos().getX() + 1, this.getPos().getY() + 1, this.getPos().getZ() + 1).expand(distance, distance, distance));
 
       for(EntityAnimal var3 : var5) {
          EntityLivingBase var4 = var3;
@@ -73,8 +70,8 @@ public class TileArcaneLampFertility extends TileThaumcraft implements IEssentia
                   if (var33.getGrowingAge() == 0 && !var33.isInLove()) {
                      if (partner != null) {
                         this.charges -= 2;
-                        var33.func_146082_f(null);
-                        partner.func_146082_f(null);
+                        var33.setInLove(null);
+                        partner.setInLove(null);
                         return;
                      }
 
@@ -88,7 +85,7 @@ public class TileArcaneLampFertility extends TileThaumcraft implements IEssentia
    }
 
    public void readCustomNBT(NBTTagCompound nbttagcompound) {
-      this.facing = ForgeDirection.getOrientation(nbttagcompound.getInteger("orientation"));
+      this.facing = EnumFacing.byIndex(nbttagcompound.getInteger("orientation"));
       this.charges = nbttagcompound.getInteger("charges");
    }
 
@@ -101,7 +98,7 @@ public class TileArcaneLampFertility extends TileThaumcraft implements IEssentia
       if (++this.drawDelay % 5 != 0) {
          return false;
       } else {
-         TileEntity te = ThaumcraftApiHelper.getConnectableTile(this.worldObj, this.xCoord, this.yCoord, this.zCoord, this.facing);
+         TileEntity te = ThaumcraftApiHelper.getConnectableTile(this.world, this.getPos().getX(), this.getPos().getY(), this.getPos().getZ(), this.facing);
          if (te != null) {
             IEssentiaTransport ic = (IEssentiaTransport)te;
             if (!ic.canOutputTo(this.facing.getOpposite())) {
@@ -115,15 +112,15 @@ public class TileArcaneLampFertility extends TileThaumcraft implements IEssentia
       }
    }
 
-   public boolean isConnectable(ForgeDirection face) {
+   public boolean isConnectable(EnumFacing face) {
       return face == this.facing;
    }
 
-   public boolean canInputFrom(ForgeDirection face) {
+   public boolean canInputFrom(EnumFacing face) {
       return face == this.facing;
    }
 
-   public boolean canOutputTo(ForgeDirection face) {
+   public boolean canOutputTo(EnumFacing face) {
       return false;
    }
 
@@ -138,27 +135,27 @@ public class TileArcaneLampFertility extends TileThaumcraft implements IEssentia
       return 0;
    }
 
-   public Aspect getSuctionType(ForgeDirection face) {
+   public Aspect getSuctionType(EnumFacing face) {
       return Aspect.LIFE;
    }
 
-   public int getSuctionAmount(ForgeDirection face) {
+   public int getSuctionAmount(EnumFacing face) {
       return face == this.facing ? 128 - this.charges * 10 : 0;
    }
 
-   public Aspect getEssentiaType(ForgeDirection loc) {
+   public Aspect getEssentiaType(EnumFacing loc) {
       return null;
    }
 
-   public int getEssentiaAmount(ForgeDirection loc) {
+   public int getEssentiaAmount(EnumFacing loc) {
       return 0;
    }
 
-   public int takeEssentia(Aspect aspect, int amount, ForgeDirection facing) {
+   public int takeEssentia(Aspect aspect, int amount, EnumFacing facing) {
       return 0;
    }
 
-   public int addEssentia(Aspect aspect, int amount, ForgeDirection facing) {
+   public int addEssentia(Aspect aspect, int amount, EnumFacing facing) {
       return 0;
    }
 }

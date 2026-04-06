@@ -1,0 +1,52 @@
+{
+  "variants": {
+    "meta=0": {
+      "model": "thaumcraft:blockessentiareservoir"
+    },
+    "meta=1": {
+      "model": "thaumcraft:blockessentiareservoir"
+    },
+    "meta=2": {
+      "model": "thaumcraft:blockessentiareservoir"
+    },
+    "meta=3": {
+      "model": "thaumcraft:blockessentiareservoir"
+    },
+    "meta=4": {
+      "model": "thaumcraft:blockessentiareservoir"
+    },
+    "meta=5": {
+      "model": "thaumcraft:blockessentiareservoir"
+    },
+    "meta=6": {
+      "model": "thaumcraft:blockessentiareservoir"
+    },
+    "meta=7": {
+      "model": "thaumcraft:blockessentiareservoir"
+    },
+    "meta=8": {
+      "model": "thaumcraft:blockessentiareservoir"
+    },
+    "meta=9": {
+      "model": "thaumcraft:blockessentiareservoir"
+    },
+    "meta=10": {
+      "model": "thaumcraft:blockessentiareservoir"
+    },
+    "meta=11": {
+      "model": "thaumcraft:blockessentiareservoir"
+    },
+    "meta=12": {
+      "model": "thaumcraft:blockessentiareservoir"
+    },
+    "meta=13": {
+      "model": "thaumcraft:blockessentiareservoir"
+    },
+    "meta=14": {
+      "model": "thaumcraft:blockessentiareservoir"
+    },
+    "meta=15": {
+      "model": "thaumcraft:blockessentiareservoir"
+    }
+  }
+}

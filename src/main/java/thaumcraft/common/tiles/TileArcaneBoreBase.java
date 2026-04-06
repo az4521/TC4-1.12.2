@@ -4,8 +4,9 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.EnumFacing;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
-import net.minecraftforge.common.util.ForgeDirection;
 import thaumcraft.api.ThaumcraftApiHelper;
 import thaumcraft.api.TileThaumcraft;
 import thaumcraft.api.aspects.Aspect;
@@ -13,14 +14,10 @@ import thaumcraft.api.aspects.IEssentiaTransport;
 import thaumcraft.api.wands.IWandable;
 
 public class TileArcaneBoreBase extends TileThaumcraft implements IWandable, IEssentiaTransport {
-   public ForgeDirection orientation = ForgeDirection.getOrientation(2);
-
-   public boolean canUpdate() {
-      return false;
-   }
+   public EnumFacing orientation = EnumFacing.byIndex(2);
 
    public void readCustomNBT(NBTTagCompound nbttagcompound) {
-      this.orientation = ForgeDirection.getOrientation(nbttagcompound.getInteger("orientation"));
+      this.orientation = EnumFacing.byIndex(nbttagcompound.getInteger("orientation"));
    }
 
    public void writeCustomNBT(NBTTagCompound nbttagcompound) {
@@ -28,9 +25,9 @@ public class TileArcaneBoreBase extends TileThaumcraft implements IWandable, IEs
    }
 
    public int onWandRightClick(World world, ItemStack wandstack, EntityPlayer player, int x, int y, int z, int side, int md) {
-      this.orientation = ForgeDirection.getOrientation(side);
-      player.worldObj.playSound((double)x + (double)0.5F, (double)y + (double)0.5F, (double)z + (double)0.5F, "thaumcraft:tool", 0.3F, 1.9F + player.worldObj.rand.nextFloat() * 0.2F, false);
-      player.swingItem();
+      this.orientation = EnumFacing.byIndex(side);
+      { net.minecraft.util.SoundEvent _snd = net.minecraft.util.SoundEvent.REGISTRY.getObject(new net.minecraft.util.ResourceLocation("thaumcraft:tool")); if (_snd != null) player.world.playSound(null, new BlockPos(x, y, z), _snd, net.minecraft.util.SoundCategory.BLOCKS, 0.3F, 1.9F + player.world.rand.nextFloat() * 0.2F); }
+      player.swingArm(net.minecraft.util.EnumHand.MAIN_HAND);
       this.markDirty();
       return 0;
    }
@@ -46,8 +43,8 @@ public class TileArcaneBoreBase extends TileThaumcraft implements IWandable, IEs
    }
 
    boolean drawEssentia() {
-      for(ForgeDirection facing : ForgeDirection.VALID_DIRECTIONS) {
-         TileEntity te = ThaumcraftApiHelper.getConnectableTile(this.worldObj, this.xCoord, this.yCoord, this.zCoord, facing);
+      for (EnumFacing facing : EnumFacing.values()) {
+         TileEntity te = ThaumcraftApiHelper.getConnectableTile(this.world, this.getPos().getX(), this.getPos().getY(), this.getPos().getZ(), facing);
          if (te != null) {
             IEssentiaTransport ic = (IEssentiaTransport)te;
             if (!ic.canOutputTo(facing.getOpposite())) {
@@ -63,42 +60,42 @@ public class TileArcaneBoreBase extends TileThaumcraft implements IWandable, IEs
       return false;
    }
 
-   public boolean isConnectable(ForgeDirection face) {
+   public boolean isConnectable(EnumFacing face) {
       return true;
    }
 
-   public boolean canInputFrom(ForgeDirection face) {
+   public boolean canInputFrom(EnumFacing face) {
       return true;
    }
 
-   public boolean canOutputTo(ForgeDirection face) {
+   public boolean canOutputTo(EnumFacing face) {
       return false;
    }
 
    public void setSuction(Aspect aspect, int amount) {
    }
 
-   public Aspect getSuctionType(ForgeDirection face) {
+   public Aspect getSuctionType(EnumFacing face) {
       return Aspect.ENTROPY;
    }
 
-   public int getSuctionAmount(ForgeDirection face) {
+   public int getSuctionAmount(EnumFacing face) {
       return face != this.orientation ? 128 : 0;
    }
 
-   public int takeEssentia(Aspect aspect, int amount, ForgeDirection face) {
+   public int takeEssentia(Aspect aspect, int amount, EnumFacing face) {
       return 0;
    }
 
-   public int addEssentia(Aspect aspect, int amount, ForgeDirection face) {
+   public int addEssentia(Aspect aspect, int amount, EnumFacing face) {
       return 0;
    }
 
-   public Aspect getEssentiaType(ForgeDirection face) {
+   public Aspect getEssentiaType(EnumFacing face) {
       return null;
    }
 
-   public int getEssentiaAmount(ForgeDirection face) {
+   public int getEssentiaAmount(EnumFacing face) {
       return 0;
    }
 

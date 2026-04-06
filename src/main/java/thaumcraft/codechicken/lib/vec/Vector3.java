@@ -4,7 +4,7 @@ import java.math.BigDecimal;
 import java.math.MathContext;
 import java.math.RoundingMode;
 
-import net.minecraft.util.Vec3;
+import net.minecraft.util.math.Vec3d;
 import thaumcraft.codechicken.lib.math.MathHelper;
 import thaumcraft.codechicken.lib.util.Copyable;
 
@@ -30,10 +30,10 @@ public class Vector3 implements Copyable {
       this.y = vec.y;
       this.z = vec.z;
    }
-   public Vector3(Vec3 vec) {
-      this.x = vec.xCoord;
-      this.y = vec.yCoord;
-      this.z = vec.zCoord;
+   public Vector3(Vec3d vec) {
+      this.x = vec.x;
+      this.y = vec.y;
+      this.z = vec.z;
    }
 
 
@@ -162,8 +162,8 @@ public class Vector3 implements Copyable {
       return this;
    }
 
-   public Vec3 toVec3D() {
-      return Vec3.createVectorHelper(this.x, this.y, this.z);
+   public Vec3d toVec3D() {
+      return new Vec3d(this.x, this.y, this.z);
    }
 
    public double angle(Vector3 vec) {

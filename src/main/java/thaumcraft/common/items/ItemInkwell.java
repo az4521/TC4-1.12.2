@@ -1,16 +1,18 @@
 package thaumcraft.common.items;
 
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraft.block.Block;
-import net.minecraft.client.renderer.texture.IIconRegister;
+import thaumcraft.client.renderers.compat.IIconRegister;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.IIcon;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.util.EnumFacing;
+import net.minecraft.util.EnumHand;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
-import net.minecraftforge.common.util.ForgeDirection;
 import thaumcraft.api.IScribeTools;
 import thaumcraft.common.Thaumcraft;
 import thaumcraft.common.tiles.TileResearchTable;
@@ -18,7 +20,7 @@ import thaumcraft.common.tiles.TileTable;
 
 public class ItemInkwell extends Item implements IScribeTools {
    @SideOnly(Side.CLIENT)
-   public IIcon icon;
+   public TextureAtlasSprite icon;
 
    public ItemInkwell() {
       this.maxStackSize = 1;
@@ -30,33 +32,37 @@ public class ItemInkwell extends Item implements IScribeTools {
 
    @SideOnly(Side.CLIENT)
    public void registerIcons(IIconRegister ir) {
-      this.icon = ir.registerIcon("thaumcraft:inkwell");
+      this.icon = ir.registerSprite("thaumcraft:inkwell");
    }
 
    @SideOnly(Side.CLIENT)
-   public IIcon getIconFromDamage(int par1) {
+   public TextureAtlasSprite getIconFromDamage(int par1) {
       return this.icon;
    }
 
-   public boolean onItemUseFirst(ItemStack stack, EntityPlayer player, World world, int x, int y, int z, int side, float hitX, float hitY, float hitZ) {
-      TileEntity tile = world.getTileEntity(x, y, z);
-      int md = world.getBlockMetadata(x, y, z);
-      Block bi = world.getBlock(x, y, z);
+   public net.minecraft.util.EnumActionResult onItemUseFirst(EntityPlayer player, World world, BlockPos blockPos, EnumFacing facing, float hitX, float hitY, float hitZ, EnumHand hand) {
+      ItemStack stack = player.getHeldItem(hand);
+      int x = blockPos.getX(), y = blockPos.getY(), z = blockPos.getZ();
+      TileEntity tile = world.getTileEntity(blockPos);
+      int md = world.getBlockState(blockPos).getBlock().getMetaFromState(world.getBlockState(blockPos));
+      Block bi = world.getBlockState(blockPos).getBlock();
       if (tile instanceof TileTable && md != 6) {
          if (world.isRemote) {
-            return false;
+            return net.minecraft.util.EnumActionResult.PASS;
          }
 
          for(int a = 2; a < 6; ++a) {
-            TileEntity tile2 = world.getTileEntity(x + ForgeDirection.getOrientation(a).offsetX, y + ForgeDirection.getOrientation(a).offsetY, z + ForgeDirection.getOrientation(a).offsetZ);
-            int md2 = world.getBlockMetadata(x + ForgeDirection.getOrientation(a).offsetX, y + ForgeDirection.getOrientation(a).offsetY, z + ForgeDirection.getOrientation(a).offsetZ);
+            EnumFacing af = EnumFacing.byIndex(a);
+            BlockPos neighbor = new BlockPos(x + af.getXOffset(), y + af.getYOffset(), z + af.getZOffset());
+            TileEntity tile2 = world.getTileEntity(neighbor);
+            int md2 = world.getBlockState(neighbor).getBlock().getMetaFromState(world.getBlockState(neighbor));
             if (tile2 instanceof TileTable && md2 < 6) {
-               world.setBlock(x, y, z, bi, a, 0);
-               world.setTileEntity(x, y, z, new TileResearchTable());
-               world.setBlock(x + ForgeDirection.getOrientation(a).offsetX, y + ForgeDirection.getOrientation(a).offsetY, z + ForgeDirection.getOrientation(a).offsetZ, bi, ForgeDirection.getOrientation(a).getOpposite().ordinal() + 4, 0);
-               world.markBlockForUpdate(x, y, z);
-               world.markBlockForUpdate(x + ForgeDirection.getOrientation(a).offsetX, y + ForgeDirection.getOrientation(a).offsetY, z + ForgeDirection.getOrientation(a).offsetZ);
-               TileEntity tile3 = world.getTileEntity(x, y, z);
+               world.setBlockState(blockPos, bi.getStateFromMeta(a), 0);
+               world.setTileEntity(blockPos, new TileResearchTable());
+               world.setBlockState(neighbor, bi.getStateFromMeta(af.getOpposite().ordinal() + 4), 0);
+               { net.minecraft.block.state.IBlockState _bs = world.getBlockState(blockPos); world.notifyBlockUpdate(blockPos, _bs, _bs, 3); }
+               { net.minecraft.block.state.IBlockState _bs = world.getBlockState(neighbor); world.notifyBlockUpdate(neighbor, _bs, _bs, 3); }
+               TileEntity tile3 = world.getTileEntity(blockPos);
                if (tile3 instanceof TileResearchTable) {
                   ((TileResearchTable)tile3).setInventorySlotContents(0, stack.copy());
                   if (!player.capabilities.isCreativeMode) {
@@ -64,14 +70,14 @@ public class ItemInkwell extends Item implements IScribeTools {
                      player.inventory.markDirty();
                   }
 
-                  world.markBlockForUpdate(x, y, z);
+                  { net.minecraft.block.state.IBlockState _bs = world.getBlockState(blockPos); world.notifyBlockUpdate(blockPos, _bs, _bs, 3); }
                }
 
-               return true;
+               return net.minecraft.util.EnumActionResult.SUCCESS;
             }
          }
       }
 
-      return false;
+      return net.minecraft.util.EnumActionResult.PASS;
    }
 }

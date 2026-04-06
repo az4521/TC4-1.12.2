@@ -1,7 +1,7 @@
 package thaumcraft.common.lib.events;
 
 import com.google.common.io.Files;
-import cpw.mods.fml.common.eventhandler.SubscribeEvent;
+import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import java.io.File;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
@@ -34,14 +34,14 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.potion.Potion;
 import net.minecraft.potion.PotionEffect;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.ChatComponentText;
-import net.minecraft.util.ChatComponentTranslation;
-import net.minecraft.util.EnumChatFormatting;
-import net.minecraft.util.MathHelper;
-import net.minecraft.util.StatCollector;
+import net.minecraft.util.text.TextComponentString;
+import net.minecraft.util.text.TextComponentTranslation;
+import net.minecraft.util.text.TextFormatting;
+import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.text.translation.I18n;
 import net.minecraft.world.EnumDifficulty;
 import net.minecraft.world.World;
-import net.minecraft.world.biome.BiomeGenBase;
+import net.minecraft.world.biome.Biome;
 import net.minecraftforge.common.BiomeDictionary;
 import net.minecraftforge.common.BiomeDictionary.Type;
 import net.minecraftforge.common.util.FakePlayer;
@@ -54,10 +54,9 @@ import net.minecraftforge.event.entity.living.LivingDropsEvent;
 import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.event.entity.player.ArrowLooseEvent;
 import net.minecraftforge.event.entity.player.ArrowNockEvent;
-import net.minecraftforge.event.entity.player.EntityInteractEvent;
 import net.minecraftforge.event.entity.player.EntityItemPickupEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.event.entity.player.PlayerUseItemEvent;
+import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import thaumcraft.api.IRepairable;
 import thaumcraft.api.IRepairableExtended;
 import thaumcraft.api.aspects.Aspect;
@@ -103,6 +102,7 @@ import thaumcraft.common.lib.world.dim.MazeHandler;
 import thaumcraft.common.tiles.TileOwned;
 
 import static thaumcraft.api.expands.warp.WarpEventManager.getWarpEventDelayForPlayer;
+import net.minecraft.util.math.BlockPos;
 
 public class EventHandlerEntity {
    public HashMap<Integer,Float> prevStep = new HashMap<>();
@@ -110,22 +110,22 @@ public class EventHandlerEntity {
 
    @SubscribeEvent
    public void droppedItem(ItemTossEvent event) {
-      NBTTagCompound itemData = event.entityItem.getEntityData();
-      itemData.setString("thrower", event.player.getCommandSenderName());
+      NBTTagCompound itemData = event.getEntityItem().getEntityData();
+      itemData.setString("thrower", event.getPlayer().getName());
    }
 
    @SubscribeEvent
    public void playerLoad(PlayerEvent.LoadFromFile event) {
-      EntityPlayer p = event.entityPlayer;
-      Thaumcraft.proxy.getPlayerKnowledge().wipePlayerKnowledge(p.getCommandSenderName());
-      File file1 = this.getPlayerFile("thaum", event.playerDirectory, p.getCommandSenderName());
+      EntityPlayer p = event.getEntityPlayer();
+      Thaumcraft.proxy.getPlayerKnowledge().wipePlayerKnowledge(p.getName());
+      File file1 = this.getPlayerFile("thaum", event.getPlayerDirectory(), p.getName());
       boolean legacy = false;
       if (!file1.exists()) {
          File filep = event.getPlayerFile("thaum");
          if (filep.exists()) {
             try {
                Files.copy(filep, file1);
-                Thaumcraft.log.info("Using and converting UUID Thaumcraft savefile for {}", p.getCommandSenderName());
+                Thaumcraft.log.info("Using and converting UUID Thaumcraft savefile for {}", p.getName());
                legacy = true;
                filep.delete();
                File fb = event.getPlayerFile("thaumback");
@@ -139,7 +139,7 @@ public class EventHandlerEntity {
             if (filet.exists()) {
                try {
                   Files.copy(filet, file1);
-                   Thaumcraft.log.info("Using pre MC 1.7.10 Thaumcraft savefile for {}", p.getCommandSenderName());
+                   Thaumcraft.log.info("Using pre MC 1.7.10 Thaumcraft savefile for {}", p.getName());
                   legacy = true;
                } catch (IOException ignored) {
                }
@@ -147,7 +147,7 @@ public class EventHandlerEntity {
          }
       }
 
-      ResearchManager.loadPlayerData(p, file1, this.getPlayerFile("thaumback", event.playerDirectory, p.getCommandSenderName()), legacy);
+      ResearchManager.loadPlayerData(p, file1, this.getPlayerFile("thaumback", event.getPlayerDirectory(), p.getName()), legacy);
 
       for(ResearchCategoryList cat : ResearchCategories.researchCategories.values()) {
          for(ResearchItem ri : cat.research.values()) {
@@ -161,8 +161,8 @@ public class EventHandlerEntity {
 
    public File getLegacyPlayerFile(EntityPlayer player) {
       try {
-         File playersDirectory = new File(player.worldObj.getSaveHandler().getWorldDirectory(), "players");
-         return new File(playersDirectory, player.getCommandSenderName() + ".thaum");
+         File playersDirectory = new File(player.world.getSaveHandler().getWorldDirectory(), "players");
+         return new File(playersDirectory, player.getName() + ".thaum");
       } catch (Exception e) {
          e.printStackTrace();
          return null;
@@ -179,12 +179,12 @@ public class EventHandlerEntity {
 
    @SubscribeEvent
    public void playerSave(PlayerEvent.SaveToFile event) {
-      EntityPlayer p = event.entityPlayer;
-      ResearchManager.savePlayerData(p, this.getPlayerFile("thaum", event.playerDirectory, p.getCommandSenderName()), this.getPlayerFile("thaumback", event.playerDirectory, p.getCommandSenderName()));
+      EntityPlayer p = event.getEntityPlayer();
+      ResearchManager.savePlayerData(p, this.getPlayerFile("thaum", event.getPlayerDirectory(), p.getName()), this.getPlayerFile("thaumback", event.getPlayerDirectory(), p.getName()));
    }
 
    public static void doRepair(ItemStack is, EntityPlayer player) {
-      int level = EnchantmentHelper.getEnchantmentLevel(Config.enchRepair.effectId, is);
+      int level = EnchantmentHelper.getEnchantmentLevel(Config.enchRepair, is);
       if (level > 0) {
          if (level > 2) {
             level = 2;
@@ -215,25 +215,25 @@ public class EventHandlerEntity {
 
    @SubscribeEvent
    public void livingTick(LivingEvent.LivingUpdateEvent event) {
-      if (event.entity instanceof EntityPlayer) {
-         EntityPlayer player = (EntityPlayer)event.entity;
-         if (event.entity.worldObj.provider.dimensionId == Config.dimensionOuterId && !player.capabilities.isCreativeMode && player.ticksExisted % 20 == 0 && (player.capabilities.isFlying || Hover.getHover(player.getEntityId()))) {
+      if (event.getEntity() instanceof EntityPlayer) {
+         EntityPlayer player = (EntityPlayer)event.getEntity();
+         if (event.getEntity().world.provider.getDimension() == Config.dimensionOuterId && !player.capabilities.isCreativeMode && player.ticksExisted % 20 == 0 && (player.capabilities.isFlying || Hover.getHover(player.getEntityId()))) {
             player.capabilities.isFlying = false;
             Hover.setHover(player.getEntityId(), false);
-            player.addChatMessage(new ChatComponentText(EnumChatFormatting.ITALIC + "" + EnumChatFormatting.GRAY + StatCollector.translateToLocal("tc.break.fly")));
+            player.sendMessage(new TextComponentString(TextFormatting.ITALIC + "" + TextFormatting.GRAY + I18n.translateToLocal("tc.break.fly")));
          }
 
-         if (Hover.getHover(player.getEntityId()) && (player.inventory.armorItemInSlot(2) == null || !(player.inventory.armorItemInSlot(2).getItem() instanceof ItemHoverHarness))) {
+         if (Hover.getHover(player.getEntityId()) && (player.inventory.armorInventory.get(2) == null || !(player.inventory.armorInventory.get(2).getItem() instanceof ItemHoverHarness))) {
             Hover.setHover(player.getEntityId(), false);
             player.capabilities.isFlying = false;
          }
 
-         if (!event.entity.worldObj.isRemote) {
+         if (!event.getEntity().world.isRemote) {
             if (!Config.wuss && player.ticksExisted > 0 && player.ticksExisted % getWarpEventDelayForPlayer(player) == 0) {
                WarpEvents.checkWarpEvent(player);
             }
 
-            if (player.ticksExisted % 10 == 0 && player.isPotionActive(Config.potionDeathGazeID)) {
+            if (player.ticksExisted % 10 == 0 && player.isPotionActive(Potion.getPotionById(Config.potionDeathGazeID))) {
                WarpEvents.checkDeathGaze(player);
             }
 
@@ -244,8 +244,8 @@ public class EventHandlerEntity {
                   InventoryPlayer var10001 = player.inventory;
                   if (a >= InventoryPlayer.getHotbarSize()) {
                      for(/*int */a = 0; a < 4; ++a) {
-                        if (player.inventory.armorItemInSlot(a) != null) {
-                           ItemStack is = player.inventory.armorItemInSlot(a);
+                        if (player.inventory.armorInventory.get(a) != null) {
+                           ItemStack is = player.inventory.armorInventory.get(a);
                            if (is.getItemDamage() > 0 && is.getItem() instanceof IRepairable && !player.capabilities.isCreativeMode) {
                               doRepair(is, player);
                            }
@@ -254,8 +254,8 @@ public class EventHandlerEntity {
                      break;
                   }
 
-                  if (player.inventory.mainInventory[a] != null) {
-                     ItemStack is = player.inventory.mainInventory[a];
+                  if (!player.inventory.mainInventory.get(a).isEmpty()) {
+                     ItemStack is = player.inventory.mainInventory.get(a);
                      if (is.getItemDamage() > 0 && is.getItem() instanceof IRepairable && !player.capabilities.isCreativeMode && !(is.getItem() instanceof ItemHoverHarness)) {
                         doRepair(is, player);
                      }
@@ -267,14 +267,14 @@ public class EventHandlerEntity {
          }
 
          this.updateSpeed(player);
-         if (player.worldObj.isRemote && (player.isSneaking() || player.inventory.armorItemInSlot(0) == null || player.inventory.armorItemInSlot(0).getItem() != ConfigItems.itemBootsTraveller) && this.prevStep.containsKey(player.getEntityId())) {
+         if (player.world.isRemote && (player.isSneaking() || player.inventory.armorInventory.get(0) == null || player.inventory.armorInventory.get(0).getItem() != ConfigItems.itemBootsTraveller) && this.prevStep.containsKey(player.getEntityId())) {
             player.stepHeight = this.prevStep.get(player.getEntityId());
             this.prevStep.remove(player.getEntityId());
          }
       }
 
-      if (event.entity instanceof EntityMob && !event.entity.isDead) {
-         EntityMob mob = (EntityMob)event.entity;
+      if (event.getEntity() instanceof EntityMob && !event.getEntity().isDead) {
+         EntityMob mob = (EntityMob)event.getEntity();
          int t = (int)mob.getEntityAttribute(EntityUtils.CHAMPION_MOD).getAttributeValue();
          if (t >= 0 && ChampionModifier.mods[t].type == 0) {
             ChampionModifier.mods[t].effect.performEffect(mob, null, null, 0.0F);
@@ -285,8 +285,8 @@ public class EventHandlerEntity {
 
    private void updateSpeed(EntityPlayer player) {
       try {
-         if (!player.capabilities.isFlying && player.inventory.armorItemInSlot(0) != null && player.moveForward > 0.0F) {
-            int haste = EnchantmentHelper.getEnchantmentLevel(Config.enchHaste.effectId, player.inventory.armorItemInSlot(0));
+         if (!player.capabilities.isFlying && player.inventory.armorInventory.get(0) != null && player.moveForward > 0.0F) {
+            int haste = EnchantmentHelper.getEnchantmentLevel(Config.enchHaste, player.inventory.armorInventory.get(0));
             if (haste > 0) {
                float bonus = (float)haste * 0.015F;
                if (player.isAirBorne) {
@@ -297,7 +297,7 @@ public class EventHandlerEntity {
                   bonus /= 2.0F;
                }
 
-               player.moveFlying(0.0F, 1.0F, bonus);
+               player.moveRelative(0.0F, 0.0F, 1.0F, bonus);
             }
          }
       } catch (Exception ignored) {
@@ -307,18 +307,18 @@ public class EventHandlerEntity {
 
    @SubscribeEvent
    public void playerJumps(LivingEvent.LivingJumpEvent event) {
-      if (event.entity instanceof EntityPlayer && ((EntityPlayer)event.entity).inventory.armorItemInSlot(0) != null && ((EntityPlayer)event.entity).inventory.armorItemInSlot(0).getItem() == ConfigItems.itemBootsTraveller) {
-         EntityLivingBase var10000 = event.entityLiving;
+      if (event.getEntity() instanceof EntityPlayer && ((EntityPlayer)event.getEntity()).inventory.armorInventory.get(0) != null && ((EntityPlayer)event.getEntity()).inventory.armorInventory.get(0).getItem() == ConfigItems.itemBootsTraveller) {
+         EntityLivingBase var10000 = event.getEntityLiving();
          var10000.motionY += 0.275F;
       }
 
    }
 
    @SubscribeEvent
-   public void playerInteract(EntityInteractEvent event) {
-      if (event.target instanceof EntityGolemBase && !((EntityGolemBase) event.target).getOwnerName().isEmpty() && !((EntityGolemBase)event.target).getOwnerName().equals(event.entityPlayer.getCommandSenderName())) {
-         if (!event.entityPlayer.worldObj.isRemote) {
-            event.entityPlayer.addChatMessage(new ChatComponentTranslation("You are not my Master!"));
+   public void playerInteract(net.minecraftforge.event.entity.player.PlayerInteractEvent.EntityInteract event) {
+      if (event.getTarget() instanceof EntityGolemBase && !((EntityGolemBase) event.getTarget()).getOwnerName().isEmpty() && !((EntityGolemBase)event.getTarget()).getOwnerName().equals(event.getEntityPlayer().getName())) {
+         if (!event.getEntityPlayer().world.isRemote) {
+            event.getEntityPlayer().sendMessage(new TextComponentTranslation("You are not my Master!"));
          }
 
          event.setCanceled(true);
@@ -328,23 +328,23 @@ public class EventHandlerEntity {
 
    @SubscribeEvent
    public void entitySpawns(EntityJoinWorldEvent event) {
-      if (!event.world.isRemote) {
-         if (event.entity instanceof EntityEnderPearl) {
-            int x = MathHelper.floor_double(event.entity.posX);
-            int y = MathHelper.floor_double(event.entity.posY);
-            int z = MathHelper.floor_double(event.entity.posZ);
+      if (!event.getWorld().isRemote) {
+         if (event.getEntity() instanceof EntityEnderPearl) {
+            int x = MathHelper.floor(event.getEntity().posX);
+            int y = MathHelper.floor(event.getEntity().posY);
+            int z = MathHelper.floor(event.getEntity().posZ);
 
             label138:
             for(int xx = -5; xx <= 5; ++xx) {
                for(int yy = -5; yy <= 5; ++yy) {
                   for(int zz = -5; zz <= 5; ++zz) {
-                     TileEntity tile = event.world.getTileEntity(x + xx, y + yy, z + zz);
+                     TileEntity tile = event.getWorld().getTileEntity(new BlockPos(x + xx, y + yy, z + zz));
                      if (tile instanceof TileOwned) {
-                        if (((EntityEnderPearl)event.entity).getThrower() instanceof EntityPlayer) {
-                           ((EntityPlayer)((EntityEnderPearl)event.entity).getThrower()).addChatMessage(new ChatComponentText("§5§oThe magic of a nearby warded object destroys the ender pearl."));
+                        if (((EntityEnderPearl)event.getEntity()).getThrower() instanceof EntityPlayer) {
+                           ((EntityPlayer)((EntityEnderPearl)event.getEntity()).getThrower()).sendMessage(new TextComponentString("§5§oThe magic of a nearby warded object destroys the ender pearl."));
                         }
 
-                        event.entity.setDead();
+                        event.getEntity().setDead();
                         break label138;
                      }
                   }
@@ -352,46 +352,43 @@ public class EventHandlerEntity {
             }
          }
 
-         if (event.entity instanceof EntityPlayer) {
-            ArrayList<WeakReference<Entity>> dudes = linkedEntities.get(event.entity.getCommandSenderName());
+         if (event.getEntity() instanceof EntityPlayer) {
+            ArrayList<WeakReference<Entity>> dudes = linkedEntities.get(event.getEntity().getName());
             if (dudes != null) {
                for(WeakReference dude : dudes) {
                   if (dude.get() != null && ((Entity)dude.get()).timeUntilPortal == 0) {
                      ((Entity)dude.get()).timeUntilPortal = ((Entity)dude.get()).getPortalCooldown();
-                     ((Entity)dude.get()).travelToDimension(event.world.provider.dimensionId);
+                     ((Entity)dude.get()).changeDimension(event.getWorld().provider.getDimension());
                   }
                }
             }
-         } else if (event.entity instanceof EntityMob) {
-            EntityMob mob = (EntityMob)event.entity;
+         } else if (event.getEntity() instanceof EntityMob) {
+            EntityMob mob = (EntityMob)event.getEntity();
             if (mob.getEntityAttribute(EntityUtils.CHAMPION_MOD).getAttributeValue() < (double)-1.0F) {
-               int championChance = event.world.rand.nextInt(100);
-               if (event.world.difficultySetting == EnumDifficulty.EASY || !Config.championMobs) {
+               int championChance = event.getWorld().rand.nextInt(100);
+               if (event.getWorld().getDifficulty() == EnumDifficulty.EASY || !Config.championMobs) {
                   championChance += 2;
                }
 
-               if (event.world.difficultySetting == EnumDifficulty.HARD) {
+               if (event.getWorld().getDifficulty() == EnumDifficulty.HARD) {
                   championChance -= Config.championMobs ? 2 : 0;
                }
 
-               if (event.world.provider.dimensionId == Config.dimensionOuterId) {
+               if (event.getWorld().provider.getDimension() == Config.dimensionOuterId) {
                   championChance -= 3;
                }
 
-               BiomeGenBase bg = mob.worldObj.getBiomeGenForCoords(
-                       MathHelper.ceiling_double_int(mob.posX),
-                       MathHelper.ceiling_double_int(mob.posZ)
-               );
-               if (BiomeDictionary.isBiomeOfType(bg, Type.SPOOKY)
-                       || BiomeDictionary.isBiomeOfType(bg, Type.NETHER)
-                       || BiomeDictionary.isBiomeOfType(bg, Type.END)) {
+               Biome bg = mob.world.getBiome(new BlockPos(MathHelper.ceil(mob.posX), 0, MathHelper.ceil(mob.posZ)));
+               if (BiomeDictionary.hasType(bg, Type.SPOOKY)
+                       || BiomeDictionary.hasType(bg, Type.NETHER)
+                       || BiomeDictionary.hasType(bg, Type.END)) {
                   championChance -= Config.championMobs ? 2 : 1;
                }
 
                if (this.isDangerousLocation(
-                       mob.worldObj, MathHelper.ceiling_double_int(mob.posX),
-                       MathHelper.ceiling_double_int(mob.posY),
-                       MathHelper.ceiling_double_int(mob.posZ))) {
+                       mob.world, MathHelper.ceil(mob.posX),
+                       MathHelper.ceil(mob.posY),
+                       MathHelper.ceil(mob.posZ))) {
                   championChance -= Config.championMobs ? 10 : 3;
                }
 
@@ -399,9 +396,9 @@ public class EventHandlerEntity {
                boolean whitelisted = false;
 
                for(Class<?> clazz : ConfigEntities.championModWhitelist.keySet()) {
-                  if (clazz.isAssignableFrom(event.entity.getClass())) {
+                  if (clazz.isAssignableFrom(event.getEntity().getClass())) {
                      whitelisted = true;
-                     if (Config.championMobs || event.entity instanceof EntityThaumcraftBoss) {
+                     if (Config.championMobs || event.getEntity() instanceof EntityThaumcraftBoss) {
                         cc = Math.max(cc, ConfigEntities.championModWhitelist.get(clazz) - 1);
                      }
                   }
@@ -409,7 +406,7 @@ public class EventHandlerEntity {
 
                championChance -= cc;
                if (whitelisted && championChance <= 0
-                       && mob.getEntityAttribute(SharedMonsterAttributes.maxHealth).getBaseValue() >= (double)10.0F) {
+                       && mob.getEntityAttribute(SharedMonsterAttributes.MAX_HEALTH).getBaseValue() >= (double)10.0F) {
                   EntityUtils.makeChampion(mob, false);
                } else {
                   IAttributeInstance modai = mob.getEntityAttribute(EntityUtils.CHAMPION_MOD);
@@ -423,7 +420,7 @@ public class EventHandlerEntity {
    }
 
    private boolean isDangerousLocation(World world, int x, int y, int z) {
-      if (world.provider.dimensionId == Config.dimensionOuterId) {
+      if (world.provider.getDimension() == Config.dimensionOuterId) {
          int xx = x >> 4;
          int zz = z >> 4;
          Cell c = MazeHandler.getFromHashMap(new CellLoc(xx, zz));
@@ -435,8 +432,8 @@ public class EventHandlerEntity {
 
    @SubscribeEvent
    public void entityConstuct(EntityEvent.EntityConstructing event) {
-      if (event.entity instanceof EntityMob) {
-         EntityMob mob = (EntityMob)event.entity;
+      if (event.getEntity() instanceof EntityMob) {
+         EntityMob mob = (EntityMob)event.getEntity();
          mob.getAttributeMap().registerAttribute(EntityUtils.CHAMPION_MOD).setBaseValue(-2.0F);
       }
 
@@ -444,7 +441,7 @@ public class EventHandlerEntity {
 
    @SubscribeEvent
    public void itemPickup(EntityItemPickupEvent event) {
-      if (event.entityPlayer.getCommandSenderName().startsWith("FakeThaumcraft")) {
+      if (event.getEntityPlayer().getName().startsWith("FakeThaumcraft")) {
          event.setCanceled(true);
       }
 
@@ -452,50 +449,50 @@ public class EventHandlerEntity {
 
    @SubscribeEvent
    public void livingDrops(LivingDropsEvent event) {
-      boolean fakePlayerFlag = event.source.getEntity() != null && event.source.getEntity() instanceof FakePlayer;
-      if (!event.entity.worldObj.isRemote
-              && event.recentlyHit
+      boolean fakePlayerFlag = event.getSource().getTrueSource() != null && event.getSource().getTrueSource() instanceof FakePlayer;
+      if (!event.getEntity().world.isRemote
+              && event.isRecentlyHit()
               && !fakePlayerFlag
-              && event.entity instanceof EntityMob
-              && !(event.entity instanceof EntityThaumcraftBoss)
-              && ((EntityMob)event.entity).getEntityAttribute(EntityUtils.CHAMPION_MOD).getAttributeValue() >= (double)0.0F) {
-         int i = 5 + event.entity.worldObj.rand.nextInt(3);
+              && event.getEntity() instanceof EntityMob
+              && !(event.getEntity() instanceof EntityThaumcraftBoss)
+              && ((EntityMob)event.getEntity()).getEntityAttribute(EntityUtils.CHAMPION_MOD).getAttributeValue() >= (double)0.0F) {
+         int i = 5 + event.getEntity().world.rand.nextInt(3);
 
          while(i > 0) {
             int j = EntityXPOrb.getXPSplit(i);
             i -= j;
-            event.entity.worldObj.spawnEntityInWorld(
-                    new EntityXPOrb(event.entity.worldObj, event.entity.posX, event.entity.posY, event.entity.posZ, j
+            event.getEntity().world.spawnEntity(
+                    new EntityXPOrb(event.getEntity().world, event.getEntity().posX, event.getEntity().posY, event.getEntity().posZ, j
                     ));
          }
 
-         int lb = Math.min(2, MathHelper.floor_float((float)(event.entity.worldObj.rand.nextInt(9) + event.lootingLevel) / 5.0F));
-         event.drops.add(
-                 new EntityItem(event.entity.worldObj,
-                         event.entityLiving.posX,
-                         event.entityLiving.posY + (double)event.entityLiving.getEyeHeight(),
-                         event.entityLiving.posZ,
+         int lb = Math.min(2, MathHelper.floor((float)(event.getEntity().world.rand.nextInt(9) + event.getLootingLevel()) / 5.0F));
+         event.getDrops().add(
+                 new EntityItem(event.getEntity().world,
+                         event.getEntityLiving().posX,
+                         event.getEntityLiving().posY + (double)event.getEntityLiving().getEyeHeight(),
+                         event.getEntityLiving().posZ,
                          new ItemStack(ConfigItems.itemLootbag, 1, lb)));
       }
 
-      if (event.entityLiving instanceof EntityZombie && !(event.entityLiving instanceof EntityBrainyZombie) && event.recentlyHit && event.entity.worldObj.rand.nextInt(10) - event.lootingLevel < 1) {
-         event.drops.add(new EntityItem(event.entity.worldObj, event.entityLiving.posX, event.entityLiving.posY + (double)event.entityLiving.getEyeHeight(), event.entityLiving.posZ, new ItemStack(ConfigItems.itemZombieBrain)));
+      if (event.getEntityLiving() instanceof EntityZombie && !(event.getEntityLiving() instanceof EntityBrainyZombie) && event.isRecentlyHit() && event.getEntity().world.rand.nextInt(10) - event.getLootingLevel() < 1) {
+         event.getDrops().add(new EntityItem(event.getEntity().world, event.getEntityLiving().posX, event.getEntityLiving().posY + (double)event.getEntityLiving().getEyeHeight(), event.getEntityLiving().posZ, new ItemStack(ConfigItems.itemZombieBrain)));
       }
 
-      if (event.entityLiving instanceof EntityVillager && event.entity.worldObj.rand.nextInt(10) - event.lootingLevel < 1) {
-         event.drops.add(new EntityItem(event.entity.worldObj, event.entityLiving.posX, event.entityLiving.posY + (double)event.entityLiving.getEyeHeight(), event.entityLiving.posZ, new ItemStack(ConfigItems.itemResource, 1, 18)));
+      if (event.getEntityLiving() instanceof EntityVillager && event.getEntity().world.rand.nextInt(10) - event.getLootingLevel() < 1) {
+         event.getDrops().add(new EntityItem(event.getEntity().world, event.getEntityLiving().posX, event.getEntityLiving().posY + (double)event.getEntityLiving().getEyeHeight(), event.getEntityLiving().posZ, new ItemStack(ConfigItems.itemResource, 1, 18)));
       }
 
-      if (event.source == DamageSourceThaumcraft.dissolve) {
-         AspectList aspects = ScanManager.generateEntityAspects(event.entityLiving);
+      if (event.getSource() == DamageSourceThaumcraft.dissolve) {
+         AspectList aspects = ScanManager.generateEntityAspects(event.getEntityLiving());
          if (aspects != null && aspects.size() > 0) {
             for(Aspect aspect : aspects.getAspects()) {
-               if (!event.entity.worldObj.rand.nextBoolean()) {
-                  int size = 1 + event.entity.worldObj.rand.nextInt(aspects.getAmount(aspect));
+               if (!event.getEntity().world.rand.nextBoolean()) {
+                  int size = 1 + event.getEntity().world.rand.nextInt(aspects.getAmount(aspect));
                   size = Math.max(1, size / 2);
                   ItemStack stack = new ItemStack(ConfigItems.itemCrystalEssence, size, 0);
                   ((ItemCrystalEssence)stack.getItem()).setAspects(stack, (new AspectList()).add(aspect, 1));
-                  event.drops.add(new EntityItem(event.entity.worldObj, event.entityLiving.posX, event.entityLiving.posY + (double)event.entityLiving.getEyeHeight(), event.entityLiving.posZ, stack));
+                  event.getDrops().add(new EntityItem(event.getEntity().world, event.getEntityLiving().posX, event.getEntityLiving().posY + (double)event.getEntityLiving().getEyeHeight(), event.getEntityLiving().posZ, stack));
                }
             }
          }
@@ -505,41 +502,41 @@ public class EventHandlerEntity {
 
    @SubscribeEvent
    public void livingTick(LivingDeathEvent event) {
-      if (!event.entityLiving.worldObj.isRemote && !(event.entityLiving instanceof ITaintedMob) && event.entityLiving.isPotionActive(Config.potionTaintPoisonID)) {
+      if (!event.getEntityLiving().world.isRemote && !(event.getEntityLiving() instanceof ITaintedMob) && event.getEntityLiving().isPotionActive(Potion.getPotionById(Config.potionTaintPoisonID))) {
          Entity entity = null;
-         if (event.entityLiving instanceof EntityCreeper) {
-            entity = new EntityTaintCreeper(event.entityLiving.worldObj);
-         } else if (event.entityLiving instanceof EntitySheep) {
-            entity = new EntityTaintSheep(event.entityLiving.worldObj);
-         } else if (event.entityLiving instanceof EntityCow) {
-            entity = new EntityTaintCow(event.entityLiving.worldObj);
-         } else if (event.entityLiving instanceof EntityPig) {
-            entity = new EntityTaintPig(event.entityLiving.worldObj);
-         } else if (event.entityLiving instanceof EntityChicken) {
-            entity = new EntityTaintChicken(event.entityLiving.worldObj);
-         } else if (event.entityLiving instanceof EntityVillager) {
-            entity = new EntityTaintVillager(event.entityLiving.worldObj);
+         if (event.getEntityLiving() instanceof EntityCreeper) {
+            entity = new EntityTaintCreeper(event.getEntityLiving().world);
+         } else if (event.getEntityLiving() instanceof EntitySheep) {
+            entity = new EntityTaintSheep(event.getEntityLiving().world);
+         } else if (event.getEntityLiving() instanceof EntityCow) {
+            entity = new EntityTaintCow(event.getEntityLiving().world);
+         } else if (event.getEntityLiving() instanceof EntityPig) {
+            entity = new EntityTaintPig(event.getEntityLiving().world);
+         } else if (event.getEntityLiving() instanceof EntityChicken) {
+            entity = new EntityTaintChicken(event.getEntityLiving().world);
+         } else if (event.getEntityLiving() instanceof EntityVillager) {
+            entity = new EntityTaintVillager(event.getEntityLiving().world);
          } else {
-            entity = new EntityThaumicSlime(event.entityLiving.worldObj);
+            entity = new EntityThaumicSlime(event.getEntityLiving().world);
             if (entity != null) {
-               ((EntityThaumicSlime)entity).setSlimeSize((int)(1.0F + Math.min(event.entityLiving.getMaxHealth() / 10.0F, 6.0F)));
+               ((EntityThaumicSlime)entity).setSlimeSize((int)(1.0F + Math.min(event.getEntityLiving().getMaxHealth() / 10.0F, 6.0F)));
             }
          }
 
          if (entity != null) {
-            entity.setLocationAndAngles(event.entityLiving.posX, event.entityLiving.posY, event.entityLiving.posZ, event.entityLiving.rotationYaw, 0.0F);
-            event.entityLiving.worldObj.spawnEntityInWorld(entity);
-            event.entityLiving.setDead();
+            entity.setLocationAndAngles(event.getEntityLiving().posX, event.getEntityLiving().posY, event.getEntityLiving().posZ, event.getEntityLiving().rotationYaw, 0.0F);
+            event.getEntityLiving().world.spawnEntity(entity);
+            event.getEntityLiving().setDead();
          }
-      } else if (!event.entityLiving.worldObj.isRemote && EntityUtils.getRecentlyHit(event.entityLiving) > 0) {
-         AspectList aspectsCompound = ScanManager.generateEntityAspects(event.entityLiving);
+      } else if (!event.getEntityLiving().world.isRemote && EntityUtils.getRecentlyHit(event.getEntityLiving()) > 0) {
+         AspectList aspectsCompound = ScanManager.generateEntityAspects(event.getEntityLiving());
          if (aspectsCompound != null && aspectsCompound.size() > 0) {
             AspectList aspects = ResearchManager.reduceToPrimals(aspectsCompound);
 
             for(Aspect aspect : aspects.getAspects()) {
-               if (event.entityLiving.worldObj.rand.nextBoolean()) {
-                  EntityAspectOrb orb = new EntityAspectOrb(event.entityLiving.worldObj, event.entityLiving.posX, event.entityLiving.posY, event.entityLiving.posZ, aspect, 1 + event.entityLiving.worldObj.rand.nextInt(aspects.getAmount(aspect)));
-                  event.entityLiving.worldObj.spawnEntityInWorld(orb);
+               if (event.getEntityLiving().world.rand.nextBoolean()) {
+                  EntityAspectOrb orb = new EntityAspectOrb(event.getEntityLiving().world, event.getEntityLiving().posX, event.getEntityLiving().posY, event.getEntityLiving().posZ, aspect, 1 + event.getEntityLiving().world.rand.nextInt(aspects.getAmount(aspect)));
+                  event.getEntityLiving().world.spawnEntity(orb);
                }
             }
          }
@@ -549,8 +546,8 @@ public class EventHandlerEntity {
 
    @SubscribeEvent
    public void bowNocked(ArrowNockEvent event) {
-      if (event.entityPlayer.inventory.hasItem(ConfigItems.itemPrimalArrow)) {
-         event.entityPlayer.setItemInUse(event.result, event.result.getItem().getMaxItemUseDuration(event.result));
+      if (event.getEntityPlayer().inventory.hasItemStack(new ItemStack(ConfigItems.itemPrimalArrow))) {
+         event.getEntityPlayer().setActiveHand(event.getHand()); event.setAction(new net.minecraft.util.ActionResult<>(net.minecraft.util.EnumActionResult.SUCCESS, event.getBow()));
          event.setCanceled(true);
       }
 
@@ -558,11 +555,11 @@ public class EventHandlerEntity {
 
    @SubscribeEvent
    public void bowShot(ArrowLooseEvent event) {
-      if (event.entityPlayer.inventory.hasItem(ConfigItems.itemPrimalArrow)) {
+      if (event.getEntityPlayer().inventory.hasItemStack(new ItemStack(ConfigItems.itemPrimalArrow))) {
          float f = 0.0F;
          float dam = 2.0F;
-         if (event.bow.getItem() instanceof ItemBowBone) {
-            f = (float)event.charge / 10.0F;
+         if (event.getBow().getItem() instanceof ItemBowBone) {
+            f = (float)event.getCharge() / 10.0F;
             f = (f * f + f * 2.0F) / 3.0F;
             if ((double)f < 0.1) {
                return;
@@ -570,7 +567,7 @@ public class EventHandlerEntity {
 
             dam = 2.5F;
          } else {
-            f = (float)event.charge / 20.0F;
+            f = (float)event.getCharge() / 20.0F;
             f = (f * f + f * 2.0F) / 3.0F;
             if ((double)f < 0.1) {
                return;
@@ -583,26 +580,26 @@ public class EventHandlerEntity {
 
          int type = 0;
 
-         for(int j = 0; j < event.entityPlayer.inventory.mainInventory.length; ++j) {
-            if (event.entityPlayer.inventory.mainInventory[j] != null && event.entityPlayer.inventory.mainInventory[j].getItem() == ConfigItems.itemPrimalArrow) {
-               type = event.entityPlayer.inventory.mainInventory[j].getItemDamage();
+         for(int j = 0; j < event.getEntityPlayer().inventory.mainInventory.size(); ++j) {
+            if (event.getEntityPlayer().inventory.mainInventory.get(j) != null && event.getEntityPlayer().inventory.mainInventory.get(j).getItem() == ConfigItems.itemPrimalArrow) {
+               type = event.getEntityPlayer().inventory.mainInventory.get(j).getItemDamage();
                break;
             }
          }
 
-         EntityPrimalArrow entityarrow = new EntityPrimalArrow(event.entityPlayer.worldObj, event.entityPlayer, f * dam, type);
-         if (event.bow.getItem() instanceof ItemBowBone) {
+         EntityPrimalArrow entityarrow = new EntityPrimalArrow(event.getEntityPlayer().world, event.getEntityPlayer(), f * dam, type);
+         if (event.getBow().getItem() instanceof ItemBowBone) {
             entityarrow.setDamage(entityarrow.getDamage() + (double)0.5F);
          } else if (f == 1.0F) {
             entityarrow.setIsCritical(true);
          }
 
-         int k = EnchantmentHelper.getEnchantmentLevel(Enchantment.power.effectId, event.bow);
+         int k = EnchantmentHelper.getEnchantmentLevel(net.minecraft.init.Enchantments.POWER, event.getBow());
          if (k > 0) {
             entityarrow.setDamage(entityarrow.getDamage() + (double)k * (double)0.5F + (double)0.5F);
          }
 
-         int l = EnchantmentHelper.getEnchantmentLevel(Enchantment.punch.effectId, event.bow);
+         int l = EnchantmentHelper.getEnchantmentLevel(net.minecraft.init.Enchantments.PUNCH, event.getBow());
          if (type == 3) {
             ++l;
          }
@@ -611,20 +608,20 @@ public class EventHandlerEntity {
             entityarrow.setKnockbackStrength(l);
          }
 
-         if (EnchantmentHelper.getEnchantmentLevel(Enchantment.flame.effectId, event.bow) > 0) {
+         if (EnchantmentHelper.getEnchantmentLevel(net.minecraft.init.Enchantments.FLAME, event.getBow()) > 0) {
             entityarrow.setFire(100);
          }
 
-         event.bow.damageItem(1, event.entityPlayer);
-         event.entityPlayer.worldObj.playSoundAtEntity(event.entityPlayer, "random.bow", 1.0F, 1.0F / (event.entityPlayer.worldObj.rand.nextFloat() * 0.4F + 1.2F) + f * 0.5F);
-         boolean flag = EnchantmentHelper.getEnchantmentLevel(Enchantment.infinity.effectId, event.bow) > 0 && event.entityPlayer.worldObj.rand.nextFloat() < 0.33F;
+         event.getBow().damageItem(1, event.getEntityPlayer());
+         event.getEntityPlayer().world.playSound(null, event.getEntityPlayer().posX, event.getEntityPlayer().posY, event.getEntityPlayer().posZ, net.minecraft.init.SoundEvents.ENTITY_ARROW_SHOOT, net.minecraft.util.SoundCategory.NEUTRAL, 1.0F, 1.0F / (event.getEntityPlayer().world.rand.nextFloat() * 0.4F + 1.2F) + f * 0.5F);
+         boolean flag = EnchantmentHelper.getEnchantmentLevel(net.minecraft.init.Enchantments.INFINITY, event.getBow()) > 0 && event.getEntityPlayer().world.rand.nextFloat() < 0.33F;
 
-          if (!event.entityPlayer.capabilities.isCreativeMode || !flag) {
-            InventoryUtils.consumeInventoryItem(event.entityPlayer, ConfigItems.itemPrimalArrow, type);
+          if (!event.getEntityPlayer().capabilities.isCreativeMode || !flag) {
+            InventoryUtils.consumeInventoryItem(event.getEntityPlayer(), ConfigItems.itemPrimalArrow, type);
          }
 
-         if (!event.entityPlayer.worldObj.isRemote) {
-            event.entityPlayer.worldObj.spawnEntityInWorld(entityarrow);
+         if (!event.getEntityPlayer().world.isRemote) {
+            event.getEntityPlayer().world.spawnEntity(entityarrow);
          }
 
          event.setCanceled(true);
@@ -633,25 +630,27 @@ public class EventHandlerEntity {
    }
 
    @SubscribeEvent
-   public void finishedUsingItem(PlayerUseItemEvent.Finish event) {
-      if (!event.entity.worldObj.isRemote && event.entityPlayer.isPotionActive(Config.potionUnHungerID)) {
-         if (!event.item.isItemEqual(new ItemStack(Items.rotten_flesh)) && !event.item.isItemEqual(new ItemStack(ConfigItems.itemZombieBrain))) {
-            if (event.item.getItem() instanceof ItemFood) {
-               event.entityPlayer.addChatMessage(new ChatComponentText("§4§o" + StatCollector.translateToLocal("warp.text.hunger.1")));
+   public void finishedUsingItem(net.minecraftforge.event.entity.living.LivingEntityUseItemEvent.Finish event) {
+      if (!(event.getEntityLiving() instanceof EntityPlayer)) return;
+      EntityPlayer player = (EntityPlayer) event.getEntityLiving();
+      if (!player.world.isRemote && player.isPotionActive(Potion.getPotionById(Config.potionUnHungerID))) {
+         if (!event.getItem().isItemEqual(new ItemStack(Items.ROTTEN_FLESH)) && !event.getItem().isItemEqual(new ItemStack(ConfigItems.itemZombieBrain))) {
+            if (event.getItem().getItem() instanceof ItemFood) {
+               player.sendMessage(new TextComponentString("§4§o" + I18n.translateToLocal("warp.text.hunger.1")));
             }
          } else {
-            PotionEffect pe = event.entityPlayer.getActivePotionEffect(Potion.potionTypes[Config.potionUnHungerID]);
+            PotionEffect pe = player.getActivePotionEffect(Potion.getPotionById(Config.potionUnHungerID));
             int amp = pe.getAmplifier() - 1;
             int duration = pe.getDuration() - 600;
-            event.entityPlayer.removePotionEffect(Config.potionUnHungerID);
+            player.removePotionEffect(net.minecraft.potion.Potion.getPotionById(Config.potionUnHungerID));
             if (duration > 0 && amp >= 0) {
-               pe = new PotionEffect(Config.potionUnHungerID, duration, amp, true);
+               pe = new PotionEffect(Potion.getPotionById(Config.potionUnHungerID), duration, amp, true, true);
                pe.getCurativeItems().clear();
-               pe.addCurativeItem(new ItemStack(Items.rotten_flesh));
-               event.entityPlayer.addPotionEffect(pe);
+               pe.addCurativeItem(new ItemStack(Items.ROTTEN_FLESH));
+               player.addPotionEffect(pe);
             }
 
-            event.entityPlayer.addChatMessage(new ChatComponentText("§2§o" + StatCollector.translateToLocal("warp.text.hunger.2")));
+            player.sendMessage(new TextComponentString("§2§o" + I18n.translateToLocal("warp.text.hunger.2")));
          }
       }
 
@@ -659,12 +658,13 @@ public class EventHandlerEntity {
 
    @SubscribeEvent
    public void itemExpire(ItemExpireEvent event) {
-      if (event.entityItem.getEntityItem() != null && event.entityItem.getEntityItem().getItem() != null && event.entityItem.getEntityItem().getItem() instanceof ItemBathSalts) {
-         int x = MathHelper.floor_double(event.entityItem.posX);
-         int y = MathHelper.floor_double(event.entityItem.posY);
-         int z = MathHelper.floor_double(event.entityItem.posZ);
-         if (event.entityItem.worldObj.getBlock(x, y, z) == Blocks.water && event.entityItem.worldObj.getBlockMetadata(x, y, z) == 0) {
-            event.entityItem.worldObj.setBlock(x, y, z, ConfigBlocks.blockFluidPure);
+      if (!event.getEntityItem().getItem().isEmpty() && event.getEntityItem().getItem().getItem() instanceof ItemBathSalts) {
+         int x = MathHelper.floor(event.getEntityItem().posX);
+         int y = MathHelper.floor(event.getEntityItem().posY);
+         int z = MathHelper.floor(event.getEntityItem().posZ);
+         net.minecraft.block.state.IBlockState waterState = event.getEntityItem().world.getBlockState(new BlockPos(x, y, z));
+         if (waterState.getBlock() == net.minecraft.init.Blocks.WATER && waterState.getBlock().getMetaFromState(waterState) == 0) {
+            event.getEntityItem().world.setBlockState(new BlockPos(x, y, z), ConfigBlocks.blockFluidPure.getDefaultState(), 3);
          }
       }
 
@@ -672,8 +672,8 @@ public class EventHandlerEntity {
 
    @SubscribeEvent
    public void breakSpeedEvent(PlayerEvent.BreakSpeed event) {
-      if (!event.entityPlayer.onGround && Hover.getHover(event.entityPlayer.getEntityId())) {
-         event.newSpeed = event.originalSpeed * 5.0F;
+      if (!event.getEntityPlayer().onGround && Hover.getHover(event.getEntityPlayer().getEntityId())) {
+         event.setNewSpeed(event.getOriginalSpeed() * 5.0F);
       }
 
    }

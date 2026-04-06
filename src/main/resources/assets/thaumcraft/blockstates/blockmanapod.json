@@ -1,0 +1,52 @@
+{
+  "variants": {
+    "meta=0": {
+      "model": "thaumcraft:blockmanapod"
+    },
+    "meta=1": {
+      "model": "thaumcraft:blockmanapod"
+    },
+    "meta=2": {
+      "model": "thaumcraft:blockmanapod"
+    },
+    "meta=3": {
+      "model": "thaumcraft:blockmanapod"
+    },
+    "meta=4": {
+      "model": "thaumcraft:blockmanapod"
+    },
+    "meta=5": {
+      "model": "thaumcraft:blockmanapod"
+    },
+    "meta=6": {
+      "model": "thaumcraft:blockmanapod"
+    },
+    "meta=7": {
+      "model": "thaumcraft:blockmanapod"
+    },
+    "meta=8": {
+      "model": "thaumcraft:blockmanapod"
+    },
+    "meta=9": {
+      "model": "thaumcraft:blockmanapod"
+    },
+    "meta=10": {
+      "model": "thaumcraft:blockmanapod"
+    },
+    "meta=11": {
+      "model": "thaumcraft:blockmanapod"
+    },
+    "meta=12": {
+      "model": "thaumcraft:blockmanapod"
+    },
+    "meta=13": {
+      "model": "thaumcraft:blockmanapod"
+    },
+    "meta=14": {
+      "model": "thaumcraft:blockmanapod"
+    },
+    "meta=15": {
+      "model": "thaumcraft:blockmanapod"
+    }
+  }
+}

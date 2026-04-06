@@ -1,0 +1,7 @@
+{
+  "parent": "block/cube_column",
+  "textures": {
+    "end": "thaumcraft:blocks/pedestal_top",
+    "side": "thaumcraft:blocks/pedestal_side"
+  }
+}

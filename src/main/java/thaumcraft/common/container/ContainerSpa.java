@@ -37,25 +37,25 @@ public class ContainerSpa extends Container {
    }
 
    public boolean canInteractWith(EntityPlayer par1EntityPlayer) {
-      return this.spa.isUseableByPlayer(par1EntityPlayer);
+      return this.spa.isUsableByPlayer(par1EntityPlayer);
    }
 
    public ItemStack transferStackInSlot(EntityPlayer par1EntityPlayer, int slot) {
-      ItemStack stack = null;
+      ItemStack stack = ItemStack.EMPTY;
       Slot slotObject = (Slot)this.inventorySlots.get(slot);
       if (slotObject != null && slotObject.getHasStack()) {
          ItemStack stackInSlot = slotObject.getStack();
          stack = stackInSlot.copy();
          if (slot == 0) {
             if (!this.spa.isItemValidForSlot(slot, stackInSlot) || !this.mergeItemStack(stackInSlot, 1, this.inventorySlots.size(), true)) {
-               return null;
+               return ItemStack.EMPTY;
             }
          } else if (!this.spa.isItemValidForSlot(slot, stackInSlot) || !this.mergeItemStack(stackInSlot, 0, 1, false)) {
-            return null;
+            return ItemStack.EMPTY;
          }
 
-         if (stackInSlot.stackSize == 0) {
-            slotObject.putStack(null);
+         if (stackInSlot.isEmpty()) {
+            slotObject.putStack(ItemStack.EMPTY);
          } else {
             slotObject.onSlotChanged();
          }

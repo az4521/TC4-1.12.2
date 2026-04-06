@@ -15,12 +15,13 @@ public class BlockMagicalLogItem extends ItemBlock {
       return par1;
    }
 
-   public String getUnlocalizedName(ItemStack par1ItemStack) {
+   @Override
+   public String getTranslationKey(ItemStack par1ItemStack) {
       int var2 = par1ItemStack.getItemDamage();
       if (var2 < 0 || var2 >= BlockMagicalLog.woodType.length) {
          var2 = 0;
       }
 
-      return super.getUnlocalizedName() + "." + BlockMagicalLog.woodType[var2];
+      return super.getTranslationKey(par1ItemStack) + "." + BlockMagicalLog.woodType[var2];
    }
 }

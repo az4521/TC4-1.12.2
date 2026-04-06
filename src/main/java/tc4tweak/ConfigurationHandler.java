@@ -1,10 +1,10 @@
 package tc4tweak;
 
 import com.google.common.collect.ImmutableList;
-import cpw.mods.fml.client.event.ConfigChangedEvent;
-import cpw.mods.fml.common.FMLCommonHandler;
-import cpw.mods.fml.common.eventhandler.SubscribeEvent;
-import cpw.mods.fml.relauncher.FMLLaunchHandler;
+import net.minecraftforge.fml.client.event.ConfigChangedEvent;
+import net.minecraftforge.fml.common.FMLCommonHandler;
+import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import net.minecraftforge.fml.relauncher.FMLLaunchHandler;
 import gnu.trove.map.TObjectDoubleMap;
 import gnu.trove.map.hash.TObjectDoubleHashMap;
 import gnu.trove.set.hash.TIntHashSet;
@@ -74,7 +74,7 @@ public enum ConfigurationHandler {
         for (String categoryName : config.getCategoryNames()) {
             ConfigCategory category = config.getCategory(categoryName);
             for (Map.Entry<String, Property> entry : category.entrySet()) {
-                entry.getValue().comment = entry.getValue().comment.replace(". ", ".\n");
+                entry.getValue().setComment(entry.getValue().getComment().replace(". ", ".\n"));
             }
         }
     }
@@ -91,7 +91,7 @@ public enum ConfigurationHandler {
 
     @SubscribeEvent
     public void onConfigChange(ConfigChangedEvent.OnConfigChangedEvent e) {
-        if (e.modID.equals(Thaumcraft.MOD_ID)) {
+        if (e.getModID().equals(Thaumcraft.MOD_ID)) {
             loadConfig(true);
             FlushableCache.enableAll(false);
             CommonUtils.sortResearchCategories(true);
@@ -333,9 +333,10 @@ public enum ConfigurationHandler {
             @SuppressWarnings("deprecation")
             @Override
             public boolean test(ItemStack playerInput, ItemStack recipeSpec) {
-                int od = OreDictionary.getOreID(playerInput);
-                if (od == -1) return false;
-                ItemStack[] ores = OreDictionary.getOres(od).toArray(new ItemStack[0]);
+                int[] ods = OreDictionary.getOreIDs(playerInput);
+                if (ods.length == 0) return false;
+                int od = ods[0];
+                ItemStack[] ores = OreDictionary.getOres(OreDictionary.getOreName(od)).toArray(new ItemStack[0]);
                 return ThaumcraftApiHelper.containsMatch(false, new ItemStack[]{recipeSpec}, ores);
             }
         },

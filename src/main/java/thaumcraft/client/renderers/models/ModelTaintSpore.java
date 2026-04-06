@@ -4,8 +4,9 @@ import net.minecraft.client.model.ModelBase;
 import net.minecraft.client.model.ModelRenderer;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.util.MathHelper;
-import org.lwjgl.opengl.GL11;
+import net.minecraft.util.math.MathHelper;
+
+import net.minecraft.client.renderer.GlStateManager;
 
 public class ModelTaintSpore extends ModelBase {
    ModelRenderer cube;
@@ -21,12 +22,12 @@ public class ModelTaintSpore extends ModelBase {
 
    public void render(Entity par1Entity, float par2, float par3, float par4, float par5, float par6, float par7) {
       this.setRotationAngles(par2, par3, par4, par5, par6, par7, par1Entity);
-      GL11.glPushMatrix();
-      GL11.glEnable(GL11.GL_BLEND);
-      GL11.glBlendFunc(770, 771);
+      GlStateManager.pushMatrix();
+      GlStateManager.enableBlend();
+      GlStateManager.blendFunc(770, 771);
       this.cube.render(par7);
-      GL11.glDisable(GL11.GL_BLEND);
-      GL11.glPopMatrix();
+      GlStateManager.disableBlend();
+      GlStateManager.popMatrix();
    }
 
    public void setRotationAngles(float par1, float par2, float par3, float par4, float par5, float par6, Entity entity) {

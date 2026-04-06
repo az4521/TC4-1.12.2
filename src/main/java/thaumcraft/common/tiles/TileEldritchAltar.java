@@ -1,14 +1,15 @@
 package thaumcraft.common.tiles;
 
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 
 import java.util.List;
 
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.util.AxisAlignedBB;
-import net.minecraft.util.MathHelper;
-import net.minecraft.world.World;
+import net.minecraft.util.math.AxisAlignedBB;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.EnumFacing;
 import thaumcraft.api.TileThaumcraft;
 import thaumcraft.common.entities.monster.EntityCultist;
 import thaumcraft.common.entities.monster.EntityCultistCleric;
@@ -42,11 +43,12 @@ public class TileEldritchAltar extends TileThaumcraft {
         this.spawnType = nbttagcompound.getByte("spawntype");
     }
 
-    public void writeToNBT(NBTTagCompound nbttagcompound) {
+    public NBTTagCompound writeToNBT(NBTTagCompound nbttagcompound) {
         super.writeToNBT(nbttagcompound);
         nbttagcompound.setBoolean("spawnedClerics", this.spawnedClerics);
         nbttagcompound.setBoolean("spawner", this.spawner);
         nbttagcompound.setByte("spawntype", this.spawnType);
+        return nbttagcompound;
     }
 
     public double getMaxRenderDistanceSquared() {
@@ -55,7 +57,7 @@ public class TileEldritchAltar extends TileThaumcraft {
 
     @SideOnly(Side.CLIENT)
     public AxisAlignedBB getRenderBoundingBox() {
-        return AxisAlignedBB.getBoundingBox(this.xCoord, this.yCoord, this.zCoord, this.xCoord + 1, this.yCoord + 1, this.zCoord + 1);
+        return new AxisAlignedBB(this.getPos().getX(), this.getPos().getY(), this.getPos().getZ(), this.getPos().getX() + 1, this.getPos().getY() + 1, this.getPos().getZ() + 1);
     }
 
     public boolean isSpawner() {
@@ -66,12 +68,8 @@ public class TileEldritchAltar extends TileThaumcraft {
         this.spawner = spawner;
     }
 
-    public boolean canUpdate() {
-        return super.canUpdate();
-    }
-
     public void updateEntity() {
-        if (!this.worldObj.isRemote && this.isSpawner() && this.counter++ >= 80 && this.counter % 40 == 0) {
+        if (!this.world.isRemote && this.isSpawner() && this.counter++ >= 80 && this.counter % 40 == 0) {
             switch (this.spawnType) {
                 case 0:
                     if (!this.spawnedClerics) {
@@ -88,23 +86,23 @@ public class TileEldritchAltar extends TileThaumcraft {
     }
 
     private void spawnGuards() {
-        List ents = this.worldObj.getEntitiesWithinAABB(EntityCultistCleric.class, AxisAlignedBB.getBoundingBox(this.xCoord, this.yCoord, this.zCoord, this.xCoord + 1, this.yCoord + 1, this.zCoord + 1).expand(24.0F, 16.0F, 24.0F));
+        List ents = this.world.getEntitiesWithinAABB(EntityCultistCleric.class, new AxisAlignedBB(this.getPos().getX(), this.getPos().getY(), this.getPos().getZ(), this.getPos().getX() + 1, this.getPos().getY() + 1, this.getPos().getZ() + 1).expand(24.0F, 16.0F, 24.0F));
         if (ents.isEmpty()) {
             this.setSpawner(false);
         } else {
-            ents = this.worldObj.getEntitiesWithinAABB(EntityCultist.class, AxisAlignedBB.getBoundingBox(this.xCoord, this.yCoord, this.zCoord, this.xCoord + 1, this.yCoord + 1, this.zCoord + 1).expand(24.0F, 16.0F, 24.0F));
+            ents = this.world.getEntitiesWithinAABB(EntityCultist.class, new AxisAlignedBB(this.getPos().getX(), this.getPos().getY(), this.getPos().getZ(), this.getPos().getX() + 1, this.getPos().getY() + 1, this.getPos().getZ() + 1).expand(24.0F, 16.0F, 24.0F));
             if (ents.size() < 8) {
-                EntityCultistKnight eg = new EntityCultistKnight(this.worldObj);
-                int i1 = this.xCoord + MathHelper.getRandomIntegerInRange(this.worldObj.rand, 4, 10) * MathHelper.getRandomIntegerInRange(this.worldObj.rand, -1, 1);
-                int j1 = this.yCoord + MathHelper.getRandomIntegerInRange(this.worldObj.rand, 0, 3) * MathHelper.getRandomIntegerInRange(this.worldObj.rand, -1, 1);
-                int k1 = this.zCoord + MathHelper.getRandomIntegerInRange(this.worldObj.rand, 4, 10) * MathHelper.getRandomIntegerInRange(this.worldObj.rand, -1, 1);
-                if (World.doesBlockHaveSolidTopSurface(this.worldObj, i1, j1 - 1, k1)) {
+                EntityCultistKnight eg = new EntityCultistKnight(this.world);
+                int i1 = this.getPos().getX() + MathHelper.getInt(this.world.rand, 4, 10) * MathHelper.getInt(this.world.rand, -1, 1);
+                int j1 = this.getPos().getY() + MathHelper.getInt(this.world.rand, 0, 3) * MathHelper.getInt(this.world.rand, -1, 1);
+                int k1 = this.getPos().getZ() + MathHelper.getInt(this.world.rand, 4, 10) * MathHelper.getInt(this.world.rand, -1, 1);
+                if (this.world.isSideSolid(new BlockPos(i1, j1 - 1, k1), EnumFacing.UP)) {
                     eg.setPosition(i1, j1, k1);
-                    if (this.worldObj.checkNoEntityCollision(eg.boundingBox) && this.worldObj.getCollidingBoundingBoxes(eg, eg.boundingBox).isEmpty() && !this.worldObj.isAnyLiquid(eg.boundingBox)) {
-                        eg.onSpawnWithEgg(null);
+                    if (this.world.checkNoEntityCollision(eg.getEntityBoundingBox()) && this.world.getCollisionBoxes(eg, eg.getEntityBoundingBox()).isEmpty() && !this.world.containsAnyLiquid(eg.getEntityBoundingBox())) {
+                        eg.onInitialSpawn(this.world.getDifficultyForLocation(eg.getPosition()), null);
                         eg.spawnExplosionParticle();
-                        eg.setHomeArea(this.xCoord, this.yCoord, this.zCoord, 16);
-                        this.worldObj.spawnEntityInWorld(eg);
+                        eg.setHomePosAndDistance(new BlockPos(this.getPos().getX(), this.getPos().getY(), this.getPos().getZ()), 16);
+                        this.world.spawnEntity(eg);
                     }
                 }
             }
@@ -113,17 +111,17 @@ public class TileEldritchAltar extends TileThaumcraft {
     }
 
     private void spawnGuardian() {
-        EntityEldritchGuardian eg = new EntityEldritchGuardian(this.worldObj);
-        int i1 = this.xCoord + MathHelper.getRandomIntegerInRange(this.worldObj.rand, 4, 10) * MathHelper.getRandomIntegerInRange(this.worldObj.rand, -1, 1);
-        int j1 = this.yCoord + MathHelper.getRandomIntegerInRange(this.worldObj.rand, 0, 3) * MathHelper.getRandomIntegerInRange(this.worldObj.rand, -1, 1);
-        int k1 = this.zCoord + MathHelper.getRandomIntegerInRange(this.worldObj.rand, 4, 10) * MathHelper.getRandomIntegerInRange(this.worldObj.rand, -1, 1);
-        if (World.doesBlockHaveSolidTopSurface(this.worldObj, i1, j1 - 1, k1)) {
+        EntityEldritchGuardian eg = new EntityEldritchGuardian(this.world);
+        int i1 = this.getPos().getX() + MathHelper.getInt(this.world.rand, 4, 10) * MathHelper.getInt(this.world.rand, -1, 1);
+        int j1 = this.getPos().getY() + MathHelper.getInt(this.world.rand, 0, 3) * MathHelper.getInt(this.world.rand, -1, 1);
+        int k1 = this.getPos().getZ() + MathHelper.getInt(this.world.rand, 4, 10) * MathHelper.getInt(this.world.rand, -1, 1);
+        if (this.world.isSideSolid(new BlockPos(i1, j1 - 1, k1), EnumFacing.UP)) {
             eg.setPosition(i1, j1, k1);
             if (eg.getCanSpawnHere()) {
-                eg.onSpawnWithEgg(null);
+                eg.onInitialSpawn(this.world.getDifficultyForLocation(eg.getPosition()), null);
                 eg.spawnExplosionParticle();
-                eg.setHomeArea(this.xCoord, this.yCoord, this.zCoord, 16);
-                this.worldObj.spawnEntityInWorld(eg);
+                eg.setHomePosAndDistance(new BlockPos(this.getPos().getX(), this.getPos().getY(), this.getPos().getZ()), 16);
+                this.world.spawnEntity(eg);
             }
         }
 
@@ -153,14 +151,14 @@ public class TileEldritchAltar extends TileThaumcraft {
                     zz = 2;
             }
 
-            EntityCultistCleric cleric = new EntityCultistCleric(this.worldObj);
-            if (World.doesBlockHaveSolidTopSurface(this.worldObj, this.xCoord + xx, this.yCoord - 1, this.zCoord + zz)) {
-                cleric.setPosition((double) this.xCoord + (double) 0.5F + (double) xx, this.yCoord, (double) this.zCoord + (double) 0.5F + (double) zz);
-                if (this.worldObj.checkNoEntityCollision(cleric.boundingBox) && this.worldObj.getCollidingBoundingBoxes(cleric, cleric.boundingBox).isEmpty() && !this.worldObj.isAnyLiquid(cleric.boundingBox)) {
-                    cleric.setHomeArea(this.xCoord, this.yCoord, this.zCoord, 8);
-                    cleric.onSpawnWithEgg(null);
+            EntityCultistCleric cleric = new EntityCultistCleric(this.world);
+            if (this.world.isSideSolid(new BlockPos(this.getPos().getX() + xx, this.getPos().getY() - 1, this.getPos().getZ() + zz), EnumFacing.UP)) {
+                cleric.setPosition((double) this.getPos().getX() + (double) 0.5F + (double) xx, this.getPos().getY(), (double) this.getPos().getZ() + (double) 0.5F + (double) zz);
+                if (this.world.checkNoEntityCollision(cleric.getEntityBoundingBox()) && this.world.getCollisionBoxes(cleric, cleric.getEntityBoundingBox()).isEmpty() && !this.world.containsAnyLiquid(cleric.getEntityBoundingBox())) {
+                    cleric.setHomePosAndDistance(new BlockPos(this.getPos().getX(), this.getPos().getY(), this.getPos().getZ()), 8);
+                    cleric.onInitialSpawn(this.world.getDifficultyForLocation(cleric.getPosition()), null);
                     cleric.spawnExplosionParticle();
-                    if (this.worldObj.spawnEntityInWorld(cleric)) {
+                    if (this.world.spawnEntity(cleric)) {
                         ++success;
                         cleric.setIsRitualist(true);
                     }
@@ -200,10 +198,10 @@ public class TileEldritchAltar extends TileThaumcraft {
     }
 
     public boolean checkForMaze() {
-        int w = 15 + this.worldObj.rand.nextInt(8) * 2;
-        int h = 15 + this.worldObj.rand.nextInt(8) * 2;
-        if (!MazeHandler.mazesInRange(this.xCoord >> 4, this.zCoord >> 4, w, h)) {
-            Thread t = new Thread(new MazeThread(this.xCoord >> 4, this.zCoord >> 4, w, h, this.worldObj.rand.nextLong()));
+        int w = 15 + this.world.rand.nextInt(8) * 2;
+        int h = 15 + this.world.rand.nextInt(8) * 2;
+        if (!MazeHandler.mazesInRange(this.getPos().getX() >> 4, this.getPos().getZ() >> 4, w, h)) {
+            Thread t = new Thread(new MazeThread(this.getPos().getX() >> 4, this.getPos().getZ() >> 4, w, h, this.world.rand.nextLong()));
             t.start();
             return false;
         } else {

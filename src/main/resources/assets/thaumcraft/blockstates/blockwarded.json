@@ -1,0 +1,52 @@
+{
+  "variants": {
+    "meta=0": {
+      "model": "thaumcraft:blockwarded"
+    },
+    "meta=1": {
+      "model": "thaumcraft:blockwarded"
+    },
+    "meta=2": {
+      "model": "thaumcraft:blockwarded"
+    },
+    "meta=3": {
+      "model": "thaumcraft:blockwarded"
+    },
+    "meta=4": {
+      "model": "thaumcraft:blockwarded"
+    },
+    "meta=5": {
+      "model": "thaumcraft:blockwarded"
+    },
+    "meta=6": {
+      "model": "thaumcraft:blockwarded"
+    },
+    "meta=7": {
+      "model": "thaumcraft:blockwarded"
+    },
+    "meta=8": {
+      "model": "thaumcraft:blockwarded"
+    },
+    "meta=9": {
+      "model": "thaumcraft:blockwarded"
+    },
+    "meta=10": {
+      "model": "thaumcraft:blockwarded"
+    },
+    "meta=11": {
+      "model": "thaumcraft:blockwarded"
+    },
+    "meta=12": {
+      "model": "thaumcraft:blockwarded"
+    },
+    "meta=13": {
+      "model": "thaumcraft:blockwarded"
+    },
+    "meta=14": {
+      "model": "thaumcraft:blockwarded"
+    },
+    "meta=15": {
+      "model": "thaumcraft:blockwarded"
+    }
+  }
+}

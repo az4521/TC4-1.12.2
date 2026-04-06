@@ -4,7 +4,8 @@ import net.minecraft.block.Block;
 import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.ai.EntityAIBase;
 import net.minecraft.init.Blocks;
-import net.minecraft.util.MathHelper;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
 import thaumcraft.common.config.ConfigBlocks;
 import thaumcraft.common.lib.utils.Utils;
@@ -17,7 +18,7 @@ public class AIConvertGrass extends EntityAIBase {
 
    public AIConvertGrass(EntityLiving par1EntityLiving) {
       this.entity = par1EntityLiving;
-      this.world = par1EntityLiving.worldObj;
+      this.world = par1EntityLiving.world;
       this.setMutexBits(7);
    }
 
@@ -25,17 +26,21 @@ public class AIConvertGrass extends EntityAIBase {
       if (this.entity.getRNG().nextInt(250) != 0) {
          return false;
       } else {
-         int var1 = MathHelper.floor_double(this.entity.posX);
-         int var2 = MathHelper.floor_double(this.entity.posY);
-         int var3 = MathHelper.floor_double(this.entity.posZ);
-         return this.world.getBlock(var1, var2, var3) == Blocks.tallgrass && this.world.getBlockMetadata(var1, var2, var3) == 1 || this.world.getBlock(var1, var2 - 1, var3) == Blocks.grass;
+         int var1 = MathHelper.floor(this.entity.posX);
+         int var2 = MathHelper.floor(this.entity.posY);
+         int var3 = MathHelper.floor(this.entity.posZ);
+         BlockPos pos = new BlockPos(var1, var2, var3);
+         BlockPos posBelow = new BlockPos(var1, var2 - 1, var3);
+         return (this.world.getBlockState(pos).getBlock() == Blocks.TALLGRASS
+               && this.world.getBlockState(pos).getBlock().getMetaFromState(this.world.getBlockState(pos)) == 1)
+               || this.world.getBlockState(posBelow).getBlock() == Blocks.GRASS;
       }
    }
 
    public void startExecuting() {
       this.field_48399_a = 40;
       this.world.setEntityState(this.entity, (byte)10);
-      this.entity.getNavigator().clearPathEntity();
+      this.entity.getNavigator().clearPath();
    }
 
    public void resetTask() {
@@ -53,22 +58,23 @@ public class AIConvertGrass extends EntityAIBase {
    public void updateTask() {
       this.field_48399_a = Math.max(0, this.field_48399_a - 1);
       if (this.field_48399_a == 4) {
-         int var1 = MathHelper.floor_double(this.entity.posX);
-         int var2 = MathHelper.floor_double(this.entity.posY);
-         int var3 = MathHelper.floor_double(this.entity.posZ);
-         if (this.world.getBlock(var1, var2, var3) == Blocks.tallgrass) {
-            this.world.playAuxSFX(2001, var1, var2, var3, Block.getIdFromBlock(Blocks.grass) + 4096);
-            this.world.setBlockToAir(var1, var2, var3);
-            this.world.setBlock(var1, var2, var3, ConfigBlocks.blockTaintFibres, 0, 3);
+         int var1 = MathHelper.floor(this.entity.posX);
+         int var2 = MathHelper.floor(this.entity.posY);
+         int var3 = MathHelper.floor(this.entity.posZ);
+         BlockPos pos = new BlockPos(var1, var2, var3);
+         BlockPos posBelow = new BlockPos(var1, var2 - 1, var3);
+         if (this.world.getBlockState(pos).getBlock() == Blocks.TALLGRASS) {
+            this.world.playEvent(2001, pos, Block.getIdFromBlock(Blocks.GRASS) + 4096);
+            this.world.setBlockToAir(pos);
+            this.world.setBlockState(pos, ConfigBlocks.blockTaintFibres.getDefaultState(), 3);
             Utils.setBiomeAt(this.world, var1, var3, ThaumcraftWorldGenerator.biomeTaint);
             this.entity.eatGrassBonus();
-         } else if (this.world.getBlock(var1, var2 - 1, var3) == Blocks.grass) {
-            this.world.playAuxSFX(2001, var1, var2 - 1, var3, Block.getIdFromBlock(Blocks.grass));
-            this.world.setBlock(var1, var2, var3, ConfigBlocks.blockTaintFibres, 0, 3);
+         } else if (this.world.getBlockState(posBelow).getBlock() == Blocks.GRASS) {
+            this.world.playEvent(2001, posBelow, Block.getIdFromBlock(Blocks.GRASS));
+            this.world.setBlockState(pos, ConfigBlocks.blockTaintFibres.getDefaultState(), 3);
             Utils.setBiomeAt(this.world, var1, var3, ThaumcraftWorldGenerator.biomeTaint);
             this.entity.eatGrassBonus();
          }
       }
-
    }
 }

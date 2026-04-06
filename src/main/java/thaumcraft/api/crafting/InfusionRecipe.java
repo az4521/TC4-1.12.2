@@ -47,7 +47,7 @@ public class InfusionRecipe
 	public boolean matches(ArrayList<ItemStack> input, ItemStack central, World world, EntityPlayer player) {
 		if (getRecipeInput()==null) return false;
 			
-		if (!research.isEmpty() && !ThaumcraftApiHelper.isResearchComplete(player.getCommandSenderName(), research)) {
+		if (!research.isEmpty() && !ThaumcraftApiHelper.isResearchComplete(player.getName(), research)) {
     		return false;
     	}
 		
@@ -96,7 +96,7 @@ public class InfusionRecipe
 
 		return playerInput.getItem() == recipeSpec.getItem() &&
 				(playerInput.getItemDamage() == recipeSpec.getItemDamage() || recipeSpec.getItemDamage() == 32767) &&
-				playerInput.stackSize <= playerInput.getMaxStackSize();
+				playerInput.getCount() <= playerInput.getMaxStackSize();
 //		if (playerInput==null && recipeSpec!=null) return false;
 //		if (playerInput!=null && recipeSpec==null) return false;
 //		if (playerInput==null && recipeSpec==null) return true;

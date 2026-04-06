@@ -3,12 +3,13 @@ package thaumcraft.common.tiles;
 import java.util.ArrayList;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraftforge.common.util.ForgeDirection;
+import net.minecraft.util.EnumFacing;
 import thaumcraft.api.TileThaumcraft;
 import thaumcraft.api.aspects.Aspect;
 import thaumcraft.api.aspects.AspectList;
 import thaumcraft.api.aspects.IAspectContainer;
 import thaumcraft.common.lib.research.ResearchManager;
+import net.minecraft.util.math.BlockPos;
 
 public class TileManaPod extends TileThaumcraft implements IAspectContainer {
    public Aspect aspect = null;
@@ -29,10 +30,11 @@ public class TileManaPod extends TileThaumcraft implements IAspectContainer {
    }
 
    public void checkGrowth() {
-      int l = this.worldObj.getBlockMetadata(this.xCoord, this.yCoord, this.zCoord);
+      net.minecraft.block.state.IBlockState currentState = this.world.getBlockState(this.getPos());
+      int l = currentState.getBlock().getMetaFromState(currentState);
       if (l < 7) {
          ++l;
-         this.worldObj.setBlockMetadataWithNotify(this.xCoord, this.yCoord, this.zCoord, l, 3);
+         this.world.setBlockState(this.getPos(), currentState.getBlock().getStateFromMeta(l), 3);
       }
 
       if (l > 2) {
@@ -43,11 +45,11 @@ public class TileManaPod extends TileThaumcraft implements IAspectContainer {
             }
 
             for(int d = 2; d < 6; ++d) {
-               ForgeDirection dir = ForgeDirection.getOrientation(d);
-               int x = this.xCoord + dir.offsetX;
-               int y = this.yCoord + dir.offsetY;
-               int z = this.zCoord + dir.offsetZ;
-               TileEntity tile = this.worldObj.getTileEntity(x, y, z);
+               EnumFacing dir = EnumFacing.byIndex(d);
+               int x = this.getPos().getX() + dir.getXOffset();
+               int y = this.getPos().getY() + dir.getYOffset();
+               int z = this.getPos().getZ() + dir.getZOffset();
+               TileEntity tile = this.world.getTileEntity(new BlockPos(x, y, z));
                if (tile instanceof TileManaPod && ((TileManaPod) tile).aspect != null) {
                   al.add(((TileManaPod)tile).aspect, 1);
                }
@@ -72,7 +74,7 @@ public class TileManaPod extends TileThaumcraft implements IAspectContainer {
                }
 
                if (!outlist.isEmpty()) {
-                  this.aspect = outlist.get(this.worldObj.rand.nextInt(outlist.size()));
+                  this.aspect = outlist.get(this.world.rand.nextInt(outlist.size()));
                   this.markDirty();
                }
             }
@@ -84,11 +86,11 @@ public class TileManaPod extends TileThaumcraft implements IAspectContainer {
          }
 
          if (this.aspect == null) {
-            if (this.worldObj.rand.nextInt(8) == 0) {
+            if (this.world.rand.nextInt(8) == 0) {
                this.aspect = Aspect.PLANT;
             } else {
                ArrayList<Aspect> outlist = Aspect.getPrimalAspects();
-               this.aspect = outlist.get(this.worldObj.rand.nextInt(outlist.size()));
+               this.aspect = outlist.get(this.world.rand.nextInt(outlist.size()));
             }
 
             this.markDirty();
@@ -98,7 +100,8 @@ public class TileManaPod extends TileThaumcraft implements IAspectContainer {
    }
 
    public AspectList getAspects() {
-      return this.aspect != null && this.getBlockMetadata() == 7 ? (new AspectList()).add(this.aspect, 1) : null;
+      net.minecraft.block.state.IBlockState s = this.world.getBlockState(this.getPos());
+      return this.aspect != null && s.getBlock().getMetaFromState(s) == 7 ? (new AspectList()).add(this.aspect, 1) : null;
    }
 
    public void setAspects(AspectList aspects) {

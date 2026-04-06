@@ -1,20 +1,19 @@
 package thaumcraft.common.items.wands.foci;
 
-import cpw.mods.fml.common.network.NetworkRegistry;
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
+import net.minecraftforge.fml.common.network.NetworkRegistry;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import java.util.ArrayList;
 import java.util.HashMap;
 import net.minecraft.block.Block;
-import net.minecraft.client.renderer.texture.IIconRegister;
+import thaumcraft.client.renderers.compat.IIconRegister;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.IIcon;
-import net.minecraft.util.MovingObjectPosition;
-import net.minecraft.util.MovingObjectPosition.MovingObjectType;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.world.World;
-import net.minecraftforge.common.util.ForgeDirection;
+import net.minecraft.util.EnumFacing;
 import thaumcraft.api.BlockCoordinates;
 import thaumcraft.api.IArchitect;
 import thaumcraft.api.aspects.Aspect;
@@ -28,10 +27,11 @@ import thaumcraft.common.items.wands.WandManager;
 import thaumcraft.common.lib.network.PacketHandler;
 import thaumcraft.common.lib.network.fx.PacketFXBlockSparkle;
 import thaumcraft.common.tiles.TileWarded;
+import net.minecraft.util.math.BlockPos;
 
 public class ItemFocusWarding extends ItemFocusBasic implements IArchitect {
-   public IIcon iconOrnament;
-   IIcon depthIcon = null;
+   public TextureAtlasSprite iconOrnament;
+   TextureAtlasSprite depthIcon = null;
    private static final AspectList cost;
    public static HashMap<String,Long> delay;
    ArrayList<BlockCoordinates> checked = new ArrayList<>();
@@ -46,17 +46,17 @@ public class ItemFocusWarding extends ItemFocusBasic implements IArchitect {
 
    @SideOnly(Side.CLIENT)
    public void registerIcons(IIconRegister ir) {
-      this.depthIcon = ir.registerIcon("thaumcraft:focus_warding_depth");
-      this.icon = ir.registerIcon("thaumcraft:focus_warding");
-      this.iconOrnament = ir.registerIcon("thaumcraft:focus_warding_orn");
+      this.depthIcon = ir.registerSprite("thaumcraft:focus_warding_depth");
+      this.icon = ir.registerSprite("thaumcraft:focus_warding");
+      this.iconOrnament = ir.registerSprite("thaumcraft:focus_warding_orn");
    }
 
-   public IIcon getFocusDepthLayerIcon(ItemStack itemstack) {
+   public TextureAtlasSprite getFocusDepthLayerIcon(ItemStack itemstack) {
       return this.depthIcon;
    }
 
    @SideOnly(Side.CLIENT)
-   public IIcon getIconFromDamageForRenderPass(int par1, int renderPass) {
+   public TextureAtlasSprite getIconFromDamageForRenderPass(int par1, int renderPass) {
       return renderPass == 1 ? this.icon : this.iconOrnament;
    }
 
@@ -65,7 +65,7 @@ public class ItemFocusWarding extends ItemFocusBasic implements IArchitect {
       return true;
    }
 
-   public IIcon getOrnament(ItemStack itemstack) {
+   public TextureAtlasSprite getOrnament(ItemStack itemstack) {
       return this.iconOrnament;
    }
 
@@ -77,59 +77,59 @@ public class ItemFocusWarding extends ItemFocusBasic implements IArchitect {
       return cost.copy();
    }
 
-   public ItemStack onFocusRightClick(ItemStack itemstack, World world, EntityPlayer player, MovingObjectPosition mop) {
+   public ItemStack onFocusRightClick(ItemStack itemstack, World world, EntityPlayer player, RayTraceResult mop) {
       ItemWandCasting wand = (ItemWandCasting)itemstack.getItem();
-      player.swingItem();
-      if (!world.isRemote && mop != null && mop.typeOfHit == MovingObjectType.BLOCK) {
-         String key = mop.blockX + ":" + mop.blockY + ":" + mop.blockZ + ":" + world.provider.dimensionId;
+      player.swingArm(net.minecraft.util.EnumHand.MAIN_HAND);
+      if (!world.isRemote && mop != null && mop.typeOfHit == RayTraceResult.Type.BLOCK) {
+         String key = mop.getBlockPos().getX() + ":" + mop.getBlockPos().getY() + ":" + mop.getBlockPos().getZ() + ":" + world.provider.getDimension();
          if (delay.containsKey(key) && delay.get(key) > System.currentTimeMillis()) {
             return itemstack;
          }
 
          delay.put(key, System.currentTimeMillis() + 500L);
-         TileEntity tt = world.getTileEntity(mop.blockX, mop.blockY, mop.blockZ);
-         boolean solid = world.isBlockNormalCubeDefault(mop.blockX, mop.blockY, mop.blockZ, true);
+         TileEntity tt = world.getTileEntity(mop.getBlockPos());
+         boolean solid = world.getBlockState(mop.getBlockPos()).isNormalCube();
          if (tt == null && solid) {
-            for(BlockCoordinates c : this.getArchitectBlocks(itemstack, world, mop.blockX, mop.blockY, mop.blockZ, mop.sideHit, player)) {
+            for(BlockCoordinates c : this.getArchitectBlocks(itemstack, world, mop.getBlockPos().getX(), mop.getBlockPos().getY(), mop.getBlockPos().getZ(), mop.sideHit, player)) {
                if (!wand.consumeAllVis(itemstack, player, this.getVisCost(itemstack), true, false)) {
                   break;
                }
 
-               if (world.getTileEntity(c.x, c.y, c.z) == null && world.isBlockNormalCubeDefault(c.x, c.y, c.z, true)) {
-                  Block bi = world.getBlock(c.x, c.y, c.z);
-                  int md = world.getBlockMetadata(c.x, c.y, c.z);
-                  int ll = bi.getLightValue(world, c.x, c.y, c.z);
-                  world.setBlock(c.x, c.y, c.z, ConfigBlocks.blockWarded, md, 3);
-                  TileEntity tile = world.getTileEntity(c.x, c.y, c.z);
+               if (world.getTileEntity(new BlockPos(c.x, c.y, c.z)) == null && world.getBlockState(new BlockPos(c.x, c.y, c.z)).isNormalCube()) {
+                  Block bi = world.getBlockState(new BlockPos(c.x, c.y, c.z)).getBlock();
+                  int md = world.getBlockState(new BlockPos(c.x, c.y, c.z)).getBlock().getMetaFromState(world.getBlockState(new BlockPos(c.x, c.y, c.z)));
+                  int ll = bi.getLightValue(world.getBlockState(new BlockPos(c.x, c.y, c.z)));
+                  world.setBlockState(new BlockPos(c.x, c.y, c.z), (ConfigBlocks.blockWarded).getStateFromMeta(md), 3);
+                  TileEntity tile = world.getTileEntity(new BlockPos(c.x, c.y, c.z));
                   if (tile instanceof TileWarded) {
                      TileWarded tw = (TileWarded)tile;
                      tw.block = bi;
                      tw.blockMd = (byte)md;
                      tw.light = (byte)ll;
-                     tw.owner = player.getCommandSenderName().hashCode();
-                     world.markBlockForUpdate(c.x, c.y, c.z);
-                     PacketHandler.INSTANCE.sendToAllAround(new PacketFXBlockSparkle(c.x, c.y, c.z, 16556032), new NetworkRegistry.TargetPoint(world.provider.dimensionId, c.x, c.y, c.z, 32.0F));
+                     tw.owner = player.getName().hashCode();
+                     { BlockPos _cp = new BlockPos(c.x, c.y, c.z); net.minecraft.block.state.IBlockState _bs = world.getBlockState(_cp); world.notifyBlockUpdate(_cp, _bs, _bs, 3); }
+                     PacketHandler.INSTANCE.sendToAllAround(new PacketFXBlockSparkle(c.x, c.y, c.z, 16556032), new NetworkRegistry.TargetPoint(world.provider.getDimension(), c.x, c.y, c.z, 32.0F));
                   }
                }
             }
 
-            world.playSoundEffect((double)mop.blockX + (double)0.5F, (double)mop.blockY + (double)0.5F, (double)mop.blockZ + (double)0.5F, "thaumcraft:zap", 0.25F, 1.0F);
+            { net.minecraft.util.SoundEvent _snd = net.minecraft.util.SoundEvent.REGISTRY.getObject(new net.minecraft.util.ResourceLocation("thaumcraft:zap")); if (_snd != null) world.playSound(null, mop.getBlockPos().getX() + 0.5, mop.getBlockPos().getY() + 0.5, mop.getBlockPos().getZ() + 0.5, _snd, net.minecraft.util.SoundCategory.NEUTRAL, 0.25F, 1.0F); }
          } else if (tt instanceof TileWarded) {
             TileWarded tw = (TileWarded)tt;
-            if (tw.owner == player.getCommandSenderName().hashCode()) {
-               for(BlockCoordinates c : this.getArchitectBlocks(itemstack, world, mop.blockX, mop.blockY, mop.blockZ, mop.sideHit, player)) {
-                  TileEntity tile = world.getTileEntity(c.x, c.y, c.z);
+            if (tw.owner == player.getName().hashCode()) {
+               for(BlockCoordinates c : this.getArchitectBlocks(itemstack, world, mop.getBlockPos().getX(), mop.getBlockPos().getY(), mop.getBlockPos().getZ(), mop.sideHit, player)) {
+                  TileEntity tile = world.getTileEntity(new BlockPos(c.x, c.y, c.z));
                   if (tile instanceof TileWarded) {
                      TileWarded tw2 = (TileWarded)tile;
-                     if (tw2.owner == player.getCommandSenderName().hashCode()) {
-                        world.setBlock(c.x, c.y, c.z, tw2.block, tw2.blockMd, 3);
-                        world.markBlockForUpdate(c.x, c.y, c.z);
-                        PacketHandler.INSTANCE.sendToAllAround(new PacketFXBlockSparkle(c.x, c.y, c.z, 16556032), new NetworkRegistry.TargetPoint(world.provider.dimensionId, c.x, c.y, c.z, 32.0F));
+                     if (tw2.owner == player.getName().hashCode()) {
+                        world.setBlockState(new BlockPos(c.x, c.y, c.z), (tw2.block).getStateFromMeta(tw2.blockMd), 3);
+                        { BlockPos _cp = new BlockPos(c.x, c.y, c.z); net.minecraft.block.state.IBlockState _bs = world.getBlockState(_cp); world.notifyBlockUpdate(_cp, _bs, _bs, 3); }
+                        PacketHandler.INSTANCE.sendToAllAround(new PacketFXBlockSparkle(c.x, c.y, c.z, 16556032), new NetworkRegistry.TargetPoint(world.provider.getDimension(), c.x, c.y, c.z, 32.0F));
                      }
                   }
                }
 
-               world.playSoundEffect((double)mop.blockX + (double)0.5F, (double)mop.blockY + (double)0.5F, (double)mop.blockZ + (double)0.5F, "thaumcraft:zap", 0.25F, 1.0F);
+               { net.minecraft.util.SoundEvent _snd = net.minecraft.util.SoundEvent.REGISTRY.getObject(new net.minecraft.util.ResourceLocation("thaumcraft:zap")); if (_snd != null) world.playSound(null, mop.getBlockPos().getX() + 0.5, mop.getBlockPos().getY() + 0.5, mop.getBlockPos().getZ() + 0.5, _snd, net.minecraft.util.SoundCategory.NEUTRAL, 0.25F, 1.0F); }
             }
          }
       }
@@ -162,14 +162,13 @@ public class ItemFocusWarding extends ItemFocusBasic implements IArchitect {
       return 3 + this.getUpgradeLevel(focusstack, FocusUpgradeType.enlarge);
    }
 
-   public ArrayList<BlockCoordinates> getArchitectBlocks(ItemStack stack, World world, int x, int y, int z, int side, EntityPlayer player) {
+   public ArrayList<BlockCoordinates> getArchitectBlocks(ItemStack stack, World world, int x, int y, int z, EnumFacing side, EntityPlayer player) {
       ArrayList<BlockCoordinates> out = new ArrayList<>();
       ItemWandCasting wand = (ItemWandCasting)stack.getItem();
       wand.getFocus(stack);
       this.checked.clear();
       boolean tiles = false;
-      TileEntity tt = world.getTileEntity(x, y, z);
-      boolean solid = world.isBlockNormalCubeDefault(x, y, z, true);
+      TileEntity tt = world.getTileEntity(new BlockPos(x, y, z));
       if (tt instanceof TileWarded) {
          tiles = true;
       }
@@ -183,16 +182,17 @@ public class ItemFocusWarding extends ItemFocusBasic implements IArchitect {
          sizeZ = WandManager.getAreaZ(stack);
       }
 
-      if (side != 2 && side != 3) {
-         this.checkNeighbours(world, x, y, z, new BlockCoordinates(x, y, z), side, sizeX, sizeY, sizeZ, out, player, tiles);
+      int sideIdx = side.getIndex();
+      if (sideIdx != 2 && sideIdx != 3) {
+         this.checkNeighbours(world, x, y, z, new BlockCoordinates(x, y, z), sideIdx, sizeX, sizeY, sizeZ, out, player, tiles);
       } else {
-         this.checkNeighbours(world, x, y, z, new BlockCoordinates(x, y, z), side, sizeZ, sizeY, sizeX, out, player, tiles);
+         this.checkNeighbours(world, x, y, z, new BlockCoordinates(x, y, z), sideIdx, sizeZ, sizeY, sizeX, out, player, tiles);
       }
 
       return out;
    }
 
-   public void checkNeighbours(World world, int x, int y, int z, BlockCoordinates pos, int side, int sizeX, int sizeY, int sizeZ, ArrayList list, EntityPlayer player, boolean tiles) {
+   public void checkNeighbours(World world, int x, int y, int z, BlockCoordinates pos, int side, int sizeX, int sizeY, int sizeZ, ArrayList<BlockCoordinates> list, EntityPlayer player, boolean tiles) {
       if (!this.checked.contains(pos)) {
          this.checked.add(pos);
          switch (side) {
@@ -239,22 +239,22 @@ public class ItemFocusWarding extends ItemFocusBasic implements IArchitect {
                }
          }
 
-         TileEntity tt = world.getTileEntity(pos.x, pos.y, pos.z);
-         boolean solid = world.isBlockNormalCubeDefault(pos.x, pos.y, pos.z, true);
+         TileEntity tt = world.getTileEntity(new BlockPos(pos.x, pos.y, pos.z));
+         boolean solid = world.getBlockState(new BlockPos(pos.x, pos.y, pos.z)).isNormalCube();
          if (!tiles || tt instanceof TileWarded) {
             if (tiles || tt == null && solid) {
                if (tiles && tt != null && tt instanceof TileWarded) {
                   TileWarded tw2 = (TileWarded)tt;
-                  if (tw2.owner != player.getCommandSenderName().hashCode()) {
+                  if (tw2.owner != player.getName().hashCode()) {
                      return;
                   }
                }
 
-               if (!world.isAirBlock(pos.x, pos.y, pos.z)) {
+               if (!world.isAirBlock(new BlockPos(pos.x, pos.y, pos.z))) {
                   list.add(pos);
 
-                  for(ForgeDirection dir : ForgeDirection.VALID_DIRECTIONS) {
-                     BlockCoordinates cc = new BlockCoordinates(pos.x + dir.offsetX, pos.y + dir.offsetY, pos.z + dir.offsetZ);
+                  for(EnumFacing dir : EnumFacing.VALUES) {
+                     BlockCoordinates cc = new BlockCoordinates(pos.x + dir.getXOffset(), pos.y + dir.getYOffset(), pos.z + dir.getZOffset());
                      this.checkNeighbours(world, x, y, z, cc, side, sizeX, sizeY, sizeZ, list, player, tiles);
                   }
 
@@ -264,12 +264,12 @@ public class ItemFocusWarding extends ItemFocusBasic implements IArchitect {
       }
    }
 
-   public boolean showAxis(ItemStack stack, World world, EntityPlayer player, int side, IArchitect.EnumAxis axis) {
+   public boolean showAxis(ItemStack stack, World world, EntityPlayer player, EnumFacing side, IArchitect.EnumAxis axis) {
       int dim = WandManager.getAreaDim(stack);
       if (dim == 0) {
          return true;
       } else {
-         switch (side) {
+         switch (side.getIndex()) {
             case 0:
             case 1:
                if (axis == IArchitect.EnumAxis.X && dim == 1 || axis == IArchitect.EnumAxis.Z && dim == 2 || axis == IArchitect.EnumAxis.Y && dim == 3) {

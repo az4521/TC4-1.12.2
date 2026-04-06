@@ -2,9 +2,9 @@ package thaumcraft.common.entities.ai.fluid;
 
 import net.minecraft.entity.ai.EntityAIBase;
 import net.minecraft.entity.ai.RandomPositionGenerator;
-import net.minecraft.util.ChunkCoordinates;
-import net.minecraft.util.MathHelper;
-import net.minecraft.util.Vec3;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import thaumcraft.common.config.Config;
 import thaumcraft.common.entities.golems.EntityGolemBase;
@@ -23,19 +23,19 @@ public class AIEssentiaGoto extends EntityAIBase {
 
    public AIEssentiaGoto(EntityGolemBase par1EntityCreature) {
       this.theGolem = par1EntityCreature;
-      this.theWorld = par1EntityCreature.worldObj;
+      this.theWorld = par1EntityCreature.world;
       this.setMutexBits(3);
    }
 
    public boolean shouldExecute() {
       if (this.theGolem.ticksExisted % Config.golemDelay <= 0 && this.theGolem.essentia != null && this.theGolem.essentiaAmount != 0) {
-         ChunkCoordinates jarloc = GolemHelper.findJarWithRoom(this.theGolem);
+         BlockPos jarloc = GolemHelper.findJarWithRoom(this.theGolem);
          if (jarloc == null) {
             return false;
          } else {
-            this.jarX = jarloc.posX;
-            this.jarY = jarloc.posY;
-            this.jarZ = jarloc.posZ;
+            this.jarX = jarloc.getX();
+            this.jarY = jarloc.getY();
+            this.jarZ = jarloc.getZ();
             return true;
          }
       } else {
@@ -53,11 +53,11 @@ public class AIEssentiaGoto extends EntityAIBase {
 
    public void updateTask() {
       --this.count;
-      if (this.count == 0 && this.prevX == MathHelper.floor_double(this.theGolem.posX) && this.prevY == MathHelper.floor_double(this.theGolem.posY) && this.prevZ == MathHelper.floor_double(this.theGolem.posZ)) {
-         Vec3 var2 = RandomPositionGenerator.findRandomTarget(this.theGolem, 2, 1);
+      if (this.count == 0 && this.prevX == MathHelper.floor(this.theGolem.posX) && this.prevY == MathHelper.floor(this.theGolem.posY) && this.prevZ == MathHelper.floor(this.theGolem.posZ)) {
+         Vec3d var2 = RandomPositionGenerator.findRandomTarget(this.theGolem, 2, 1);
          if (var2 != null) {
             this.count = 20;
-            this.theGolem.getNavigator().tryMoveToXYZ(var2.xCoord, var2.yCoord, var2.zCoord, this.theGolem.getAIMoveSpeed());
+            this.theGolem.getNavigator().tryMoveToXYZ(var2.x, var2.y, var2.z, this.theGolem.getAIMoveSpeed());
          }
       }
 
@@ -66,9 +66,9 @@ public class AIEssentiaGoto extends EntityAIBase {
 
    public void startExecuting() {
       this.count = 200;
-      this.prevX = MathHelper.floor_double(this.theGolem.posX);
-      this.prevY = MathHelper.floor_double(this.theGolem.posY);
-      this.prevZ = MathHelper.floor_double(this.theGolem.posZ);
+      this.prevX = MathHelper.floor(this.theGolem.posX);
+      this.prevY = MathHelper.floor(this.theGolem.posY);
+      this.prevZ = MathHelper.floor(this.theGolem.posZ);
       this.theGolem.getNavigator().tryMoveToXYZ(this.jarX, this.jarY, this.jarZ, this.theGolem.getAIMoveSpeed());
    }
 }

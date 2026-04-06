@@ -1,13 +1,14 @@
 package thaumcraft.client.gui;
 
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.world.World;
-import org.lwjgl.opengl.GL11;
+
 import thaumcraft.client.lib.UtilsFX;
 import thaumcraft.common.container.ContainerFocusPouch;
+import net.minecraft.client.renderer.GlStateManager;
 
 @SideOnly(Side.CLIENT)
 public class GuiFocusPouch extends GuiContainer {
@@ -24,9 +25,9 @@ public class GuiFocusPouch extends GuiContainer {
       UtilsFX.bindTexture("textures/gui/gui_focuspouch.png");
       float t = this.zLevel;
       this.zLevel = 200.0F;
-      GL11.glEnable(GL11.GL_BLEND);
+      GlStateManager.enableBlend();
       this.drawTexturedModalRect(8 + this.blockSlot * 18, 209, 240, 0, 16, 16);
-      GL11.glDisable(GL11.GL_BLEND);
+      GlStateManager.disableBlend();
       this.zLevel = t;
    }
 
@@ -35,16 +36,16 @@ public class GuiFocusPouch extends GuiContainer {
    }
 
    protected void drawGuiContainerBackgroundLayer(float par1, int par2, int par3) {
-      if (this.mc.thePlayer.inventory.mainInventory[this.blockSlot] == null) {
-         this.mc.thePlayer.closeScreen();
+      if (this.mc.player.inventory.mainInventory.get(this.blockSlot) == null) {
+         this.mc.player.closeScreen();
       }
 
       UtilsFX.bindTexture("textures/gui/gui_focuspouch.png");
-      GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+      GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
       int var5 = (this.width - this.xSize) / 2;
       int var6 = (this.height - this.ySize) / 2;
-      GL11.glEnable(GL11.GL_BLEND);
+      GlStateManager.enableBlend();
       this.drawTexturedModalRect(var5, var6, 0, 0, this.xSize, this.ySize);
-      GL11.glDisable(GL11.GL_BLEND);
+      GlStateManager.disableBlend();
    }
 }

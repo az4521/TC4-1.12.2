@@ -3,7 +3,7 @@ package thaumcraft.common.lib.research;
 import com.google.common.base.Charsets;
 import com.google.common.io.Files;
 import com.mojang.authlib.GameProfile;
-import cpw.mods.fml.common.ObfuscationReflectionHelper;
+import net.minecraftforge.fml.common.ObfuscationReflectionHelper;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -21,7 +21,7 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagInt;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.management.ItemInWorldManager;
+import net.minecraft.server.management.PlayerInteractionManager;
 import net.minecraft.world.World;
 import net.minecraft.world.storage.IPlayerFileData;
 import net.minecraft.world.storage.SaveHandler;
@@ -55,7 +55,7 @@ public class ResearchManager {
       for(ResearchCategoryList rcl : ResearchCategories.researchCategories.values()) {
          label110:
          for(ResearchItem ri : rcl.research.values()) {
-            boolean valid = ri.tags != null && ri.tags.size() > 0 && (ri.isLost() || ri.isHidden()) && !isResearchComplete(player.getCommandSenderName(), ri.key) && !isResearchComplete(player.getCommandSenderName(), "@" + ri.key);
+            boolean valid = ri.tags != null && ri.tags.size() > 0 && (ri.isLost() || ri.isHidden()) && !isResearchComplete(player.getName(), ri.key) && !isResearchComplete(player.getName(), "@" + ri.key);
             if (valid) {
                if (clue instanceof ItemStack && ri.getItemTriggers() != null && ri.getItemTriggers().length > 0) {
                   for(ItemStack stack : ri.getItemTriggers()) {
@@ -105,11 +105,11 @@ public class ResearchManager {
       int slot = getResearchSlot(player, key);
       if (slot >= 0) {
          note = player.inventory.getStackInSlot(slot);
-      } else if (consumeInkFromPlayer(player, false) && player.inventory.consumeInventoryItem(Items.paper)) {
+      } else if (consumeInkFromPlayer(player, false) && player.inventory.clearMatchingItems(Items.PAPER, -1, 1, null) > 0) {
          consumeInkFromPlayer(player, true);
          note = createNote(new ItemStack(ConfigItems.itemResearchNotes), key, world);
          if (!player.inventory.addItemStackToInventory(note)) {
-            player.dropPlayerItemWithRandomChoice(note, false);
+            player.dropItem(note, false);
          }
 
          player.inventoryContainer.detectAndSendChanges();
@@ -134,8 +134,8 @@ public class ResearchManager {
       ArrayList<String> keys = new ArrayList<>();
 
       for(ResearchItem research : allHiddenResearch) {
-         if (!isResearchComplete(player.getCommandSenderName(), research.key)
-                 && doesPlayerHaveRequisites(player.getCommandSenderName(), research.key)
+         if (!isResearchComplete(player.getName(), research.key)
+                 && doesPlayerHaveRequisites(player.getName(), research.key)
                  && (research.getItemTriggers() != null
                  || research.getEntityTriggers() != null
                  || research.getAspectTriggers() != null
@@ -145,7 +145,7 @@ public class ResearchManager {
          }
       }
 
-      Random rand = new Random(player.worldObj.getWorldTime() / 10L / 5L);
+      Random rand = new Random(player.world.getWorldTime() / 10L / 5L);
       if (!keys.isEmpty()) {
          int r = rand.nextInt(keys.size());
          return keys.get(r);
@@ -172,23 +172,24 @@ public class ResearchManager {
       ArrayList<String> keys = new ArrayList<>();
 
       for(ResearchItem research : allValidResearch) {
-         if (!isResearchComplete(player.getCommandSenderName(), research.key) && doesPlayerHaveRequisites(player.getCommandSenderName(), research.key) && research.tags.getAmount(aspect) > 0) {
+         if (!isResearchComplete(player.getName(), research.key) && doesPlayerHaveRequisites(player.getName(), research.key) && research.tags.getAmount(aspect) > 0) {
             keys.add(research.key);
          }
       }
 
       if (!keys.isEmpty()) {
-         randomMatch = keys.get(player.worldObj.rand.nextInt(keys.size()));
+         randomMatch = keys.get(player.world.rand.nextInt(keys.size()));
       }
 
       return randomMatch;
    }
 
    public static int getResearchSlot(EntityPlayer player, String key) {
-      ItemStack[] inv = player.inventory.mainInventory;
-      if (inv != null && inv.length != 0) {
-         for(int a = 0; a < inv.length; ++a) {
-            if (inv[a] != null && inv[a].getItem() != null && inv[a].getItem() == ConfigItems.itemResearchNotes && getData(inv[a]) != null && getData(inv[a]).key.equals(key)) {
+      java.util.List<ItemStack> inv = player.inventory.mainInventory;
+      if (inv != null && !inv.isEmpty()) {
+         for(int a = 0; a < inv.size(); ++a) {
+            ItemStack stack = inv.get(a);
+            if (stack != null && !stack.isEmpty() && stack.getItem() == ConfigItems.itemResearchNotes && getData(stack) != null && getData(stack).key.equals(key)) {
                return a;
             }
          }
@@ -198,7 +199,7 @@ public class ResearchManager {
    }
 
    public static boolean consumeInkFromPlayer(EntityPlayer player, boolean doit) {
-      ItemStack[] inv = player.inventory.mainInventory;
+      java.util.List<ItemStack> inv = player.inventory.mainInventory;
 
        for (ItemStack itemStack : inv) {
            if (itemStack != null && itemStack.getItem() instanceof IScribeTools && itemStack.getItemDamage() < itemStack.getMaxDamage()) {
@@ -293,14 +294,14 @@ public class ResearchManager {
       if (primaryaspect == null) {
          return null;
       } else {
-         if (stack.stackTagCompound == null) {
+         if (stack.getTagCompound() == null) {
             stack.setTagCompound(new NBTTagCompound());
          }
 
-         stack.stackTagCompound.setString("key", key);
-         stack.stackTagCompound.setInteger("color", primaryaspect.getColor());
-         stack.stackTagCompound.setBoolean("complete", false);
-         stack.stackTagCompound.setInteger("copies", 0);
+         stack.getTagCompound().setString("key", key);
+         stack.getTagCompound().setInteger("color", primaryaspect.getColor());
+         stack.getTagCompound().setBoolean("complete", false);
+         stack.getTagCompound().setInteger("copies", 0);
          int radius = 1 + Math.min(3, rr.getComplexity());
          HashMap<String, HexUtils.Hex> hexLocs = HexUtils.generateHexes(radius);
          ArrayList<HexUtils.Hex> outerRing = HexUtils.distributeRingRandomly(radius, rr.tags.size(), world.rand);
@@ -375,7 +376,7 @@ public class ResearchManager {
             gridtag.appendTag(gt);
          }
 
-         stack.stackTagCompound.setTag("hexgrid", gridtag);
+         stack.getTagCompound().setTag("hexgrid", gridtag);
          return stack;
       }
    }
@@ -385,14 +386,14 @@ public class ResearchManager {
          return null;
       } else {
          ResearchNoteData data = new ResearchNoteData();
-         if (stack.stackTagCompound == null) {
+         if (stack.getTagCompound() == null) {
             return null;
          } else {
-            data.key = stack.stackTagCompound.getString("key");
-            data.color = stack.stackTagCompound.getInteger("color");
-            data.complete = stack.stackTagCompound.getBoolean("complete");
-            data.copies = stack.stackTagCompound.getInteger("copies");
-            NBTTagList grid = stack.stackTagCompound.getTagList("hexgrid", 10);
+            data.key = stack.getTagCompound().getString("key");
+            data.color = stack.getTagCompound().getInteger("color");
+            data.complete = stack.getTagCompound().getBoolean("complete");
+            data.copies = stack.getTagCompound().getInteger("copies");
+            NBTTagList grid = stack.getTagCompound().getTagList("hexgrid", 10);
             data.hexEntries = new HashMap<>();
 
             for(int x = 0; x < grid.tagCount(); ++x) {
@@ -413,14 +414,14 @@ public class ResearchManager {
    }
 
    public static void updateData(ItemStack stack, ResearchNoteData data) {
-      if (stack.stackTagCompound == null) {
+      if (stack.getTagCompound() == null) {
          stack.setTagCompound(new NBTTagCompound());
       }
 
-      stack.stackTagCompound.setString("key", data.key);
-      stack.stackTagCompound.setInteger("color", data.color);
-      stack.stackTagCompound.setBoolean("complete", data.complete);
-      stack.stackTagCompound.setInteger("copies", data.copies);
+      stack.getTagCompound().setString("key", data.key);
+      stack.getTagCompound().setInteger("color", data.color);
+      stack.getTagCompound().setBoolean("complete", data.complete);
+      stack.getTagCompound().setInteger("copies", data.copies);
       NBTTagList gridtag = new NBTTagList();
 
       for(HexUtils.Hex hex : data.hexes.values()) {
@@ -435,7 +436,7 @@ public class ResearchManager {
          gridtag.appendTag(gt);
       }
 
-      stack.stackTagCompound.setTag("hexgrid", gridtag);
+      stack.getTagCompound().setTag("hexgrid", gridtag);
    }
 
    public static boolean isResearchComplete(String playername, String key) {
@@ -451,15 +452,16 @@ public class ResearchManager {
       ArrayList<String> out = Thaumcraft.proxy.getCompletedResearch().get(playername);
 
       try {
-         if (out == null && Thaumcraft.proxy.getClientWorld() == null && MinecraftServer.getServer() != null) {
+         MinecraftServer server = net.minecraftforge.fml.common.FMLCommonHandler.instance().getMinecraftServerInstance();
+         if (out == null && Thaumcraft.proxy.getClientWorld() == null && server != null) {
             Thaumcraft.proxy.getCompletedResearch().put(playername, new ArrayList<>());
             UUID id = UUID.nameUUIDFromBytes(("OfflinePlayer:" + playername).getBytes(Charsets.UTF_8));
-            EntityPlayerMP entityplayermp = new EntityPlayerMP(MinecraftServer.getServer(), MinecraftServer.getServer().worldServerForDimension(0), new GameProfile(id, playername), new ItemInWorldManager(MinecraftServer.getServer().worldServerForDimension(0)));
+            EntityPlayerMP entityplayermp = new EntityPlayerMP(server, server.getWorld(0), new GameProfile(id, playername), new PlayerInteractionManager(server.getWorld(0)));
             if (entityplayermp != null) {
-               IPlayerFileData playerNBTManagerObj = MinecraftServer.getServer().worldServerForDimension(0).getSaveHandler().getSaveHandler();
+               net.minecraft.world.storage.ISaveHandler playerNBTManagerObj = server.getWorld(0).getSaveHandler();
                SaveHandler sh = (SaveHandler)playerNBTManagerObj;
                File dir = ObfuscationReflectionHelper.getPrivateValue(SaveHandler.class, sh, new String[]{
-                       "playersDirectory", "field_75771_c"});
+                       "playersDirectory", "playersDirectory"});
                File file1 = new File(dir, id + ".thaum");
                File file2 = new File(dir, id + ".thaumbak");
                loadPlayerData(entityplayermp, file1, file2, false);
@@ -573,9 +575,9 @@ public class ResearchManager {
    }
 
    public void completeResearch(EntityPlayer player, String key) {
-      if (completeResearchUnsaved(player.getCommandSenderName(), key)) {
+      if (completeResearchUnsaved(player.getName(), key)) {
          int warp = ThaumcraftApi.getWarp(key);
-         if (warp > 0 && !Config.wuss && !player.worldObj.isRemote) {
+         if (warp > 0 && !Config.wuss && !player.world.isRemote) {
             if (warp > 1) {
                int w2 = warp / 2;
                if (warp - w2 > 0) {
@@ -606,7 +608,7 @@ public class ResearchManager {
    }
 
    public void completeAspect(EntityPlayer player, Aspect aspect, short amount) {
-      if (completeAspectUnsaved(player.getCommandSenderName(), aspect, amount)) {
+      if (completeAspectUnsaved(player.getName(), aspect, amount)) {
          scheduleSave(player);
       }
 
@@ -667,21 +669,21 @@ public class ResearchManager {
    }
 
    public void completeScannedObject(EntityPlayer player, String object) {
-      if (completeScannedObjectUnsaved(player.getCommandSenderName(), object)) {
+      if (completeScannedObjectUnsaved(player.getName(), object)) {
          scheduleSave(player);
       }
 
    }
 
    public void completeScannedEntity(EntityPlayer player, String key) {
-      if (completeScannedEntityUnsaved(player.getCommandSenderName(), key)) {
+      if (completeScannedEntityUnsaved(player.getName(), key)) {
          scheduleSave(player);
       }
 
    }
 
    public void completeScannedPhenomena(EntityPlayer player, String key) {
-      if (completeScannedPhenomenaUnsaved(player.getCommandSenderName(), key)) {
+      if (completeScannedPhenomenaUnsaved(player.getName(), key)) {
          scheduleSave(player);
       }
 
@@ -700,8 +702,8 @@ public class ResearchManager {
             }
          }
 
-         if (file1 == null || !file1.exists() || data == null || data.hasNoTags()) {
-             Thaumcraft.log.warn("Thaumcraft data not found for {}. Trying to load backup Thaumcraft data.", player.getCommandSenderName());
+         if (file1 == null || !file1.exists() || data == null || data.isEmpty()) {
+             Thaumcraft.log.warn("Thaumcraft data not found for {}. Trying to load backup Thaumcraft data.", player.getName());
             if (file2 != null && file2.exists()) {
                try {
                   FileInputStream fileinputstream = new FileInputStream(file2);
@@ -726,35 +728,35 @@ public class ResearchManager {
                int warp = data.getInteger("Thaumcraft.eldritch");
                if (legacy && !data.hasKey("Thaumcraft.eldritch.sticky")) {
                   warp /= 2;
-                  Thaumcraft.proxy.getPlayerKnowledge().setWarpSticky(player.getCommandSenderName(), warp);
+                  Thaumcraft.proxy.getPlayerKnowledge().setWarpSticky(player.getName(), warp);
                }
 
-               Thaumcraft.proxy.getPlayerKnowledge().setWarpPerm(player.getCommandSenderName(), warp);
+               Thaumcraft.proxy.getPlayerKnowledge().setWarpPerm(player.getName(), warp);
             }
 
             if (data.hasKey("Thaumcraft.eldritch.temp")) {
-               Thaumcraft.proxy.getPlayerKnowledge().setWarpTemp(player.getCommandSenderName(), data.getInteger("Thaumcraft.eldritch.temp"));
+               Thaumcraft.proxy.getPlayerKnowledge().setWarpTemp(player.getName(), data.getInteger("Thaumcraft.eldritch.temp"));
             }
 
             if (data.hasKey("Thaumcraft.eldritch.sticky")) {
-               Thaumcraft.proxy.getPlayerKnowledge().setWarpSticky(player.getCommandSenderName(), data.getInteger("Thaumcraft.eldritch.sticky"));
+               Thaumcraft.proxy.getPlayerKnowledge().setWarpSticky(player.getName(), data.getInteger("Thaumcraft.eldritch.sticky"));
             }
 
             if (data.hasKey("Thaumcraft.eldritch.counter")) {
-               Thaumcraft.proxy.getPlayerKnowledge().setWarpCounter(player.getCommandSenderName(), data.getInteger("Thaumcraft.eldritch.counter"));
+               Thaumcraft.proxy.getPlayerKnowledge().setWarpCounter(player.getName(), data.getInteger("Thaumcraft.eldritch.counter"));
             } else {
-               Thaumcraft.proxy.getPlayerKnowledge().setWarpCounter(player.getCommandSenderName(), 0);
+               Thaumcraft.proxy.getPlayerKnowledge().setWarpCounter(player.getName(), 0);
             }
          } else {
             for(Aspect aspect : Aspect.aspects.values()) {
                if (aspect.getComponents() == null) {
                   Thaumcraft.proxy.getResearchManager();
-                  completeAspectUnsaved(player.getCommandSenderName(), aspect, (short)(15 + player.worldObj.rand.nextInt(5)));
+                  completeAspectUnsaved(player.getName(), aspect, (short)(15 + player.world.rand.nextInt(5)));
                }
             }
 
             scheduleSave(player);
-             Thaumcraft.log.info("Assigning initial aspects to {}", player.getCommandSenderName());
+             Thaumcraft.log.info("Assigning initial aspects to {}", player.getName());
          }
       } catch (Exception exception1) {
          exception1.printStackTrace();
@@ -769,7 +771,7 @@ public class ResearchManager {
       for(int j = 0; j < tagList.tagCount(); ++j) {
          NBTTagCompound rs = tagList.getCompoundTagAt(j);
          if (rs.hasKey("key")) {
-            completeResearchUnsaved(player.getCommandSenderName(), rs.getString("key"));
+            completeResearchUnsaved(player.getName(), rs.getString("key"));
          }
       }
 
@@ -785,7 +787,7 @@ public class ResearchManager {
                Aspect aspect = Aspect.getAspect(rs.getString("key"));
                short amount = rs.getShort("amount");
                if (aspect != null) {
-                  completeAspectUnsaved(player.getCommandSenderName(), aspect, amount);
+                  completeAspectUnsaved(player.getName(), aspect, amount);
                }
             }
          }
@@ -799,7 +801,7 @@ public class ResearchManager {
       for(int j = 0; j < tagList.tagCount(); ++j) {
          NBTTagCompound rs = tagList.getCompoundTagAt(j);
          if (rs.hasKey("key")) {
-            completeScannedObjectUnsaved(player.getCommandSenderName(), rs.getString("key"));
+            completeScannedObjectUnsaved(player.getName(), rs.getString("key"));
          }
       }
 
@@ -808,7 +810,7 @@ public class ResearchManager {
       for(int j = 0; j < tagList.tagCount(); ++j) {
          NBTTagCompound rs = tagList.getCompoundTagAt(j);
          if (rs.hasKey("key")) {
-            completeScannedEntityUnsaved(player.getCommandSenderName(), rs.getString("key"));
+            completeScannedEntityUnsaved(player.getName(), rs.getString("key"));
          }
       }
 
@@ -817,14 +819,14 @@ public class ResearchManager {
       for(int j = 0; j < tagList.tagCount(); ++j) {
          NBTTagCompound rs = tagList.getCompoundTagAt(j);
          if (rs.hasKey("key")) {
-            completeScannedPhenomenaUnsaved(player.getCommandSenderName(), rs.getString("key"));
+            completeScannedPhenomenaUnsaved(player.getName(), rs.getString("key"));
          }
       }
 
    }
 
    public static void scheduleSave(EntityPlayer player) {
-      if (!player.worldObj.isRemote) {
+      if (!player.world.isRemote) {
       }
    }
 
@@ -840,15 +842,15 @@ public class ResearchManager {
             data.setTag("Thaumcraft.shielding", new NBTTagInt(Thaumcraft.instance.runicEventHandler.runicCharge.get(player.getEntityId())));
          }
 
-         data.setTag("Thaumcraft.eldritch", new NBTTagInt(Thaumcraft.proxy.getPlayerKnowledge().getWarpPerm(player.getCommandSenderName())));
-         data.setTag("Thaumcraft.eldritch.temp", new NBTTagInt(Thaumcraft.proxy.getPlayerKnowledge().getWarpTemp(player.getCommandSenderName())));
-         data.setTag("Thaumcraft.eldritch.sticky", new NBTTagInt(Thaumcraft.proxy.getPlayerKnowledge().getWarpSticky(player.getCommandSenderName())));
-         data.setTag("Thaumcraft.eldritch.counter", new NBTTagInt(Thaumcraft.proxy.getPlayerKnowledge().getWarpCounter(player.getCommandSenderName())));
+         data.setTag("Thaumcraft.eldritch", new NBTTagInt(Thaumcraft.proxy.getPlayerKnowledge().getWarpPerm(player.getName())));
+         data.setTag("Thaumcraft.eldritch.temp", new NBTTagInt(Thaumcraft.proxy.getPlayerKnowledge().getWarpTemp(player.getName())));
+         data.setTag("Thaumcraft.eldritch.sticky", new NBTTagInt(Thaumcraft.proxy.getPlayerKnowledge().getWarpSticky(player.getName())));
+         data.setTag("Thaumcraft.eldritch.counter", new NBTTagInt(Thaumcraft.proxy.getPlayerKnowledge().getWarpCounter(player.getName())));
          if (file1 != null && file1.exists()) {
             try {
                Files.copy(file1, file2);
             } catch (Exception var8) {
-                Thaumcraft.log.error("Could not backup old research file for player {}", player.getCommandSenderName());
+                Thaumcraft.log.error("Could not backup old research file for player {}", player.getName());
             }
          }
 
@@ -859,7 +861,7 @@ public class ResearchManager {
                fileoutputstream.close();
             }
          } catch (Exception var9) {
-             Thaumcraft.log.error("Could not save research file for player {}", player.getCommandSenderName());
+             Thaumcraft.log.error("Could not save research file for player {}", player.getName());
             if (file1.exists()) {
                try {
                   file1.delete();
@@ -880,13 +882,13 @@ public class ResearchManager {
 
    public static void saveResearchNBT(NBTTagCompound entityData, EntityPlayer player) {
       NBTTagList tagList = new NBTTagList();
-      List res = getResearchForPlayer(player.getCommandSenderName());
+      List res = getResearchForPlayer(player.getName());
       if (res != null && !res.isEmpty()) {
          for(Object key : res) {
             if (key != null && (((String)key).startsWith("@") || ResearchCategories.getResearch((String)key) != null)) {
                if (((String)key).startsWith("@")) {
                   String k = ((String)key).substring(1);
-                  if (isResearchComplete(player.getCommandSenderName(), k)) {
+                  if (isResearchComplete(player.getName(), k)) {
                      continue;
                   }
                }
@@ -905,7 +907,7 @@ public class ResearchManager {
 
    public static void saveAspectNBT(NBTTagCompound entityData, EntityPlayer player) {
       NBTTagList tagList = new NBTTagList();
-      AspectList res = Thaumcraft.proxy.getKnownAspects().get(player.getCommandSenderName());
+      AspectList res = Thaumcraft.proxy.getKnownAspects().get(player.getName());
       if (res != null && res.size() > 0) {
          for(Aspect aspect : res.getAspects()) {
             if (aspect != null) {
@@ -922,7 +924,7 @@ public class ResearchManager {
 
    public static void saveScannedNBT(NBTTagCompound entityData, EntityPlayer player) {
       NBTTagList tagList = new NBTTagList();
-      List<String> obj = Thaumcraft.proxy.getScannedObjects().get(player.getCommandSenderName());
+      List<String> obj = Thaumcraft.proxy.getScannedObjects().get(player.getName());
       if (obj != null && !obj.isEmpty()) {
          for(String object : obj) {
             if (object != null) {
@@ -935,7 +937,7 @@ public class ResearchManager {
 
       entityData.setTag("THAUMCRAFT.SCAN.OBJECTS", tagList);
       tagList = new NBTTagList();
-      List<String> ent = Thaumcraft.proxy.getScannedEntities().get(player.getCommandSenderName());
+      List<String> ent = Thaumcraft.proxy.getScannedEntities().get(player.getName());
       if (ent != null && !ent.isEmpty()) {
          for(String key : ent) {
             if (key != null) {
@@ -948,7 +950,7 @@ public class ResearchManager {
 
       entityData.setTag("THAUMCRAFT.SCAN.ENTITIES", tagList);
       tagList = new NBTTagList();
-      List<String> phe = Thaumcraft.proxy.getScannedPhenomena().get(player.getCommandSenderName());
+      List<String> phe = Thaumcraft.proxy.getScannedPhenomena().get(player.getName());
       if (phe != null && !phe.isEmpty()) {
          for(String key : phe) {
             if (key != null) {

@@ -1,0 +1,28 @@
+{
+  "variants": {
+    "variant=cinnabar": {
+      "model": "thaumcraft:blockcustomore_cinnabar"
+    },
+    "variant=infusedair": {
+      "model": "thaumcraft:blockcustomore_infusedair"
+    },
+    "variant=infusedfire": {
+      "model": "thaumcraft:blockcustomore_infusedfire"
+    },
+    "variant=infusedwater": {
+      "model": "thaumcraft:blockcustomore_infusedwater"
+    },
+    "variant=infusedearth": {
+      "model": "thaumcraft:blockcustomore_infusedearth"
+    },
+    "variant=infusedorder": {
+      "model": "thaumcraft:blockcustomore_infusedorder"
+    },
+    "variant=infusedentropy": {
+      "model": "thaumcraft:blockcustomore_infusedentropy"
+    },
+    "variant=amber": {
+      "model": "thaumcraft:blockcustomore_amber"
+    }
+  }
+}

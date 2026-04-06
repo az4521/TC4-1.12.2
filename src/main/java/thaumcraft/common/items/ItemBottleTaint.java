@@ -1,12 +1,12 @@
 package thaumcraft.common.items;
 
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
-import net.minecraft.client.renderer.texture.IIconRegister;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
+import thaumcraft.client.renderers.compat.IIconRegister;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.IIcon;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.world.World;
 import thaumcraft.api.IScribeTools;
 import thaumcraft.common.Thaumcraft;
@@ -14,7 +14,7 @@ import thaumcraft.common.entities.projectile.EntityBottleTaint;
 
 public class ItemBottleTaint extends Item implements IScribeTools {
    @SideOnly(Side.CLIENT)
-   public IIcon icon;
+   public TextureAtlasSprite icon;
 
    public ItemBottleTaint() {
       this.maxStackSize = 8;
@@ -25,24 +25,25 @@ public class ItemBottleTaint extends Item implements IScribeTools {
 
    @SideOnly(Side.CLIENT)
    public void registerIcons(IIconRegister ir) {
-      this.icon = ir.registerIcon("thaumcraft:bottle_taint");
+      this.icon = ir.registerSprite("thaumcraft:bottle_taint");
    }
 
    @SideOnly(Side.CLIENT)
-   public IIcon getIconFromDamage(int par1) {
+   public TextureAtlasSprite getIconFromDamage(int par1) {
       return this.icon;
    }
 
-   public ItemStack onItemRightClick(ItemStack stack, World world, EntityPlayer player) {
+   public net.minecraft.util.ActionResult<ItemStack> onItemRightClick(World world, EntityPlayer player, net.minecraft.util.EnumHand hand) {
+      ItemStack stack = player.getHeldItem(hand);
       if (!player.capabilities.isCreativeMode) {
-         --stack.stackSize;
+         stack.shrink(1);
       }
 
-      world.playSoundAtEntity(player, "random.bow", 0.5F, 0.4F / (itemRand.nextFloat() * 0.4F + 0.8F));
+      { net.minecraft.util.SoundEvent _snd = net.minecraft.util.SoundEvent.REGISTRY.getObject(new net.minecraft.util.ResourceLocation("minecraft:random.bow")); if (_snd != null) world.playSound(null, player.posX, player.posY, player.posZ, _snd, net.minecraft.util.SoundCategory.NEUTRAL, 0.5F, 0.4F / (itemRand.nextFloat() * 0.4F + 0.8F)); };
       if (!world.isRemote) {
-         world.spawnEntityInWorld(new EntityBottleTaint(world, player));
+         world.spawnEntity(new EntityBottleTaint(world, player));
       }
 
-      return stack;
+      return new net.minecraft.util.ActionResult<>(net.minecraft.util.EnumActionResult.SUCCESS, stack);
    }
 }

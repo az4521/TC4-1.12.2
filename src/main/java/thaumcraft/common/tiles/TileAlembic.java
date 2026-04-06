@@ -1,15 +1,15 @@
 package thaumcraft.common.tiles;
 
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.NetworkManager;
-import net.minecraft.network.play.server.S35PacketUpdateTileEntity;
-import net.minecraft.util.AxisAlignedBB;
+import net.minecraft.network.play.server.SPacketUpdateTileEntity;
+import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.world.World;
-import net.minecraftforge.common.util.ForgeDirection;
+import net.minecraft.util.EnumFacing;
 import thaumcraft.api.TileThaumcraft;
 import thaumcraft.api.aspects.Aspect;
 import thaumcraft.api.aspects.AspectList;
@@ -17,6 +17,7 @@ import thaumcraft.api.aspects.IAspectContainer;
 import thaumcraft.api.aspects.IEssentiaTransport;
 import thaumcraft.api.wands.IWandable;
 import thaumcraft.common.config.ConfigBlocks;
+import net.minecraft.util.math.BlockPos;
 
 public class TileAlembic extends TileThaumcraft implements IAspectContainer, IWandable, IEssentiaTransport {
    public Aspect aspect;
@@ -26,7 +27,7 @@ public class TileAlembic extends TileThaumcraft implements IAspectContainer, IWa
    public int facing = 2;
    public boolean aboveAlembic = false;
    public boolean aboveFurnace = false;
-   ForgeDirection fd = null;
+   EnumFacing fd = null;
 
    public AspectList getAspects() {
       return this.aspect != null ? (new AspectList()).add(this.aspect, this.amount) : new AspectList();
@@ -37,7 +38,7 @@ public class TileAlembic extends TileThaumcraft implements IAspectContainer, IWa
 
    @SideOnly(Side.CLIENT)
    public AxisAlignedBB getRenderBoundingBox() {
-      return AxisAlignedBB.getBoundingBox(this.xCoord - 1, this.yCoord, this.zCoord - 1, this.xCoord + 2, this.yCoord + 1, this.zCoord + 2);
+      return new AxisAlignedBB(this.getPos().getX() - 1, this.getPos().getY(), this.getPos().getZ() - 1, this.getPos().getX() + 2, this.getPos().getY() + 1, this.getPos().getZ() + 2);
    }
 
    public void readCustomNBT(NBTTagCompound nbttagcompound) {
@@ -49,7 +50,7 @@ public class TileAlembic extends TileThaumcraft implements IAspectContainer, IWa
       }
 
       this.amount = nbttagcompound.getShort("amount");
-      this.fd = ForgeDirection.getOrientation(this.facing);
+      this.fd = EnumFacing.byIndex(this.facing);
    }
 
    public void writeCustomNBT(NBTTagCompound nbttagcompound) {
@@ -78,7 +79,7 @@ public class TileAlembic extends TileThaumcraft implements IAspectContainer, IWa
       }
 
       this.markDirty();
-      this.worldObj.markBlockForUpdate(this.xCoord, this.yCoord, this.zCoord);
+      { net.minecraft.block.state.IBlockState _bs = this.world.getBlockState(this.pos); this.world.notifyBlockUpdate(this.pos, _bs, _bs, 3); }
       return am;
    }
 
@@ -96,7 +97,7 @@ public class TileAlembic extends TileThaumcraft implements IAspectContainer, IWa
          }
 
          this.markDirty();
-         this.worldObj.markBlockForUpdate(this.xCoord, this.yCoord, this.zCoord);
+         { net.minecraft.block.state.IBlockState _bs = this.world.getBlockState(this.pos); this.world.notifyBlockUpdate(this.pos, _bs, _bs, 3); }
          return true;
       } else {
          return false;
@@ -125,15 +126,17 @@ public class TileAlembic extends TileThaumcraft implements IAspectContainer, IWa
 
    public void getAppearance() {
       this.aboveAlembic = false;
-       this.aboveFurnace = this.worldObj.getBlock(this.xCoord, this.yCoord - 1, this.zCoord) == ConfigBlocks.blockStoneDevice && this.worldObj.getBlockMetadata(this.xCoord, this.yCoord - 1, this.zCoord) == 0;
+      net.minecraft.util.math.BlockPos bBelow = this.getPos().down();
+      net.minecraft.block.state.IBlockState sBelow = this.world.getBlockState(bBelow);
+      this.aboveFurnace = sBelow.getBlock() == ConfigBlocks.blockStoneDevice && sBelow.getBlock().getMetaFromState(sBelow) == 0;
 
-      if (this.worldObj.getBlock(this.xCoord, this.yCoord - 1, this.zCoord) == ConfigBlocks.blockMetalDevice && this.worldObj.getBlockMetadata(this.xCoord, this.yCoord - 1, this.zCoord) == this.getBlockMetadata()) {
+      if (sBelow.getBlock() == ConfigBlocks.blockMetalDevice && sBelow.getBlock().getMetaFromState(sBelow) == this.getBlockMetadata()) {
          this.aboveAlembic = true;
       }
 
    }
 
-   public void onDataPacket(NetworkManager net, S35PacketUpdateTileEntity pkt) {
+   public void onDataPacket(NetworkManager net, SPacketUpdateTileEntity pkt) {
       super.onDataPacket(net, pkt);
       this.getAppearance();
    }
@@ -141,9 +144,9 @@ public class TileAlembic extends TileThaumcraft implements IAspectContainer, IWa
    public int onWandRightClick(World world, ItemStack wandstack, EntityPlayer player, int x, int y, int z, int side, int md) {
        if (side > 1) {
            this.facing = side;
-           this.fd = ForgeDirection.getOrientation(this.facing);
-           this.worldObj.markBlockForUpdate(this.xCoord, this.yCoord, this.zCoord);
-           player.swingItem();
+           this.fd = EnumFacing.byIndex(this.facing);
+           { net.minecraft.block.state.IBlockState _bs = this.world.getBlockState(this.pos); this.world.notifyBlockUpdate(this.pos, _bs, _bs, 3); }
+           player.swingArm(net.minecraft.util.EnumHand.MAIN_HAND);
            this.markDirty();
        }
        return 0;
@@ -159,42 +162,42 @@ public class TileAlembic extends TileThaumcraft implements IAspectContainer, IWa
    public void onWandStoppedUsing(ItemStack wandstack, World world, EntityPlayer player, int count) {
    }
 
-   public boolean isConnectable(ForgeDirection face) {
-      return face != ForgeDirection.getOrientation(this.facing) && face != ForgeDirection.DOWN;
+   public boolean isConnectable(EnumFacing face) {
+      return face != EnumFacing.byIndex(this.facing) && face != EnumFacing.DOWN;
    }
 
-   public boolean canInputFrom(ForgeDirection face) {
+   public boolean canInputFrom(EnumFacing face) {
       return false;
    }
 
-   public boolean canOutputTo(ForgeDirection face) {
-      return face != ForgeDirection.getOrientation(this.facing) && face != ForgeDirection.DOWN;
+   public boolean canOutputTo(EnumFacing face) {
+      return face != EnumFacing.byIndex(this.facing) && face != EnumFacing.DOWN;
    }
 
    public void setSuction(Aspect aspect, int amount) {
    }
 
-   public Aspect getSuctionType(ForgeDirection loc) {
+   public Aspect getSuctionType(EnumFacing loc) {
       return null;
    }
 
-   public int getSuctionAmount(ForgeDirection loc) {
+   public int getSuctionAmount(EnumFacing loc) {
       return 0;
    }
 
-   public Aspect getEssentiaType(ForgeDirection loc) {
+   public Aspect getEssentiaType(EnumFacing loc) {
       return this.aspect;
    }
 
-   public int getEssentiaAmount(ForgeDirection loc) {
+   public int getEssentiaAmount(EnumFacing loc) {
       return this.amount;
    }
 
-   public int takeEssentia(Aspect aspect, int amount, ForgeDirection face) {
+   public int takeEssentia(Aspect aspect, int amount, EnumFacing face) {
       return this.canOutputTo(face) && this.takeFromContainer(aspect, amount) ? amount : 0;
    }
 
-   public int addEssentia(Aspect aspect, int amount, ForgeDirection loc) {
+   public int addEssentia(Aspect aspect, int amount, EnumFacing loc) {
       return 0;
    }
 

@@ -1,7 +1,7 @@
 package thaumcraft.api.expands.worldgen.node.consts;
 
 import net.minecraft.world.World;
-import net.minecraft.world.biome.BiomeGenBase;
+import net.minecraft.world.biome.Biome;
 import thaumcraft.api.expands.worldgen.node.listeners.NodeTypePicker;
 import thaumcraft.api.nodes.NodeType;
 import thaumcraft.common.config.Config;
@@ -44,8 +44,8 @@ public class NodeTypePickers {
                         type = NodeType.HUNGRY;
                 }
             }
-            BiomeGenBase bg = world.getBiomeGenForCoords(x, z);
-            if (type != NodeType.PURE && bg.biomeID == biomeTaint.biomeID) {
+            Biome bg = world.getBiome(new net.minecraft.util.math.BlockPos(x, 0, z));
+            if (type != NodeType.PURE && net.minecraft.world.biome.Biome.getIdForBiome(bg) == net.minecraft.world.biome.Biome.getIdForBiome(biomeTaint)) {
                 if (random.nextBoolean()) {
                     type = NodeType.TAINTED;
                 }

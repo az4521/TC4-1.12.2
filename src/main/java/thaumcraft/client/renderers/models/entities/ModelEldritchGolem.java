@@ -4,7 +4,7 @@ import net.minecraft.client.model.ModelBase;
 import net.minecraft.client.model.ModelRenderer;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.util.MathHelper;
+import net.minecraft.util.math.MathHelper;
 import thaumcraft.common.entities.monster.boss.EntityEldritchGolem;
 
 public class ModelEldritchGolem extends ModelBase {
@@ -304,8 +304,8 @@ public class ModelEldritchGolem extends ModelBase {
       this.LegL.rotateAngleX = MathHelper.cos(par1 * 0.4662F + (float)Math.PI) * 1.4F * par2;
    }
 
-   public void setLivingAnimations(EntityLivingBase p_78086_1_, float par1, float par2, float par3) {
-      EntityEldritchGolem golem = (EntityEldritchGolem)p_78086_1_;
+   public void setLivingAnimations(EntityLivingBase entitylivingbaseIn, float par1, float par2, float par3) {
+      EntityEldritchGolem golem = (EntityEldritchGolem)entitylivingbaseIn;
       int i = golem.getAttackTimer();
       if (i > 0) {
          this.ArmR.rotateAngleX = -2.0F + 1.5F * this.doAbs((float)i - par3, 10.0F);
@@ -317,8 +317,8 @@ public class ModelEldritchGolem extends ModelBase {
 
    }
 
-   private float doAbs(float p_78172_1_, float p_78172_2_) {
-      return (Math.abs(p_78172_1_ % p_78172_2_ - p_78172_2_ * 0.5F) - p_78172_2_ * 0.25F) / (p_78172_2_ * 0.25F);
+   private float doAbs(float rotation, float tickDelta) {
+      return (Math.abs(rotation % tickDelta - tickDelta * 0.5F) - tickDelta * 0.25F) / (tickDelta * 0.25F);
    }
 
    private void setRotation(ModelRenderer model, float x, float y, float z) {

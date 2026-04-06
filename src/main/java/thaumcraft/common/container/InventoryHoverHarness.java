@@ -4,6 +4,8 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.Container;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.TextComponentString;
 import thaumcraft.api.aspects.Aspect;
 import thaumcraft.api.aspects.AspectList;
 import thaumcraft.common.blocks.ItemJarFilled;
@@ -20,29 +22,38 @@ public class InventoryHoverHarness implements IInventory {
       return this.stackList.length;
    }
 
-   public ItemStack getStackInSlot(int par1) {
-      return par1 >= this.getSizeInventory() ? null : this.stackList[par1];
+   @Override
+   public boolean isEmpty() {
+      for (ItemStack stack : this.stackList) {
+         if (stack != null && !stack.isEmpty()) return false;
+      }
+      return true;
    }
 
-   public ItemStack getStackInSlotOnClosing(int par1) {
+   public ItemStack getStackInSlot(int par1) {
+      return par1 >= this.getSizeInventory() ? ItemStack.EMPTY : (this.stackList[par1] == null ? ItemStack.EMPTY : this.stackList[par1]);
+   }
+
+   @Override
+   public ItemStack removeStackFromSlot(int par1) {
       if (this.stackList[par1] != null) {
          ItemStack var2 = this.stackList[par1];
          this.stackList[par1] = null;
          return var2;
       } else {
-         return null;
+         return ItemStack.EMPTY;
       }
    }
 
    public ItemStack decrStackSize(int par1, int par2) {
       if (this.stackList[par1] != null) {
           ItemStack var3;
-          if (this.stackList[par1].stackSize <= par2) {
+          if (this.stackList[par1].getCount() <= par2) {
               var3 = this.stackList[par1];
             this.stackList[par1] = null;
           } else {
               var3 = this.stackList[par1].splitStack(par2);
-            if (this.stackList[par1].stackSize == 0) {
+            if (this.stackList[par1].getCount() == 0) {
                this.stackList[par1] = null;
             }
 
@@ -50,7 +61,7 @@ public class InventoryHoverHarness implements IInventory {
           this.eventHandler.onCraftMatrixChanged(this);
           return var3;
       } else {
-         return null;
+         return ItemStack.EMPTY;
       }
    }
 
@@ -63,12 +74,13 @@ public class InventoryHoverHarness implements IInventory {
       return 1;
    }
 
-   public boolean isUseableByPlayer(EntityPlayer par1EntityPlayer) {
+   @Override
+   public boolean isUsableByPlayer(EntityPlayer par1EntityPlayer) {
       return true;
    }
 
    public boolean isItemValidForSlot(int i, ItemStack jar) {
-      if (jar != null && jar.getItem() instanceof ItemJarFilled && jar.hasTagCompound()) {
+      if (jar != null && !jar.isEmpty() && jar.getItem() instanceof ItemJarFilled && jar.hasTagCompound()) {
          AspectList aspects = ((ItemJarFilled)jar.getItem()).getAspects(jar);
           return aspects != null && aspects.size() > 0 && aspects.getAmount(Aspect.ENERGY) > 0;
       }
@@ -76,20 +88,43 @@ public class InventoryHoverHarness implements IInventory {
       return false;
    }
 
-   public String getInventoryName() {
+   @Override
+   public String getName() {
       return "container.hoverharness";
    }
 
-   public boolean hasCustomInventoryName() {
+   @Override
+   public boolean hasCustomName() {
       return false;
+   }
+
+   @Override
+   public ITextComponent getDisplayName() {
+      return new TextComponentString(getName());
    }
 
    public void markDirty() {
    }
 
-   public void openInventory() {
+   @Override
+   public void openInventory(EntityPlayer player) {
    }
 
-   public void closeInventory() {
+   @Override
+   public void closeInventory(EntityPlayer player) {
    }
+
+   @Override
+   public void clear() {
+      for (int i = 0; i < getSizeInventory(); i++) setInventorySlotContents(i, ItemStack.EMPTY);
+   }
+
+   @Override
+   public int getFieldCount() { return 0; }
+
+   @Override
+   public int getField(int id) { return 0; }
+
+   @Override
+   public void setField(int id, int value) {}
 }

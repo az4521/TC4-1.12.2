@@ -1,10 +1,10 @@
 package thaumcraft.common.lib.network.fx;
 
-import cpw.mods.fml.common.network.simpleimpl.IMessage;
-import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
-import cpw.mods.fml.common.network.simpleimpl.MessageContext;
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
+import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
+import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
+import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import io.netty.buffer.ByteBuf;
 import java.awt.Color;
 import net.minecraft.world.World;
@@ -57,11 +57,11 @@ public class PacketFXVisDrain implements IMessage, IMessageHandler<PacketFXVisDr
 
    @SideOnly(Side.CLIENT)
    public IMessage onMessage(PacketFXVisDrain message, MessageContext ctx) {
-      World worldObj = Thaumcraft.proxy.getClientWorld();
-      FXVisSparkle fb = new FXVisSparkle(worldObj, (double)message.dx + 0.4 + (double)(worldObj.rand.nextFloat() * 0.2F), (double)message.dy + 0.4 + (double)(worldObj.rand.nextFloat() * 0.2F), (double)message.dz + 0.4 + (double)(worldObj.rand.nextFloat() * 0.2F), (float)message.x + worldObj.rand.nextFloat(), (float)message.y + worldObj.rand.nextFloat(), (float)message.z + worldObj.rand.nextFloat());
+      World world = Thaumcraft.proxy.getClientWorld();
+      FXVisSparkle fb = new FXVisSparkle(world, (double)message.dx + 0.4 + (double)(world.rand.nextFloat() * 0.2F), (double)message.dy + 0.4 + (double)(world.rand.nextFloat() * 0.2F), (double)message.dz + 0.4 + (double)(world.rand.nextFloat() * 0.2F), (float)message.x + world.rand.nextFloat(), (float)message.y + world.rand.nextFloat(), (float)message.z + world.rand.nextFloat());
       Color c = new Color(message.color);
       fb.setRBGColorF((float)c.getRed() / 255.0F, (float)c.getGreen() / 255.0F, (float)c.getBlue() / 255.0F);
-      ParticleEngine.instance.addEffect(worldObj, fb);
+      ParticleEngine.instance.addEffect(world, fb);
       return null;
    }
 }

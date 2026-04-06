@@ -4,20 +4,24 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 import net.minecraft.block.material.Material;
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.ai.EntityAIBase;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.init.Blocks;
 import net.minecraft.init.Items;
-import net.minecraft.item.ItemStack;
+import net.minecraft.init.SoundEvents;
 import net.minecraft.item.ItemFishFood.FishType;
+import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.FurnaceRecipes;
-import net.minecraft.util.MathHelper;
-import net.minecraft.util.Vec3;
+import net.minecraft.util.EnumFacing;
+import net.minecraft.util.EnumParticleTypes;
+import net.minecraft.util.SoundCategory;
 import net.minecraft.util.WeightedRandom;
-import net.minecraft.util.WeightedRandomFishable;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
-import net.minecraftforge.common.util.ForgeDirection;
 import thaumcraft.common.config.Config;
 import thaumcraft.common.entities.golems.EntityGolemBase;
 import thaumcraft.common.entities.golems.EntityGolemBobber;
@@ -30,17 +34,30 @@ public class AIFish extends EntityAIBase {
    private int maxDelay = 1;
    private int mod = 1;
    private int count = 0;
-   private Vec3 target = null;
+   private Vec3d target = null;
    private EntityGolemBobber bobber = null;
-   private static final List LOOTCRAP;
-   private static final List LOOTRARE;
-   private static final List LOOTFISH;
+
+   // Simple weighted fishing item entry
+   private static class FishingEntry extends WeightedRandom.Item {
+      private final ItemStack stack;
+      FishingEntry(ItemStack stack, int weight) {
+         super(weight);
+         this.stack = stack;
+      }
+      public ItemStack getStack() {
+         return stack.copy();
+      }
+   }
+
+   private static final List<FishingEntry> LOOTCRAP;
+   private static final List<FishingEntry> LOOTRARE;
+   private static final List<FishingEntry> LOOTFISH;
 
    public AIFish(EntityGolemBase par1EntityCreature) {
       this.theGolem = par1EntityCreature;
-      this.theWorld = par1EntityCreature.worldObj;
+      this.theWorld = par1EntityCreature.world;
       this.setMutexBits(3);
-      this.distance = (float)MathHelper.ceiling_float_int(this.theGolem.getRange() / 2.0F);
+      this.distance = (float)MathHelper.ceil(this.theGolem.getRange() / 2.0F);
    }
 
    public boolean shouldExecute() {
@@ -49,35 +66,37 @@ public class AIFish extends EntityAIBase {
             this.bobber.setDead();
          }
 
-         Vec3 vv = this.findWater();
+         Vec3d vv = this.findWater();
          if (vv == null) {
             return false;
          } else {
-            this.target = Vec3.createVectorHelper(vv.xCoord, vv.yCoord, vv.zCoord);
+            this.target = new Vec3d(vv.x, vv.y, vv.z);
             this.quality = 0.0F;
-            int x = (int)this.target.xCoord;
-            int y = (int)this.target.yCoord;
-            int z = (int)this.target.zCoord;
+            int x = (int)this.target.x;
+            int y = (int)this.target.y;
+            int z = (int)this.target.z;
 
             for(int a = 2; a <= 5; ++a) {
-               ForgeDirection dir = ForgeDirection.getOrientation(a);
-               if (this.theWorld.getBlock(x + dir.offsetX, y + dir.offsetY, z + dir.offsetZ).getMaterial() == Material.water && this.theWorld.isAirBlock(x + dir.offsetX, y + 1 + dir.offsetY, z + dir.offsetZ)) {
+               EnumFacing dir = EnumFacing.byIndex(a);
+               IBlockState adjState = this.theWorld.getBlockState(new BlockPos(x + dir.getXOffset(), y + dir.getYOffset(), z + dir.getZOffset()));
+               if (adjState.getMaterial() == Material.WATER && this.theWorld.isAirBlock(new BlockPos(x + dir.getXOffset(), y + 1 + dir.getYOffset(), z + dir.getZOffset()))) {
                   this.quality += 3.0E-5F;
-                  if (this.theWorld.canBlockSeeTheSky(x + dir.offsetX, y + 1 + dir.offsetY, z + dir.offsetZ)) {
+                  if (this.theWorld.canBlockSeeSky(new BlockPos(x + dir.getXOffset(), y + 1 + dir.getYOffset(), z + dir.getZOffset()))) {
                      this.quality += 3.0E-5F;
                   }
 
                   for(int depth = 1; depth <= 3; ++depth) {
-                     if (this.theWorld.getBlock(x + dir.offsetX, y - depth + dir.offsetY, z + dir.offsetZ).getMaterial() == Material.water) {
+                     IBlockState depthState = this.theWorld.getBlockState(new BlockPos(x + dir.getXOffset(), y - depth + dir.getYOffset(), z + dir.getZOffset()));
+                     if (depthState.getMaterial() == Material.WATER) {
                         this.quality += 1.5E-5F;
                      }
                   }
                }
             }
 
-            this.theWorld.playSoundAtEntity(this.theGolem, "random.bow", 0.5F, 0.4F / (this.theWorld.rand.nextFloat() * 0.4F + 0.8F));
+            this.theWorld.playSound(null, this.theGolem.getPosition(), SoundEvents.ENTITY_ARROW_SHOOT, SoundCategory.NEUTRAL, 0.5F, 0.4F / (this.theWorld.rand.nextFloat() * 0.4F + 0.8F));
             this.bobber = new EntityGolemBobber(this.theWorld, this.theGolem, x, y, z);
-            return this.theWorld.spawnEntityInWorld(this.bobber);
+            return this.theWorld.spawnEntity(this.bobber);
          }
       } else {
          return false;
@@ -90,7 +109,7 @@ public class AIFish extends EntityAIBase {
 
    public void updateTask() {
       if (this.target != null) {
-         this.theGolem.getLookHelper().setLookPosition(this.target.xCoord + (double)0.5F, this.target.yCoord + (double)1.0F, this.target.zCoord + (double)0.5F, 30.0F, 30.0F);
+         this.theGolem.getLookHelper().setLookPosition(this.target.x + (double)0.5F, this.target.y + (double)1.0F, this.target.z + (double)0.5F, 30.0F, 30.0F);
          float chance = this.quality + (float)this.theGolem.getGolemStrength() * 1.5E-4F;
          if (this.theWorld.rand.nextFloat() < chance) {
             this.theGolem.startRightArmTimer();
@@ -102,32 +121,32 @@ public class AIFish extends EntityAIBase {
             for(int a = 0; a < qq; ++a) {
                ItemStack fs = this.getFishingResult();
                if (this.theGolem.getUpgradeAmount(2) > 0) {
-                  ItemStack sr = FurnaceRecipes.smelting().getSmeltingResult(fs);
-                  if (sr != null) {
+                  ItemStack sr = FurnaceRecipes.instance().getSmeltingResult(fs);
+                  if (!sr.isEmpty()) {
                      fs = sr.copy();
                   }
                }
 
-               EntityItem entityitem = new EntityItem(this.theWorld, this.target.xCoord + (double)0.5F, this.target.yCoord + (double)1.0F, this.target.zCoord + (double)0.5F, fs);
+               EntityItem entityitem = new EntityItem(this.theWorld, this.target.x + (double)0.5F, this.target.y + (double)1.0F, this.target.z + (double)0.5F, fs);
                if (this.theGolem.getUpgradeAmount(2) > 0) {
                   entityitem.setFire(2);
                }
 
-               entityitem.delayBeforeCanPickup = 20;
-               double d1 = this.theGolem.posX + (double)this.theWorld.rand.nextFloat() - (double)this.theWorld.rand.nextFloat() - this.target.xCoord + (double)0.5F;
-               double d3 = this.theGolem.posY - this.target.yCoord + (double)1.0F;
-               double d5 = this.theGolem.posZ + (double)this.theWorld.rand.nextFloat() - (double)this.theWorld.rand.nextFloat() - this.target.zCoord + (double)0.5F;
-               double d7 = MathHelper.sqrt_double(d1 * d1 + d3 * d3 + d5 * d5);
+               entityitem.setPickupDelay(20);
+               double d1 = this.theGolem.posX + (double)this.theWorld.rand.nextFloat() - (double)this.theWorld.rand.nextFloat() - this.target.x + (double)0.5F;
+               double d3 = this.theGolem.posY - this.target.y + (double)1.0F;
+               double d5 = this.theGolem.posZ + (double)this.theWorld.rand.nextFloat() - (double)this.theWorld.rand.nextFloat() - this.target.z + (double)0.5F;
+               double d7 = MathHelper.sqrt(d1 * d1 + d3 * d3 + d5 * d5);
                double d9 = 0.1;
                entityitem.motionX = d1 * d9;
-               entityitem.motionY = d3 * d9 + (double)MathHelper.sqrt_double(d7) * 0.08;
+               entityitem.motionY = d3 * d9 + (double)MathHelper.sqrt(d7) * 0.08;
                entityitem.motionZ = d5 * d9;
-               this.theWorld.spawnEntityInWorld(entityitem);
+               this.theWorld.spawnEntity(entityitem);
             }
 
             if (this.bobber != null) {
-               this.bobber.playSound("random.splash", 0.15F, 1.0F + (this.theWorld.rand.nextFloat() - this.theWorld.rand.nextFloat()) * 0.4F);
-               ((WorldServer)this.theWorld).func_147487_a("splash", this.bobber.posX, this.bobber.posY + (double)0.5F, this.bobber.posZ, 20 + this.theWorld.rand.nextInt(20), 0.1F, 0.0F, 0.1F, 0.0F);
+               this.bobber.playSound(SoundEvents.ENTITY_BOBBER_SPLASH, 0.15F, 1.0F + (this.theWorld.rand.nextFloat() - this.theWorld.rand.nextFloat()) * 0.4F);
+               ((WorldServer)this.theWorld).spawnParticle(EnumParticleTypes.WATER_SPLASH, false, this.bobber.posX, this.bobber.posY + 0.5, this.bobber.posZ, 20 + this.theWorld.rand.nextInt(20), 0.1, 0.0, 0.1, 0.0);
                this.bobber.setDead();
             }
 
@@ -151,16 +170,17 @@ public class AIFish extends EntityAIBase {
       this.theGolem.startRightArmTimer();
    }
 
-   private Vec3 findWater() {
+   private Vec3d findWater() {
       Random rand = this.theGolem.getRNG();
+      BlockPos homePos = this.theGolem.getHomePosition();
 
       for(int var2 = 0; (float)var2 < this.distance * 2.0F; ++var2) {
-         int x = (int)((float)(this.theGolem.getHomePosition().posX + rand.nextInt((int)(1.0F + this.distance * 2.0F))) - this.distance);
-         int y = (int)((float)(this.theGolem.getHomePosition().posY + rand.nextInt((int)(1.0F + this.distance))) - this.distance / 2.0F);
-         int z = (int)((float)(this.theGolem.getHomePosition().posZ + rand.nextInt((int)(1.0F + this.distance * 2.0F))) - this.distance);
-         if (this.theWorld.getBlock(x, y, z).getMaterial() == Material.water && this.theWorld.isAirBlock(x, y + 1, z)) {
-            Vec3 v = Vec3.createVectorHelper(x, y, z);
-            return v;
+         int x = (int)((float)(homePos.getX() + rand.nextInt((int)(1.0F + this.distance * 2.0F))) - this.distance);
+         int y = (int)((float)(homePos.getY() + rand.nextInt((int)(1.0F + this.distance))) - this.distance / 2.0F);
+         int z = (int)((float)(homePos.getZ() + rand.nextInt((int)(1.0F + this.distance * 2.0F))) - this.distance);
+         IBlockState state = this.theWorld.getBlockState(new BlockPos(x, y, z));
+         if (state.getMaterial() == Material.WATER && this.theWorld.isAirBlock(new BlockPos(x, y + 1, z))) {
+            return new Vec3d(x, y, z);
          }
       }
 
@@ -171,46 +191,71 @@ public class AIFish extends EntityAIBase {
       float f = this.theWorld.rand.nextFloat();
       float f1 = 0.1F - (float)this.theGolem.getUpgradeAmount(5) * 0.025F;
       float f2 = 0.05F + (float)this.theGolem.getUpgradeAmount(4) * 0.0125F;
-      int x = (int)this.target.xCoord;
-      int y = (int)this.target.yCoord;
-      int z = (int)this.target.zCoord;
+      int x = (int)this.target.x;
+      int y = (int)this.target.y;
+      int z = (int)this.target.z;
 
       for(int a = 2; a <= 5; ++a) {
-         ForgeDirection dir = ForgeDirection.getOrientation(a);
-         if (this.theWorld.getBlock(x + dir.offsetX, y + dir.offsetY, z + dir.offsetZ).getMaterial() == Material.water && this.theWorld.isAirBlock(x + dir.offsetX, y + 1 + dir.offsetY, z + dir.offsetZ)) {
+         EnumFacing dir = EnumFacing.byIndex(a);
+         IBlockState adjState = this.theWorld.getBlockState(new BlockPos(x + dir.getXOffset(), y + dir.getYOffset(), z + dir.getZOffset()));
+         if (adjState.getMaterial() == Material.WATER && this.theWorld.isAirBlock(new BlockPos(x + dir.getXOffset(), y + 1 + dir.getYOffset(), z + dir.getZOffset()))) {
             f1 -= 0.005F;
             f2 += 0.00125F;
-            if (this.theWorld.canBlockSeeTheSky(x + dir.offsetX, y + 1 + dir.offsetY, z + dir.offsetZ)) {
+            if (this.theWorld.canBlockSeeSky(new BlockPos(x + dir.getXOffset(), y + 1 + dir.getYOffset(), z + dir.getZOffset()))) {
                f1 -= 0.005F;
                f2 += 0.00125F;
             }
 
             for(int depth = 1; depth <= 3; ++depth) {
-               if (this.theWorld.getBlock(x + dir.offsetX, y - depth + dir.offsetY, z + dir.offsetZ).getMaterial() == Material.water) {
+               IBlockState depthState = this.theWorld.getBlockState(new BlockPos(x + dir.getXOffset(), y - depth + dir.getYOffset(), z + dir.getZOffset()));
+               if (depthState.getMaterial() == Material.WATER) {
                   f2 += 0.001F;
                }
             }
          }
       }
 
-      f1 = MathHelper.clamp_float(f1, 0.0F, 1.0F);
-      f2 = MathHelper.clamp_float(f2, 0.0F, 1.0F);
+      f1 = MathHelper.clamp(f1, 0.0F, 1.0F);
+      f2 = MathHelper.clamp(f2, 0.0F, 1.0F);
       if (f < f1) {
-         return ((WeightedRandomFishable)WeightedRandom.getRandomItem(this.theWorld.rand, LOOTCRAP)).func_150708_a(this.theWorld.rand);
+         return ((FishingEntry)WeightedRandom.getRandomItem(this.theWorld.rand, LOOTCRAP)).getStack();
       } else {
          f -= f1;
          if (f < f2) {
-            return ((WeightedRandomFishable)WeightedRandom.getRandomItem(this.theWorld.rand, LOOTRARE)).func_150708_a(this.theWorld.rand);
+            return ((FishingEntry)WeightedRandom.getRandomItem(this.theWorld.rand, LOOTRARE)).getStack();
          } else {
-            float var10000 = f - f2;
-            return ((WeightedRandomFishable)WeightedRandom.getRandomItem(this.theWorld.rand, LOOTFISH)).func_150708_a(this.theWorld.rand);
+            return ((FishingEntry)WeightedRandom.getRandomItem(this.theWorld.rand, LOOTFISH)).getStack();
          }
       }
    }
 
    static {
-      LOOTCRAP = Arrays.asList((new WeightedRandomFishable(new ItemStack(Items.leather_boots), 10)).func_150709_a(0.9F), new WeightedRandomFishable(new ItemStack(Items.leather), 10), new WeightedRandomFishable(new ItemStack(Items.bone), 10), new WeightedRandomFishable(new ItemStack(Items.potionitem), 10), new WeightedRandomFishable(new ItemStack(Items.string), 5), (new WeightedRandomFishable(new ItemStack(Items.fishing_rod), 2)).func_150709_a(0.9F), new WeightedRandomFishable(new ItemStack(Items.bowl), 10), new WeightedRandomFishable(new ItemStack(Items.stick), 5), new WeightedRandomFishable(new ItemStack(Items.dye, 10, 0), 5), new WeightedRandomFishable(new ItemStack(Blocks.tripwire_hook), 10), new WeightedRandomFishable(new ItemStack(Items.rotten_flesh), 10));
-      LOOTRARE = Arrays.asList(new WeightedRandomFishable(new ItemStack(Blocks.waterlily), 1), new WeightedRandomFishable(new ItemStack(Items.name_tag), 1), new WeightedRandomFishable(new ItemStack(Items.saddle), 1), (new WeightedRandomFishable(new ItemStack(Items.bow), 1)).func_150709_a(0.25F).func_150707_a(), (new WeightedRandomFishable(new ItemStack(Items.fishing_rod), 1)).func_150709_a(0.25F).func_150707_a(), (new WeightedRandomFishable(new ItemStack(Items.book), 1)).func_150707_a());
-      LOOTFISH = Arrays.asList(new WeightedRandomFishable(new ItemStack(Items.fish, 1, FishType.COD.func_150976_a()), 60), new WeightedRandomFishable(new ItemStack(Items.fish, 1, FishType.SALMON.func_150976_a()), 25), new WeightedRandomFishable(new ItemStack(Items.fish, 1, FishType.CLOWNFISH.func_150976_a()), 2), new WeightedRandomFishable(new ItemStack(Items.fish, 1, FishType.PUFFERFISH.func_150976_a()), 13));
+      LOOTCRAP = Arrays.asList(
+         new FishingEntry(new ItemStack(Items.LEATHER_BOOTS), 10),
+         new FishingEntry(new ItemStack(Items.LEATHER), 10),
+         new FishingEntry(new ItemStack(Items.BONE), 10),
+         new FishingEntry(new ItemStack(Items.POTIONITEM), 10),
+         new FishingEntry(new ItemStack(Items.STRING), 5),
+         new FishingEntry(new ItemStack(Items.FISHING_ROD), 2),
+         new FishingEntry(new ItemStack(Items.BOWL), 10),
+         new FishingEntry(new ItemStack(Items.STICK), 5),
+         new FishingEntry(new ItemStack(Items.DYE, 10, 0), 5),
+         new FishingEntry(new ItemStack(Blocks.TRIPWIRE_HOOK), 10),
+         new FishingEntry(new ItemStack(Items.ROTTEN_FLESH), 10)
+      );
+      LOOTRARE = Arrays.asList(
+         new FishingEntry(new ItemStack(Blocks.WATERLILY), 1),
+         new FishingEntry(new ItemStack(Items.NAME_TAG), 1),
+         new FishingEntry(new ItemStack(Items.SADDLE), 1),
+         new FishingEntry(new ItemStack(Items.BOW), 1),
+         new FishingEntry(new ItemStack(Items.FISHING_ROD), 1),
+         new FishingEntry(new ItemStack(Items.BOOK), 1)
+      );
+      LOOTFISH = Arrays.asList(
+         new FishingEntry(new ItemStack(Items.FISH, 1, FishType.COD.getMetadata()), 60),
+         new FishingEntry(new ItemStack(Items.FISH, 1, FishType.SALMON.getMetadata()), 25),
+         new FishingEntry(new ItemStack(Items.FISH, 1, FishType.CLOWNFISH.getMetadata()), 2),
+         new FishingEntry(new ItemStack(Items.FISH, 1, FishType.PUFFERFISH.getMetadata()), 13)
+      );
    }
 }

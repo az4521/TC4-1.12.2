@@ -1,45 +1,42 @@
 package thaumcraft.common.lib.world.dim;
 
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
-import net.minecraft.util.ChunkCoordinates;
-import net.minecraft.util.MathHelper;
-import net.minecraft.util.Vec3;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.DimensionType;
 import net.minecraft.world.WorldProvider;
-import net.minecraft.world.biome.WorldChunkManagerHell;
+import net.minecraft.world.biome.BiomeProviderSingle;
 import net.minecraft.world.chunk.Chunk;
-import net.minecraft.world.chunk.IChunkProvider;
+import net.minecraft.world.gen.IChunkGenerator;
 import thaumcraft.common.config.Config;
 import thaumcraft.common.lib.world.ThaumcraftWorldGenerator;
 
 public class WorldProviderOuter extends WorldProvider {
+
    @Override
-   public String getDimensionName() {
-      return "The Outer Lands";
+   public DimensionType getDimensionType() {
+      return DimensionType.THE_END; // placeholder; register a custom DimensionType at mod init if needed
    }
 
    @Override
-   public String getWelcomeMessage() {
-      return "Entering The Outer Lands";
+   public String getSaveFolder() {
+      return "DIM" + getDimension();
    }
 
    @Override
-   public String getDepartMessage() {
-      return "Leaving The Outer Lands";
-   }
-
-   @Override
-   public boolean shouldMapSpin(String entity, double x, double y, double z) {
+   public boolean shouldMapSpin(String entity, double x, double z, double rotation) {
       return true;
    }
 
    @Override
-   public boolean canBlockFreeze(int x, int y, int z, boolean byWater) {
+   public boolean canBlockFreeze(BlockPos pos, boolean byWater) {
       return false;
    }
 
    @Override
-   public boolean canSnowAt(int x, int y, int z, boolean checkLight) {
+   public boolean canSnowAt(BlockPos pos, boolean checkLight) {
       return false;
    }
 
@@ -54,33 +51,33 @@ public class WorldProviderOuter extends WorldProvider {
    }
 
    @Override
-   public void registerWorldChunkManager() {
-      this.worldChunkMgr = new WorldChunkManagerHell(ThaumcraftWorldGenerator.biomeEldritchLands, 0.0F);
-      this.dimensionId = Config.dimensionOuterId;
-      this.hasNoSky = true;
+   protected void init() {
+      this.biomeProvider = new BiomeProviderSingle(ThaumcraftWorldGenerator.biomeEldritchLands);
+      this.setDimension(Config.dimensionOuterId);
+      this.hasSkyLight = false;
    }
 
    @Override
-   public IChunkProvider createChunkGenerator() {
-      return new ChunkProviderOuter(this.worldObj, this.worldObj.getSeed(), true);
+   public IChunkGenerator createChunkGenerator() {
+      return new ChunkProviderOuter(this.world, this.world.getSeed(), true);
    }
 
    @Override
-   public float calculateCelestialAngle(long p_76563_1_, float p_76563_3_) {
+   public float calculateCelestialAngle(long worldTime, float partialTicks) {
       return 0.0F;
    }
 
    @Override
    @SideOnly(Side.CLIENT)
-   public float[] calcSunriseSunsetColors(float p_76560_1_, float p_76560_2_) {
+   public float[] calcSunriseSunsetColors(float celestialAngle, float partialTicks) {
       return null;
    }
 
    @Override
    @SideOnly(Side.CLIENT)
-   public Vec3 getFogColor(float p_76562_1_, float p_76562_2_) {
+   public Vec3d getFogColor(float timeOfDay, float tickDelta) {
       int i = 10518688;
-      float f2 = MathHelper.cos(p_76562_1_ * (float)Math.PI * 2.0F) * 2.0F + 0.5F;
+      float f2 = MathHelper.cos(timeOfDay * (float)Math.PI * 2.0F) * 2.0F + 0.5F;
       if (f2 < 0.0F) {
          f2 = 0.0F;
       }
@@ -95,7 +92,7 @@ public class WorldProviderOuter extends WorldProvider {
       f3 *= f2 * 0.0F + 0.15F;
       f4 *= f2 * 0.0F + 0.15F;
       f5 *= f2 * 0.0F + 0.15F;
-      return Vec3.createVectorHelper(f3, f4, f5);
+      return new Vec3d(f3, f4, f5);
    }
 
    @Override
@@ -121,13 +118,8 @@ public class WorldProviderOuter extends WorldProvider {
    }
 
    @Override
-   public boolean canCoordinateBeSpawn(int p_76566_1_, int p_76566_2_) {
-      return this.worldObj.getTopBlock(p_76566_1_, p_76566_2_).getMaterial().blocksMovement();
-   }
-
-   @Override
-   public ChunkCoordinates getEntrancePortalLocation() {
-       return super.getEntrancePortalLocation();
+   public boolean canCoordinateBeSpawn(int x, int z) {
+      return this.world.getGroundAboveSeaLevel(new BlockPos(x, 0, z)).getMaterial().blocksMovement();
    }
 
    @Override
@@ -137,7 +129,7 @@ public class WorldProviderOuter extends WorldProvider {
 
    @Override
    @SideOnly(Side.CLIENT)
-   public boolean doesXZShowFog(int p_76568_1_, int p_76568_2_) {
+   public boolean doesXZShowFog(int x, int z) {
       return true;
    }
 }

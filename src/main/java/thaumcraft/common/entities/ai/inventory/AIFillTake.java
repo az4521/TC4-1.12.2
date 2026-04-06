@@ -4,8 +4,8 @@ import net.minecraft.entity.ai.EntityAIBase;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.ChunkCoordinates;
-import net.minecraftforge.common.util.ForgeDirection;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.EnumFacing;
 import thaumcraft.common.config.Config;
 import thaumcraft.common.entities.golems.EntityGolemBase;
 import thaumcraft.common.entities.golems.GolemHelper;
@@ -24,30 +24,31 @@ public class AIFillTake extends EntityAIBase {
 
    public boolean shouldExecute() {
       if (this.theGolem.getCarried() == null && this.theGolem.itemWatched != null && this.theGolem.getNavigator().noPath() && this.theGolem.hasSomething()) {
-         ForgeDirection facing = ForgeDirection.getOrientation(this.theGolem.homeFacing);
-         ChunkCoordinates home = this.theGolem.getHomePosition();
-         int cX = home.posX - facing.offsetX;
-         int cY = home.posY - facing.offsetY;
-         int cZ = home.posZ - facing.offsetZ;
+         EnumFacing facing = EnumFacing.byIndex(this.theGolem.homeFacing);
+         BlockPos home = this.theGolem.getHomePosition();
+         int cX = home.getX() - facing.getXOffset();
+         int cY = home.getY() - facing.getYOffset();
+         int cZ = home.getZ() - facing.getZOffset();
 
-         for(IInventory te : GolemHelper.getMarkedContainersAdjacentToGolem(this.theGolem.worldObj, this.theGolem)) {
+         for(IInventory te : GolemHelper.getMarkedContainersAdjacentToGolem(this.theGolem.world, this.theGolem)) {
             TileEntity tile = (TileEntity)te;
-            if (tile != null && (tile.xCoord != cX || tile.yCoord != cY || tile.zCoord != cZ)) {
+            if (tile != null && (tile.getPos().getX() != cX || tile.getPos().getY() != cY || tile.getPos().getZ() != cZ)) {
                for(byte color : this.theGolem.getColorsMatching(this.theGolem.itemWatched)) {
                   for(Integer side : GolemHelper.getMarkedSides(this.theGolem, tile, color)) {
                      ItemStack target = this.theGolem.itemWatched.copy();
-                     target.stackSize = this.theGolem.getToggles()[0] ? this.theGolem.getCarrySpace() : Math.min(target.stackSize, this.theGolem.getCarrySpace());
+                     target.setCount(this.theGolem.getToggles()[0] ? this.theGolem.getCarrySpace() : Math.min(target.getCount(), this.theGolem.getCarrySpace()));
                      ItemStack result = InventoryUtils.extractStack(te, target, side, this.theGolem.checkOreDict(), this.theGolem.ignoreDamage(), this.theGolem.ignoreNBT(), true);
-                     if (result == null && InventoryUtils.getDoubleChest(tile) != null) {
+                     if ((result == null || result.isEmpty()) && InventoryUtils.getDoubleChest(tile) != null) {
                         result = InventoryUtils.extractStack(InventoryUtils.getDoubleChest(tile), target, side, this.theGolem.checkOreDict(), this.theGolem.ignoreDamage(), this.theGolem.ignoreNBT(), true);
                      }
 
-                     if (result != null) {
+                     if (result != null && !result.isEmpty()) {
                         this.theGolem.setCarried(result);
+                        this.inv = te;
 
                         try {
                            if (Config.golemChestInteract) {
-                              this.inv.openInventory();
+                              this.inv.openInventory(null);
                            }
                         } catch (Exception ignored) {
                         }
@@ -82,7 +83,7 @@ public class AIFillTake extends EntityAIBase {
    public void resetTask() {
       try {
          if (this.inv != null && Config.golemChestInteract) {
-            this.inv.closeInventory();
+            this.inv.closeInventory(null);
          }
       } catch (Exception ignored) {
       }

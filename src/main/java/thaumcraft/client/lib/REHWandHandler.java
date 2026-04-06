@@ -1,24 +1,25 @@
 package thaumcraft.client.lib;
 
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.TreeMap;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.RenderBlocks;
+import thaumcraft.client.renderers.compat.RenderBlocks;
 import net.minecraft.client.renderer.RenderHelper;
 import net.minecraft.client.renderer.Tessellator;
-import net.minecraft.client.renderer.entity.RenderItem;
+import net.minecraft.client.renderer.RenderItem;
 import net.minecraft.client.renderer.texture.TextureMap;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.Facing;
-import net.minecraft.util.IIcon;
-import net.minecraft.util.MathHelper;
-import net.minecraft.util.MovingObjectPosition;
+import net.minecraft.util.EnumFacing;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.world.World;
 import net.minecraftforge.client.event.DrawBlockHighlightEvent;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
@@ -38,6 +39,9 @@ import thaumcraft.common.lib.network.PacketHandler;
 import thaumcraft.common.lib.network.misc.PacketFocusChangeToServer;
 
 import static simpleutils.bauble.BaubleUtils.forEachBauble;
+import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.client.renderer.BufferBuilder;
+import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 
 public class REHWandHandler {
    static float radialHudScale = 0.0F;
@@ -102,10 +106,10 @@ public class REHWandHandler {
                   }
                   return false;
                };
-               forEachBauble(mc.thePlayer,ItemFocusPouch.class,focusPouchConsumer);
+               forEachBauble(mc.player,ItemFocusPouch.class,focusPouchConsumer);
 
                for(int a = 0; a < 36; ++a) {
-                  ItemStack stack = mc.thePlayer.inventory.mainInventory[a];
+                  ItemStack stack = mc.player.inventory.mainInventory.get(a);
                   if (stack == null){
                      continue;
                   }
@@ -127,12 +131,12 @@ public class REHWandHandler {
             }
          }
 
-         this.renderFocusRadialHUD(event.resolution.getScaledWidth_double(), event.resolution.getScaledHeight_double(), time, event.partialTicks);
+         this.renderFocusRadialHUD(event.getResolution().getScaledWidth_double(), event.getResolution().getScaledHeight_double(), time, event.getPartialTicks());
          if (time > this.lastTime) {
             for(String key : this.fociHover.keySet()) {
                if (this.fociHover.get(key)) {
                   if (!KeyHandler.radialActive && !KeyHandler.radialLock) {
-                     PacketHandler.INSTANCE.sendToServer(new PacketFocusChangeToServer(mc.thePlayer, key));
+                     PacketHandler.INSTANCE.sendToServer(new PacketFocusChangeToServer(mc.player, key));
                      KeyHandler.radialLock = true;
                   }
 
@@ -168,67 +172,67 @@ public class REHWandHandler {
 
    @SideOnly(Side.CLIENT)
    private void renderFocusRadialHUD(double sw, double sh, long time, float partialTicks) {
-      RenderItem ri = new RenderItem();
+      RenderItem ri = Minecraft.getMinecraft().getRenderItem();
       Minecraft mc = Minecraft.getMinecraft();
-      if (mc.thePlayer.getCurrentEquippedItem() != null && mc.thePlayer.getCurrentEquippedItem().getItem() instanceof ItemWandCasting) {
-         ItemWandCasting wand = (ItemWandCasting)mc.thePlayer.getCurrentEquippedItem().getItem();
-         ItemFocusBasic focus = wand.getFocus(mc.thePlayer.getCurrentEquippedItem());
+      if (mc.player.getHeldItemMainhand() != null && mc.player.getHeldItemMainhand().getItem() instanceof ItemWandCasting) {
+         ItemWandCasting wand = (ItemWandCasting)mc.player.getHeldItemMainhand().getItem();
+         ItemFocusBasic focus = wand.getFocus(mc.player.getHeldItemMainhand());
          int i = (int)((double)Mouse.getEventX() * sw / (double)mc.displayWidth);
          int j = (int)(sh - (double)Mouse.getEventY() * sh / (double)mc.displayHeight - (double)1.0F);
          int k = Mouse.getEventButton();
          if (!this.fociItem.isEmpty()) {
-            GL11.glPushMatrix();
-            GL11.glClear(256);
+            GlStateManager.pushMatrix();
+            GlStateManager.clear(256);
             GL11.glMatrixMode(5889);
             GL11.glLoadIdentity();
             GL11.glOrtho(0.0F, sw, sh, 0.0F, 1000.0F, 3000.0F);
             GL11.glMatrixMode(5888);
             GL11.glLoadIdentity();
-            GL11.glTranslatef(0.0F, 0.0F, -2000.0F);
-            GL11.glDisable(2929);
-            GL11.glDepthMask(false);
-            GL11.glPushMatrix();
-            GL11.glTranslated(sw / (double)2.0F, sh / (double)2.0F, 0.0F);
+            GlStateManager.translate(0.0F, 0.0F, -2000.0F);
+            GlStateManager.disableDepth();
+            GlStateManager.depthMask(false);
+            GlStateManager.pushMatrix();
+            GlStateManager.translate(sw / (double)2.0F, sh / (double)2.0F, 0.0F);
             ItemStack tt = null;
             float width = 16.0F + (float)this.fociItem.size() * 2.5F;
             UtilsFX.bindTexture("textures/misc/radial.png");
-            GL11.glPushMatrix();
-            GL11.glRotatef(partialTicks + (float)(mc.thePlayer.ticksExisted % 720) / 2.0F, 0.0F, 0.0F, 1.0F);
-            GL11.glAlphaFunc(516, 0.003921569F);
-            GL11.glEnable(GL11.GL_BLEND);
-            GL11.glBlendFunc(770, 771);
+            GlStateManager.pushMatrix();
+            GlStateManager.rotate(partialTicks + (float)(mc.player.ticksExisted % 720) / 2.0F, 0.0F, 0.0F, 1.0F);
+            GlStateManager.alphaFunc(516, 0.003921569F);
+            GlStateManager.enableBlend();
+            GlStateManager.blendFunc(770, 771);
             UtilsFX.renderQuadCenteredFromTexture(width * 2.75F * radialHudScale, 0.5F, 0.5F, 0.5F, 200, 771, 0.5F);
-            GL11.glDisable(GL11.GL_BLEND);
-            GL11.glAlphaFunc(516, 0.1F);
-            GL11.glPopMatrix();
+            GlStateManager.disableBlend();
+            GlStateManager.alphaFunc(516, 0.1F);
+            GlStateManager.popMatrix();
             UtilsFX.bindTexture("textures/misc/radial2.png");
-            GL11.glPushMatrix();
-            GL11.glRotatef(-(partialTicks + (float)(mc.thePlayer.ticksExisted % 720) / 2.0F), 0.0F, 0.0F, 1.0F);
-            GL11.glAlphaFunc(516, 0.003921569F);
-            GL11.glEnable(GL11.GL_BLEND);
-            GL11.glBlendFunc(770, 771);
+            GlStateManager.pushMatrix();
+            GlStateManager.rotate(-(partialTicks + (float)(mc.player.ticksExisted % 720) / 2.0F), 0.0F, 0.0F, 1.0F);
+            GlStateManager.alphaFunc(516, 0.003921569F);
+            GlStateManager.enableBlend();
+            GlStateManager.blendFunc(770, 771);
             UtilsFX.renderQuadCenteredFromTexture(width * 2.55F * radialHudScale, 0.5F, 0.5F, 0.5F, 200, 771, 0.5F);
-            GL11.glDisable(GL11.GL_BLEND);
-            GL11.glAlphaFunc(516, 0.1F);
-            GL11.glPopMatrix();
+            GlStateManager.disableBlend();
+            GlStateManager.alphaFunc(516, 0.1F);
+            GlStateManager.popMatrix();
             if (focus != null) {
-               GL11.glPushMatrix();
-               GL11.glEnable(32826);
+               GlStateManager.pushMatrix();
+               GlStateManager.enableRescaleNormal();
                RenderHelper.enableGUIStandardItemLighting();
-               ItemStack item = wand.getFocusItem(mc.thePlayer.getCurrentEquippedItem()).copy();
-               item.stackTagCompound = null;
-               ri.renderItemIntoGUI(mc.fontRenderer, mc.renderEngine, item, -8, -8);
+               ItemStack item = wand.getFocusItem(mc.player.getHeldItemMainhand()).copy();
+               item.setTagCompound(null);
+               ri.renderItemIntoGUI(item, -8, -8);
                RenderHelper.disableStandardItemLighting();
-               GL11.glDisable(32826);
-               GL11.glPopMatrix();
+               GlStateManager.disableRescaleNormal();
+               GlStateManager.popMatrix();
                int mx = (int)((double)i - sw / (double)2.0F);
                int my = (int)((double)j - sh / (double)2.0F);
                if (mx >= -10 && mx <= 10 && my >= -10 && my <= 10) {
-                  tt = wand.getFocusItem(mc.thePlayer.getCurrentEquippedItem());
+                  tt = wand.getFocusItem(mc.player.getHeldItemMainhand());
                }
             }
 
-            GL11.glScaled(radialHudScale, radialHudScale, radialHudScale);
+            GlStateManager.scale(radialHudScale, radialHudScale, radialHudScale);
             float currentRot = -90.0F * radialHudScale;
             float pieSlice = 360.0F / (float)this.fociItem.size();
             String key = this.foci.firstKey();
@@ -237,17 +241,17 @@ public class REHWandHandler {
                double xx = MathHelper.cos(currentRot / 180.0F * (float)Math.PI) * width;
                double yy = MathHelper.sin(currentRot / 180.0F * (float)Math.PI) * width;
                currentRot += pieSlice;
-               GL11.glPushMatrix();
-               GL11.glTranslated(xx, yy, 100.0F);
-               GL11.glScalef(this.fociScale.get(key), this.fociScale.get(key), this.fociScale.get(key));
-               GL11.glEnable(32826);
+               GlStateManager.pushMatrix();
+               GlStateManager.translate(xx, yy, 100.0F);
+               GlStateManager.scale(this.fociScale.get(key), this.fociScale.get(key), this.fociScale.get(key));
+               GlStateManager.enableRescaleNormal();
                RenderHelper.enableGUIStandardItemLighting();
                ItemStack item = this.fociItem.get(key).copy();
-               item.stackTagCompound = null;
-               ri.renderItemIntoGUI(mc.fontRenderer, mc.renderEngine, item, -8, -8);
+               item.setTagCompound(null);
+               ri.renderItemIntoGUI(item, -8, -8);
                RenderHelper.disableStandardItemLighting();
-               GL11.glDisable(32826);
-               GL11.glPopMatrix();
+               GlStateManager.disableRescaleNormal();
+               GlStateManager.popMatrix();
                if (!KeyHandler.radialLock && KeyHandler.radialActive) {
                   int mx = (int)((double)i - sw / (double)2.0F - xx);
                   int my = (int)((double)j - sh / (double)2.0F - yy);
@@ -257,7 +261,7 @@ public class REHWandHandler {
                      if (k == 0) {
                         KeyHandler.radialActive = false;
                         KeyHandler.radialLock = true;
-                        PacketHandler.INSTANCE.sendToServer(new PacketFocusChangeToServer(mc.thePlayer, key));
+                        PacketHandler.INSTANCE.sendToServer(new PacketFocusChangeToServer(mc.player, key));
                         break;
                      }
                   } else {
@@ -268,39 +272,39 @@ public class REHWandHandler {
                key = this.foci.higherKey(key);
             }
 
-            GL11.glPopMatrix();
+            GlStateManager.popMatrix();
             if (tt != null) {
-               UtilsFX.drawCustomTooltip(mc.currentScreen, ri, mc.fontRenderer, tt.getTooltip(mc.thePlayer, mc.gameSettings.advancedItemTooltips), -4, 20, 11);
+               UtilsFX.drawCustomTooltip(mc.currentScreen, ri, mc.fontRenderer, tt.getTooltip(mc.player, mc.gameSettings.advancedItemTooltips ? ITooltipFlag.TooltipFlags.ADVANCED : ITooltipFlag.TooltipFlags.NORMAL), -4, 20, 11);
             }
 
-            GL11.glDepthMask(true);
-            GL11.glEnable(2929);
-            GL11.glDisable(GL11.GL_BLEND);
-            GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
-            GL11.glPopMatrix();
+            GlStateManager.depthMask(true);
+            GlStateManager.enableDepth();
+            GlStateManager.disableBlend();
+            GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
+            GlStateManager.popMatrix();
          }
       }
    }
 
    @SideOnly(Side.CLIENT)
-   public boolean handleArchitectOverlay(ItemStack stack, DrawBlockHighlightEvent event, int playerticks, MovingObjectPosition target) {
+   public boolean handleArchitectOverlay(ItemStack stack, DrawBlockHighlightEvent event, int playerticks, RayTraceResult target) {
       Minecraft mc = Minecraft.getMinecraft();
       IArchitect af = (IArchitect)stack.getItem();
-      String h = target.blockX + "" + target.blockY + target.blockZ + target.sideHit + playerticks / 5;
+      String h = target.getBlockPos().getX() + "" + target.getBlockPos().getY() + target.getBlockPos().getZ() + target.sideHit + playerticks / 5;
       int hc = h.hashCode();
       if (hc != this.lastArcHash) {
          this.lastArcHash = hc;
-         this.architectBlocks = af.getArchitectBlocks(stack, mc.theWorld, target.blockX, target.blockY, target.blockZ, target.sideHit, event.player);
+         this.architectBlocks = af.getArchitectBlocks(stack, mc.world, target.getBlockPos().getX(), target.getBlockPos().getY(), target.getBlockPos().getZ(), target.sideHit, event.getPlayer());
       }
 
       if (this.architectBlocks != null && !this.architectBlocks.isEmpty()) {
-         this.drawArchitectAxis(target.blockX, target.blockY, target.blockZ, event.partialTicks, af.showAxis(stack, mc.theWorld, event.player, target.sideHit, IArchitect.EnumAxis.X), af.showAxis(stack, mc.theWorld, event.player, target.sideHit, IArchitect.EnumAxis.Y), af.showAxis(stack, mc.theWorld, event.player, target.sideHit, IArchitect.EnumAxis.Z));
+         this.drawArchitectAxis(target.getBlockPos().getX(), target.getBlockPos().getY(), target.getBlockPos().getZ(), event.getPartialTicks(), af.showAxis(stack, mc.world, event.getPlayer(), target.sideHit, IArchitect.EnumAxis.X), af.showAxis(stack, mc.world, event.getPlayer(), target.sideHit, IArchitect.EnumAxis.Y), af.showAxis(stack, mc.world, event.getPlayer(), target.sideHit, IArchitect.EnumAxis.Z));
 
          for(BlockCoordinates cc : this.architectBlocks) {
-            this.drawOverlayBlock(cc.x, cc.y, cc.z, playerticks, mc, event.partialTicks);
+            this.drawOverlayBlock(cc.x, cc.y, cc.z, playerticks, mc, event.getPartialTicks());
          }
 
-         GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+         GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
          return true;
       } else {
          return false;
@@ -312,7 +316,7 @@ public class REHWandHandler {
    }
 
    @SideOnly(Side.CLIENT)
-   private IIcon getIconOnSide(World world, int x, int y, int z, int side, int ticks) {
+   private TextureAtlasSprite getIconOnSide(World world, int x, int y, int z, int side, int ticks) {
       boolean[] bitMatrix = new boolean[8];
       if (side == 0 || side == 1) {
          bitMatrix[0] = this.isConnectedBlock(world, x - 1, y, z - 1);
@@ -353,7 +357,7 @@ public class REHWandHandler {
          idBuilder += bitMatrix[i] ? (i == 0 ? 1 : (i == 1 ? 2 : (i == 2 ? 4 : (i == 3 ? 8 : (i == 4 ? 16 : (i == 5 ? 32 : (i == 6 ? 64 : 128))))))) : 0;
       }
 
-      IIcon var10;
+      TextureAtlasSprite var10;
       if (idBuilder <= 255 && idBuilder >= 0) {
          BlockCosmeticOpaque var11 = (BlockCosmeticOpaque)ConfigBlocks.blockCosmeticOpaque;
          var10 = BlockCosmeticOpaque.wardedGlassIcon[UtilsFX.connectedTextureRefByID[idBuilder]];
@@ -366,121 +370,122 @@ public class REHWandHandler {
    }
 
    private boolean shouldSideBeRendered(int x, int y, int z, int side) {
-      return !this.architectBlocks.contains(new BlockCoordinates(x - Facing.offsetsXForSide[side], y - Facing.offsetsYForSide[side], z - Facing.offsetsZForSide[side]));
+      return !this.architectBlocks.contains(new BlockCoordinates(x - net.minecraft.util.EnumFacing.byIndex(side).getXOffset(), y - net.minecraft.util.EnumFacing.byIndex(side).getYOffset(), z - net.minecraft.util.EnumFacing.byIndex(side).getZOffset()));
    }
 
    @SideOnly(Side.CLIENT)
    public void drawOverlayBlock(int x, int y, int z, int ticks, Minecraft mc, float partialTicks) {
-      GL11.glPushMatrix();
-      GL11.glDepthMask(false);
-      GL11.glDisable(2929);
-      GL11.glDisable(2884);
-      GL11.glEnable(GL11.GL_BLEND);
-      GL11.glBlendFunc(770, 1);
-      GL11.glAlphaFunc(516, 0.003921569F);
-      EntityPlayer player = (EntityPlayer)mc.renderViewEntity;
+      GlStateManager.pushMatrix();
+      GlStateManager.depthMask(false);
+      GlStateManager.disableDepth();
+      GlStateManager.disableCull();
+      GlStateManager.enableBlend();
+      GlStateManager.blendFunc(770, 1);
+      GlStateManager.alphaFunc(516, 0.003921569F);
+      EntityPlayer player = (EntityPlayer)mc.getRenderViewEntity();
       double iPX = player.prevPosX + (player.posX - player.prevPosX) * (double)partialTicks;
       double iPY = player.prevPosY + (player.posY - player.prevPosY) * (double)partialTicks;
       double iPZ = player.prevPosZ + (player.posZ - player.prevPosZ) * (double)partialTicks;
-      GL11.glTranslated(-iPX + (double)x + (double)0.5F, -iPY + (double)y, -iPZ + (double)z + (double)0.5F);
-      GL11.glDisable(2896);
-      Tessellator t = Tessellator.instance;
+      GlStateManager.translate(-iPX + (double)x + (double)0.5F, -iPY + (double)y, -iPZ + (double)z + (double)0.5F);
+      GlStateManager.disableLighting();
+      Tessellator t = Tessellator.getInstance();
+      BufferBuilder buf = t.getBuffer();
       this.renderBlocks.setRenderBounds(-0.001F, -0.001F, -0.001F, 1.001F, 1.001F, 1.001F);
       float r = MathHelper.sin((float)ticks / 2.0F + (float)x) * 0.2F + 0.3F;
       float g = MathHelper.sin((float)ticks / 3.0F + (float)y) * 0.2F + 0.3F;
       float b = MathHelper.sin((float)ticks / 4.0F + (float)z) * 0.2F + 0.8F;
-      GL11.glColor4f(r, g, b, 0.2F);
-      t.startDrawingQuads();
-      t.setBrightness(200);
-      mc.renderEngine.bindTexture(TextureMap.locationBlocksTexture);
+      GlStateManager.color(r, g, b, 0.2F);
+      buf.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX); 
+     
+      mc.getTextureManager().bindTexture(TextureMap.LOCATION_BLOCKS_TEXTURE);
       GL11.glTexEnvi(8960, 8704, 260);
       if (this.shouldSideBeRendered(x, y, z, 1)) {
-         this.renderBlocks.renderFaceYNeg(ConfigBlocks.blockJar, -0.5F, 0.0F, -0.5F, this.getIconOnSide(mc.theWorld, x, y, z, 0, ticks));
+         this.renderBlocks.renderFaceYNeg(ConfigBlocks.blockJar, -0.5F, 0.0F, -0.5F, this.getIconOnSide(mc.world, x, y, z, 0, ticks));
       }
 
       if (this.shouldSideBeRendered(x, y, z, 0)) {
-         this.renderBlocks.renderFaceYPos(ConfigBlocks.blockJar, -0.5F, 0.0F, -0.5F, this.getIconOnSide(mc.theWorld, x, y, z, 1, ticks));
+         this.renderBlocks.renderFaceYPos(ConfigBlocks.blockJar, -0.5F, 0.0F, -0.5F, this.getIconOnSide(mc.world, x, y, z, 1, ticks));
       }
 
       if (this.shouldSideBeRendered(x, y, z, 3)) {
-         this.renderBlocks.renderFaceZNeg(ConfigBlocks.blockJar, -0.5F, 0.0F, -0.5F, this.getIconOnSide(mc.theWorld, x, y, z, 2, ticks));
+         this.renderBlocks.renderFaceZNeg(ConfigBlocks.blockJar, -0.5F, 0.0F, -0.5F, this.getIconOnSide(mc.world, x, y, z, 2, ticks));
       }
 
       if (this.shouldSideBeRendered(x, y, z, 2)) {
-         this.renderBlocks.renderFaceZPos(ConfigBlocks.blockJar, -0.5F, 0.0F, -0.5F, this.getIconOnSide(mc.theWorld, x, y, z, 3, ticks));
+         this.renderBlocks.renderFaceZPos(ConfigBlocks.blockJar, -0.5F, 0.0F, -0.5F, this.getIconOnSide(mc.world, x, y, z, 3, ticks));
       }
 
       if (this.shouldSideBeRendered(x, y, z, 5)) {
-         this.renderBlocks.renderFaceXNeg(ConfigBlocks.blockJar, -0.5F, 0.0F, -0.5F, this.getIconOnSide(mc.theWorld, x, y, z, 4, ticks));
+         this.renderBlocks.renderFaceXNeg(ConfigBlocks.blockJar, -0.5F, 0.0F, -0.5F, this.getIconOnSide(mc.world, x, y, z, 4, ticks));
       }
 
       if (this.shouldSideBeRendered(x, y, z, 4)) {
-         this.renderBlocks.renderFaceXPos(ConfigBlocks.blockJar, -0.5F, 0.0F, -0.5F, this.getIconOnSide(mc.theWorld, x, y, z, 5, ticks));
+         this.renderBlocks.renderFaceXPos(ConfigBlocks.blockJar, -0.5F, 0.0F, -0.5F, this.getIconOnSide(mc.world, x, y, z, 5, ticks));
       }
 
       t.draw();
       GL11.glTexEnvi(8960, 8704, 8448);
-      GL11.glEnable(2896);
-      GL11.glAlphaFunc(516, 0.1F);
-      GL11.glDisable(GL11.GL_BLEND);
-      GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
-      GL11.glEnable(2884);
-      GL11.glEnable(2929);
-      GL11.glDepthMask(true);
-      GL11.glPopMatrix();
+      GlStateManager.enableLighting();
+      GlStateManager.alphaFunc(516, 0.1F);
+      GlStateManager.disableBlend();
+      GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
+      GlStateManager.enableCull();
+      GlStateManager.enableDepth();
+      GlStateManager.depthMask(true);
+      GlStateManager.popMatrix();
    }
 
    @SideOnly(Side.CLIENT)
    public void drawArchitectAxis(double x, double y, double z, float partialTicks, boolean dx, boolean dy, boolean dz) {
       if (dx || dy || dz) {
-         EntityPlayer player = (EntityPlayer)Minecraft.getMinecraft().renderViewEntity;
+         EntityPlayer player = (EntityPlayer)Minecraft.getMinecraft().getRenderViewEntity();
          double iPX = player.prevPosX + (player.posX - player.prevPosX) * (double)partialTicks;
          double iPY = player.prevPosY + (player.posY - player.prevPosY) * (double)partialTicks;
          double iPZ = player.prevPosZ + (player.posZ - player.prevPosZ) * (double)partialTicks;
          float r = MathHelper.sin((float)((double)((float)player.ticksExisted / 4.0F) + x)) * 0.2F + 0.3F;
          float g = MathHelper.sin((float)((double)((float)player.ticksExisted / 3.0F) + y)) * 0.2F + 0.3F;
          float b = MathHelper.sin((float)((double)((float)player.ticksExisted / 2.0F) + z)) * 0.2F + 0.8F;
-         GL11.glPushMatrix();
-         GL11.glDepthMask(false);
-         GL11.glDisable(2929);
-         GL11.glDisable(2884);
-         GL11.glEnable(GL11.GL_BLEND);
-         GL11.glBlendFunc(770, 1);
-         GL11.glTranslated(-iPX + x + (double)0.5F, -iPY + y + (double)0.5F, -iPZ + z + (double)0.5F);
-         GL11.glPushMatrix();
-         GL11.glColor4f(1.0F, 1.0F, 1.0F, 0.33F);
-         GL11.glRotatef(90.0F, 1.0F, 0.0F, 0.0F);
+         GlStateManager.pushMatrix();
+         GlStateManager.depthMask(false);
+         GlStateManager.disableDepth();
+         GlStateManager.disableCull();
+         GlStateManager.enableBlend();
+         GlStateManager.blendFunc(770, 1);
+         GlStateManager.translate(-iPX + x + (double)0.5F, -iPY + y + (double)0.5F, -iPZ + z + (double)0.5F);
+         GlStateManager.pushMatrix();
+         GlStateManager.color(1.0F, 1.0F, 1.0F, 0.33F);
+         GlStateManager.rotate(90.0F, 1.0F, 0.0F, 0.0F);
          if (dx) {
-            GL11.glPushMatrix();
+            GlStateManager.pushMatrix();
             UtilsFX.renderQuadCenteredFromTexture(this.tex, 1.0F, r, g, b, 200, 1, 1.0F);
-            GL11.glRotatef(90.0F, 1.0F, 0.0F, 0.0F);
+            GlStateManager.rotate(90.0F, 1.0F, 0.0F, 0.0F);
             UtilsFX.renderQuadCenteredFromTexture(this.tex, 1.0F, r, g, b, 200, 1, 1.0F);
-            GL11.glPopMatrix();
+            GlStateManager.popMatrix();
          }
 
          if (dz) {
-            GL11.glPushMatrix();
-            GL11.glRotatef(90.0F, 0.0F, 0.0F, 1.0F);
+            GlStateManager.pushMatrix();
+            GlStateManager.rotate(90.0F, 0.0F, 0.0F, 1.0F);
             UtilsFX.renderQuadCenteredFromTexture(this.tex, 1.0F, r, g, b, 200, 1, 1.0F);
-            GL11.glRotatef(90.0F, 1.0F, 0.0F, 0.0F);
+            GlStateManager.rotate(90.0F, 1.0F, 0.0F, 0.0F);
             UtilsFX.renderQuadCenteredFromTexture(this.tex, 1.0F, r, g, b, 200, 1, 1.0F);
-            GL11.glPopMatrix();
+            GlStateManager.popMatrix();
          }
 
          if (dy) {
-            GL11.glRotatef(90.0F, 0.0F, 1.0F, 0.0F);
+            GlStateManager.rotate(90.0F, 0.0F, 1.0F, 0.0F);
             UtilsFX.renderQuadCenteredFromTexture(this.tex, 1.0F, r, g, b, 200, 1, 1.0F);
-            GL11.glRotatef(90.0F, 1.0F, 0.0F, 0.0F);
+            GlStateManager.rotate(90.0F, 1.0F, 0.0F, 0.0F);
             UtilsFX.renderQuadCenteredFromTexture(this.tex, 1.0F, r, g, b, 200, 1, 1.0F);
          }
 
-         GL11.glPopMatrix();
-         GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
-         GL11.glDisable(GL11.GL_BLEND);
-         GL11.glEnable(2884);
-         GL11.glEnable(2929);
-         GL11.glDepthMask(true);
-         GL11.glPopMatrix();
+         GlStateManager.popMatrix();
+         GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
+         GlStateManager.disableBlend();
+         GlStateManager.enableCull();
+         GlStateManager.enableDepth();
+         GlStateManager.depthMask(true);
+         GlStateManager.popMatrix();
       }
    }
 }

@@ -1,0 +1,52 @@
+{
+  "variants": {
+    "meta=0": {
+      "model": "thaumcraft:blockcrystal"
+    },
+    "meta=1": {
+      "model": "thaumcraft:blockcrystal"
+    },
+    "meta=2": {
+      "model": "thaumcraft:blockcrystal"
+    },
+    "meta=3": {
+      "model": "thaumcraft:blockcrystal"
+    },
+    "meta=4": {
+      "model": "thaumcraft:blockcrystal"
+    },
+    "meta=5": {
+      "model": "thaumcraft:blockcrystal"
+    },
+    "meta=6": {
+      "model": "thaumcraft:blockcrystal"
+    },
+    "meta=7": {
+      "model": "thaumcraft:blockcrystal"
+    },
+    "meta=8": {
+      "model": "thaumcraft:blockcrystal"
+    },
+    "meta=9": {
+      "model": "thaumcraft:blockcrystal"
+    },
+    "meta=10": {
+      "model": "thaumcraft:blockcrystal"
+    },
+    "meta=11": {
+      "model": "thaumcraft:blockcrystal"
+    },
+    "meta=12": {
+      "model": "thaumcraft:blockcrystal"
+    },
+    "meta=13": {
+      "model": "thaumcraft:blockcrystal"
+    },
+    "meta=14": {
+      "model": "thaumcraft:blockcrystal"
+    },
+    "meta=15": {
+      "model": "thaumcraft:blockcrystal"
+    }
+  }
+}

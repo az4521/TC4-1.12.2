@@ -19,21 +19,21 @@ public class BehaviorDispenseAlumetum extends BehaviorProjectileDispense {
          return def.dispense(par1IBlockSource, par2ItemStack);
       } else {
          World var3 = par1IBlockSource.getWorld();
-         IPosition var4 = BlockDispenser.func_149939_a(par1IBlockSource);
-         EnumFacing var5 = BlockDispenser.func_149937_b(par1IBlockSource.getBlockMetadata());
-         IProjectile var6 = this.getProjectileEntity(var3, var4);
-         var6.setThrowableHeading(var5.getFrontOffsetX(), (float)var5.getFrontOffsetY() + 0.1F, var5.getFrontOffsetZ(), this.func_82500_b(), this.func_82498_a());
-         var3.spawnEntityInWorld((Entity)var6);
+         IPosition var4 = BlockDispenser.getDispensePosition(par1IBlockSource);
+         EnumFacing var5 = par1IBlockSource.getBlockState().getValue(BlockDispenser.FACING);
+         IProjectile var6 = this.getProjectileEntity(var3, var4, par2ItemStack);
+         var6.shoot(var5.getXOffset(), (float)var5.getYOffset() + 0.1F, var5.getZOffset(), this.getProjectileVelocity(), this.getProjectileInaccuracy());
+         var3.spawnEntity((Entity)var6);
          par2ItemStack.splitStack(1);
          return par2ItemStack;
       }
    }
 
-   protected IProjectile getProjectileEntity(World par1World, IPosition par2IPosition) {
+   protected EntityAlumentum getProjectileEntity(World par1World, IPosition par2IPosition, ItemStack stackIn) {
       return new EntityAlumentum(par1World, par2IPosition.getX(), par2IPosition.getY(), par2IPosition.getZ());
    }
 
    protected void playDispenseSound(IBlockSource par1IBlockSource) {
-      par1IBlockSource.getWorld().playAuxSFX(1009, par1IBlockSource.getXInt(), par1IBlockSource.getYInt(), par1IBlockSource.getZInt(), 0);
+      par1IBlockSource.getWorld().playEvent(1000, par1IBlockSource.getBlockPos(), 0);
    }
 }

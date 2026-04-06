@@ -1,11 +1,11 @@
 package thaumcraft.common.lib.network.playerdata;
 
-import cpw.mods.fml.common.network.ByteBufUtils;
-import cpw.mods.fml.common.network.simpleimpl.IMessage;
-import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
-import cpw.mods.fml.common.network.simpleimpl.MessageContext;
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
+import net.minecraftforge.fml.common.network.ByteBufUtils;
+import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
+import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
+import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 import io.netty.buffer.ByteBuf;
 import java.util.ArrayList;
 import net.minecraft.client.Minecraft;
@@ -21,7 +21,7 @@ public class PacketSyncResearch implements IMessage, IMessageHandler<PacketSyncR
    }
 
    public PacketSyncResearch(EntityPlayer player) {
-      this.data = ResearchManager.getResearchForPlayer(player.getCommandSenderName());
+      this.data = ResearchManager.getResearchForPlayer(player.getName());
    }
 
    public void toBytes(ByteBuf buffer) {
@@ -51,11 +51,13 @@ public class PacketSyncResearch implements IMessage, IMessageHandler<PacketSyncR
 
    @SideOnly(Side.CLIENT)
    public IMessage onMessage(PacketSyncResearch message, MessageContext ctx) {
+      Minecraft.getMinecraft().addScheduledTask(() -> {
       for(String key : message.data) {
-         Thaumcraft.proxy.getResearchManager().completeResearch(Minecraft.getMinecraft().thePlayer, key);
+         Thaumcraft.proxy.getResearchManager().completeResearch(Minecraft.getMinecraft().player, key);
       }
 
-      GuiResearchBrowser.completedResearch.put(Minecraft.getMinecraft().thePlayer.getCommandSenderName(), message.data);
+      GuiResearchBrowser.completedResearch.put(Minecraft.getMinecraft().player.getName(), message.data);
+            });
       return null;
    }
 }

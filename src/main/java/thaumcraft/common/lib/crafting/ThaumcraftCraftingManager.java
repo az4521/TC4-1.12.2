@@ -103,7 +103,11 @@ public class ThaumcraftCraftingManager {
             }
         }
 
-        return new ShapedRecipes(var5, var6, var15, par1ItemStack);
+        net.minecraft.util.NonNullList<net.minecraft.item.crafting.Ingredient> _ings = net.minecraft.util.NonNullList.withSize(var5 * var6, net.minecraft.item.crafting.Ingredient.EMPTY);
+        for (int _i = 0; _i < var15.length; _i++) {
+            if (var15[_i] != null) _ings.set(_i, net.minecraft.item.crafting.Ingredient.fromStacks(var15[_i]));
+        }
+        return new ShapedRecipes("", var5, var6, _ings, par1ItemStack);
     }
 
     public static CrucibleRecipe findMatchingCrucibleRecipe(String username, AspectList aspects, ItemStack lastDrop) {
@@ -114,7 +118,7 @@ public class ThaumcraftCraftingManager {
             if (ThaumcraftApi.getCraftingRecipes().get(a) instanceof CrucibleRecipe) {
                 CrucibleRecipe recipe = (CrucibleRecipe) ThaumcraftApi.getCraftingRecipes().get(a);
                 ItemStack temp = lastDrop.copy();
-                temp.stackSize = 1;
+                temp.setCount(1);
                 if (ResearchManager.isResearchComplete(username, recipe.key) && recipe.matches(aspects, temp)) {
                     int result = recipe.aspects.size();
                     if (result > highest) {
@@ -156,7 +160,7 @@ public class ThaumcraftCraftingManager {
 //      IArcaneRecipe var13 = null;
 //
 //      for(Object var11 : ThaumcraftApi.getCraftingRecipes()) {
-//         if (var11 instanceof IArcaneRecipe && ((IArcaneRecipe)var11).matches(awb, player.worldObj, player)) {
+//         if (var11 instanceof IArcaneRecipe && ((IArcaneRecipe)var11).matches(awb, player.world, player)) {
 //            var13 = (IArcaneRecipe)var11;
 //            break;
 //         }
@@ -188,7 +192,7 @@ public class ThaumcraftCraftingManager {
 //      IArcaneRecipe var13 = null;
 //
 //      for(Object var11 : ThaumcraftApi.getCraftingRecipes()) {
-//         if (var11 instanceof IArcaneRecipe && ((IArcaneRecipe)var11).matches(awb, player.worldObj, player)) {
+//         if (var11 instanceof IArcaneRecipe && ((IArcaneRecipe)var11).matches(awb, player.world, player)) {
 //            var13 = (IArcaneRecipe)var11;
 //            break;
 //         }
@@ -201,7 +205,7 @@ public class ThaumcraftCraftingManager {
         InfusionRecipe var13 = null;
 
         for (Object var11 : ThaumcraftApi.getCraftingRecipes()) {
-            if (var11 instanceof InfusionRecipe && ((InfusionRecipe) var11).matches(items, input, player.worldObj, player)) {
+            if (var11 instanceof InfusionRecipe && ((InfusionRecipe) var11).matches(items, input, player.world, player)) {
                 var13 = (InfusionRecipe) var11;
                 break;
             }
@@ -214,7 +218,7 @@ public class ThaumcraftCraftingManager {
         InfusionEnchantmentRecipe var13 = null;
 
         for (Object var11 : ThaumcraftApi.getCraftingRecipes()) {
-            if (var11 instanceof InfusionEnchantmentRecipe && ((InfusionEnchantmentRecipe) var11).matches(items, input, player.worldObj, player)) {
+            if (var11 instanceof InfusionEnchantmentRecipe && ((InfusionEnchantmentRecipe) var11).matches(items, input, player.world, player)) {
                 var13 = (InfusionEnchantmentRecipe) var11;
                 break;
             }
@@ -277,59 +281,59 @@ public class ThaumcraftCraftingManager {
          tmp.merge(Aspect.TOOL, (wand.getRod(itemstack).getCraftCost() + wand.getCap(itemstack).getCraftCost()) / 3);
       }
 
-      if (item != null && item == Items.potionitem) {
+      if (item != null && item == Items.POTIONITEM) {
          if (tmp == null) {
             tmp = new AspectList();
          }
 
          tmp.merge(Aspect.WATER, 1);
-         ItemPotion ip = (ItemPotion)item;
-         List<PotionEffect> effects = (List<PotionEffect>)ip.getEffects(itemstack.getItemDamage());
-         if (effects != null) {
-            if (ItemPotion.isSplash(itemstack.getItemDamage())) {
+         List<PotionEffect> effects = net.minecraft.potion.PotionUtils.getEffectsFromStack(itemstack);
+         if (effects != null && !effects.isEmpty()) {
+            if (itemstack.getItem() instanceof net.minecraft.item.ItemSplashPotion) {
                tmp.merge(Aspect.ENTROPY, 2);
             }
 
             for(PotionEffect var6 : effects) {
                tmp.merge(Aspect.MAGIC, (var6.getAmplifier() + 1) * 2);
-               if (var6.getPotionID() == Potion.blindness.id) {
+               net.minecraft.potion.Potion pot = var6.getPotion();
+               if (pot == net.minecraft.init.MobEffects.BLINDNESS) {
                   tmp.merge(Aspect.DARKNESS, (var6.getAmplifier() + 1) * 3);
-               } else if (var6.getPotionID() == Potion.confusion.id) {
+               } else if (pot == net.minecraft.init.MobEffects.NAUSEA) {
                   tmp.merge(Aspect.ELDRITCH, (var6.getAmplifier() + 1) * 3);
-               } else if (var6.getPotionID() == Potion.damageBoost.id) {
+               } else if (pot == net.minecraft.init.MobEffects.STRENGTH) {
                   tmp.merge(Aspect.WEAPON, (var6.getAmplifier() + 1) * 3);
-               } else if (var6.getPotionID() == Potion.digSlowdown.id) {
+               } else if (pot == net.minecraft.init.MobEffects.MINING_FATIGUE) {
                   tmp.merge(Aspect.TRAP, (var6.getAmplifier() + 1) * 3);
-               } else if (var6.getPotionID() == Potion.digSpeed.id) {
+               } else if (pot == net.minecraft.init.MobEffects.HASTE) {
                   tmp.merge(Aspect.TOOL, (var6.getAmplifier() + 1) * 3);
-               } else if (var6.getPotionID() == Potion.fireResistance.id) {
+               } else if (pot == net.minecraft.init.MobEffects.FIRE_RESISTANCE) {
                   tmp.merge(Aspect.ARMOR, var6.getAmplifier() + 1);
                   tmp.merge(Aspect.FIRE, (var6.getAmplifier() + 1) * 2);
-               } else if (var6.getPotionID() == Potion.harm.id) {
+               } else if (pot == net.minecraft.init.MobEffects.INSTANT_DAMAGE) {
                   tmp.merge(Aspect.DEATH, (var6.getAmplifier() + 1) * 3);
-               } else if (var6.getPotionID() == Potion.heal.id) {
+               } else if (pot == net.minecraft.init.MobEffects.INSTANT_HEALTH) {
                   tmp.merge(Aspect.HEAL, (var6.getAmplifier() + 1) * 3);
-               } else if (var6.getPotionID() == Potion.hunger.id) {
+               } else if (pot == net.minecraft.init.MobEffects.HUNGER) {
                   tmp.merge(Aspect.DEATH, (var6.getAmplifier() + 1) * 3);
-               } else if (var6.getPotionID() == Potion.invisibility.id) {
+               } else if (pot == net.minecraft.init.MobEffects.INVISIBILITY) {
                   tmp.merge(Aspect.SENSES, (var6.getAmplifier() + 1) * 3);
-               } else if (var6.getPotionID() == Potion.jump.id) {
+               } else if (pot == net.minecraft.init.MobEffects.JUMP_BOOST) {
                   tmp.merge(Aspect.FLIGHT, (var6.getAmplifier() + 1) * 3);
-               } else if (var6.getPotionID() == Potion.moveSlowdown.id) {
+               } else if (pot == net.minecraft.init.MobEffects.SLOWNESS) {
                   tmp.merge(Aspect.TRAP, (var6.getAmplifier() + 1) * 3);
-               } else if (var6.getPotionID() == Potion.moveSpeed.id) {
+               } else if (pot == net.minecraft.init.MobEffects.SPEED) {
                   tmp.merge(Aspect.MOTION, (var6.getAmplifier() + 1) * 3);
-               } else if (var6.getPotionID() == Potion.nightVision.id) {
+               } else if (pot == net.minecraft.init.MobEffects.NIGHT_VISION) {
                   tmp.merge(Aspect.SENSES, (var6.getAmplifier() + 1) * 3);
-               } else if (var6.getPotionID() == Potion.poison.id) {
+               } else if (pot == net.minecraft.init.MobEffects.POISON) {
                   tmp.merge(Aspect.POISON, (var6.getAmplifier() + 1) * 3);
-               } else if (var6.getPotionID() == Potion.regeneration.id) {
+               } else if (pot == net.minecraft.init.MobEffects.REGENERATION) {
                   tmp.merge(Aspect.HEAL, (var6.getAmplifier() + 1) * 3);
-               } else if (var6.getPotionID() == Potion.resistance.id) {
+               } else if (pot == net.minecraft.init.MobEffects.RESISTANCE) {
                   tmp.merge(Aspect.ARMOR, (var6.getAmplifier() + 1) * 3);
-               } else if (var6.getPotionID() == Potion.waterBreathing.id) {
+               } else if (pot == net.minecraft.init.MobEffects.WATER_BREATHING) {
                   tmp.merge(Aspect.AIR, (var6.getAmplifier() + 1) * 3);
-               } else if (var6.getPotionID() == Potion.weakness.id) {
+               } else if (pot == net.minecraft.init.MobEffects.WEAKNESS) {
                   tmp.merge(Aspect.DEATH, (var6.getAmplifier() + 1) * 3);
                }
             }
@@ -394,7 +398,7 @@ public class ThaumcraftCraftingManager {
         CrucibleRecipe cr = ThaumcraftApi.getCrucibleRecipe(new ItemStack(item, 1, meta));
         if (cr != null) {
             AspectList ot = cr.aspects.copy();
-            int ss = cr.getRecipeOutput().stackSize;
+            int ss = cr.getRecipeOutput().getCount();
             ItemStack cat = null;
             if (cr.catalyst instanceof ItemStack) {
                 cat = (ItemStack) cr.catalyst;
@@ -402,6 +406,7 @@ public class ThaumcraftCraftingManager {
                 cat = (ItemStack) ((ArrayList) cr.catalyst).get(0);
             }
 
+            if (cat == null || cat.isEmpty()) return null;
             AspectList ot2 = generateTags(cat.getItem(), cat.getItemDamage(), history);
             AspectList out = new AspectList();
             if (ot2 != null && ot2.size() > 0) {
@@ -462,7 +467,7 @@ public class ThaumcraftCraftingManager {
                                                     AspectList obj = generateTags(it.getItem(), it.getItemDamage(), history);
                                                     if (obj != null && obj.size() > 0) {
                                                         ItemStack is = it.copy();
-                                                        is.stackSize = 1;
+                                                        is.setCount(1);
                                                         ingredients.add(is);
                                                         break;
                                                     }
@@ -474,7 +479,7 @@ public class ThaumcraftCraftingManager {
                                                 }
 
                                                 ItemStack is = it.copy();
-                                                is.stackSize = 1;
+                                                is.setCount(1);
                                                 ingredients.add(is);
                                             }
                                         }
@@ -494,7 +499,7 @@ public class ThaumcraftCraftingManager {
                                                 AspectList obj = generateTags(it.getItem(), it.getItemDamage(), history);
                                                 if (obj != null && obj.size() > 0) {
                                                     ItemStack is = it.copy();
-                                                    is.stackSize = 1;
+                                                    is.setCount(1);
                                                     ingredients.add(is);
                                                     break;
                                                 }
@@ -506,7 +511,7 @@ public class ThaumcraftCraftingManager {
                                             }
 
                                             ItemStack is = it.copy();
-                                            is.stackSize = 1;
+                                            is.setCount(1);
                                             ingredients.add(is);
                                         }
                                     }
@@ -516,7 +521,7 @@ public class ThaumcraftCraftingManager {
                             AspectList ph = getAspectsFromIngredients(ingredients, recipe.getRecipeOutput(), history);
                             if (recipe.getAspects() != null) {
                                 for (Aspect a : recipe.getAspects().getAspects()) {
-                                    ph.add(a, (int) (Math.sqrt(recipe.getAspects().getAmount(a)) / (double) ((float) recipe.getRecipeOutput().stackSize)));
+                                    ph.add(a, (int) (Math.sqrt(recipe.getAspects().getAmount(a)) / (double) ((float) recipe.getRecipeOutput().getCount())));
                                 }
                             }
 
@@ -549,12 +554,12 @@ public class ThaumcraftCraftingManager {
             AspectList ot = cr.getAspects().copy();
             ArrayList<ItemStack> ingredients = new ArrayList<>();
             ItemStack is = cr.getRecipeInput().copy();
-            is.stackSize = 1;
+            is.setCount(1);
             ingredients.add(is);
 
             for (ItemStack cat : cr.getComponents()) {
                 ItemStack is2 = cat.copy();
-                is2.stackSize = 1;
+                is2.setCount(1);
                 ingredients.add(is2);
             }
 
@@ -566,7 +571,7 @@ public class ThaumcraftCraftingManager {
             }
 
             for (Aspect tt : ot.getAspects()) {
-                int amt = (int) (Math.sqrt(ot.getAmount(tt)) / (double) ((ItemStack) cr.getRecipeOutput()).stackSize);
+                int amt = (int) (Math.sqrt(ot.getAmount(tt)) / (double) ((ItemStack) cr.getRecipeOutput()).getCount());
                 out.add(tt, amt);
             }
 
@@ -583,7 +588,7 @@ public class ThaumcraftCraftingManager {
     private static AspectList generateTagsFromCraftingRecipes(Item item, int meta, ArrayList history) {
         AspectList ret = null;
         int value = Integer.MAX_VALUE;
-        List recipeList = CraftingManager.getInstance().getRecipeList();
+        List recipeList = new java.util.ArrayList<>(net.minecraftforge.fml.common.registry.ForgeRegistries.RECIPES.getValuesCollection());
 
         label216:
         for (Object o : recipeList) {
@@ -600,95 +605,72 @@ public class ThaumcraftCraftingManager {
                         if (o instanceof ShapedRecipes) {
                             int width = ((ShapedRecipes) o).recipeWidth;
                             int height = ((ShapedRecipes) o).recipeHeight;
-                            ItemStack[] items = ((ShapedRecipes) o).recipeItems;
+                            net.minecraft.util.NonNullList<net.minecraft.item.crafting.Ingredient> items = ((ShapedRecipes) o).recipeItems;
 
                             for (int i = 0; i < width && i < 3; ++i) {
                                 for (int j = 0; j < height && j < 3; ++j) {
-                                    if (items[i + j * width] != null) {
-                                        if (Utils.isEETransmutionItem(items[i + j * width].getItem())) {
+                                    net.minecraft.item.crafting.Ingredient ing = items.get(i + j * width);
+                                    ItemStack[] stacks = ing.getMatchingStacks();
+                                    if (stacks.length > 0) {
+                                        if (Utils.isEETransmutionItem(stacks[0].getItem())) {
                                             continue label216;
                                         }
-
-                                        ItemStack is = items[i + j * width].copy();
-                                        is.stackSize = 1;
+                                        ItemStack is = stacks[0].copy();
+                                        is.setCount(1);
                                         ingredients.add(is);
                                     }
                                 }
                             }
                         } else if (o instanceof ShapelessRecipes) {
-                            List<ItemStack> items = ((ShapelessRecipes) o).recipeItems;
+                            net.minecraft.util.NonNullList<net.minecraft.item.crafting.Ingredient> items = ((ShapelessRecipes) o).recipeItems;
 
                             for (int i = 0; i < items.size() && i < 9; ++i) {
-                                if (items.get(i) != null) {
-                                    if (Utils.isEETransmutionItem(items.get(i).getItem())) {
+                                ItemStack[] stacks = items.get(i).getMatchingStacks();
+                                if (stacks.length > 0) {
+                                    if (Utils.isEETransmutionItem(stacks[0].getItem())) {
                                         continue label216;
                                     }
-
-                                    ItemStack is = items.get(i).copy();
-                                    is.stackSize = 1;
+                                    ItemStack is = stacks[0].copy();
+                                    is.setCount(1);
                                     ingredients.add(is);
                                 }
                             }
                         } else if (o instanceof ShapedOreRecipe) {
-                            int size = ((ShapedOreRecipe) o).getRecipeSize();
-                            Object[] items = ((ShapedOreRecipe) o).getInput();
+                            net.minecraft.util.NonNullList<net.minecraft.item.crafting.Ingredient> _oreIngs = ((ShapedOreRecipe) o).getIngredients();
+                            int size = _oreIngs.size();
+                            Object[] items = _oreIngs.toArray();
 
                             for (int i = 0; i < size && i < 9; ++i) {
-                                if (items[i] != null) {
-                                    if (items[i] instanceof ArrayList) {
-                                        for (ItemStack it : (ArrayList<ItemStack>) items[i]) {
-                                            if (Utils.isEETransmutionItem(it.getItem())) {
-                                                continue label216;
-                                            }
-
-                                            AspectList obj = generateTags(it.getItem(), it.getItemDamage(), history);
-                                            if (obj != null && obj.size() > 0) {
-                                                ItemStack is = it.copy();
-                                                is.stackSize = 1;
-                                                ingredients.add(is);
-                                                break;
-                                            }
-                                        }
-                                    } else {
-                                        ItemStack it = (ItemStack) items[i];
-                                        if (Utils.isEETransmutionItem(it.getItem())) {
-                                            continue label216;
-                                        }
-
+                                net.minecraft.item.crafting.Ingredient ing = (net.minecraft.item.crafting.Ingredient) items[i];
+                                ItemStack[] stacks = ing.getMatchingStacks();
+                                for (ItemStack it : stacks) {
+                                    if (Utils.isEETransmutionItem(it.getItem())) {
+                                        continue label216;
+                                    }
+                                    AspectList obj = generateTags(it.getItem(), it.getItemDamage(), history);
+                                    if (obj != null && obj.size() > 0) {
                                         ItemStack is = it.copy();
-                                        is.stackSize = 1;
+                                        is.setCount(1);
                                         ingredients.add(is);
+                                        break;
                                     }
                                 }
                             }
                         } else if (o instanceof ShapelessOreRecipe) {
-                            ArrayList items = ((ShapelessOreRecipe) o).getInput();
+                            net.minecraft.util.NonNullList<net.minecraft.item.crafting.Ingredient> items = ((ShapelessOreRecipe) o).getIngredients();
 
                             for (int i = 0; i < items.size() && i < 9; ++i) {
-                                if (items.get(i) != null) {
-                                    if (items.get(i) instanceof ArrayList) {
-                                        for (ItemStack it : (ArrayList<ItemStack>) items.get(i)) {
-                                            if (Utils.isEETransmutionItem(it.getItem())) {
-                                                continue label216;
-                                            }
-
-                                            AspectList obj = generateTags(it.getItem(), it.getItemDamage(), history);
-                                            if (obj != null && obj.size() > 0) {
-                                                ItemStack is = it.copy();
-                                                is.stackSize = 1;
-                                                ingredients.add(is);
-                                                break;
-                                            }
-                                        }
-                                    } else {
-                                        ItemStack it = (ItemStack) items.get(i);
-                                        if (Utils.isEETransmutionItem(it.getItem())) {
-                                            continue label216;
-                                        }
-
+                                ItemStack[] stacks = items.get(i).getMatchingStacks();
+                                for (ItemStack it : stacks) {
+                                    if (Utils.isEETransmutionItem(it.getItem())) {
+                                        continue label216;
+                                    }
+                                    AspectList obj = generateTags(it.getItem(), it.getItemDamage(), history);
+                                    if (obj != null && obj.size() > 0) {
                                         ItemStack is = it.copy();
-                                        is.stackSize = 1;
+                                        is.setCount(1);
                                         ingredients.add(is);
+                                        break;
                                     }
                                 }
                             }
@@ -728,7 +710,7 @@ public class ThaumcraftCraftingManager {
                 if (!i$.hasNext()) {
                     for (Aspect as : mid.getAspects()) {
                         if (as != null) {
-                            out.add(as, (int) ((float) mid.getAmount(as) * 0.75F / (float) recipeOut.stackSize));
+                            out.add(as, (int) ((float) mid.getAmount(as) * 0.75F / (float) recipeOut.getCount()));
                         }
                     }
 

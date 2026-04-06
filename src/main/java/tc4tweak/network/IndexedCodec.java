@@ -18,9 +18,9 @@
  */
 package tc4tweak.network;
 
-import cpw.mods.fml.common.network.NetworkRegistry;
-import cpw.mods.fml.common.network.internal.FMLProxyPacket;
-import cpw.mods.fml.common.network.simpleimpl.IMessage;
+import net.minecraftforge.fml.common.network.NetworkRegistry;
+import net.minecraftforge.fml.common.network.internal.FMLProxyPacket;
+import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
 import gnu.trove.map.TByteObjectMap;
 import gnu.trove.map.TObjectByteMap;
 import gnu.trove.map.hash.TByteObjectHashMap;
@@ -35,7 +35,7 @@ import thaumcraft.common.Thaumcraft;
 import java.lang.ref.WeakReference;
 import java.util.List;
 
-import static cpw.mods.fml.common.network.FMLIndexedMessageToMessageCodec.INBOUNDPACKETTRACKER;
+import static net.minecraftforge.fml.common.network.FMLIndexedMessageToMessageCodec.INBOUNDPACKETTRACKER;
 
 @ChannelHandler.Sharable
 public class IndexedCodec extends MessageToMessageCodec<FMLProxyPacket, IMessage> {
@@ -60,8 +60,8 @@ public class IndexedCodec extends MessageToMessageCodec<FMLProxyPacket, IMessage
         Class<? extends IMessage> clazz = msg.getClass();
         int discriminator = types.get(clazz);
         buffer.writeByte(discriminator);
-        msg.toBytes(buffer);
-        FMLProxyPacket proxy = new FMLProxyPacket(buffer.copy(), ctx.channel().attr(NetworkRegistry.FML_CHANNEL).get());
+        msg.toBytes(new net.minecraft.network.PacketBuffer(buffer));
+        FMLProxyPacket proxy = new FMLProxyPacket(new net.minecraft.network.PacketBuffer(buffer.copy()), ctx.channel().attr(NetworkRegistry.FML_CHANNEL).get());
         WeakReference<FMLProxyPacket> ref = ctx.attr(INBOUNDPACKETTRACKER).get().get();
         FMLProxyPacket old = ref == null ? null : ref.get();
         if (old != null) {
