@@ -1,18 +1,9 @@
-Requires [BaublesExpanded](https://github.com/GTNewHorizons/Baubles-Expanded)
+Requires Baubles
 
--------------------
+---
 
-Decompiled thaumcraft 4(I'm nor sure if it's illegal,sorry [Azanor](https://github.com/Azanor/thaumcraft-beta)) and added parameterized types.
-I need lots of cleaning.
+making a collection of clankers port this to 1.12.2
 
-maybe it's better to rewrite these all.
+it WORKS!!!! mostly, there are a few issues with 3d rendering
 
-most of Hodgepodge and TC4Tweaks modification are applied.Don't use with TC4Tweaks.
-
-UnicodeFontFixer is still recommended because i don't know what they actually did.
-
--------------------
-
-going to migrate to 1.20.1,but needs a far way.(api migration almost finished,thx to chatGPT i can know apis and migrations fast.)
-
-see [OpenTC4-Architectury](https://github.com/IgnoreLicensesCN/OpenTC4-Architectury) for progress(commits) of this part
+claude agi, codex is ok i guess
