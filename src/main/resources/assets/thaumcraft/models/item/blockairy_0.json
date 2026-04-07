@@ -1,0 +1,7 @@
+{
+  "parent": "item/generated",
+  "textures": {
+    "layer0": "thaumcraft:misc/node_bubble",
+    "layer1": "thaumcraft:aspects/auram"
+  }
+}

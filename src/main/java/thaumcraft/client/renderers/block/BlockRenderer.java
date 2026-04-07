@@ -34,41 +34,21 @@ public class BlockRenderer {
    }
 
    public static void drawFaces(RenderBlocks renderblocks, Block block, TextureAtlasSprite i1, TextureAtlasSprite i2, TextureAtlasSprite i3, TextureAtlasSprite i4, TextureAtlasSprite i5, TextureAtlasSprite i6, boolean solidtop) {
-      Tessellator tessellator = Tessellator.getInstance();
-      BufferBuilder buffer = tessellator.getBuffer();
       GlStateManager.translate(-0.5F, -0.5F, -0.5F);
-      buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX); 
-     
       renderblocks.renderFaceYNeg(block, 0.0F, 0.0F, 0.0F, i1);
-      tessellator.draw();
       if (solidtop) {
          GlStateManager.disableAlpha();
       }
 
-      buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX); 
-     
       renderblocks.renderFaceYPos(block, 0.0F, 0.0F, 0.0F, i2);
-      tessellator.draw();
       if (solidtop) {
          GlStateManager.enableAlpha();
       }
 
-      buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX); 
-     
       renderblocks.renderFaceXNeg(block, 0.0F, 0.0F, 0.0F, i3);
-      tessellator.draw();
-      buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX); 
-     
       renderblocks.renderFaceXPos(block, 0.0F, 0.0F, 0.0F, i4);
-      tessellator.draw();
-      buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX); 
-     
       renderblocks.renderFaceZNeg(block, 0.0F, 0.0F, 0.0F, i5);
-      tessellator.draw();
-      buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX); 
-     
       renderblocks.renderFaceZPos(block, 0.0F, 0.0F, 0.0F, i6);
-      tessellator.draw();
       GlStateManager.translate(0.5F, 0.5F, 0.5F);
    }
 

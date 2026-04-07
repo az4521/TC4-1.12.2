@@ -1,0 +1,44 @@
+{
+  "textures": {
+    "all": "thaumcraft:models/alembic",
+    "particle": "thaumcraft:models/alembic"
+  },
+  "elements": [
+    {
+      "from": [4, 0, 4],
+      "to": [12, 9, 12],
+      "faces": {
+        "down": {"texture": "#all"},
+        "up": {"texture": "#all"},
+        "north": {"texture": "#all"},
+        "south": {"texture": "#all"},
+        "west": {"texture": "#all"},
+        "east": {"texture": "#all"}
+      }
+    },
+    {
+      "from": [6, 9, 6],
+      "to": [10, 14, 10],
+      "faces": {
+        "down": {"texture": "#all"},
+        "up": {"texture": "#all"},
+        "north": {"texture": "#all"},
+        "south": {"texture": "#all"},
+        "west": {"texture": "#all"},
+        "east": {"texture": "#all"}
+      }
+    },
+    {
+      "from": [7, 14, 7],
+      "to": [9, 16, 13],
+      "faces": {
+        "down": {"texture": "#all"},
+        "up": {"texture": "#all"},
+        "north": {"texture": "#all"},
+        "south": {"texture": "#all"},
+        "west": {"texture": "#all"},
+        "east": {"texture": "#all"}
+      }
+    }
+  ]
+}

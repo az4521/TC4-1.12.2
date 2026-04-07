@@ -1,6 +1,20 @@
 {
-  "parent": "item/generated",
-  "textures": {
-    "layer0": "thaumcraft:blocks/al_furnace_front_off"
+  "parent": "thaumcraft:block/blockstonedevice_furnace",
+  "display": {
+    "gui": {
+      "rotation": [30, 225, 0],
+      "translation": [0, 0, 0],
+      "scale": [0.625, 0.625, 0.625]
+    },
+    "ground": {
+      "rotation": [0, 0, 0],
+      "translation": [0, 2, 0],
+      "scale": [0.5, 0.5, 0.5]
+    },
+    "fixed": {
+      "rotation": [0, 180, 0],
+      "translation": [0, 0, 0],
+      "scale": [0.5, 0.5, 0.5]
+    }
   }
 }

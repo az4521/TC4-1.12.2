@@ -104,6 +104,7 @@ import thaumcraft.common.tiles.TileEldritchLock;
 import thaumcraft.common.tiles.TileEldritchNothing;
 import thaumcraft.common.tiles.TileEldritchObelisk;
 import thaumcraft.common.tiles.TileEldritchPortal;
+import thaumcraft.common.tiles.TileEldritchStone;
 import thaumcraft.common.tiles.TileEldritchTrap;
 import thaumcraft.common.tiles.TileEssentiaCrystalizer;
 import thaumcraft.common.tiles.TileEssentiaReservoir;
@@ -454,6 +455,7 @@ public class ConfigBlocks {
       GameRegistry.registerTileEntity(TileEldritchAltar.class, new net.minecraft.util.ResourceLocation("thaumcraft", "TileEldritchAltar"));
       GameRegistry.registerTileEntity(TileEldritchObelisk.class, new net.minecraft.util.ResourceLocation("thaumcraft", "TileEldritchObelisk"));
       GameRegistry.registerTileEntity(TileEldritchCap.class, new net.minecraft.util.ResourceLocation("thaumcraft", "TileEldritchCap"));
+      GameRegistry.registerTileEntity(TileEldritchStone.class, new net.minecraft.util.ResourceLocation("thaumcraft", "TileEldritchStone"));
       GameRegistry.registerTileEntity(TileBanner.class, new net.minecraft.util.ResourceLocation("thaumcraft", "TileBanner"));
       GameRegistry.registerTileEntity(thaumcraft.common.tiles.TilePlank.class, new net.minecraft.util.ResourceLocation("thaumcraft", "TilePlank"));
       GameRegistry.registerTileEntity(TileEldritchPortal.class, new net.minecraft.util.ResourceLocation("thaumcraft", "TileEldritchPortal"));

@@ -16,7 +16,14 @@ public class BlockCrystalRenderer extends BlockRenderer implements ISimpleBlockR
       if (metadata <= 6) {
          GlStateManager.rotate(90.0F, 0.0F, 1.0F, 0.0F);
          GlStateManager.translate(-0.5F, -0.5F, -0.5F);
-         TileCrystal tc = new TileCrystal();
+         TileCrystal tc = new TileCrystal() {
+            @Override
+            public int getBlockMetadata() {
+               return metadata;
+            }
+         };
+         tc.setWorld(net.minecraft.client.Minecraft.getMinecraft().world);
+         tc.setPos(net.minecraft.util.math.BlockPos.ORIGIN);
          TileEntityRendererDispatcher.instance.render(tc, 0.0, 0.0, 0.0, 0.0F);
          GlStateManager.enableRescaleNormal();
       }

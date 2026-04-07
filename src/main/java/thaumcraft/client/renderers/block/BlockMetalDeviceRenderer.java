@@ -19,10 +19,20 @@ import net.minecraft.tileentity.TileEntity;
 
 public class BlockMetalDeviceRenderer extends BlockRenderer implements ISimpleBlockRenderingHandler {
    public void renderInventoryBlock(Block block, int metadata, int modelID, RenderBlocks renderer) {
-      if (metadata == 1) {
+      if (metadata == 0) {
+         BlockMetalDevice bmd = (BlockMetalDevice) block;
+         renderer.setRenderBounds(0.0F, 0.0F, 0.0F, 1.0F, 1.0F, 1.0F);
+         drawFaces(renderer, block, bmd.icon[2], bmd.icon[4], bmd.icon[3], bmd.icon[3], bmd.icon[3], bmd.icon[3], true);
+      } else if (metadata == 1) {
          GlStateManager.translate(-0.5F, 0.0F, -0.5F);
          TileEntityRendererDispatcher.instance.render(new TileAlembic(), 0.0, 0.0, 0.0, 0.0F);
          GlStateManager.enableRescaleNormal();
+      } else if (metadata == 5 || metadata == 6) {
+         BlockMetalDevice bmd = (BlockMetalDevice) block;
+         GlStateManager.translate(0.0F, -0.3F, 0.0F);
+         renderer.setRenderBounds(0.0F, 0.8125F, 0.0F, 1.0F, 1.0F, 1.0F);
+         drawFaces(renderer, block, bmd.icon[8], false);
+         drawFaces(renderer, block, bmd.icon[9], false);
       } else if (metadata == 14) {
          GlStateManager.pushMatrix();
          GlStateManager.scale(1.5F, 1.5F, 1.5F);

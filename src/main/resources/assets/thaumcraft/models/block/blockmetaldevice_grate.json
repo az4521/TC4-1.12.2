@@ -1,0 +1,21 @@
+{
+  "textures": {
+    "top": "thaumcraft:blocks/grate_hatch",
+    "side": "thaumcraft:blocks/grate",
+    "particle": "thaumcraft:blocks/grate"
+  },
+  "elements": [
+    {
+      "from": [0, 13, 0],
+      "to": [16, 16, 16],
+      "faces": {
+        "down": {"texture": "#side"},
+        "up": {"texture": "#top"},
+        "north": {"texture": "#side", "uv": [0, 13, 16, 16]},
+        "south": {"texture": "#side", "uv": [0, 13, 16, 16]},
+        "west": {"texture": "#side", "uv": [0, 13, 16, 16]},
+        "east": {"texture": "#side", "uv": [0, 13, 16, 16]}
+      }
+    }
+  ]
+}

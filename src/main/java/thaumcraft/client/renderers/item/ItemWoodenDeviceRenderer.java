@@ -32,10 +32,10 @@ public class ItemWoodenDeviceRenderer implements IItemRenderer {
          if (type == ItemRenderType.EQUIPPED || type == ItemRenderType.EQUIPPED_FIRST_PERSON) {
             GlStateManager.translate(1.0F, 1.0F, 1.0F);
             GlStateManager.translate(-0.15F, 0.0F, -0.15F);
-            GlStateManager.scale(0.75F, 0.75F, 0.75F);
+            GlStateManager.scale(0.625F, 0.625F, 0.625F);
          } else {
             GlStateManager.translate(0.0F, 0.3F, 0.0F);
-            GlStateManager.scale(0.5F, 0.5F, 0.5F);
+            GlStateManager.scale(0.375F, 0.375F, 0.375F);
          }
 
          GlStateManager.translate(-0.5F, -0.5F, -0.5F);
@@ -57,6 +57,15 @@ public class ItemWoodenDeviceRenderer implements IItemRenderer {
          return;
       }
 
+      GlStateManager.pushMatrix();
+      if (type == ItemRenderType.INVENTORY || type == ItemRenderType.ENTITY) {
+         GlStateManager.rotate(30.0F, 1.0F, 0.0F, 0.0F);
+         GlStateManager.rotate(225.0F, 0.0F, 1.0F, 0.0F);
+         GlStateManager.scale(0.625F, 0.625F, 0.625F);
+      } else if (type == ItemRenderType.EQUIPPED || type == ItemRenderType.EQUIPPED_FIRST_PERSON) {
+         GlStateManager.scale(0.625F, 0.625F, 0.625F);
+      }
       this.blockRenderer.renderInventoryBlock(ConfigBlocks.blockWoodenDevice, meta, ConfigBlocks.blockWoodenDeviceRI, new RenderBlocks());
+      GlStateManager.popMatrix();
    }
 }

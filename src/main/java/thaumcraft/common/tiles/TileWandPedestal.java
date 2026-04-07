@@ -37,6 +37,10 @@ public class TileWandPedestal extends TileThaumcraft implements ISidedInventory,
    public int drainColor = 0;
    ArrayList<BlockPos> nodes = null;
 
+   public TileWandPedestal() {
+      java.util.Arrays.fill(this.inventory, ItemStack.EMPTY);
+   }
+
    @SideOnly(Side.CLIENT)
    public AxisAlignedBB getRenderBoundingBox() {
       return new AxisAlignedBB(this.getPos().getX(), this.getPos().getY(), this.getPos().getZ(), this.getPos().getX() + 1, this.getPos().getY() + 1, this.getPos().getZ() + 1).expand(2.0F, 2.0F, 2.0F);
@@ -47,11 +51,11 @@ public class TileWandPedestal extends TileThaumcraft implements ISidedInventory,
    }
 
    public ItemStack getStackInSlot(int par1) {
-      return this.inventory[par1];
+      return this.inventory[par1] == null ? ItemStack.EMPTY : this.inventory[par1];
    }
 
    public ItemStack decrStackSize(int par1, int par2) {
-      if (!this.inventory[par1].isEmpty()) {
+      if (this.inventory[par1] != null && !this.inventory[par1].isEmpty()) {
          { net.minecraft.block.state.IBlockState _bs = this.world.getBlockState(this.pos); this.world.notifyBlockUpdate(this.pos, _bs, _bs, 3); }
           ItemStack itemstack;
           if (this.inventory[par1].getCount() <= par2) {
@@ -72,7 +76,7 @@ public class TileWandPedestal extends TileThaumcraft implements ISidedInventory,
    }
 
    public ItemStack getStackInSlotOnClosing(int par1) {
-      if (!this.inventory[par1].isEmpty()) {
+      if (this.inventory[par1] != null && !this.inventory[par1].isEmpty()) {
          ItemStack itemstack = this.inventory[par1];
          this.inventory[par1] = ItemStack.EMPTY;
          this.markDirty();
@@ -115,7 +119,7 @@ public class TileWandPedestal extends TileThaumcraft implements ISidedInventory,
       NBTTagList nbttaglist = new NBTTagList();
 
       for(int i = 0; i < this.inventory.length; ++i) {
-         if (!this.inventory[i].isEmpty()) {
+         if (this.inventory[i] != null && !this.inventory[i].isEmpty()) {
             NBTTagCompound nbttagcompound1 = new NBTTagCompound();
             nbttagcompound1.setByte("Slot", (byte)i);
             this.inventory[i].writeToNBT(nbttagcompound1);
@@ -323,14 +327,14 @@ public class TileWandPedestal extends TileThaumcraft implements ISidedInventory,
    @Override
    public boolean isEmpty() {
       for (ItemStack stack : this.inventory) {
-         if (!stack.isEmpty()) return false;
+         if (stack != null && !stack.isEmpty()) return false;
       }
       return true;
    }
 
    @Override
    public ItemStack removeStackFromSlot(int index) {
-      if (!this.inventory[index].isEmpty()) {
+      if (this.inventory[index] != null && !this.inventory[index].isEmpty()) {
          ItemStack stack = this.inventory[index];
          this.inventory[index] = ItemStack.EMPTY;
          return stack;

@@ -1,6 +1,1 @@
-{
-  "parent": "item/generated",
-  "textures": {
-    "layer0": "thaumcraft:blocks/taint_crust"
-  }
-}
+{"parent":"thaumcraft:block/blocktaint_taintcrust"}

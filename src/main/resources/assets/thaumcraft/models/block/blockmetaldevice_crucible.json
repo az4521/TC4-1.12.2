@@ -1,0 +1,67 @@
+{
+  "textures": {
+    "bottom": "thaumcraft:blocks/crucible2",
+    "top": "thaumcraft:blocks/crucible4",
+    "side": "thaumcraft:blocks/crucible3",
+    "inner": "thaumcraft:blocks/crucible5",
+    "particle": "thaumcraft:blocks/crucible3"
+  },
+  "elements": [
+    {
+      "from": [2, 0, 2],
+      "to": [14, 5, 14],
+      "faces": {
+        "down": {"texture": "#bottom"},
+        "up": {"texture": "#inner", "uv": [2, 2, 14, 14]},
+        "north": {"texture": "#side", "uv": [2, 11, 14, 16]},
+        "south": {"texture": "#side", "uv": [2, 11, 14, 16]},
+        "west": {"texture": "#side", "uv": [2, 11, 14, 16]},
+        "east": {"texture": "#side", "uv": [2, 11, 14, 16]}
+      }
+    },
+    {
+      "from": [1, 5, 1],
+      "to": [15, 14, 3],
+      "faces": {
+        "up": {"texture": "#top", "uv": [1, 1, 15, 3]},
+        "north": {"texture": "#side", "uv": [1, 2, 15, 11]},
+        "south": {"texture": "#inner", "uv": [1, 2, 15, 11]},
+        "west": {"texture": "#side", "uv": [1, 2, 3, 11]},
+        "east": {"texture": "#side", "uv": [13, 2, 15, 11]}
+      }
+    },
+    {
+      "from": [1, 5, 13],
+      "to": [15, 14, 15],
+      "faces": {
+        "up": {"texture": "#top", "uv": [1, 13, 15, 15]},
+        "north": {"texture": "#inner", "uv": [1, 2, 15, 11]},
+        "south": {"texture": "#side", "uv": [1, 2, 15, 11]},
+        "west": {"texture": "#side", "uv": [13, 2, 15, 11]},
+        "east": {"texture": "#side", "uv": [1, 2, 3, 11]}
+      }
+    },
+    {
+      "from": [1, 5, 3],
+      "to": [3, 14, 13],
+      "faces": {
+        "up": {"texture": "#top", "uv": [3, 3, 13, 5]},
+        "north": {"texture": "#side", "uv": [13, 2, 15, 11]},
+        "south": {"texture": "#side", "uv": [1, 2, 3, 11]},
+        "west": {"texture": "#side", "uv": [3, 2, 13, 11]},
+        "east": {"texture": "#inner", "uv": [3, 2, 13, 11]}
+      }
+    },
+    {
+      "from": [13, 5, 3],
+      "to": [15, 14, 13],
+      "faces": {
+        "up": {"texture": "#top", "uv": [3, 11, 13, 13]},
+        "north": {"texture": "#side", "uv": [1, 2, 3, 11]},
+        "south": {"texture": "#side", "uv": [13, 2, 15, 11]},
+        "west": {"texture": "#inner", "uv": [3, 2, 13, 11]},
+        "east": {"texture": "#side", "uv": [3, 2, 13, 11]}
+      }
+    }
+  ]
+}

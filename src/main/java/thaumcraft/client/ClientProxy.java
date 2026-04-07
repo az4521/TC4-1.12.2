@@ -159,8 +159,16 @@ import thaumcraft.client.renderers.entity.RenderTravelingTrunk;
 import thaumcraft.client.renderers.entity.RenderWisp;
 import thaumcraft.client.renderers.item.ItemBannerRenderer;
 import thaumcraft.client.renderers.item.ItemBowBoneRenderer;
+import thaumcraft.client.renderers.item.ItemChestHungryRenderer;
+import thaumcraft.client.renderers.item.ItemCrystalRenderer;
+import thaumcraft.client.renderers.item.ItemEssentiaReservoirRenderer;
+import thaumcraft.client.renderers.item.ItemJarRenderer;
+import thaumcraft.client.renderers.item.ItemMetalDeviceRenderer;
 import thaumcraft.client.renderers.item.ItemThaumometerRenderer;
+import thaumcraft.client.renderers.item.ItemStoneDeviceRenderer;
+import thaumcraft.client.renderers.item.ItemTableRenderer;
 import thaumcraft.client.renderers.item.ItemTrunkSpawnerRenderer;
+import thaumcraft.client.renderers.item.ItemTubeRenderer;
 import thaumcraft.client.renderers.item.ItemWandRenderer;
 import thaumcraft.client.renderers.item.ItemWoodenDeviceRenderer;
 import thaumcraft.client.renderers.compat.TransformTrackingModel;
@@ -368,9 +376,16 @@ public class ClientProxy extends CommonProxy {
       // Bridge 1.7.10 IItemRenderers to 1.12.2 TEISR system
       thaumcraft.client.renderers.compat.IItemRendererTEISR.register(ConfigItems.itemThaumometer, new ItemThaumometerRenderer());
       thaumcraft.client.renderers.compat.IItemRendererTEISR.register(ConfigItems.itemWandCasting, new ItemWandRenderer());
-      thaumcraft.client.renderers.compat.IItemRendererTEISR.register(ConfigItems.itemBowBone, new ItemBowBoneRenderer());
       thaumcraft.client.renderers.compat.IItemRendererTEISR.register(ConfigItems.itemTrunkSpawner, new ItemTrunkSpawnerRenderer());
+      thaumcraft.client.renderers.compat.IItemRendererTEISR.register(Item.getItemFromBlock(ConfigBlocks.blockChestHungry), new ItemChestHungryRenderer());
+      thaumcraft.client.renderers.compat.IItemRendererTEISR.register(Item.getItemFromBlock(ConfigBlocks.blockCrystal), new ItemCrystalRenderer());
+      thaumcraft.client.renderers.compat.IItemRendererTEISR.register(Item.getItemFromBlock(ConfigBlocks.blockJar), new ItemJarRenderer());
       thaumcraft.client.renderers.compat.IItemRendererTEISR.register(Item.getItemFromBlock(ConfigBlocks.blockWoodenDevice), new ItemWoodenDeviceRenderer());
+      thaumcraft.client.renderers.compat.IItemRendererTEISR.register(Item.getItemFromBlock(ConfigBlocks.blockMetalDevice), new ItemMetalDeviceRenderer());
+      thaumcraft.client.renderers.compat.IItemRendererTEISR.register(Item.getItemFromBlock(ConfigBlocks.blockStoneDevice), new ItemStoneDeviceRenderer());
+      thaumcraft.client.renderers.compat.IItemRendererTEISR.register(Item.getItemFromBlock(ConfigBlocks.blockTable), new ItemTableRenderer());
+      thaumcraft.client.renderers.compat.IItemRendererTEISR.register(Item.getItemFromBlock(ConfigBlocks.blockTube), new ItemTubeRenderer());
+      thaumcraft.client.renderers.compat.IItemRendererTEISR.register(Item.getItemFromBlock(ConfigBlocks.blockEssentiaReservoir), new ItemEssentiaReservoirRenderer());
       thaumcraft.client.renderers.compat.IItemRendererTEISR.register(ConfigItems.itemJarFilled, new thaumcraft.client.renderers.tile.ItemJarFilledRenderer());
       thaumcraft.client.renderers.compat.IItemRendererTEISR.register(ConfigItems.itemJarNode, new thaumcraft.client.renderers.tile.ItemJarNodeRenderer());
    }
@@ -449,6 +464,19 @@ public class ClientProxy extends CommonProxy {
          bmd.icon[21] = event.getMap().registerSprite(new net.minecraft.util.ResourceLocation("thaumcraft", "blocks/lamp_fert_top_off"));
          bmd.icon[22] = event.getMap().registerSprite(new net.minecraft.util.ResourceLocation("thaumcraft", "blocks/alchemyblockadv"));
          bmd.iconGlow = event.getMap().registerSprite(new net.minecraft.util.ResourceLocation("thaumcraft", "blocks/animatedglow"));
+      }
+
+      if (ConfigBlocks.blockTube instanceof thaumcraft.common.blocks.BlockTube) {
+         thaumcraft.common.blocks.BlockTube bt = (thaumcraft.common.blocks.BlockTube) ConfigBlocks.blockTube;
+         bt.icon[0] = event.getMap().registerSprite(new net.minecraft.util.ResourceLocation("thaumcraft", "blocks/pipe_1"));
+         bt.icon[1] = event.getMap().registerSprite(new net.minecraft.util.ResourceLocation("thaumcraft", "blocks/pipe_2"));
+         bt.icon[2] = event.getMap().registerSprite(new net.minecraft.util.ResourceLocation("thaumcraft", "blocks/pipe_3"));
+         bt.icon[3] = event.getMap().registerSprite(new net.minecraft.util.ResourceLocation("thaumcraft", "blocks/pipe_filter"));
+         bt.icon[4] = event.getMap().registerSprite(new net.minecraft.util.ResourceLocation("thaumcraft", "blocks/pipe_filter_core"));
+         bt.icon[5] = event.getMap().registerSprite(new net.minecraft.util.ResourceLocation("thaumcraft", "blocks/pipe_buffer"));
+         bt.icon[6] = event.getMap().registerSprite(new net.minecraft.util.ResourceLocation("thaumcraft", "blocks/pipe_restrict"));
+         bt.icon[7] = event.getMap().registerSprite(new net.minecraft.util.ResourceLocation("thaumcraft", "blocks/pipe_oneway"));
+         bt.iconValve = event.getMap().registerSprite(new net.minecraft.util.ResourceLocation("thaumcraft", "blocks/pipe_valve"));
       }
    }
 
@@ -693,7 +721,7 @@ public class ClientProxy extends CommonProxy {
         // BlockCustomOre variants
         String[] oreNames = {"cinnabar","infusedair","infusedfire","infusedwater","infusedearth","infusedorder","infusedentropy","amber"};
         for (int i = 0; i < oreNames.length; i++) {
-            ModelLoader.setCustomModelResourceLocation(Item.getItemFromBlock(ConfigBlocks.blockCustomOre), i, new ModelResourceLocation("thaumcraft:blockcustomore", "variant=" + oreNames[i]));
+            ModelLoader.setCustomModelResourceLocation(Item.getItemFromBlock(ConfigBlocks.blockCustomOre), i, new ModelResourceLocation("thaumcraft:blockcustomore_" + oreNames[i], "inventory"));
         }
         // BlockMagicalLog variants
         ModelLoader.setCustomModelResourceLocation(Item.getItemFromBlock(ConfigBlocks.blockMagicalLog), 0, new ModelResourceLocation("thaumcraft:blockmagicallog", "axis=y,variant=greatwood"));
@@ -710,7 +738,9 @@ public class ClientProxy extends CommonProxy {
         for (int i = 0; i <= 2; i++) {
             ModelLoader.setCustomModelResourceLocation(Item.getItemFromBlock(ConfigBlocks.blockTaint), i, new ModelResourceLocation("thaumcraft:blocktaint_" + i, "inventory"));
         }
-        ModelLoader.setCustomModelResourceLocation(Item.getItemFromBlock(ConfigBlocks.blockTaintFibres), 0, new ModelResourceLocation("thaumcraft:blocktaintfibres", "meta=0"));
+        for (int i = 0; i <= 4; i++) {
+            ModelLoader.setCustomModelResourceLocation(Item.getItemFromBlock(ConfigBlocks.blockTaintFibres), i, new ModelResourceLocation("thaumcraft:blocktaintfibres_" + i, "inventory"));
+        }
         // BlockCosmeticOpaque variants
         String[] opaqueNames = {"amber","amberbrick","wardedglass"};
         for (int i = 0; i < opaqueNames.length; i++) {
@@ -720,15 +750,13 @@ public class ClientProxy extends CommonProxy {
         int[] solidMetas = {0,1,2,3,4,5,6,7,8,9,11,12,14,15};
         String[] solidNames = {"obsidiantotem","obsidiantile","pavingtravel","pavingwarding","thaumiumblock","tallowblock","arcanestone","arcanestonebrick","obsidiantotemcharged","golemfetter","ancientstone","ancientrock","crustedstone","pedestalstone"};
         for (int i = 0; i < solidMetas.length; i++) {
-            ModelLoader.setCustomModelResourceLocation(Item.getItemFromBlock(ConfigBlocks.blockCosmeticSolid), solidMetas[i], new ModelResourceLocation("thaumcraft:blockcosmeticsolid", "variant=" + solidNames[i]));
+            String model = solidMetas[i] == 14 ? "thaumcraft:blockcosmeticsolid_crustedstone" : "thaumcraft:blockcosmeticsolid";
+            String variant = solidMetas[i] == 14 ? "inventory" : "variant=" + solidNames[i];
+            ModelLoader.setCustomModelResourceLocation(Item.getItemFromBlock(ConfigBlocks.blockCosmeticSolid), solidMetas[i], new ModelResourceLocation(model, variant));
         }
-        ModelLoader.setCustomModelResourceLocation(Item.getItemFromBlock(ConfigBlocks.blockCrystal), 0, new ModelResourceLocation("thaumcraft:blockcrystal", "normal"));
-        ModelLoader.setCustomModelResourceLocation(Item.getItemFromBlock(ConfigBlocks.blockCrystal), 1, new ModelResourceLocation("thaumcraft:blockcrystal", "normal"));
-        ModelLoader.setCustomModelResourceLocation(Item.getItemFromBlock(ConfigBlocks.blockCrystal), 2, new ModelResourceLocation("thaumcraft:blockcrystal", "normal"));
-        ModelLoader.setCustomModelResourceLocation(Item.getItemFromBlock(ConfigBlocks.blockCrystal), 3, new ModelResourceLocation("thaumcraft:blockcrystal", "normal"));
-        ModelLoader.setCustomModelResourceLocation(Item.getItemFromBlock(ConfigBlocks.blockCrystal), 4, new ModelResourceLocation("thaumcraft:blockcrystal", "normal"));
-        ModelLoader.setCustomModelResourceLocation(Item.getItemFromBlock(ConfigBlocks.blockCrystal), 5, new ModelResourceLocation("thaumcraft:blockcrystal", "normal"));
-        ModelLoader.setCustomModelResourceLocation(Item.getItemFromBlock(ConfigBlocks.blockCrystal), 6, new ModelResourceLocation("thaumcraft:blockcrystal", "normal"));
+        for (int i = 0; i <= 7; i++) {
+            ModelLoader.setCustomModelResourceLocation(Item.getItemFromBlock(ConfigBlocks.blockCrystal), i, new ModelResourceLocation("thaumcraft:blockcrystal_" + i, "inventory"));
+        }
         // Tube per-meta models
         for (int i = 0; i <= 7; i++) {
             ModelLoader.setCustomModelResourceLocation(Item.getItemFromBlock(ConfigBlocks.blockTube), i, new ModelResourceLocation("thaumcraft:blocktube_" + i, "inventory"));
@@ -750,19 +778,19 @@ public class ClientProxy extends CommonProxy {
         for (int i : new int[]{0, 14, 15}) {
             ModelLoader.setCustomModelResourceLocation(Item.getItemFromBlock(ConfigBlocks.blockTable), i, new ModelResourceLocation("thaumcraft:blocktable", "normal"));
         }
-        ModelLoader.setCustomModelResourceLocation(Item.getItemFromBlock(ConfigBlocks.blockChestHungry), 0, new ModelResourceLocation("thaumcraft:blockchesthungry", "normal"));
+        ModelLoader.setCustomModelResourceLocation(Item.getItemFromBlock(ConfigBlocks.blockChestHungry), 0, new ModelResourceLocation("thaumcraft:blockchesthungry", "inventory"));
         ModelLoader.setCustomModelResourceLocation(Item.getItemFromBlock(ConfigBlocks.blockLifter), 0, new ModelResourceLocation("thaumcraft:blocklifter", "normal"));
         ModelLoader.setCustomModelResourceLocation(Item.getItemFromBlock(ConfigBlocks.blockMagicBox), 0, new ModelResourceLocation("thaumcraft:blockmagicbox", "normal"));
         ModelLoader.setCustomModelResourceLocation(Item.getItemFromBlock(ConfigBlocks.blockAlchemyFurnace), 0, new ModelResourceLocation("thaumcraft:blockalchemyfurnace", "normal"));
         for (int i : new int[]{0, 1, 3}) {
-            ModelLoader.setCustomModelResourceLocation(Item.getItemFromBlock(ConfigBlocks.blockJar), i, new ModelResourceLocation("thaumcraft:blockjar", "normal"));
+            ModelLoader.setCustomModelResourceLocation(Item.getItemFromBlock(ConfigBlocks.blockJar), i, new ModelResourceLocation("thaumcraft:blockjar_" + i, "inventory"));
         }
         for (int i = 0; i < 16; i++) {
             ModelLoader.setCustomModelResourceLocation(Item.getItemFromBlock(ConfigBlocks.blockCandle), i, new ModelResourceLocation("thaumcraft:blockcandle", "normal"));
         }
         // Eldritch per-meta models
         ModelLoader.setCustomModelResourceLocation(Item.getItemFromBlock(ConfigBlocks.blockEldritch), 4, new ModelResourceLocation("thaumcraft:blockeldritch_4", "inventory"));
-        ModelLoader.setCustomModelResourceLocation(Item.getItemFromBlock(ConfigBlocks.blockAiry), 0, new ModelResourceLocation("thaumcraft:blockairy", "normal"));
+        ModelLoader.setCustomModelResourceLocation(Item.getItemFromBlock(ConfigBlocks.blockAiry), 0, new ModelResourceLocation("thaumcraft:blockairy_0", "inventory"));
         ModelLoader.setCustomModelResourceLocation(Item.getItemFromBlock(ConfigBlocks.blockManaPod), 0, new ModelResourceLocation("thaumcraft:blockmanapod", "normal"));
         ModelLoader.setCustomModelResourceLocation(Item.getItemFromBlock(ConfigBlocks.blockArcaneFurnace), 0, new ModelResourceLocation("thaumcraft:blockarcanefurnace", "normal"));
         ModelLoader.setCustomModelResourceLocation(Item.getItemFromBlock(ConfigBlocks.blockWarded), 0, new ModelResourceLocation("thaumcraft:blockwarded", "normal"));
@@ -869,6 +897,7 @@ public class ClientProxy extends CommonProxy {
       this.registerTileEntitySpecialRenderer(TileDeconstructionTable.class, new TileDeconstructionTableRenderer());
       this.registerTileEntitySpecialRenderer(TileEldritchAltar.class, new TileEldritchCapRenderer("textures/models/obelisk_cap_altar.png"));
       this.registerTileEntitySpecialRenderer(TileEldritchCap.class, new TileEldritchCapRenderer("textures/models/obelisk_cap.png"));
+      this.registerTileEntitySpecialRenderer(TileEldritchStone.class, new thaumcraft.client.renderers.compat.BlockRendererDispatcherTESR<>(new BlockEldritchRenderer()));
       this.registerTileEntitySpecialRenderer(TileEldritchCrabSpawner.class, new TileEldritchCrabSpawnerRenderer());
       this.registerTileEntitySpecialRenderer(TileEldritchNothing.class, new TileEldritchNothingRenderer());
       this.registerTileEntitySpecialRenderer(TileEldritchObelisk.class, new TileEldritchObeliskRenderer());
@@ -1607,6 +1636,7 @@ public class ClientProxy extends CommonProxy {
       ic.registerItemColorHandler((stack, ti) -> ((thaumcraft.common.items.ItemResource)stack.getItem()).getColorFromItemStack(stack, ti), ConfigItems.itemResource);
       ic.registerItemColorHandler((stack, ti) -> ((thaumcraft.common.items.ItemResearchNotes)stack.getItem()).getColorFromItemStack(stack, ti), ConfigItems.itemResearchNotes);
       ic.registerItemColorHandler((stack, ti) -> ((thaumcraft.common.items.baubles.ItemBaubleBlanks)stack.getItem()).getColorFromItemStack(stack, ti), ConfigItems.itemBaubleBlanks);
+      ic.registerItemColorHandler((stack, ti) -> ((thaumcraft.common.entities.ItemSpawnerEgg)stack.getItem()).getColorFromItemStack(stack, ti), ConfigItems.itemSpawnerEgg);
 
       // Greatwood leaves: biome foliage tint; silverwood: no tint
       bc.registerBlockColorHandler((state, world, pos, ti) -> {

@@ -1,6 +1,1 @@
-{
-  "parent": "item/generated",
-  "textures": {
-    "layer0": "thaumcraft:items/blank"
-  }
-}
+{"parent":"item/template_spawn_egg"}

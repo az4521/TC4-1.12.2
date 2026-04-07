@@ -4,6 +4,23 @@
     "top": "thaumcraft:blocks/pedestal_top",
     "particle": "thaumcraft:blocks/pedestal_side"
   },
+  "display": {
+    "gui": {
+      "rotation": [30, 225, 0],
+      "translation": [0, 0, 0],
+      "scale": [0.625, 0.625, 0.625]
+    },
+    "ground": {
+      "rotation": [0, 0, 0],
+      "translation": [0, 3, 0],
+      "scale": [0.45, 0.45, 0.45]
+    },
+    "fixed": {
+      "rotation": [0, 180, 0],
+      "translation": [0, 0, 0],
+      "scale": [0.5, 0.5, 0.5]
+    }
+  },
   "elements": [
     {
       "from": [0, 0, 0],

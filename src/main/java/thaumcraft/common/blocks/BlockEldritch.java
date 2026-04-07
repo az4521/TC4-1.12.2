@@ -19,6 +19,7 @@ import net.minecraft.util.math.BlockPos;
 
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
+import net.minecraft.util.EnumBlockRenderType;
 import thaumcraft.client.fx.ParticleEngine;
 import thaumcraft.client.fx.particles.FXSpark;
 import thaumcraft.common.Thaumcraft;
@@ -48,10 +49,18 @@ public class BlockEldritch extends BlockContainer {
       return state.getValue(META);
    }
 
+   @Override
+   public net.minecraft.block.state.IBlockState getStateForPlacement(World world, BlockPos pos, EnumFacing facing,
+         float hitX, float hitY, float hitZ, int meta, net.minecraft.entity.EntityLivingBase placer,
+         EnumHand hand) {
+      return this.getStateFromMeta(meta);
+   }
+
    private Random rand = new Random();
 
    public BlockEldritch() {
       super(Material.ROCK);
+      this.setDefaultState(this.blockState.getBaseState().withProperty(META, 0));
       this.setResistance(20000.0F);
       this.setHardness(50.0F);
       // setStepSound removed in 1.12.2 — sound is now data-driven
@@ -88,7 +97,7 @@ public class BlockEldritch extends BlockContainer {
    @Override
    public boolean hasTileEntity(IBlockState state) {
       int metadata = this.getMetaFromState(state);
-      return metadata == 0 || metadata == 1 || metadata == 3 || metadata == 8 || metadata == 9 || metadata == 10;
+      return metadata == 0 || metadata == 1 || metadata == 3 || metadata == 4 || metadata == 5 || metadata == 6 || metadata == 8 || metadata == 9 || metadata == 10;
    }
 
    @Override
@@ -97,6 +106,7 @@ public class BlockEldritch extends BlockContainer {
       if (metadata == 0) return new TileEldritchAltar();
       if (metadata == 1) return new TileEldritchObelisk();
       if (metadata == 3) return new TileEldritchCap();
+      if (metadata == 4 || metadata == 5 || metadata == 6) return new TileEldritchStone();
       if (metadata == 8) return new TileEldritchLock();
       if (metadata == 9) return new TileEldritchCrabSpawner();
       if (metadata == 10) return new TileEldritchTrap();
@@ -105,11 +115,15 @@ public class BlockEldritch extends BlockContainer {
 
    @Override
    public TileEntity createNewTileEntity(World worldIn, int meta) {
+      if (meta == 0) return new TileEldritchAltar();
+      if (meta == 1) return new TileEldritchObelisk();
+      if (meta == 3) return new TileEldritchCap();
+      if (meta == 4 || meta == 5 || meta == 6) return new TileEldritchStone();
+      if (meta == 8) return new TileEldritchLock();
+      if (meta == 9) return new TileEldritchCrabSpawner();
+      if (meta == 10) return new TileEldritchTrap();
       return null;
    }
-
-   // getRenderType() removed — defaults to MODEL in 1.12.2
-   // renderAsNormalBlock() removed in 1.12.2
 
    @Override
    public boolean isOpaqueCube(IBlockState state) {
@@ -272,8 +286,8 @@ public class BlockEldritch extends BlockContainer {
    @Override
    public net.minecraft.util.EnumBlockRenderType getRenderType(net.minecraft.block.state.IBlockState state) {
       int meta = state.getValue(META);
-      // Solid blocks (4-6,9,10) use block model; TESR blocks (0-3,7,8) use INVISIBLE
-      if (meta >= 4 && meta <= 6 || meta == 9 || meta == 10) return net.minecraft.util.EnumBlockRenderType.MODEL;
+      if (meta >= 4 && meta <= 6) return EnumBlockRenderType.ENTITYBLOCK_ANIMATED;
+      if (meta == 9 || meta == 10) return EnumBlockRenderType.MODEL;
       return net.minecraft.util.EnumBlockRenderType.INVISIBLE;
    }
 }

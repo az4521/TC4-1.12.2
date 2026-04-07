@@ -88,6 +88,7 @@ public class BlockCosmeticSolid extends Block {
 
    public BlockCosmeticSolid() {
       super(Material.ROCK);
+      this.setDefaultState(this.blockState.getBaseState().withProperty(VARIANT, SolidVariant.OBSIDIANTOTEM));
       this.setResistance(10.0F);
       this.setHardness(2.0F);
       this.setSoundType(SoundType.STONE);

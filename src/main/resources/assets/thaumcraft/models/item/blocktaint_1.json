@@ -1,6 +1,1 @@
-{
-  "parent": "item/generated",
-  "textures": {
-    "layer0": "thaumcraft:blocks/taint_soil"
-  }
-}
+{"parent":"thaumcraft:block/blocktaint_taintsoil"}
