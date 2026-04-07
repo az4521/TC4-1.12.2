@@ -249,6 +249,7 @@ public class BlockAlchemyFurnace extends BlockContainer {
 
    @Override
    public net.minecraft.util.EnumBlockRenderType getRenderType(net.minecraft.block.state.IBlockState state) {
-      return net.minecraft.util.EnumBlockRenderType.MODEL;
+      int meta = this.getMetaFromState(state);
+      return meta == 0 ? net.minecraft.util.EnumBlockRenderType.ENTITYBLOCK_ANIMATED : net.minecraft.util.EnumBlockRenderType.INVISIBLE;
    }
 }

@@ -25,6 +25,7 @@ import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import thaumcraft.common.Thaumcraft;
 import thaumcraft.common.tiles.TileArcaneFurnace;
+import thaumcraft.common.tiles.TileArcaneFurnacePart;
 import thaumcraft.common.tiles.TileArcaneFurnaceNozzle;
 
 import java.util.List;
@@ -57,8 +58,116 @@ public class BlockArcaneFurnace extends BlockContainer {
       this.setDefaultState(this.blockState.getBaseState().withProperty(META, 0));
    }
 
-   // registerBlockIcons, getIcon, calculateTexture, calculateLevel removed —
-   // textures are handled by JSON models in 1.12.2.
+   public int calculateTextureIndex(IBlockAccess world, int x, int y, int z, int side) {
+      int meta = this.getMetaFromState(world.getBlockState(new BlockPos(x, y, z)));
+      int level = this.calculateLevel(world, x, y, z);
+      int add = this.isBlockTouchingOnSide(world, x, y, z, side) ? 3 : 0;
+
+      switch (side) {
+         case 0:
+         case 1:
+            if (side == 1 && level == 18) {
+               switch (meta) {
+                  case 2:
+                     return 16;
+                  case 4:
+                     return 17;
+                  case 6:
+                     return 26;
+                  case 8:
+                     return 25;
+                  default:
+                     break;
+               }
+            }
+
+            if (add != 3) {
+               if (meta == 5) {
+                  return 10;
+               }
+
+               int index = (meta - 1) % 3 + (meta - 1) / 3 * 9;
+               return index < 0 ? 7 : index;
+            }
+            return 6;
+         case 2:
+            switch (meta) {
+               case 1:
+                  return 2 + level + add;
+               case 2:
+                  return 1 + level + add;
+               case 3:
+                  return level + add;
+               default:
+                  return level != 9 ? 7 : 6;
+            }
+         case 3:
+            switch (meta) {
+               case 7:
+                  return level + add;
+               case 8:
+                  return 1 + level + add;
+               case 9:
+                  return 2 + level + add;
+               default:
+                  return level != 9 ? 7 : 6;
+            }
+         case 4:
+            switch (meta) {
+               case 1:
+                  return level + add;
+               case 4:
+                  return 1 + level + add;
+               case 7:
+                  return 2 + level + add;
+               default:
+                  return level != 9 ? 7 : 6;
+            }
+         case 5:
+            switch (meta) {
+               case 3:
+                  return 2 + level + add;
+               case 6:
+                  return 1 + level + add;
+               case 9:
+                  return level + add;
+               default:
+                  return level != 9 ? 7 : 6;
+            }
+         default:
+            return add == 0 ? 7 : 6;
+      }
+   }
+
+   public int calculateLevel(IBlockAccess world, int x, int y, int z) {
+      int meta = this.getMetaFromState(world.getBlockState(new BlockPos(x, y, z)));
+      IBlockState stateA = world.getBlockState(new BlockPos(x, y + 1, z));
+      IBlockState stateB = world.getBlockState(new BlockPos(x, y - 1, z));
+      Block blockA = stateA.getBlock();
+      Block blockB = stateB.getBlock();
+      int metaA = blockA == this ? this.getMetaFromState(stateA) : -1;
+      if (metaA == 10 || metaA == 0) {
+         metaA = meta;
+      }
+
+      int metaB = blockB == this ? this.getMetaFromState(stateB) : -1;
+      if (metaB == 10 || metaB == 0) {
+         metaB = meta;
+      }
+
+      if (meta == metaA && meta == metaB && this == blockA && this == blockB) {
+         return 9;
+      }
+
+      return meta != metaA || this != blockA || meta == metaB && this == blockB ? 0 : 18;
+   }
+
+   private boolean isBlockTouchingOnSide(IBlockAccess world, int x, int y, int z, int side) {
+      EnumFacing facing = EnumFacing.byIndex(side);
+      BlockPos pos = new BlockPos(x, y, z).offset(facing);
+      IBlockState state = world.getBlockState(pos);
+      return state.getBlock() == this && this.getMetaFromState(state) == 10;
+   }
 
    public int getLightValue(IBlockAccess world, BlockPos pos) {
       IBlockState state = world.getBlockState(pos);
@@ -181,7 +290,22 @@ public class BlockArcaneFurnace extends BlockContainer {
    @SuppressWarnings("deprecation")
    public void breakBlock(World world, BlockPos pos, IBlockState state) {
       int meta = state.getBlock().getMetaFromState(state);
-      if (meta == 0 && !world.isRemote) {
+      if (!world.isRemote && meta == 10) {
+         BlockPos center = null;
+         if (world.getBlockState(pos.west()).getBlock() == this && this.getMetaFromState(world.getBlockState(pos.west())) == 0) {
+            center = pos.west();
+         } else if (world.getBlockState(pos.east()).getBlock() == this && this.getMetaFromState(world.getBlockState(pos.east())) == 0) {
+            center = pos.east();
+         } else if (world.getBlockState(pos.north()).getBlock() == this && this.getMetaFromState(world.getBlockState(pos.north())) == 0) {
+            center = pos.north();
+         } else if (world.getBlockState(pos.south()).getBlock() == this && this.getMetaFromState(world.getBlockState(pos.south())) == 0) {
+            center = pos.south();
+         }
+
+         if (center != null) {
+            this.restoreBlocks(world, center);
+         }
+      } else if (meta == 0 && !world.isRemote) {
          TileEntity te = world.getTileEntity(pos);
          if (te instanceof TileArcaneFurnace) {
             Entity blaze = EntityList.createEntityByIDFromName(
@@ -255,6 +379,8 @@ public class BlockArcaneFurnace extends BlockContainer {
       int meta = state.getBlock().getMetaFromState(state);
       if (meta == 0) {
          return new TileArcaneFurnace();
+      } else if (meta == 1 || meta == 3 || meta == 7 || meta == 9 || meta == 10) {
+         return new TileArcaneFurnacePart();
       } else if (meta == 2 || meta == 4 || meta == 5 || meta == 6 || meta == 8) {
          return new TileArcaneFurnaceNozzle();
       }
@@ -265,6 +391,8 @@ public class BlockArcaneFurnace extends BlockContainer {
    public TileEntity createNewTileEntity(World world, int meta) {
       if (meta == 0) {
          return new TileArcaneFurnace();
+      } else if (meta == 1 || meta == 3 || meta == 7 || meta == 9 || meta == 10) {
+         return new TileArcaneFurnacePart();
       } else if (meta == 2 || meta == 4 || meta == 5 || meta == 6 || meta == 8) {
          return new TileArcaneFurnaceNozzle();
       }
@@ -273,7 +401,8 @@ public class BlockArcaneFurnace extends BlockContainer {
 
    @Override
    public boolean hasTileEntity(IBlockState state) {
-      return true;
+      int meta = this.getMetaFromState(state);
+      return meta >= 0 && meta <= 10;
    }
 
    @Override
@@ -290,6 +419,6 @@ public class BlockArcaneFurnace extends BlockContainer {
 
    @Override
    public net.minecraft.util.EnumBlockRenderType getRenderType(net.minecraft.block.state.IBlockState state) {
-      return net.minecraft.util.EnumBlockRenderType.MODEL;
+      return net.minecraft.util.EnumBlockRenderType.ENTITYBLOCK_ANIMATED;
    }
 }

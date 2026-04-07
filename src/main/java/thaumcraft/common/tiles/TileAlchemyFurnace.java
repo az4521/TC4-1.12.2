@@ -37,6 +37,7 @@ public class TileAlchemyFurnace extends TileThaumcraft implements ISidedInventor
    public int furnaceCookTime;
    private String customName;
    int count = 0;
+   public EnumFacing facing = EnumFacing.SOUTH;
 
    public TileAlchemyFurnace() {
       java.util.Arrays.fill(this.furnaceItemStacks, ItemStack.EMPTY);
@@ -110,11 +111,18 @@ public class TileAlchemyFurnace extends TileThaumcraft implements ISidedInventor
    public void readCustomNBT(NBTTagCompound nbttagcompound) {
       this.furnaceBurnTime = nbttagcompound.getShort("BurnTime");
       this.vis = nbttagcompound.getShort("Vis");
+      if (nbttagcompound.hasKey("Facing")) {
+         EnumFacing loaded = EnumFacing.byIndex(nbttagcompound.getByte("Facing"));
+         if (loaded.getAxis().isHorizontal()) {
+            this.facing = loaded;
+         }
+      }
    }
 
    public void writeCustomNBT(NBTTagCompound nbttagcompound) {
       nbttagcompound.setShort("BurnTime", (short)this.furnaceBurnTime);
       nbttagcompound.setShort("Vis", (short)this.vis);
+      nbttagcompound.setByte("Facing", (byte)this.facing.getIndex());
    }
 
    public void readFromNBT(NBTTagCompound nbtCompound) {

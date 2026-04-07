@@ -859,7 +859,7 @@ public class WandManager implements IWandTriggerManager {
                 for (int b = -1; b <= 1; ++b) {
                     for (int c = -1; c <= 1; ++c) {
                         if (world.getBlockState(new net.minecraft.util.math.BlockPos(x + a, y + b, z + c)).getBlock() == ConfigBlocks.blockStoneDevice &&
-        world.getBlockState(new net.minecraft.util.math.BlockPos(x + a, y + b, z + c)).getBlock().getMetaFromState(world.getBlockState(new net.minecraft.util.math.BlockPos(x + a, y + b, z + c))) == 0) {
+        isAdvancedAlchemyCenter(world.getBlockState(new net.minecraft.util.math.BlockPos(x + a, y + b, z + c)))) {
                             for (int aa = -1; aa <= 1; ++aa) {
                                 for (int bb = 0; bb <= 1; ++bb) {
                                     int cc = -1;
@@ -869,7 +869,7 @@ public class WandManager implements IWandTriggerManager {
         world.getBlockState(new net.minecraft.util.math.BlockPos(x + a + aa, y + b + bb, z + c + cc)).getBlock().getMetaFromState(world.getBlockState(new net.minecraft.util.math.BlockPos(x + a + aa, y + b + bb, z + c + cc))) == 1) {
                                             if (blueprint[bb][aa + 1][cc + 1] != 2 || world.getBlockState(new net.minecraft.util.math.BlockPos(x + a + aa, y + b + bb, z + c + cc)).getBlock() == ConfigBlocks.blockMetalDevice && world.getBlockState(new net.minecraft.util.math.BlockPos(x + a + aa, y + b + bb, z + c + cc)).getBlock().getMetaFromState(world.getBlockState(new net.minecraft.util.math.BlockPos(x + a + aa, y + b + bb, z + c + cc))) == 9) {
                                                 if (blueprint[bb][aa + 1][cc + 1] != 4 || world.getBlockState(new net.minecraft.util.math.BlockPos(x + a + aa, y + b + bb, z + c + cc)).getBlock() == ConfigBlocks.blockMetalDevice && world.getBlockState(new net.minecraft.util.math.BlockPos(x + a + aa, y + b + bb, z + c + cc)).getBlock().getMetaFromState(world.getBlockState(new net.minecraft.util.math.BlockPos(x + a + aa, y + b + bb, z + c + cc))) == 3) {
-                                                    if (blueprint[bb][aa + 1][cc + 1] != 3 || world.getBlockState(new net.minecraft.util.math.BlockPos(x + a + aa, y + b + bb, z + c + cc)).getBlock() == ConfigBlocks.blockStoneDevice && world.getBlockState(new net.minecraft.util.math.BlockPos(x + a + aa, y + b + bb, z + c + cc)).getBlock().getMetaFromState(world.getBlockState(new net.minecraft.util.math.BlockPos(x + a + aa, y + b + bb, z + c + cc))) == 0) {
+                                                    if (blueprint[bb][aa + 1][cc + 1] != 3 || isAdvancedAlchemyCenter(world.getBlockState(new net.minecraft.util.math.BlockPos(x + a + aa, y + b + bb, z + c + cc)))) {
                                                         ++cc;
                                                         continue;
                                                     }
@@ -927,5 +927,13 @@ public class WandManager implements IWandTriggerManager {
 
         }
         return false;
+    }
+
+    private static boolean isAdvancedAlchemyCenter(net.minecraft.block.state.IBlockState state) {
+        if (state.getBlock() != ConfigBlocks.blockStoneDevice) {
+            return false;
+        }
+        int meta = state.getBlock().getMetaFromState(state);
+        return meta == 0 || meta == 6 || meta == 7 || meta == 15;
     }
 }

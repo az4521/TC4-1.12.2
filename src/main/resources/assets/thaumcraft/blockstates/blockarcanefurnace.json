@@ -1,7 +1,7 @@
 {
   "variants": {
     "meta=0": {
-      "model": "thaumcraft:blockarcanefurnace_core"
+      "model": "thaumcraft:blockarcanefurnace_lava"
     },
     "meta=1": {
       "model": "thaumcraft:blockarcanefurnace_netherbrick"
@@ -49,7 +49,7 @@
       "model": "thaumcraft:blockarcanefurnace_obsidian"
     },
     "normal": {
-      "model": "thaumcraft:blockarcanefurnace_core"
+      "model": "thaumcraft:blockarcanefurnace_lava"
     }
   }
 }

@@ -882,6 +882,9 @@ public class ClientProxy extends CommonProxy {
       this.registerTileEntitySpecialRenderer(TileArcaneLampGrowth.class, new thaumcraft.client.renderers.compat.BlockRendererDispatcherTESR<>(new BlockMetalDeviceRenderer()));
       this.registerTileEntitySpecialRenderer(TileArcaneLampFertility.class, new thaumcraft.client.renderers.compat.BlockRendererDispatcherTESR<>(new BlockMetalDeviceRenderer()));
       this.registerTileEntitySpecialRenderer(TileArcaneWorkbench.class, new TileArcaneWorkbenchRenderer());
+      this.registerTileEntitySpecialRenderer(TileArcaneFurnace.class, new thaumcraft.client.renderers.compat.BlockRendererDispatcherTESR<>(new BlockArcaneFurnaceRenderer()));
+      this.registerTileEntitySpecialRenderer(TileArcaneFurnacePart.class, new thaumcraft.client.renderers.compat.BlockRendererDispatcherTESR<>(new BlockArcaneFurnaceRenderer()));
+      this.registerTileEntitySpecialRenderer(TileArcaneFurnaceNozzle.class, new thaumcraft.client.renderers.compat.BlockRendererDispatcherTESR<>(new BlockArcaneFurnaceRenderer()));
       this.registerTileEntitySpecialRenderer(TileBanner.class, new TileBannerRenderer());
       this.registerTileEntitySpecialRenderer(TileBrainbox.class, new thaumcraft.client.renderers.compat.BlockRendererDispatcherTESR<>(new BlockMetalDeviceRenderer()));
       this.registerTileEntitySpecialRenderer(TileMetalDevice.class, new thaumcraft.client.renderers.compat.BlockRendererDispatcherTESR<>(new BlockMetalDeviceRenderer()));
@@ -932,7 +935,6 @@ public class ClientProxy extends CommonProxy {
       this.registerTileEntitySpecialRenderer(TileWarded.class, new TileWardedRenderer());
       this.registerTileEntitySpecialRenderer(TileFocalManipulator.class, new TileFocalManipulatorRenderer());
       this.registerTileEntitySpecialRenderer(TileAlchemyFurnaceAdvanced.class, new thaumcraft.client.renderers.tile.TileAlchemyFurnaceAdvancedRenderer());
-      this.registerTileEntitySpecialRenderer(TileArcaneFurnace.class, new thaumcraft.client.renderers.tile.TileArcaneFurnaceRenderer());
       this.registerTileEntitySpecialRenderer(TileFluxScrubber.class, new TileFluxScrubberRenderer());
    }
 

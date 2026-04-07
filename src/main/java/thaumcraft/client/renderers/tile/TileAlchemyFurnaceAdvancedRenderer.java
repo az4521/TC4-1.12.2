@@ -37,6 +37,9 @@ public class TileAlchemyFurnaceAdvancedRenderer extends TileEntitySpecialRendere
    public void render(TileAlchemyFurnaceAdvanced tile, double par2, double par4, double par6, float par8, int destroyStage, float alpha) {
       if (tile == null){return;}
       Block blockType = getBlockTypeSafely(tile);
+      TextureAtlasSprite fluxGoo = this.getAtlasSprite("thaumcraft:blocks/fluxgoo");
+      TextureAtlasSprite metalBase = this.getAtlasSprite("thaumcraft:blocks/metalbase");
+      TextureAtlasSprite fire = this.getAtlasSprite("minecraft:blocks/fire_layer_0");
       GlStateManager.pushMatrix();
       GlStateManager.translate((float)par2 + 0.5F, (float)par4, (float)par6 + 0.5F);
       GlStateManager.rotate(90.0F, -1.0F, 0.0F, 0.0F);
@@ -65,7 +68,7 @@ public class TileAlchemyFurnaceAdvancedRenderer extends TileEntitySpecialRendere
          GlStateManager.pushMatrix();
          GlStateManager.translate(0.5F, -0.5F, 1.1F);
          GlStateManager.rotate(180.0F, 0.0F, 1.0F, 0.0F);
-         this.renderQuadCenteredFromIcon(Minecraft.getMinecraft().getTextureMapBlocks().getMissingSprite(), 190, 0.0F);
+         this.renderQuadCenteredFromIcon(fluxGoo, 190, 0.0F);
          GlStateManager.popMatrix();
          GlStateManager.pushMatrix();
          float f = 1.0F - (float)tile.vis / (float)tile.maxVis;
@@ -78,10 +81,10 @@ public class TileAlchemyFurnaceAdvancedRenderer extends TileEntitySpecialRendere
             GlStateManager.translate(0.85F, -1.8F, -1.4F);
             GlStateManager.scale(0.3, 0.6, 1.0F);
             if (blockType != null){
-               this.renderQuadCenteredFromIcon(Minecraft.getMinecraft().getTextureMapBlocks().getMissingSprite(), 150, 0.0F);
+               this.renderQuadCenteredFromIcon(metalBase, 150, 0.0F);
             }
             GlStateManager.translate(0.0F, 0.0F, -0.01F);
-            this.renderQuadCenteredFromIcon(Minecraft.getMinecraft().getTextureMapBlocks().getMissingSprite(), 190, f);
+            this.renderQuadCenteredFromIcon(fluxGoo, 190, f);
             GlStateManager.popMatrix();
             GlStateManager.pushMatrix();
             GlStateManager.rotate((float)(90 * a), 0.0F, 0.0F, -1.0F);
@@ -89,10 +92,10 @@ public class TileAlchemyFurnaceAdvancedRenderer extends TileEntitySpecialRendere
             GlStateManager.translate(1.15F, 1.8F, -1.4F);
             GlStateManager.scale(-0.3, -0.6, -1.0F);
             if (blockType != null){
-               this.renderQuadCenteredFromIcon(Minecraft.getMinecraft().getTextureMapBlocks().getMissingSprite(), 150, 0.0F);
+               this.renderQuadCenteredFromIcon(metalBase, 150, 0.0F);
             }
             GlStateManager.translate(0.0F, 0.0F, 0.01F);
-            this.renderQuadCenteredFromIcon(Minecraft.getMinecraft().getTextureMapBlocks().getMissingSprite(), 190, f);
+            this.renderQuadCenteredFromIcon(fluxGoo, 190, f);
             GlStateManager.popMatrix();
             GlStateManager.popMatrix();
          }
@@ -111,11 +114,11 @@ public class TileAlchemyFurnaceAdvancedRenderer extends TileEntitySpecialRendere
             GlStateManager.rotate(180.0F, 0.0F, 0.0F, 1.0F);
             GlStateManager.translate(-0.5F, 0.0F, -1.0F);
             GlStateManager.pushMatrix();
-            this.renderQuadCenteredFromIcon(Minecraft.getMinecraft().getTextureMapBlocks().getMissingSprite(), 220, 1.0F - Math.min(1.0F, (float)tile.heat / (float)tile.maxPower));
+            this.renderQuadCenteredFromIcon(fire, 220, 1.0F - Math.min(1.0F, (float)tile.heat / (float)tile.maxPower));
             GlStateManager.popMatrix();
             GlStateManager.translate(0.0F, 0.0F, 0.05F);
             if (blockType != null){
-               this.renderQuadCenteredFromIcon(Minecraft.getMinecraft().getTextureMapBlocks().getMissingSprite(), 150, 0.0F);
+               this.renderQuadCenteredFromIcon(metalBase, 150, 0.0F);
             }
             GlStateManager.popMatrix();
          }
@@ -125,6 +128,10 @@ public class TileAlchemyFurnaceAdvancedRenderer extends TileEntitySpecialRendere
 
       GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
       GlStateManager.popMatrix();
+   }
+
+   private TextureAtlasSprite getAtlasSprite(String texture) {
+      return Minecraft.getMinecraft().getTextureMapBlocks().getAtlasSprite(texture);
    }
 
    public void renderQuadCenteredFromIcon(TextureAtlasSprite icon, int brightness, float width) {

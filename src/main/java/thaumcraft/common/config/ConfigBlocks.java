@@ -81,6 +81,7 @@ import thaumcraft.common.tiles.TileAlembic;
 import thaumcraft.common.tiles.TileArcaneBore;
 import thaumcraft.common.tiles.TileArcaneBoreBase;
 import thaumcraft.common.tiles.TileArcaneFurnace;
+import thaumcraft.common.tiles.TileArcaneFurnacePart;
 import thaumcraft.common.tiles.TileArcaneFurnaceNozzle;
 import thaumcraft.common.tiles.TileArcaneLamp;
 import thaumcraft.common.tiles.TileArcaneLampLight;
@@ -392,6 +393,7 @@ public class ConfigBlocks {
    private static void registerTileEntities() {
       GameRegistry.registerTileEntity(TileHole.class, new net.minecraft.util.ResourceLocation("thaumcraft", "TileHole"));
       GameRegistry.registerTileEntity(TileArcaneFurnace.class, new net.minecraft.util.ResourceLocation("thaumcraft", "TileArcaneFurnace"));
+      GameRegistry.registerTileEntity(TileArcaneFurnacePart.class, new net.minecraft.util.ResourceLocation("thaumcraft", "TileArcaneFurnacePart"));
       GameRegistry.registerTileEntity(TileArcaneFurnaceNozzle.class, new net.minecraft.util.ResourceLocation("thaumcraft", "TileArcaneFurnaceNozzle"));
       GameRegistry.registerTileEntity(TileCrucible.class, new net.minecraft.util.ResourceLocation("thaumcraft", "TileCrucible"));
       GameRegistry.registerTileEntity(TileAlembic.class, new net.minecraft.util.ResourceLocation("thaumcraft", "TileSiphon"));

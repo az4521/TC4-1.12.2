@@ -79,14 +79,25 @@ public class TileAlchemyFurnaceAdvanced extends TileThaumcraft {
                         BlockPos np = this.getPos().add(a, b, c);
                         net.minecraft.block.state.IBlockState nstate = this.world.getBlockState(np);
                         if (nstate.getBlock() == this.getBlockType()) {
-                           this.world.setBlockState(np, nstate.getBlock().getDefaultState(), 3);
+                           Block source = Block.getBlockFromItem(this.getBlockType().getItemDropped(nstate, this.world.rand, 0));
+                           if (source != null && source != net.minecraft.init.Blocks.AIR) {
+                              this.world.setBlockState(np, source.getStateFromMeta(this.getBlockType().damageDropped(nstate)), 3);
+                           } else {
+                              this.world.setBlockToAir(np);
+                           }
                         }
                      }
                   }
                }
             }
 
-            this.world.setBlockState(this.getPos(), this.getBlockType().getDefaultState(), 3);
+            net.minecraft.block.state.IBlockState selfState = this.world.getBlockState(this.getPos());
+            Block source = Block.getBlockFromItem(this.getBlockType().getItemDropped(selfState, this.world.rand, 0));
+            if (source != null && source != net.minecraft.init.Blocks.AIR) {
+               this.world.setBlockState(this.getPos(), source.getStateFromMeta(this.getBlockType().damageDropped(selfState)), 3);
+            } else {
+               this.world.setBlockToAir(this.getPos());
+            }
             return;
          }
 

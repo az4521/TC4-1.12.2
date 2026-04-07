@@ -44,7 +44,7 @@ public class BlockStoneDevice extends BlockContainer {
          net.minecraft.block.properties.PropertyDirection.create("facing", net.minecraft.util.EnumFacing.Plane.HORIZONTAL);
 
    private static boolean isAlchemyFurnaceMeta(int meta) {
-      return meta == 0 || meta == 6 || meta == 7 || meta == 15;
+      return meta == 0;
    }
 
    @Override
@@ -54,7 +54,7 @@ public class BlockStoneDevice extends BlockContainer {
 
    @Override
    public net.minecraft.block.state.IBlockState getStateFromMeta(int meta) {
-      if (isAlchemyFurnaceMeta(meta)) {
+      if (meta == 0 || meta == 6 || meta == 7 || meta == 15) {
          return this.getDefaultState()
                .withProperty(META, 0)
                .withProperty(FACING, getFacingForAlchemyFurnaceMeta(meta));
@@ -66,7 +66,7 @@ public class BlockStoneDevice extends BlockContainer {
    public int getMetaFromState(net.minecraft.block.state.IBlockState state) {
       int meta = state.getValue(META);
       if (meta == 0) {
-         return getAlchemyFurnaceMetaForFacing(state.getValue(FACING));
+         return 0;
       }
       return meta;
    }
@@ -97,6 +97,30 @@ public class BlockStoneDevice extends BlockContainer {
          default:
             return 0;
       }
+   }
+
+   @Override
+   @SuppressWarnings("deprecation")
+   public net.minecraft.block.state.IBlockState getActualState(net.minecraft.block.state.IBlockState state, IBlockAccess world, BlockPos pos) {
+      if (state.getValue(META) == 0) {
+         TileEntity te = world.getTileEntity(pos);
+         if (te instanceof TileAlchemyFurnace) {
+            EnumFacing facing = ((TileAlchemyFurnace) te).facing;
+            if (facing != null && facing.getAxis().isHorizontal()) {
+               return state.withProperty(FACING, facing);
+            }
+         }
+      }
+      return state;
+   }
+
+   @Override
+   public net.minecraft.block.state.IBlockState getStateForPlacement(World world, BlockPos pos, EnumFacing facing,
+         float hitX, float hitY, float hitZ, int meta, net.minecraft.entity.EntityLivingBase placer, EnumHand hand) {
+      if (meta == 0 || meta == 6 || meta == 7 || meta == 15) {
+         return this.getDefaultState().withProperty(META, 0).withProperty(FACING, placer.getHorizontalFacing().getOpposite());
+      }
+      return this.getStateFromMeta(meta);
    }
 
 
@@ -207,6 +231,20 @@ public class BlockStoneDevice extends BlockContainer {
          return new TileFocalManipulator();
       } else {
          return metadata == 14 ? new TileFluxScrubber() : null;
+      }
+   }
+
+   @Override
+   public void onBlockPlacedBy(World world, BlockPos pos, IBlockState state, net.minecraft.entity.EntityLivingBase placer, ItemStack stack) {
+      super.onBlockPlacedBy(world, pos, state, placer, stack);
+      if (state.getValue(META) == 0) {
+         TileEntity te = world.getTileEntity(pos);
+         if (te instanceof TileAlchemyFurnace) {
+            ((TileAlchemyFurnace) te).facing = placer.getHorizontalFacing().getOpposite();
+            te.markDirty();
+            IBlockState updated = world.getBlockState(pos);
+            world.notifyBlockUpdate(pos, updated, updated, 3);
+         }
       }
    }
 
