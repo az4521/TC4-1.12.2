@@ -28,6 +28,7 @@ public class ItemChestHungryRenderer implements IItemRenderer {
          GlStateManager.rotate(225.0F, 0.0F, 1.0F, 0.0F);
          GlStateManager.scale(0.625F, 0.625F, 0.625F);
       } else if (type == ItemRenderType.EQUIPPED || type == ItemRenderType.EQUIPPED_FIRST_PERSON) {
+         GlStateManager.translate(0.42F, 0.26F, 0.22F);
          GlStateManager.scale(0.625F, 0.625F, 0.625F);
       }
 

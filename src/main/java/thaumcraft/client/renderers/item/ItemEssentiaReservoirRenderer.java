@@ -30,7 +30,11 @@ public class ItemEssentiaReservoirRenderer implements IItemRenderer {
          this.renderer.renderInventoryBlock(ConfigBlocks.blockEssentiaReservoir, item.getItemDamage(), ConfigBlocks.blockEssentiaReservoirRI, this.renderBlocks);
          org.lwjgl.opengl.GL11.glPopMatrix();
       } else {
+         org.lwjgl.opengl.GL11.glPushMatrix();
+         org.lwjgl.opengl.GL11.glTranslatef(0.42F, 0.26F, 0.22F);
+         org.lwjgl.opengl.GL11.glScalef(0.625F, 0.625F, 0.625F);
          this.renderer.renderInventoryBlock(ConfigBlocks.blockEssentiaReservoir, item.getItemDamage(), ConfigBlocks.blockEssentiaReservoirRI, this.renderBlocks);
+         org.lwjgl.opengl.GL11.glPopMatrix();
       }
    }
 }
