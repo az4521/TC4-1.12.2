@@ -10,7 +10,7 @@
       "model": "thaumcraft:blockmetaldevice_lamp"
     },
     "meta=3": {
-      "model": "thaumcraft:blockmetaldevice"
+      "model": "thaumcraft:blockmetaldevice_construct_adv"
     },
     "meta=4": {
       "model": "thaumcraft:blockmetaldevice"
@@ -22,13 +22,13 @@
       "model": "thaumcraft:blockmetaldevice_ear"
     },
     "meta=7": {
-      "model": "thaumcraft:blockmetaldevice"
+      "model": "thaumcraft:blockmetaldevice_lamp_arcane"
     },
     "meta=8": {
-      "model": "thaumcraft:blockmetaldevice"
+      "model": "thaumcraft:blockmetaldevice_lamp_growth"
     },
     "meta=9": {
-      "model": "thaumcraft:blockmetaldevice"
+      "model": "thaumcraft:blockmetaldevice_construct"
     },
     "meta=10": {
       "model": "thaumcraft:blockmetaldevice"
@@ -37,10 +37,10 @@
       "model": "thaumcraft:blockmetaldevice"
     },
     "meta=12": {
-      "model": "thaumcraft:blockmetaldevice"
+      "model": "thaumcraft:blockmetaldevice_brainbox"
     },
     "meta=13": {
-      "model": "thaumcraft:blockmetaldevice"
+      "model": "thaumcraft:blockmetaldevice_lamp_fertility"
     },
     "meta=14": {
       "model": "thaumcraft:blockmetaldevice"

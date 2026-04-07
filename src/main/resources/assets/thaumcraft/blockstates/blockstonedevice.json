@@ -1,52 +1,55 @@
 {
   "variants": {
-    "meta=0": {
+    "facing=south,meta=0": {
+      "model": "thaumcraft:blockstonedevice_furnace",
+      "y": 180
+    },
+    "facing=west,meta=0": {
+      "model": "thaumcraft:blockstonedevice_furnace",
+      "y": 270
+    },
+    "facing=north,meta=0": {
       "model": "thaumcraft:blockstonedevice_furnace"
     },
-    "meta=1": {
+    "facing=east,meta=0": {
+      "model": "thaumcraft:blockstonedevice_furnace",
+      "y": 90
+    },
+    "facing=south,meta=1": {
       "model": "thaumcraft:blockstonedevice_pedestal"
     },
-    "meta=2": {
+    "facing=south,meta=2": {
       "model": "thaumcraft:blockstonedevice_matrix"
     },
-    "meta=3": {
+    "facing=south,meta=3": {
       "model": "thaumcraft:blockstonedevice_pillar"
     },
-    "meta=4": {
+    "facing=south,meta=4": {
       "model": "thaumcraft:blockstonedevice_pillar_top"
     },
-    "meta=5": {
+    "facing=south,meta=5": {
       "model": "thaumcraft:blockstonedevice_wandpedestal"
     },
-    "meta=8": {
+    "facing=south,meta=8": {
       "model": "thaumcraft:blockstonedevice_wandpedestal_focus"
     },
-    "meta=9": {
+    "facing=south,meta=9": {
       "model": "thaumcraft:blockstonedevice_stabilizer"
     },
-    "meta=10": {
+    "facing=south,meta=10": {
       "model": "thaumcraft:blockstonedevice_stabilizer2"
     },
-    "meta=11": {
+    "facing=south,meta=11": {
       "model": "thaumcraft:blockstonedevice_converter"
     },
-    "meta=12": {
+    "facing=south,meta=12": {
       "model": "thaumcraft:blockstonedevice_spa"
     },
-    "meta=13": {
+    "facing=south,meta=13": {
       "model": "thaumcraft:blockstonedevice_focal"
     },
-    "meta=14": {
+    "facing=south,meta=14": {
       "model": "thaumcraft:blockstonedevice_scrubber"
-    },
-    "meta=6": {
-      "model": "thaumcraft:blockstonedevice_furnace"
-    },
-    "meta=7": {
-      "model": "thaumcraft:blockstonedevice_furnace"
-    },
-    "meta=15": {
-      "model": "thaumcraft:blockstonedevice_furnace"
     }
   }
 }

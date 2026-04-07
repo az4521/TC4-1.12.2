@@ -35,36 +35,36 @@ public class TileMagicWorkbench extends TileThaumcraft implements IInventory, IS
          int var3 = par1 + par2 * 3;
          return this.getStackInSlot(var3);
       } else {
-         return null;
+         return ItemStack.EMPTY;
       }
    }
 
    public void clear() {
-      java.util.Arrays.fill(this.stackList, null);
+      java.util.Arrays.fill(this.stackList, ItemStack.EMPTY);
    }
 
    public ItemStack getStackInSlotOnClosing(int par1) {
-      if (this.stackList[par1] != null) {
+      if (this.stackList[par1] != null && !this.stackList[par1].isEmpty()) {
          ItemStack var2 = this.stackList[par1];
-         this.stackList[par1] = null;
+         this.stackList[par1] = ItemStack.EMPTY;
          this.markDirty();
          return var2;
       } else {
-         return null;
+         return ItemStack.EMPTY;
       }
    }
 
    public ItemStack decrStackSize(int par1, int par2) {
-      if (this.stackList[par1] != null) {
+      if (this.stackList[par1] != null && !this.stackList[par1].isEmpty()) {
           ItemStack var3;
           if (this.stackList[par1].getCount() <= par2) {
               var3 = this.stackList[par1];
-            this.stackList[par1] = null;
+            this.stackList[par1] = ItemStack.EMPTY;
 
           } else {
               var3 = this.stackList[par1].splitStack(par2);
-            if (this.stackList[par1].getCount() == 0) {
-               this.stackList[par1] = null;
+            if (this.stackList[par1].isEmpty()) {
+               this.stackList[par1] = ItemStack.EMPTY;
             }
 
           }
@@ -75,7 +75,7 @@ public class TileMagicWorkbench extends TileThaumcraft implements IInventory, IS
           { net.minecraft.block.state.IBlockState _bs = this.world.getBlockState(this.pos); this.world.notifyBlockUpdate(this.pos, _bs, _bs, 3); }
           return var3;
       } else {
-         return null;
+         return ItemStack.EMPTY;
       }
    }
    public static void updateCraftingMatrix(TileMagicWorkbench self) {
@@ -94,7 +94,7 @@ public class TileMagicWorkbench extends TileThaumcraft implements IInventory, IS
       }
    }
    public void setInventorySlotContents(int par1, ItemStack par2ItemStack) {
-      this.stackList[par1] = par2ItemStack;
+      this.stackList[par1] = par2ItemStack == null ? ItemStack.EMPTY : par2ItemStack;
       this.markDirty();
       { net.minecraft.block.state.IBlockState _bs = this.world.getBlockState(this.pos); this.world.notifyBlockUpdate(this.pos, _bs, _bs, 3); }
       if (this.eventHandler != null) {
@@ -166,8 +166,8 @@ public class TileMagicWorkbench extends TileThaumcraft implements IInventory, IS
    public int getFieldCount() { return 0; }
    public ItemStack removeStackFromSlot(int index) {
       ItemStack stack = this.stackList[index];
-      this.stackList[index] = null;
-      return stack;
+      this.stackList[index] = ItemStack.EMPTY;
+      return stack == null ? ItemStack.EMPTY : stack;
    }
 
    public void openInventory(EntityPlayer player) {
@@ -186,7 +186,7 @@ public class TileMagicWorkbench extends TileThaumcraft implements IInventory, IS
    }
 
    public boolean isItemValidForSlot(int i, ItemStack itemstack) {
-      if (i == 10 && itemstack != null) {
+      if (i == 10 && itemstack != null && !itemstack.isEmpty()) {
          if (!(itemstack.getItem() instanceof ItemWandCasting)) {
             return false;
          } else {
@@ -205,7 +205,7 @@ public class TileMagicWorkbench extends TileThaumcraft implements IInventory, IS
 
    @Override
    public boolean canInsertItem(int index, ItemStack itemstack, EnumFacing facing) {
-      if (index == 10 && itemstack != null && itemstack.getItem() instanceof ItemWandCasting) {
+      if (index == 10 && itemstack != null && !itemstack.isEmpty() && itemstack.getItem() instanceof ItemWandCasting) {
          ItemWandCasting wand = (ItemWandCasting)itemstack.getItem();
          return !wand.isStaff(itemstack);
       } else {

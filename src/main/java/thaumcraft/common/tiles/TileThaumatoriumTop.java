@@ -123,15 +123,15 @@ public class TileThaumatoriumTop extends TileThaumcraft implements IAspectContai
    }
 
    public ItemStack getStackInSlot(int par1) {
-      return this.thaumatorium == null ? null : this.thaumatorium.getStackInSlot(par1);
+      return this.thaumatorium == null ? ItemStack.EMPTY : this.thaumatorium.getStackInSlot(par1);
    }
 
    public ItemStack decrStackSize(int par1, int par2) {
-      return this.thaumatorium == null ? null : this.thaumatorium.decrStackSize(par1, par2);
+      return this.thaumatorium == null ? ItemStack.EMPTY : this.thaumatorium.decrStackSize(par1, par2);
    }
 
    public ItemStack removeStackFromSlot(int par1) {
-      return this.thaumatorium == null ? null : this.thaumatorium.getStackInSlot(par1);
+      return this.thaumatorium == null ? ItemStack.EMPTY : this.thaumatorium.removeStackFromSlot(par1);
    }
 
    public void setInventorySlotContents(int par1, ItemStack par2ItemStack) {

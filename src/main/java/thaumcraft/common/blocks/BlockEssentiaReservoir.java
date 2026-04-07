@@ -6,6 +6,7 @@ import net.minecraft.block.BlockContainer;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
@@ -120,5 +121,9 @@ public class BlockEssentiaReservoir extends BlockContainer {
    @Override
    public net.minecraft.util.EnumBlockRenderType getRenderType(net.minecraft.block.state.IBlockState state) {
       return net.minecraft.util.EnumBlockRenderType.MODEL;
+   }
+
+   public boolean canRenderInLayer(IBlockState state, BlockRenderLayer layer) {
+      return layer == BlockRenderLayer.TRANSLUCENT;
    }
 }

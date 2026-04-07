@@ -95,6 +95,24 @@ public class BlockCosmeticSolid extends Block {
       this.setTickRandomly(true);
    }
 
+   @Override
+   public boolean isOpaqueCube(IBlockState state) {
+      return state.getValue(VARIANT) != SolidVariant.PEDESTALSTONE;
+   }
+
+   @Override
+   public boolean isFullCube(IBlockState state) {
+      return state.getValue(VARIANT) != SolidVariant.PEDESTALSTONE;
+   }
+
+   @Override
+   public AxisAlignedBB getBoundingBox(IBlockState state, IBlockAccess world, BlockPos pos) {
+      if (state.getValue(VARIANT) == SolidVariant.PEDESTALSTONE) {
+         return new AxisAlignedBB(0.0D, 0.0D, 0.0D, 1.0D, 1.0D, 1.0D);
+      }
+      return FULL_BLOCK_AABB;
+   }
+
    // registerBlockIcons removed -- use ModelLoader/JSON models in 1.12.2
 
    @SideOnly(Side.CLIENT)

@@ -97,6 +97,7 @@ public class EntityPech extends EntityMob implements IRangedAttackMob {
 
    public EntityPech(World world) {
       super(world);
+      java.util.Arrays.fill(this.loot, ItemStack.EMPTY);
       this.setSize(0.6F, 1.8F);
 
       this.setPathPriority(net.minecraft.pathfinding.PathNodeType.WATER, 8.0F);
@@ -277,7 +278,7 @@ public class EntityPech extends EntityMob implements IRangedAttackMob {
 
        for (ItemStack itemStack : this.loot) {
            NBTTagCompound nbttagcompound1 = new NBTTagCompound();
-           if (itemStack != null) {
+           if (!itemStack.isEmpty()) {
                itemStack.writeToNBT(nbttagcompound1);
            }
 
@@ -309,19 +310,15 @@ public class EntityPech extends EntityMob implements IRangedAttackMob {
 
    protected boolean canDespawn() {
       try {
-         if (this.loot == null) {
-            return true;
-         } else {
-            int q = 0;
+         int q = 0;
 
-            for(ItemStack is : this.loot) {
-               if (is != null && is.getCount() > 0) {
-                  ++q;
-               }
+         for(ItemStack is : this.loot) {
+            if (!is.isEmpty() && is.getCount() > 0) {
+               ++q;
             }
-
-            return q < 5;
          }
+
+         return q < 5;
       } catch (Exception var6) {
          return true;
       }
@@ -333,7 +330,7 @@ public class EntityPech extends EntityMob implements IRangedAttackMob {
 
    protected void dropFewItems(boolean flag, int i) {
        for (ItemStack itemStack : this.loot) {
-           if (itemStack != null && this.world.rand.nextFloat() < 0.88F) {
+           if (!itemStack.isEmpty() && this.world.rand.nextFloat() < 0.88F) {
                this.entityDropItem(itemStack.copy(), 1.5F);
            }
        }
@@ -442,9 +439,9 @@ public class EntityPech extends EntityMob implements IRangedAttackMob {
       this.tasks.removeTask(this.aiArrowAttack);
       this.tasks.removeTask(this.aiBlastAttack);
       ItemStack itemstack = this.getHeldItemMainhand();
-      if (itemstack != null && itemstack.getItem() == Items.BOW) {
+      if (!itemstack.isEmpty() && itemstack.getItem() == Items.BOW) {
          this.tasks.addTask(2, this.aiArrowAttack);
-      } else if (itemstack != null && itemstack.getItem() == ConfigItems.itemWandCasting) {
+      } else if (!itemstack.isEmpty() && itemstack.getItem() == ConfigItems.itemWandCasting) {
          this.tasks.addTask(2, this.aiBlastAttack);
       } else {
          this.tasks.addTask(2, this.aiMeleeAttack);
@@ -594,17 +591,17 @@ public class EntityPech extends EntityMob implements IRangedAttackMob {
    }
 
    public boolean canPickup(ItemStack entityItem) {
-      if (entityItem == null) {
+      if (entityItem.isEmpty()) {
          return false;
       } else if (!this.isTamed() && valuedItems.containsKey(Item.getIdFromItem(entityItem.getItem()))) {
          return true;
       } else {
          for(int a = 0; a < this.loot.length; ++a) {
-            if (this.loot[a] != null && this.loot[a].getCount() <= 0) {
-               this.loot[a] = null;
+            if (!this.loot[a].isEmpty() && this.loot[a].getCount() <= 0) {
+               this.loot[a] = ItemStack.EMPTY;
             }
 
-            if (this.loot[a] == null) {
+            if (this.loot[a].isEmpty()) {
                return true;
             }
 
@@ -618,7 +615,7 @@ public class EntityPech extends EntityMob implements IRangedAttackMob {
    }
 
    public ItemStack pickupItem(ItemStack entityItem) {
-      if (entityItem == null) {
+      if (entityItem.isEmpty()) {
          return entityItem;
       } else if (!this.isTamed() && this.isValued(entityItem)) {
          if (this.rand.nextInt(10) < this.getValue(entityItem)) {
@@ -628,17 +625,17 @@ public class EntityPech extends EntityMob implements IRangedAttackMob {
          }
 
          entityItem.shrink(1);
-         return entityItem.getCount() <= 0 ? null : entityItem;
+         return entityItem.isEmpty() ? ItemStack.EMPTY : entityItem;
       } else {
          for(int a = 0; a < this.loot.length; ++a) {
-            if (this.loot[a] != null && this.loot[a].getCount() <= 0) {
-               this.loot[a] = null;
+            if (!this.loot[a].isEmpty() && this.loot[a].getCount() <= 0) {
+               this.loot[a] = ItemStack.EMPTY;
             }
 
-            if (entityItem != null && entityItem.getCount() > 0 && this.loot[a] != null && this.loot[a].getCount() < this.loot[a].getMaxStackSize() && InventoryUtils.areItemStacksEqualStrict(entityItem, this.loot[a])) {
+            if (!entityItem.isEmpty() && !this.loot[a].isEmpty() && this.loot[a].getCount() < this.loot[a].getMaxStackSize() && InventoryUtils.areItemStacksEqualStrict(entityItem, this.loot[a])) {
                if (entityItem.getCount() + this.loot[a].getCount() <= this.loot[a].getMaxStackSize()) {
                   this.loot[a].grow(entityItem.getCount());
-                  return null;
+                  return ItemStack.EMPTY;
                }
 
                int sz = Math.min(entityItem.getCount(), this.loot[a].getMaxStackSize() - this.loot[a].getCount());
@@ -646,24 +643,24 @@ public class EntityPech extends EntityMob implements IRangedAttackMob {
                entityItem.shrink(sz);
             }
 
-            if (entityItem != null && entityItem.getCount() <= 0) {
-               entityItem = null;
+            if (entityItem.isEmpty()) {
+               entityItem = ItemStack.EMPTY;
             }
          }
 
          for(int a = 0; a < this.loot.length; ++a) {
-            if (this.loot[a] != null && this.loot[a].getCount() <= 0) {
-               this.loot[a] = null;
+            if (!this.loot[a].isEmpty() && this.loot[a].getCount() <= 0) {
+               this.loot[a] = ItemStack.EMPTY;
             }
 
-            if (entityItem != null && entityItem.getCount() > 0 && this.loot[a] == null) {
+            if (!entityItem.isEmpty() && this.loot[a].isEmpty()) {
                this.loot[a] = entityItem.copy();
-               return null;
+               return ItemStack.EMPTY;
             }
          }
 
-         if (entityItem != null && entityItem.getCount() <= 0) {
-            entityItem = null;
+         if (entityItem.isEmpty()) {
+            entityItem = ItemStack.EMPTY;
          }
 
          return entityItem;
@@ -684,7 +681,7 @@ public class EntityPech extends EntityMob implements IRangedAttackMob {
    }
 
    public boolean isValued(ItemStack item) {
-      if (item == null) {
+      if (item.isEmpty()) {
          return false;
       } else {
          boolean value = valuedItems.containsKey(Item.getIdFromItem(item.getItem()));
@@ -701,7 +698,7 @@ public class EntityPech extends EntityMob implements IRangedAttackMob {
    }
 
    public int getValue(ItemStack item) {
-      if (item == null) {
+      if (item.isEmpty()) {
          return 0;
       } else {
          int value = valuedItems.containsKey(Item.getIdFromItem(item.getItem())) ? (Integer)valuedItems.get(Item.getIdFromItem(item.getItem())) : 0;

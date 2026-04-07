@@ -13,11 +13,11 @@ public class TileGrate extends TileEntity implements ISidedInventory {
    }
 
    public ItemStack getStackInSlot(int par1) {
-      return null;
+      return ItemStack.EMPTY;
    }
 
    public ItemStack decrStackSize(int par1, int par2) {
-      return null;
+      return ItemStack.EMPTY;
    }
 
 

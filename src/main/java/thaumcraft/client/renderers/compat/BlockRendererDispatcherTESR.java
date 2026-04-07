@@ -39,7 +39,9 @@ public class BlockRendererDispatcherTESR<T extends TileEntity> extends TileEntit
         Minecraft.getMinecraft().getTextureManager().bindTexture(TextureMap.LOCATION_BLOCKS_TEXTURE);
 
         renderBlocks.blockAccess = te.getWorld();
-        int meta = te.getBlockMetadata();
+        renderBlocks.offsetX = te.getPos().getX();
+        renderBlocks.offsetY = te.getPos().getY();
+        renderBlocks.offsetZ = te.getPos().getZ();
         handler.renderWorldBlock(te.getWorld(), te.getPos().getX(), te.getPos().getY(), te.getPos().getZ(),
             te.getWorld().getBlockState(te.getPos()).getBlock(), handler.getRenderId(), renderBlocks);
 

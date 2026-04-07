@@ -136,7 +136,7 @@ public class InventoryUtils {
       ItemStack slotStack = inventory.getStackInSlot(slot);
       if (canInsertItemToInventory(inventory, stack, slot, side)) {
          boolean flag = false;
-         if (slotStack == null) {
+         if (slotStack == null || slotStack.isEmpty()) {
             if (inventory.getInventoryStackLimit() < stack.getCount()) {
                ItemStack in = stack.splitStack(inventory.getInventoryStackLimit());
                if (doit) {

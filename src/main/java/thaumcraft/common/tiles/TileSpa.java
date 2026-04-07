@@ -97,38 +97,38 @@ public class TileSpa extends TileThaumcraft implements ISidedInventory, IFluidHa
    }
 
    public ItemStack decrStackSize(int par1, int par2) {
-      if (this.itemStacks[par1] != null) {
+      if (this.itemStacks[par1] != null && !this.itemStacks[par1].isEmpty()) {
           ItemStack itemstack;
           if (this.itemStacks[par1].getCount() <= par2) {
               itemstack = this.itemStacks[par1];
-            this.itemStacks[par1] = null;
+            this.itemStacks[par1] = ItemStack.EMPTY;
           } else {
               itemstack = this.itemStacks[par1].splitStack(par2);
             if (this.itemStacks[par1].isEmpty()) {
-               this.itemStacks[par1] = null;
+               this.itemStacks[par1] = ItemStack.EMPTY;
             }
 
           }
           return itemstack;
       } else {
-         return null;
+         return ItemStack.EMPTY;
       }
    }
 
    public ItemStack removeStackFromSlot(int par1) {
-      if (this.itemStacks[par1] != null) {
+      if (this.itemStacks[par1] != null && !this.itemStacks[par1].isEmpty()) {
          ItemStack itemstack = this.itemStacks[par1];
-         this.itemStacks[par1] = null;
+         this.itemStacks[par1] = ItemStack.EMPTY;
          return itemstack;
       } else {
-         return null;
+         return ItemStack.EMPTY;
       }
    }
 
    public void setInventorySlotContents(int par1, ItemStack par2ItemStack) {
-      this.itemStacks[par1] = par2ItemStack;
-      if (par2ItemStack != null && par2ItemStack.getCount() > this.getInventoryStackLimit()) {
-         par2ItemStack.setCount(this.getInventoryStackLimit());
+      this.itemStacks[par1] = par2ItemStack == null ? ItemStack.EMPTY : par2ItemStack;
+      if (!this.itemStacks[par1].isEmpty() && this.itemStacks[par1].getCount() > this.getInventoryStackLimit()) {
+         this.itemStacks[par1].setCount(this.getInventoryStackLimit());
       }
 
    }
@@ -148,7 +148,7 @@ public class TileSpa extends TileThaumcraft implements ISidedInventory, IFluidHa
    }
 
    public boolean isItemValidForSlot(int par1, ItemStack par2ItemStack) {
-      return par2ItemStack != null && par2ItemStack.getItem() instanceof ItemBathSalts;
+      return par2ItemStack != null && !par2ItemStack.isEmpty() && par2ItemStack.getItem() instanceof ItemBathSalts;
    }
 
    public int[] getSlotsForFace(EnumFacing par1) {
@@ -187,7 +187,7 @@ public class TileSpa extends TileThaumcraft implements ISidedInventory, IFluidHa
    }
 
    public void clear() {
-      Arrays.fill(itemStacks, null);
+      Arrays.fill(itemStacks, ItemStack.EMPTY);
    }
 
    @Override

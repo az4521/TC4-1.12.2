@@ -101,6 +101,7 @@ public class BlockMetalDeviceItem extends ItemBlock {
    @Override
    public boolean placeBlockAt(ItemStack stack, EntityPlayer player, World world, BlockPos pos, EnumFacing side, float hitX, float hitY, float hitZ, IBlockState newState) {
       int metadata = stack.getItemDamage();
+      newState = this.block.getStateFromMeta(metadata);
       boolean ret = super.placeBlockAt(stack, player, world, pos, side, hitX, hitY, hitZ, newState);
       if (metadata == 7) {
          TileArcaneLamp tile = (TileArcaneLamp) world.getTileEntity(pos);

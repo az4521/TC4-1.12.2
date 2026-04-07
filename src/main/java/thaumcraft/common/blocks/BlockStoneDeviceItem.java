@@ -28,8 +28,13 @@ public class BlockStoneDeviceItem extends ItemBlock {
 
    @Override
    public boolean placeBlockAt(ItemStack stack, EntityPlayer player, World world, BlockPos pos, EnumFacing side, float hitX, float hitY, float hitZ, IBlockState newState) {
-      boolean ret = super.placeBlockAt(stack, player, world, pos, side, hitX, hitY, hitZ, newState);
       int metadata = stack.getItemDamage();
+      if (metadata == 0 && player != null) {
+         EnumFacing facing = player.getHorizontalFacing().getOpposite();
+         newState = this.block.getStateFromMeta(metadata).withProperty(BlockStoneDevice.FACING, facing);
+      }
+
+      boolean ret = super.placeBlockAt(stack, player, world, pos, side, hitX, hitY, hitZ, newState);
       if (metadata == 14) {
          TileFluxScrubber tile = (TileFluxScrubber)world.getTileEntity(pos);
          if (tile instanceof TileFluxScrubber) {

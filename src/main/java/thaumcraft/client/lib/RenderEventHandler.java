@@ -186,7 +186,7 @@ public class RenderEventHandler {
          }
       }
 
-      if (event.getPlayer().inventory.armorInventory.get(3) != null && event.getPlayer().inventory.armorInventory.get(3).getItem() instanceof IGoggles && ((IGoggles)event.getPlayer().inventory.armorInventory.get(3).getItem()).showIngamePopups(event.getPlayer().inventory.armorInventory.get(3), event.getPlayer())) {
+      if (!event.getPlayer().inventory.armorInventory.get(3).isEmpty() && event.getPlayer().inventory.armorInventory.get(3).getItem() instanceof IGoggles && ((IGoggles)event.getPlayer().inventory.armorInventory.get(3).getItem()).showIngamePopups(event.getPlayer().inventory.armorInventory.get(3), event.getPlayer())) {
          boolean spaceAbove = event.getPlayer().world.isAirBlock(new net.minecraft.util.math.BlockPos(target.getBlockPos().getX(), target.getBlockPos().getY() + 1, target.getBlockPos().getZ()));
          TileEntity te = event.getPlayer().world.getTileEntity(target.getBlockPos());
          if (te != null) {
@@ -222,7 +222,7 @@ public class RenderEventHandler {
          this.wandHandler = new REHWandHandler();
       }
 
-      if (target.typeOfHit == RayTraceResult.Type.BLOCK && event.getPlayer().getHeldItemMainhand() != null && event.getPlayer().getHeldItemMainhand().getItem() instanceof IArchitect && !(event.getPlayer().getHeldItemMainhand().getItem() instanceof ItemFocusBasic) && this.wandHandler.handleArchitectOverlay(event.getPlayer().getHeldItemMainhand(), event, ticks, target)) {
+      if (target.typeOfHit == RayTraceResult.Type.BLOCK && !event.getPlayer().getHeldItemMainhand().isEmpty() && event.getPlayer().getHeldItemMainhand().getItem() instanceof IArchitect && !(event.getPlayer().getHeldItemMainhand().getItem() instanceof ItemFocusBasic) && this.wandHandler.handleArchitectOverlay(event.getPlayer().getHeldItemMainhand(), event, ticks, target)) {
          event.setCanceled(true);
       }
 
@@ -264,7 +264,7 @@ public class RenderEventHandler {
    @SideOnly(Side.CLIENT)
    @SubscribeEvent
    public void renderPlayerSpecialsEvent(RenderPlayerEvent.Specials.Pre event) {
-      if (event.getEntityPlayer() != null && event.getEntityPlayer().inventory.armorInventory.get(2) != null && (event.getEntityPlayer().inventory.armorInventory.get(2).getItem() instanceof ItemFortressArmor || event.getEntityPlayer().inventory.armorInventory.get(2).getItem() instanceof ItemVoidRobeArmor)) {
+      if (event.getEntityPlayer() != null && !event.getEntityPlayer().inventory.armorInventory.get(2).isEmpty() && (event.getEntityPlayer().inventory.armorInventory.get(2).getItem() instanceof ItemFortressArmor || event.getEntityPlayer().inventory.armorInventory.get(2).getItem() instanceof ItemVoidRobeArmor)) {
          // Cape hiding not available in 1.12.2 (event.renderCape was removed)
       }
 

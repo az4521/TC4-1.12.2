@@ -65,52 +65,42 @@ public class ItemThaumometerRenderer implements IItemRenderer {
       }
 
       EntityPlayerSP playermp = mc.player;
+      ItemRenderType renderType = type;
+      if (type == ItemRenderType.EQUIPPED_FIRST_PERSON && playermp != null) {
+         ItemStack held = playermp.getHeldItemMainhand();
+         boolean matchesHeld = !held.isEmpty() && ItemStack.areItemsEqual(held, item) && ItemStack.areItemStackTagsEqual(held, item);
+         if (!(mc.gameSettings.thirdPersonView == 0 && matchesHeld)) {
+            renderType = ItemRenderType.ENTITY;
+         }
+      }
+
       float par1 = UtilsFX.getTimer(mc).renderPartialTicks;
       float var7 = 0.8F;
       EntityPlayerSP playersp = playermp;
       GlStateManager.pushMatrix();
-      if (type == ItemRenderType.EQUIPPED_FIRST_PERSON && player_id == rve_id && mc.gameSettings.thirdPersonView == 0) {
-         GlStateManager.translate(1.0F, 0.75F, -1.0F);
-         GlStateManager.rotate(135.0F, 0.0F, -1.0F, 0.0F);
-         float f3 = playersp.prevRenderArmPitch + (playersp.renderArmPitch - playersp.prevRenderArmPitch) * par1;
-         float f4 = playersp.prevRenderArmYaw + (playersp.renderArmYaw - playersp.prevRenderArmYaw) * par1;
-         GlStateManager.rotate((playermp.rotationPitch - f3) * 0.1F, 1.0F, 0.0F, 0.0F);
-         GlStateManager.rotate((playermp.rotationYaw - f4) * 0.1F, 0.0F, 1.0F, 0.0F);
-         float var10000 = playermp.prevRotationPitch + (playermp.rotationPitch - playermp.prevRotationPitch) * par1;
+      if (renderType == ItemRenderType.EQUIPPED_FIRST_PERSON && player_id == rve_id && mc.gameSettings.thirdPersonView == 0) {
          float f1 = UtilsFX.getPrevEquippedProgress(mc.entityRenderer.itemRenderer) + (UtilsFX.getEquippedProgress(mc.entityRenderer.itemRenderer) - UtilsFX.getPrevEquippedProgress(mc.entityRenderer.itemRenderer)) * par1;
-         GlStateManager.translate(-0.7F * var7, -(-0.65F * var7) + (1.0F - f1) * 1.5F, 0.9F * var7);
-         GlStateManager.rotate(90.0F, 0.0F, 1.0F, 0.0F);
-         GlStateManager.translate(0.0F, 0.0F * var7, -0.9F * var7);
-         GlStateManager.rotate(90.0F, 0.0F, 1.0F, 0.0F);
-         GlStateManager.rotate(0.0F, 0.0F, 0.0F, 1.0F);
+         GlStateManager.translate(0.0F, 0.8F + (1.0F - f1) * 0.2F, -1F);
+         GlStateManager.rotate(90.0F, 1.0F, 0.0F, 0.0F);
+         GlStateManager.rotate(180.0F, 0.0F, 1.0F, 0.0F);
+         GlStateManager.rotate(270.0F, 0.0F, 1.0F, 0.0F); 
          GlStateManager.enableRescaleNormal();
-         GlStateManager.pushMatrix();
-         GlStateManager.scale(5.0F, 5.0F, 5.0F);
-         mc.getTextureManager().bindTexture(mc.player.getLocationSkin());
-
-         for(int var9 = 0; var9 < 2; ++var9) {
-            int var22 = var9 * 2 - 1;
-            GlStateManager.pushMatrix();
-            GlStateManager.translate(-0.0F, -0.6F, 1.1F * (float)var22);
-            GlStateManager.rotate((float)(-45 * var22), 1.0F, 0.0F, 0.0F);
-            GlStateManager.rotate(-90.0F, 0.0F, 0.0F, 1.0F);
-            GlStateManager.rotate(59.0F, 0.0F, 0.0F, 1.0F);
-            GlStateManager.rotate((float)(-65 * var22), 0.0F, 1.0F, 0.0F);
-            GlStateManager.popMatrix();
+         GlStateManager.scale(1.0F, 1.0F, 1.0F);
+      } else {
+         if (renderType == ItemRenderType.ENTITY) {
+            GlStateManager.translate(0.5F, 0.5F, 0.5F);
+            GlStateManager.scale(0.12F, 0.12F, 0.12F);
+            GlStateManager.rotate(-90.0F, 1.0F, 0.0F, 0.0F);
+            GlStateManager.translate(0.0F, -0.1F, 0.0F);
+         } else {
+            GlStateManager.scale(0.5F, 0.5F, 0.5F);
          }
 
-         GlStateManager.popMatrix();
-         GlStateManager.rotate(90.0F, 0.0F, 0.0F, 1.0F);
-         GlStateManager.translate(0.4F, -0.4F, 0.0F);
-         GlStateManager.enableRescaleNormal();
-         GlStateManager.scale(2.0F, 2.0F, 2.0F);
-      } else {
-         GlStateManager.scale(0.5F, 0.5F, 0.5F);
-         if (type == ItemRenderType.EQUIPPED) {
+         if (renderType == ItemRenderType.EQUIPPED) {
             GlStateManager.translate(1.6F, 0.3F, 2.0F);
             GlStateManager.rotate(90.0F, -1.0F, 0.0F, 0.0F);
             GlStateManager.rotate(30.0F, 0.0F, 0.0F, -1.0F);
-         } else if (type == ItemRenderType.INVENTORY) {
+         } else if (renderType == ItemRenderType.INVENTORY) {
             GlStateManager.rotate(60.0F, 1.0F, 0.0F, 0.0F);
             GlStateManager.rotate(30.0F, 0.0F, 0.0F, -1.0F);
             GlStateManager.rotate(248.0F, 0.0F, -1.0F, 0.0F);
@@ -124,7 +114,7 @@ public class ItemThaumometerRenderer implements IItemRenderer {
       GlStateManager.rotate(90.0F, 1.0F, 0.0F, 0.0F);
       GlStateManager.rotate(90.0F, 0.0F, 0.0F, 1.0F);
       UtilsFX.renderQuadCenteredFromTexture("textures/models/scanscreen.png", 2.5F, 1.0F, 1.0F, 1.0F, (int)(190.0F + MathHelper.sin((float)(playermp.ticksExisted - playermp.world.rand.nextInt(2))) * 10.0F + 10.0F), 771, 1.0F);
-      if (playermp instanceof EntityPlayer && type == ItemRenderType.EQUIPPED_FIRST_PERSON && player_id == rve_id && mc.gameSettings.thirdPersonView == 0) {
+      if (playermp instanceof EntityPlayer && renderType == ItemRenderType.EQUIPPED_FIRST_PERSON && player_id == rve_id && mc.gameSettings.thirdPersonView == 0) {
          RenderHelper.disableStandardItemLighting();
          int j = (int)(190.0F + MathHelper.sin((float)(playermp.ticksExisted - playermp.world.rand.nextInt(2))) * 10.0F + 10.0F);
          int k = j % 65536;

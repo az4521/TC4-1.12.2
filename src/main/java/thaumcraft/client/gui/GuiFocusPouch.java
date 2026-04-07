@@ -36,7 +36,7 @@ public class GuiFocusPouch extends GuiContainer {
    }
 
    protected void drawGuiContainerBackgroundLayer(float par1, int par2, int par3) {
-      if (this.mc.player.inventory.mainInventory.get(this.blockSlot) == null) {
+      if (this.mc.player.inventory.mainInventory.get(this.blockSlot).isEmpty()) {
          this.mc.player.closeScreen();
       }
 

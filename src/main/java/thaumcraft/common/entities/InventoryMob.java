@@ -24,6 +24,7 @@ public class InventoryMob implements IInventory {
    public InventoryMob(Entity entity, int slots) {
       this.slotCount = slots;
       this.inventory = new ItemStack[this.slotCount];
+      java.util.Arrays.fill(this.inventory, ItemStack.EMPTY);
       this.inventoryChanged = false;
       this.ent = entity;
    }
@@ -31,6 +32,7 @@ public class InventoryMob implements IInventory {
    public InventoryMob(Entity entity, int slots, int lim) {
       this.slotCount = slots;
       this.inventory = new ItemStack[this.slotCount];
+      java.util.Arrays.fill(this.inventory, ItemStack.EMPTY);
       this.inventoryChanged = false;
       this.stacklimit = lim;
       this.ent = entity;
@@ -38,7 +40,7 @@ public class InventoryMob implements IInventory {
 
    public int getInventorySlotContainItem(Item i) {
       for(int j = 0; j < this.inventory.length; ++j) {
-         if (this.inventory[j] != null && this.inventory[j].getItem() == i) {
+         if (!this.inventory[j].isEmpty() && this.inventory[j].getItem() == i) {
             return j;
          }
       }
@@ -48,7 +50,7 @@ public class InventoryMob implements IInventory {
 
    public int storeItemStack(ItemStack itemstack) {
       for(int i = 0; i < this.inventory.length; ++i) {
-         if (this.inventory[i] != null && this.inventory[i].getItem() == itemstack.getItem() && this.inventory[i].isStackable() && this.inventory[i].getCount() < this.inventory[i].getMaxStackSize() && this.inventory[i].getCount() < this.getInventoryStackLimit() && (!this.inventory[i].getHasSubtypes() || this.inventory[i].getItemDamage() == itemstack.getItemDamage())) {
+         if (!this.inventory[i].isEmpty() && this.inventory[i].getItem() == itemstack.getItem() && this.inventory[i].isStackable() && this.inventory[i].getCount() < this.inventory[i].getMaxStackSize() && this.inventory[i].getCount() < this.getInventoryStackLimit() && (!this.inventory[i].getHasSubtypes() || this.inventory[i].getItemDamage() == itemstack.getItemDamage())) {
             return i;
          }
       }
@@ -58,7 +60,7 @@ public class InventoryMob implements IInventory {
 
    public int getFirstEmptyStack() {
       for(int i = 0; i < this.inventory.length; ++i) {
-         if (this.inventory[i] == null) {
+         if (this.inventory[i].isEmpty()) {
             return i;
          }
       }
@@ -75,7 +77,7 @@ public class InventoryMob implements IInventory {
       }
 
        if (k >= 0) {
-           if (this.inventory[k] == null) {
+           if (this.inventory[k].isEmpty()) {
                this.inventory[k] = new ItemStack(i, 0, itemstack.getItemDamage());
            }
 
@@ -119,15 +121,15 @@ public class InventoryMob implements IInventory {
 
    public ItemStack decrStackSize(int i, int j) {
       ItemStack[] aitemstack = this.inventory;
-      if (aitemstack[i] != null) {
+      if (!aitemstack[i].isEmpty()) {
          if (aitemstack[i].getCount() <= j) {
             ItemStack itemstack = aitemstack[i];
-            aitemstack[i] = null;
+            aitemstack[i] = ItemStack.EMPTY;
             return itemstack;
          } else {
             ItemStack itemstack1 = aitemstack[i].splitStack(j);
             if (aitemstack[i].getCount() == 0) {
-               aitemstack[i] = null;
+               aitemstack[i] = ItemStack.EMPTY;
             }
 
             return itemstack1;
@@ -139,12 +141,12 @@ public class InventoryMob implements IInventory {
 
    public void setInventorySlotContents(int i, ItemStack itemstack) {
       ItemStack[] aitemstack = this.inventory;
-      aitemstack[i] = itemstack;
+      aitemstack[i] = itemstack == null ? ItemStack.EMPTY : itemstack;
    }
 
    public NBTTagList writeToNBT(NBTTagList nbttaglist) {
       for(int i = 0; i < this.inventory.length; ++i) {
-         if (this.inventory[i] != null) {
+         if (!this.inventory[i].isEmpty()) {
             NBTTagCompound nbttagcompound = new NBTTagCompound();
             nbttagcompound.setByte("Slot", (byte)i);
             this.inventory[i].writeToNBT(nbttagcompound);
@@ -157,6 +159,7 @@ public class InventoryMob implements IInventory {
 
    public void readFromNBT(NBTTagList nbttaglist) {
       this.inventory = new ItemStack[this.slotCount];
+      java.util.Arrays.fill(this.inventory, ItemStack.EMPTY);
 
       for(int i = 0; i < nbttaglist.tagCount(); ++i) {
          NBTTagCompound nbttagcompound = nbttaglist.getCompoundTagAt(i);
@@ -174,8 +177,7 @@ public class InventoryMob implements IInventory {
    }
 
    public ItemStack getStackInSlot(int i) {
-      ItemStack stack = this.inventory[i];
-      return stack != null ? stack : ItemStack.EMPTY;
+      return this.inventory[i];
    }
 
    public int getInventoryStackLimit() {
@@ -199,7 +201,7 @@ public class InventoryMob implements IInventory {
 
    public boolean func_28018_c(ItemStack itemstack) {
        for (ItemStack itemStack : this.inventory) {
-           if (itemStack != null && ItemStack.areItemStacksEqual(itemStack, itemstack)) {
+           if (!itemStack.isEmpty() && ItemStack.areItemStacksEqual(itemStack, itemstack)) {
                return true;
            }
        }
@@ -209,9 +211,9 @@ public class InventoryMob implements IInventory {
 
    public void dropAllItems() {
       for(int i = 0; i < this.inventory.length; ++i) {
-         if (this.inventory[i] != null) {
+         if (!this.inventory[i].isEmpty()) {
             this.ent.entityDropItem(this.inventory[i], 0.0F);
-            this.inventory[i] = null;
+            this.inventory[i] = ItemStack.EMPTY;
          }
       }
 
@@ -227,7 +229,7 @@ public class InventoryMob implements IInventory {
 
    public boolean hasSomething() {
       for(int a = 0; a < this.slotCount; ++a) {
-         if (this.inventory[a] != null) {
+         if (!this.inventory[a].isEmpty()) {
             return true;
          }
       }
@@ -237,7 +239,7 @@ public class InventoryMob implements IInventory {
 
    public boolean allEmpty() {
       for(int a = 0; a < this.slotCount; ++a) {
-         if (this.inventory[a] != null) {
+         if (!this.inventory[a].isEmpty()) {
             return false;
          }
       }
@@ -249,7 +251,7 @@ public class InventoryMob implements IInventory {
       int amt = 0;
 
       for(int a = 0; a < this.slotCount; ++a) {
-         if (this.inventory[a] != null && this.inventory[a].isItemEqual(stackInSlot)) {
+         if (!this.inventory[a].isEmpty() && this.inventory[a].isItemEqual(stackInSlot)) {
             amt += this.inventory[a].getCount();
          }
       }
@@ -261,7 +263,7 @@ public class InventoryMob implements IInventory {
       int amt = 0;
 
       for(int a = 0; a < this.slotCount; ++a) {
-         if (this.inventory[a] != null) {
+         if (!this.inventory[a].isEmpty()) {
             if (fuzzy) {
                if (this.inventory[a].isItemEqual(stackInSlot)) {
                   amt += this.inventory[a].getCount();
@@ -288,7 +290,7 @@ public class InventoryMob implements IInventory {
       ArrayList<ItemStack> needed = new ArrayList<>();
 
       for(int a = 0; a < this.slotCount; ++a) {
-         if (this.inventory[a] != null) {
+         if (!this.inventory[a].isEmpty()) {
             if (fuzzy) {
                int[] ods = OreDictionary.getOreIDs(this.inventory[a]);
                int od = ods.length > 0 ? ods[0] : -1;
@@ -362,7 +364,7 @@ public class InventoryMob implements IInventory {
    @Override
    public boolean isEmpty() {
       for (ItemStack stack : this.inventory) {
-         if (stack != null && !stack.isEmpty()) {
+         if (!stack.isEmpty()) {
             return false;
          }
       }
@@ -372,7 +374,7 @@ public class InventoryMob implements IInventory {
    @Override
    public void clear() {
       for (int i = 0; i < this.inventory.length; ++i) {
-         this.inventory[i] = null;
+         this.inventory[i] = ItemStack.EMPTY;
       }
    }
 
@@ -393,7 +395,7 @@ public class InventoryMob implements IInventory {
    @Override
    public ItemStack removeStackFromSlot(int i) {
       ItemStack stack = this.inventory[i];
-      this.inventory[i] = null;
+      this.inventory[i] = ItemStack.EMPTY;
       return stack;
    }
 }

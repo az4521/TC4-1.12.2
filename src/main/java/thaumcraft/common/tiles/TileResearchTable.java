@@ -45,9 +45,14 @@ public class TileResearchTable extends TileThaumcraft implements IInventory, net
    EntityPlayer researcher = null;
    public ResearchNoteData data = null;
 
+   public TileResearchTable() {
+      java.util.Arrays.fill(this.contents, ItemStack.EMPTY);
+   }
+
    public void readCustomNBT(NBTTagCompound nbttagcompound) {
       NBTTagList var2 = nbttagcompound.getTagList("Inventory", 10);
       this.contents = new ItemStack[this.getSizeInventory()];
+      java.util.Arrays.fill(this.contents, ItemStack.EMPTY);
 
       for(int var3 = 0; var3 < Math.min(2, var2.tagCount()); ++var3) {
          NBTTagCompound var4 = var2.getCompoundTagAt(var3);
@@ -75,7 +80,7 @@ public class TileResearchTable extends TileThaumcraft implements IInventory, net
       NBTTagList var2 = new NBTTagList();
 
       for(int var3 = 0; var3 < this.contents.length; ++var3) {
-         if (this.contents[var3] != null) {
+         if (!this.contents[var3].isEmpty()) {
             NBTTagCompound var4 = new NBTTagCompound();
             var4.setByte("Slot", (byte)var3);
             this.contents[var3].writeToNBT(var4);
@@ -119,7 +124,7 @@ public class TileResearchTable extends TileThaumcraft implements IInventory, net
 
    public void gatherResults() {
       this.data = null;
-      if (this.contents[1] != null && this.contents[1].getItem() instanceof ItemResearchNotes) {
+      if (!this.contents[1].isEmpty() && this.contents[1].getItem() instanceof ItemResearchNotes) {
          this.data = ResearchManager.getData(this.contents[1]);
       }
 
@@ -131,7 +136,7 @@ public class TileResearchTable extends TileThaumcraft implements IInventory, net
       }
 
       if (ResearchManager.consumeInkFromTable(this.contents[0], false)) {
-         if (this.contents[1] != null && this.contents[1].getItem() instanceof ItemResearchNotes && this.data != null && this.contents[1].getItemDamage() < 64) {
+         if (!this.contents[1].isEmpty() && this.contents[1].getItem() instanceof ItemResearchNotes && this.data != null && this.contents[1].getItemDamage() < 64) {
             boolean r1 = ResearchManager.isResearchComplete(player.getName(), "RESEARCHER1");
             boolean r2 = ResearchManager.isResearchComplete(player.getName(), "RESEARCHER2");
             HexUtils.Hex hex = new HexUtils.Hex(q, r);
@@ -297,59 +302,59 @@ public class TileResearchTable extends TileThaumcraft implements IInventory, net
 
    }
 
-   public void clear() { java.util.Arrays.fill(this.contents, null); }
+   public void clear() { java.util.Arrays.fill(this.contents, ItemStack.EMPTY); }
 
    public int getSizeInventory() {
       return 2;
    }
 
    public ItemStack getStackInSlot(int var1) {
-      ItemStack s = this.contents[var1]; return s != null ? s : ItemStack.EMPTY;
+      return this.contents[var1];
    }
 
    public ItemStack decrStackSize(int var1, int var2) {
-      if (this.contents[var1] != null) {
+      if (!this.contents[var1].isEmpty()) {
           ItemStack var3;
           if (this.contents[var1].getCount() <= var2) {
               var3 = this.contents[var1];
-            this.contents[var1] = null;
+            this.contents[var1] = ItemStack.EMPTY;
           } else {
               var3 = this.contents[var1].splitStack(var2);
             if (this.contents[var1].isEmpty()) {
-               this.contents[var1] = null;
+               this.contents[var1] = ItemStack.EMPTY;
             }
 
           }
           this.markDirty();
           return var3;
       } else {
-         return null;
+         return ItemStack.EMPTY;
       }
    }
 
    public ItemStack getStackInSlotOnClosing(int var1) {
-      if (this.contents[var1] != null) {
+      if (!this.contents[var1].isEmpty()) {
          ItemStack var2 = this.contents[var1];
-         this.contents[var1] = null;
+         this.contents[var1] = ItemStack.EMPTY;
          return var2;
       } else {
-         return null;
+         return ItemStack.EMPTY;
       }
    }
 
    public ItemStack removeStackFromSlot(int index) {
-      if (this.contents[index] != null) {
+      if (!this.contents[index].isEmpty()) {
          ItemStack itemstack = this.contents[index];
-         this.contents[index] = null;
+         this.contents[index] = ItemStack.EMPTY;
          return itemstack;
       }
-      return null;
+      return ItemStack.EMPTY;
    }
 
    public void setInventorySlotContents(int var1, ItemStack var2) {
-      this.contents[var1] = var2;
-      if (var2 != null && var2.getCount() > this.getInventoryStackLimit()) {
-         var2.setCount(this.getInventoryStackLimit());
+      this.contents[var1] = var2 == null ? ItemStack.EMPTY : var2;
+      if (!this.contents[var1].isEmpty() && this.contents[var1].getCount() > this.getInventoryStackLimit()) {
+         this.contents[var1].setCount(this.getInventoryStackLimit());
       }
 
       this.markDirty();
@@ -386,7 +391,7 @@ public class TileResearchTable extends TileThaumcraft implements IInventory, net
    }
 
    public boolean isItemValidForSlot(int i, ItemStack itemstack) {
-       if (itemstack != null) {
+       if (!itemstack.isEmpty()) {
            switch (i) {
                case 0:
                    if (itemstack.getItem() instanceof IScribeTools) {
@@ -433,7 +438,7 @@ public class TileResearchTable extends TileThaumcraft implements IInventory, net
          this.gatherResults();
       }
 
-      if (this.contents[1] != null
+      if (!this.contents[1].isEmpty()
               && this.contents[1].getItem() instanceof ItemResearchNotes
               && this.contents[1].getItemDamage() == 64
               && this.data != null
@@ -465,7 +470,7 @@ public class TileResearchTable extends TileThaumcraft implements IInventory, net
       }
    }
 
-   public boolean isEmpty() { for (ItemStack s : contents) { if (s != null && !s.isEmpty()) return false; } return true; }
+   public boolean isEmpty() { for (ItemStack s : contents) { if (!s.isEmpty()) return false; } return true; }
    public int getField(int id) { return 0; }
    public void setField(int id, int value) {}
    public int getFieldCount() { return 0; }

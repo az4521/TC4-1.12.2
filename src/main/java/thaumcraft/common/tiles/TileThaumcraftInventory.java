@@ -18,16 +18,16 @@ public class TileThaumcraftInventory extends TileThaumcraft implements ISidedInv
    }
 
    public boolean isEmpty() {
-      for (ItemStack s : this.itemStacks) if (s != null && !s.isEmpty()) return false;
+      for (ItemStack s : this.itemStacks) if (!s.isEmpty()) return false;
       return true;
    }
 
    public ItemStack getStackInSlot(int par1) {
-      ItemStack s = this.itemStacks[par1]; return s != null ? s : ItemStack.EMPTY;
+      return this.itemStacks[par1];
    }
 
    public ItemStack decrStackSize(int par1, int par2) {
-      if (this.itemStacks[par1] != null && !this.itemStacks[par1].isEmpty()) {
+      if (!this.itemStacks[par1].isEmpty()) {
          ItemStack itemstack;
          if (this.itemStacks[par1].getCount() <= par2) {
             itemstack = this.itemStacks[par1];
@@ -46,7 +46,7 @@ public class TileThaumcraftInventory extends TileThaumcraft implements ISidedInv
    }
 
    public ItemStack removeStackFromSlot(int par1) {
-      if (this.itemStacks[par1] != null && !this.itemStacks[par1].isEmpty()) {
+      if (!this.itemStacks[par1].isEmpty()) {
          ItemStack itemstack = this.itemStacks[par1];
          this.itemStacks[par1] = ItemStack.EMPTY;
          this.markDirty();
@@ -57,7 +57,7 @@ public class TileThaumcraftInventory extends TileThaumcraft implements ISidedInv
    }
 
    public void setInventorySlotContents(int par1, ItemStack par2ItemStack) {
-      this.itemStacks[par1] = par2ItemStack;
+      this.itemStacks[par1] = par2ItemStack == null ? ItemStack.EMPTY : par2ItemStack;
       if (!par2ItemStack.isEmpty() && par2ItemStack.getCount() > this.getInventoryStackLimit()) {
          par2ItemStack.setCount(this.getInventoryStackLimit());
       }
@@ -90,6 +90,7 @@ public class TileThaumcraftInventory extends TileThaumcraft implements ISidedInv
    public void readCustomNBT(NBTTagCompound nbtCompound) {
       NBTTagList nbttaglist = nbtCompound.getTagList("ItemsSynced", 10);
       this.itemStacks = new ItemStack[this.getSizeInventory()];
+      java.util.Arrays.fill(this.itemStacks, ItemStack.EMPTY);
       for (int i = 0; i < nbttaglist.tagCount(); ++i) {
          if (this.isSyncedSlot(i)) {
             NBTTagCompound nbttagcompound1 = nbttaglist.getCompoundTagAt(i);
@@ -104,7 +105,7 @@ public class TileThaumcraftInventory extends TileThaumcraft implements ISidedInv
    public void writeCustomNBT(NBTTagCompound nbtCompound) {
       NBTTagList nbttaglist = new NBTTagList();
       for (int i = 0; i < this.itemStacks.length; ++i) {
-         if (this.itemStacks[i] != null && !this.itemStacks[i].isEmpty() && this.isSyncedSlot(i)) {
+         if (!this.itemStacks[i].isEmpty() && this.isSyncedSlot(i)) {
             NBTTagCompound nbttagcompound1 = new NBTTagCompound();
             nbttagcompound1.setByte("Slot", (byte)i);
             this.itemStacks[i].writeToNBT(nbttagcompound1);
@@ -120,6 +121,7 @@ public class TileThaumcraftInventory extends TileThaumcraft implements ISidedInv
          this.customName = nbtCompound.getString("CustomName");
       }
       NBTTagList nbttaglist = nbtCompound.getTagList("Items", 10);
+      java.util.Arrays.fill(this.itemStacks, ItemStack.EMPTY);
       for (int i = 0; i < nbttaglist.tagCount(); ++i) {
          if (!this.isSyncedSlot(i)) {
             NBTTagCompound nbttagcompound1 = nbttaglist.getCompoundTagAt(i);
@@ -138,7 +140,7 @@ public class TileThaumcraftInventory extends TileThaumcraft implements ISidedInv
       }
       NBTTagList nbttaglist = new NBTTagList();
       for (int i = 0; i < this.itemStacks.length; ++i) {
-         if (this.itemStacks[i] != null && !this.itemStacks[i].isEmpty() && !this.isSyncedSlot(i)) {
+         if (!this.itemStacks[i].isEmpty() && !this.isSyncedSlot(i)) {
             NBTTagCompound nbttagcompound1 = new NBTTagCompound();
             nbttagcompound1.setByte("Slot", (byte)i);
             this.itemStacks[i].writeToNBT(nbttagcompound1);

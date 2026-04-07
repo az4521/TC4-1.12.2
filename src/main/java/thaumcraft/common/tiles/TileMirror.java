@@ -348,15 +348,15 @@ public class TileMirror extends TileThaumcraft implements IInventory {
    }
 
    public ItemStack getStackInSlot(int par1) {
-      return null;
+      return ItemStack.EMPTY;
    }
 
    public ItemStack decrStackSize(int par1, int par2) {
-      return null;
+      return ItemStack.EMPTY;
    }
 
    public ItemStack removeStackFromSlot(int par1) {
-      return null;
+      return ItemStack.EMPTY;
    }
 
    public void addStack(ItemStack stack) {

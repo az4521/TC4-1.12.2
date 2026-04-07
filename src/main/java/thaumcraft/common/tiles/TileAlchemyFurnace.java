@@ -47,38 +47,38 @@ public class TileAlchemyFurnace extends TileThaumcraft implements ISidedInventor
    }
 
    public ItemStack decrStackSize(int par1, int par2) {
-      if (this.furnaceItemStacks[par1] != null) {
+      if (this.furnaceItemStacks[par1] != null && !this.furnaceItemStacks[par1].isEmpty()) {
           ItemStack itemstack;
           if (this.furnaceItemStacks[par1].getCount() <= par2) {
               itemstack = this.furnaceItemStacks[par1];
-            this.furnaceItemStacks[par1] = null;
+            this.furnaceItemStacks[par1] = ItemStack.EMPTY;
           } else {
               itemstack = this.furnaceItemStacks[par1].splitStack(par2);
-            if (this.furnaceItemStacks[par1].getCount() == 0) {
-               this.furnaceItemStacks[par1] = null;
+            if (this.furnaceItemStacks[par1].isEmpty()) {
+               this.furnaceItemStacks[par1] = ItemStack.EMPTY;
             }
 
           }
           return itemstack;
       } else {
-         return null;
+         return ItemStack.EMPTY;
       }
    }
 
    public ItemStack removeStackFromSlot(int par1) {
-      if (this.furnaceItemStacks[par1] != null) {
+      if (this.furnaceItemStacks[par1] != null && !this.furnaceItemStacks[par1].isEmpty()) {
          ItemStack itemstack = this.furnaceItemStacks[par1];
-         this.furnaceItemStacks[par1] = null;
+         this.furnaceItemStacks[par1] = ItemStack.EMPTY;
          return itemstack;
       } else {
-         return null;
+         return ItemStack.EMPTY;
       }
    }
 
    public void setInventorySlotContents(int par1, ItemStack par2ItemStack) {
-      this.furnaceItemStacks[par1] = par2ItemStack;
-      if (par2ItemStack != null && par2ItemStack.getCount() > this.getInventoryStackLimit()) {
-         par2ItemStack.setCount(this.getInventoryStackLimit());
+      this.furnaceItemStacks[par1] = par2ItemStack == null ? ItemStack.EMPTY : par2ItemStack;
+      if (!this.furnaceItemStacks[par1].isEmpty() && this.furnaceItemStacks[par1].getCount() > this.getInventoryStackLimit()) {
+         this.furnaceItemStacks[par1].setCount(this.getInventoryStackLimit());
       }
 
    }
@@ -117,6 +117,9 @@ public class TileAlchemyFurnace extends TileThaumcraft implements ISidedInventor
       super.readFromNBT(nbtCompound);
       NBTTagList nbttaglist = nbtCompound.getTagList("Items", 10);
       this.furnaceItemStacks = new ItemStack[this.getSizeInventory()];
+      for (int i = 0; i < this.furnaceItemStacks.length; i++) {
+         this.furnaceItemStacks[i] = ItemStack.EMPTY;
+      }
 
       for(int i = 0; i < nbttaglist.tagCount(); ++i) {
          NBTTagCompound nbttagcompound1 = nbttaglist.getCompoundTagAt(i);
@@ -144,7 +147,7 @@ public class TileAlchemyFurnace extends TileThaumcraft implements ISidedInventor
       NBTTagList nbttaglist = new NBTTagList();
 
       for(int i = 0; i < this.furnaceItemStacks.length; ++i) {
-         if (this.furnaceItemStacks[i] != null) {
+         if (this.furnaceItemStacks[i] != null && !this.furnaceItemStacks[i].isEmpty()) {
             NBTTagCompound nbttagcompound1 = new NBTTagCompound();
             nbttagcompound1.setByte("Slot", (byte)i);
             this.furnaceItemStacks[i].writeToNBT(nbttagcompound1);
@@ -261,7 +264,7 @@ public class TileAlchemyFurnace extends TileThaumcraft implements ISidedInventor
             if (this.furnaceBurnTime > 0) {
                flag1 = true;
                this.speedBoost = false;
-               if (this.furnaceItemStacks[1] != null) {
+               if (this.furnaceItemStacks[1] != null && !this.furnaceItemStacks[1].isEmpty()) {
                   if (this.furnaceItemStacks[1].isItemEqual(new ItemStack(ConfigItems.itemResource, 1, 0))) {
                      this.speedBoost = true;
                   }
@@ -298,7 +301,7 @@ public class TileAlchemyFurnace extends TileThaumcraft implements ISidedInventor
    }
 
    private boolean canSmelt() {
-      if (this.furnaceItemStacks[0] == null) {
+      if (this.furnaceItemStacks[0] == null || this.furnaceItemStacks[0].isEmpty()) {
          return false;
       } else {
          AspectList al = ThaumcraftCraftingManager.getObjectTags(this.furnaceItemStacks[0]);
@@ -355,7 +358,7 @@ public class TileAlchemyFurnace extends TileThaumcraft implements ISidedInventor
 
    public boolean isEmpty() {
       for (ItemStack stack : this.furnaceItemStacks) {
-         if (stack != null) return false;
+         if (stack != null && !stack.isEmpty()) return false;
       }
       return true;
    }

@@ -32,17 +32,17 @@ public class TilePedestal extends TileThaumcraft implements ISidedInventory {
    @Override
    public boolean isEmpty() {
       for (ItemStack stack : inventory) {
-         if (stack != null && !stack.isEmpty()) return false;
+         if (!stack.isEmpty()) return false;
       }
       return true;
    }
 
    public ItemStack getStackInSlot(int par1) {
-      ItemStack s = this.inventory[par1]; return s != null ? s : ItemStack.EMPTY;
+      return this.inventory[par1];
    }
 
    public ItemStack decrStackSize(int par1, int par2) {
-      if (this.inventory[par1] != null && !this.inventory[par1].isEmpty()) {
+      if (!this.inventory[par1].isEmpty()) {
          if (!this.world.isRemote) {
             { net.minecraft.block.state.IBlockState _bs = this.world.getBlockState(this.pos); this.world.notifyBlockUpdate(this.pos, _bs, _bs, 3); }
          }
@@ -66,7 +66,7 @@ public class TilePedestal extends TileThaumcraft implements ISidedInventory {
    }
 
    public ItemStack removeStackFromSlot(int par1) {
-      if (this.inventory[par1] != null && !this.inventory[par1].isEmpty()) {
+      if (!this.inventory[par1].isEmpty()) {
          ItemStack itemstack = this.inventory[par1];
          this.inventory[par1] = ItemStack.EMPTY;
          return itemstack;
@@ -76,7 +76,7 @@ public class TilePedestal extends TileThaumcraft implements ISidedInventory {
    }
 
    public void setInventorySlotContents(int par1, ItemStack par2ItemStack) {
-      this.inventory[par1] = par2ItemStack;
+      this.inventory[par1] = par2ItemStack == null ? ItemStack.EMPTY : par2ItemStack;
       if (!par2ItemStack.isEmpty() && par2ItemStack.getCount() > this.getInventoryStackLimit()) {
          par2ItemStack.setCount(this.getInventoryStackLimit());
       }
@@ -89,7 +89,7 @@ public class TilePedestal extends TileThaumcraft implements ISidedInventory {
    }
 
    public void setInventorySlotContentsFromInfusion(int par1, ItemStack par2ItemStack) {
-      this.inventory[par1] = par2ItemStack;
+      this.inventory[par1] = par2ItemStack == null ? ItemStack.EMPTY : par2ItemStack;
       this.markDirty();
       if (!this.world.isRemote) {
          { net.minecraft.block.state.IBlockState _bs = this.world.getBlockState(this.pos); this.world.notifyBlockUpdate(this.pos, _bs, _bs, 3); }
@@ -130,6 +130,7 @@ public class TilePedestal extends TileThaumcraft implements ISidedInventory {
    public void readCustomNBT(NBTTagCompound nbttagcompound) {
       NBTTagList nbttaglist = nbttagcompound.getTagList("Items", 10);
       this.inventory = new ItemStack[this.getSizeInventory()];
+      java.util.Arrays.fill(this.inventory, ItemStack.EMPTY);
 
       for(int i = 0; i < nbttaglist.tagCount(); ++i) {
          NBTTagCompound nbttagcompound1 = nbttaglist.getCompoundTagAt(i);
@@ -145,7 +146,7 @@ public class TilePedestal extends TileThaumcraft implements ISidedInventory {
       NBTTagList nbttaglist = new NBTTagList();
 
       for(int i = 0; i < this.inventory.length; ++i) {
-         if (this.inventory[i] != null && !this.inventory[i].isEmpty()) {
+         if (!this.inventory[i].isEmpty()) {
             NBTTagCompound nbttagcompound1 = new NBTTagCompound();
             nbttagcompound1.setByte("Slot", (byte)i);
             this.inventory[i].writeToNBT(nbttagcompound1);

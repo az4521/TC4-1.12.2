@@ -409,19 +409,19 @@ public class TileThaumatorium extends TileThaumcraft implements IAspectContainer
    }
 
    public ItemStack getStackInSlot(int par1) {
-      return this.inputStack;
+      return this.inputStack == null ? ItemStack.EMPTY : this.inputStack;
    }
 
    public ItemStack decrStackSize(int par1, int par2) {
-      if (this.inputStack != null) {
+      if (this.inputStack != null && !this.inputStack.isEmpty()) {
           ItemStack itemstack;
           if (this.inputStack.getCount() <= par2) {
               itemstack = this.inputStack;
-              this.inputStack = null;
+              this.inputStack = ItemStack.EMPTY;
           } else {
               itemstack = this.inputStack.splitStack(par2);
               if (this.inputStack.isEmpty()) {
-                 this.inputStack = null;
+                 this.inputStack = ItemStack.EMPTY;
               }
           }
           if (this.eventHandler != null) {
@@ -429,24 +429,24 @@ public class TileThaumatorium extends TileThaumcraft implements IAspectContainer
           }
           return itemstack;
       } else {
-         return null;
+         return ItemStack.EMPTY;
       }
    }
 
    public ItemStack removeStackFromSlot(int par1) {
-      if (this.inputStack != null) {
+      if (this.inputStack != null && !this.inputStack.isEmpty()) {
          ItemStack itemstack = this.inputStack;
-         this.inputStack = null;
+         this.inputStack = ItemStack.EMPTY;
          return itemstack;
       } else {
-         return null;
+         return ItemStack.EMPTY;
       }
    }
 
    public void setInventorySlotContents(int par1, ItemStack par2ItemStack) {
-      this.inputStack = par2ItemStack;
-      if (par2ItemStack != null && par2ItemStack.getCount() > this.getInventoryStackLimit()) {
-         par2ItemStack.setCount(this.getInventoryStackLimit());
+      this.inputStack = par2ItemStack == null ? ItemStack.EMPTY : par2ItemStack;
+      if (!this.inputStack.isEmpty() && this.inputStack.getCount() > this.getInventoryStackLimit()) {
+         this.inputStack.setCount(this.getInventoryStackLimit());
       }
 
       if (this.eventHandler != null) {

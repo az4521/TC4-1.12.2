@@ -3,10 +3,8 @@ package thaumcraft.client.renderers.tile;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import thaumcraft.client.renderers.compat.RenderBlocks;
-import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.texture.TextureMap;
 import net.minecraft.client.renderer.tileentity.TileEntitySpecialRenderer;
-import net.minecraft.tileentity.TileEntity;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.World;
@@ -16,12 +14,9 @@ import org.lwjgl.opengl.GL11;
 
 import thaumcraft.client.lib.UtilsFX;
 import thaumcraft.client.renderers.block.BlockRenderer;
-import thaumcraft.common.blocks.BlockJar;
 import thaumcraft.common.config.ConfigBlocks;
 import thaumcraft.common.tiles.TileEssentiaReservoir;
 import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.client.renderer.BufferBuilder;
-import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 
 @SideOnly(Side.CLIENT)
 public class TileEssentiaReservoirRenderer extends TileEntitySpecialRenderer<TileEssentiaReservoir> {
@@ -53,18 +48,15 @@ public class TileEssentiaReservoirRenderer extends TileEntitySpecialRenderer<Til
          GlStateManager.pushMatrix();
          GlStateManager.enableBlend();
          GlStateManager.blendFunc(770, 771);
+         GlStateManager.disableLighting();
+         GlStateManager.color(te.cr, te.cg, te.cb, 0.9F);
          World world = te.getWorld();
          RenderBlocks renderBlocks = new RenderBlocks();
-         GlStateManager.disableLighting();
          float level = (float)te.essentia.visSize() / (float)te.maxAmount;
-         Tessellator t = Tessellator.getInstance();
-         BufferBuilder buf = t.getBuffer();
          renderBlocks.setRenderBounds(BlockRenderer.W3, BlockRenderer.W3, BlockRenderer.W3, BlockRenderer.W13, BlockRenderer.W3 + BlockRenderer.W10 * level, BlockRenderer.W13);
-         buf.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX); 
-        
-         int bright = 200;
-        
-         TextureAtlasSprite icon = ((BlockJar)ConfigBlocks.blockJar).iconLiquid;
+         TextureAtlasSprite icon = net.minecraft.client.Minecraft.getMinecraft()
+               .getTextureMapBlocks()
+               .getAtlasSprite("thaumcraft:blocks/animatedglow");
          this.rendererDispatcher.renderEngine.bindTexture(TextureMap.LOCATION_BLOCKS_TEXTURE);
          renderBlocks.renderFaceYNeg(ConfigBlocks.blockEssentiaReservoir, 0.0F, 0.5F, 0.0F, icon);
          renderBlocks.renderFaceYPos(ConfigBlocks.blockEssentiaReservoir, 0.0F, 0.5F, 0.0F, icon);
@@ -72,7 +64,7 @@ public class TileEssentiaReservoirRenderer extends TileEntitySpecialRenderer<Til
          renderBlocks.renderFaceZPos(ConfigBlocks.blockEssentiaReservoir, 0.0F, 0.5F, 0.0F, icon);
          renderBlocks.renderFaceXNeg(ConfigBlocks.blockEssentiaReservoir, 0.0F, 0.5F, 0.0F, icon);
          renderBlocks.renderFaceXPos(ConfigBlocks.blockEssentiaReservoir, 0.0F, 0.5F, 0.0F, icon);
-         t.draw();
+         GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
          GlStateManager.enableLighting();
          GlStateManager.disableBlend();
          GlStateManager.popMatrix();

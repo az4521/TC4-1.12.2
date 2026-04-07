@@ -24,6 +24,7 @@ public class RenderBlocks {
     public double renderMinY, renderMaxY;
     public double renderMinX, renderMaxX;
     public double renderMinZ, renderMaxZ;
+    public double offsetX, offsetY, offsetZ;
 
     public RenderBlocks() {}
     public RenderBlocks(IBlockAccess world) { this.blockAccess = world; }
@@ -48,7 +49,7 @@ public class RenderBlocks {
         Tessellator tess = Tessellator.getInstance();
         BufferBuilder buf = tess.getBuffer();
         buf.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX);
-        drawAllFaces(buf, x, y, z, icon);
+        drawAllFaces(buf, x - offsetX, y - offsetY, z - offsetZ, icon);
         tess.draw();
         return true;
     }
@@ -60,50 +61,62 @@ public class RenderBlocks {
         return result;
     }
 
+    private float iu(TextureAtlasSprite icon, double u) {
+        return icon.getInterpolatedU(u * 16.0D);
+    }
+
+    private float iv(TextureAtlasSprite icon, double v) {
+        return icon.getInterpolatedV(v * 16.0D);
+    }
+
     private void drawAllFaces(BufferBuilder buf, double x, double y, double z,TextureAtlasSprite icon) {
-        float u0 = icon.getMinU(), u1 = icon.getMaxU();
-        float v0 = icon.getMinV(), v1 = icon.getMaxV();
         double x0 = x + renderMinX, x1 = x + renderMaxX;
         double y0 = y + renderMinY, y1 = y + renderMaxY;
         double z0 = z + renderMinZ, z1 = z + renderMaxZ;
+        float yU0 = iu(icon, renderMinX), yU1 = iu(icon, renderMaxX);
+        float yV0 = iv(icon, renderMinZ), yV1 = iv(icon, renderMaxZ);
+        float xU0 = iu(icon, renderMinZ), xU1 = iu(icon, renderMaxZ);
+        float xV0 = iv(icon, 1.0D - renderMaxY), xV1 = iv(icon, 1.0D - renderMinY);
+        float zU0 = iu(icon, renderMinX), zU1 = iu(icon, renderMaxX);
+        float zV0 = iv(icon, 1.0D - renderMaxY), zV1 = iv(icon, 1.0D - renderMinY);
         // Bottom (Y-)
-        buf.pos(x0, y0, z1).tex(u0, v1).endVertex();
-        buf.pos(x0, y0, z0).tex(u0, v0).endVertex();
-        buf.pos(x1, y0, z0).tex(u1, v0).endVertex();
-        buf.pos(x1, y0, z1).tex(u1, v1).endVertex();
+        buf.pos(x0, y0, z1).tex(yU0, yV1).endVertex();
+        buf.pos(x0, y0, z0).tex(yU0, yV0).endVertex();
+        buf.pos(x1, y0, z0).tex(yU1, yV0).endVertex();
+        buf.pos(x1, y0, z1).tex(yU1, yV1).endVertex();
         // Top (Y+)
-        buf.pos(x0, y1, z0).tex(u0, v0).endVertex();
-        buf.pos(x0, y1, z1).tex(u0, v1).endVertex();
-        buf.pos(x1, y1, z1).tex(u1, v1).endVertex();
-        buf.pos(x1, y1, z0).tex(u1, v0).endVertex();
+        buf.pos(x0, y1, z0).tex(yU0, yV0).endVertex();
+        buf.pos(x0, y1, z1).tex(yU0, yV1).endVertex();
+        buf.pos(x1, y1, z1).tex(yU1, yV1).endVertex();
+        buf.pos(x1, y1, z0).tex(yU1, yV0).endVertex();
         // North (Z-)
-        buf.pos(x1, y1, z0).tex(u0, v0).endVertex();
-        buf.pos(x1, y0, z0).tex(u0, v1).endVertex();
-        buf.pos(x0, y0, z0).tex(u1, v1).endVertex();
-        buf.pos(x0, y1, z0).tex(u1, v0).endVertex();
+        buf.pos(x1, y1, z0).tex(zU1, zV0).endVertex();
+        buf.pos(x1, y0, z0).tex(zU1, zV1).endVertex();
+        buf.pos(x0, y0, z0).tex(zU0, zV1).endVertex();
+        buf.pos(x0, y1, z0).tex(zU0, zV0).endVertex();
         // South (Z+)
-        buf.pos(x0, y1, z1).tex(u0, v0).endVertex();
-        buf.pos(x0, y0, z1).tex(u0, v1).endVertex();
-        buf.pos(x1, y0, z1).tex(u1, v1).endVertex();
-        buf.pos(x1, y1, z1).tex(u1, v0).endVertex();
+        buf.pos(x0, y1, z1).tex(zU0, zV0).endVertex();
+        buf.pos(x0, y0, z1).tex(zU0, zV1).endVertex();
+        buf.pos(x1, y0, z1).tex(zU1, zV1).endVertex();
+        buf.pos(x1, y1, z1).tex(zU1, zV0).endVertex();
         // West (X-)
-        buf.pos(x0, y1, z0).tex(u0, v0).endVertex();
-        buf.pos(x0, y0, z0).tex(u0, v1).endVertex();
-        buf.pos(x0, y0, z1).tex(u1, v1).endVertex();
-        buf.pos(x0, y1, z1).tex(u1, v0).endVertex();
+        buf.pos(x0, y1, z0).tex(xU0, xV0).endVertex();
+        buf.pos(x0, y0, z0).tex(xU0, xV1).endVertex();
+        buf.pos(x0, y0, z1).tex(xU1, xV1).endVertex();
+        buf.pos(x0, y1, z1).tex(xU1, xV0).endVertex();
         // East (X+)
-        buf.pos(x1, y1, z1).tex(u0, v0).endVertex();
-        buf.pos(x1, y0, z1).tex(u0, v1).endVertex();
-        buf.pos(x1, y0, z0).tex(u1, v1).endVertex();
-        buf.pos(x1, y1, z0).tex(u1, v0).endVertex();
+        buf.pos(x1, y1, z1).tex(xU1, xV0).endVertex();
+        buf.pos(x1, y0, z1).tex(xU1, xV1).endVertex();
+        buf.pos(x1, y0, z0).tex(xU0, xV1).endVertex();
+        buf.pos(x1, y1, z0).tex(xU0, xV0).endVertex();
     }
 
     public void renderFaceYNeg(Block block, double x, double y, double z, TextureAtlasSprite icon) {
-        float u0 = icon.getMinU(), u1 = icon.getMaxU();
-        float v0 = icon.getMinV(), v1 = icon.getMaxV();
-        double x0 = x + renderMinX, x1 = x + renderMaxX;
-        double yy = y + renderMinY;
-        double z0 = z + renderMinZ, z1 = z + renderMaxZ;
+        double x0 = x - offsetX + renderMinX, x1 = x - offsetX + renderMaxX;
+        double yy = y - offsetY + renderMinY;
+        double z0 = z - offsetZ + renderMinZ, z1 = z - offsetZ + renderMaxZ;
+        float u0 = iu(icon, renderMinX), u1 = iu(icon, renderMaxX);
+        float v0 = iv(icon, renderMinZ), v1 = iv(icon, renderMaxZ);
         Tessellator tess = Tessellator.getInstance();
         BufferBuilder buf = tess.getBuffer();
         buf.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX);
@@ -115,11 +128,11 @@ public class RenderBlocks {
     }
 
     public void renderFaceYPos(Block block, double x, double y, double z, TextureAtlasSprite icon) {
-        float u0 = icon.getMinU(), u1 = icon.getMaxU();
-        float v0 = icon.getMinV(), v1 = icon.getMaxV();
-        double x0 = x + renderMinX, x1 = x + renderMaxX;
-        double yy = y + renderMaxY;
-        double z0 = z + renderMinZ, z1 = z + renderMaxZ;
+        double x0 = x - offsetX + renderMinX, x1 = x - offsetX + renderMaxX;
+        double yy = y - offsetY + renderMaxY;
+        double z0 = z - offsetZ + renderMinZ, z1 = z - offsetZ + renderMaxZ;
+        float u0 = iu(icon, renderMinX), u1 = iu(icon, renderMaxX);
+        float v0 = iv(icon, renderMinZ), v1 = iv(icon, renderMaxZ);
         Tessellator tess = Tessellator.getInstance();
         BufferBuilder buf = tess.getBuffer();
         buf.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX);
@@ -131,11 +144,11 @@ public class RenderBlocks {
     }
 
     public void renderFaceXNeg(Block block, double x, double y, double z, TextureAtlasSprite icon) {
-        float u0 = icon.getMinU(), u1 = icon.getMaxU();
-        float v0 = icon.getMinV(), v1 = icon.getMaxV();
-        double xx = x + renderMinX;
-        double y0 = y + renderMinY, y1 = y + renderMaxY;
-        double z0 = z + renderMinZ, z1 = z + renderMaxZ;
+        double xx = x - offsetX + renderMinX;
+        double y0 = y - offsetY + renderMinY, y1 = y - offsetY + renderMaxY;
+        double z0 = z - offsetZ + renderMinZ, z1 = z - offsetZ + renderMaxZ;
+        float u0 = iu(icon, renderMinZ), u1 = iu(icon, renderMaxZ);
+        float v0 = iv(icon, 1.0D - renderMaxY), v1 = iv(icon, 1.0D - renderMinY);
         Tessellator tess = Tessellator.getInstance();
         BufferBuilder buf = tess.getBuffer();
         buf.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX);
@@ -147,11 +160,11 @@ public class RenderBlocks {
     }
 
     public void renderFaceXPos(Block block, double x, double y, double z, TextureAtlasSprite icon) {
-        float u0 = icon.getMinU(), u1 = icon.getMaxU();
-        float v0 = icon.getMinV(), v1 = icon.getMaxV();
-        double xx = x + renderMaxX;
-        double y0 = y + renderMinY, y1 = y + renderMaxY;
-        double z0 = z + renderMinZ, z1 = z + renderMaxZ;
+        double xx = x - offsetX + renderMaxX;
+        double y0 = y - offsetY + renderMinY, y1 = y - offsetY + renderMaxY;
+        double z0 = z - offsetZ + renderMinZ, z1 = z - offsetZ + renderMaxZ;
+        float u0 = iu(icon, renderMinZ), u1 = iu(icon, renderMaxZ);
+        float v0 = iv(icon, 1.0D - renderMaxY), v1 = iv(icon, 1.0D - renderMinY);
         Tessellator tess = Tessellator.getInstance();
         BufferBuilder buf = tess.getBuffer();
         buf.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX);
@@ -163,27 +176,27 @@ public class RenderBlocks {
     }
 
     public void renderFaceZNeg(Block block, double x, double y, double z, TextureAtlasSprite icon) {
-        float u0 = icon.getMinU(), u1 = icon.getMaxU();
-        float v0 = icon.getMinV(), v1 = icon.getMaxV();
-        double x0 = x + renderMinX, x1 = x + renderMaxX;
-        double y0 = y + renderMinY, y1 = y + renderMaxY;
-        double zz = z + renderMinZ;
+        double x0 = x - offsetX + renderMinX, x1 = x - offsetX + renderMaxX;
+        double y0 = y - offsetY + renderMinY, y1 = y - offsetY + renderMaxY;
+        double zz = z - offsetZ + renderMinZ;
+        float u0 = iu(icon, renderMinX), u1 = iu(icon, renderMaxX);
+        float v0 = iv(icon, 1.0D - renderMaxY), v1 = iv(icon, 1.0D - renderMinY);
         Tessellator tess = Tessellator.getInstance();
         BufferBuilder buf = tess.getBuffer();
         buf.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX);
-        buf.pos(x1, y1, zz).tex(u0, v0).endVertex();
-        buf.pos(x1, y0, zz).tex(u0, v1).endVertex();
-        buf.pos(x0, y0, zz).tex(u1, v1).endVertex();
-        buf.pos(x0, y1, zz).tex(u1, v0).endVertex();
+        buf.pos(x1, y1, zz).tex(u1, v0).endVertex();
+        buf.pos(x1, y0, zz).tex(u1, v1).endVertex();
+        buf.pos(x0, y0, zz).tex(u0, v1).endVertex();
+        buf.pos(x0, y1, zz).tex(u0, v0).endVertex();
         tess.draw();
     }
 
     public void renderFaceZPos(Block block, double x, double y, double z, TextureAtlasSprite icon) {
-        float u0 = icon.getMinU(), u1 = icon.getMaxU();
-        float v0 = icon.getMinV(), v1 = icon.getMaxV();
-        double x0 = x + renderMinX, x1 = x + renderMaxX;
-        double y0 = y + renderMinY, y1 = y + renderMaxY;
-        double zz = z + renderMaxZ;
+        double x0 = x - offsetX + renderMinX, x1 = x - offsetX + renderMaxX;
+        double y0 = y - offsetY + renderMinY, y1 = y - offsetY + renderMaxY;
+        double zz = z - offsetZ + renderMaxZ;
+        float u0 = iu(icon, renderMinX), u1 = iu(icon, renderMaxX);
+        float v0 = iv(icon, 1.0D - renderMaxY), v1 = iv(icon, 1.0D - renderMinY);
         Tessellator tess = Tessellator.getInstance();
         BufferBuilder buf = tess.getBuffer();
         buf.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX);

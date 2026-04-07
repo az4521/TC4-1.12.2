@@ -674,39 +674,39 @@ public class TileArcaneBore extends TileThaumcraft implements IInventory, IWanda
 
     @Override
     public ItemStack decrStackSize(int var1, int var2) {
-        if (this.contents[var1] != null) {
+        if (this.contents[var1] != null && !this.contents[var1].isEmpty()) {
             ItemStack var3;
             if (this.contents[var1].getCount() <= var2) {
                 var3 = this.contents[var1];
-                this.contents[var1] = null;
+                this.contents[var1] = ItemStack.EMPTY;
             } else {
                 var3 = this.contents[var1].splitStack(var2);
-                if (this.contents[var1].getCount() == 0) {
-                    this.contents[var1] = null;
+                if (this.contents[var1].isEmpty()) {
+                    this.contents[var1] = ItemStack.EMPTY;
                 }
 
             }
             this.markDirty();
             return var3;
         } else {
-            return null;
+            return ItemStack.EMPTY;
         }
     }
 
     public ItemStack removeStackFromSlot(int var1) {
-        if (this.contents[var1] != null) {
+        if (this.contents[var1] != null && !this.contents[var1].isEmpty()) {
             ItemStack var2 = this.contents[var1];
-            this.contents[var1] = null;
+            this.contents[var1] = ItemStack.EMPTY;
             return var2;
         } else {
-            return null;
+            return ItemStack.EMPTY;
         }
     }
 
     public void setInventorySlotContents(int var1, ItemStack var2) {
-        this.contents[var1] = var2;
-        if (var2 != null && var2.getCount() > this.getInventoryStackLimit()) {
-            var2.setCount(this.getInventoryStackLimit());
+        this.contents[var1] = var2 == null ? ItemStack.EMPTY : var2;
+        if (!this.contents[var1].isEmpty() && this.contents[var1].getCount() > this.getInventoryStackLimit()) {
+            this.contents[var1].setCount(this.getInventoryStackLimit());
         }
 
         this.markDirty();
@@ -732,14 +732,14 @@ public class TileArcaneBore extends TileThaumcraft implements IInventory, IWanda
 
     public boolean isEmpty() {
         for (ItemStack stack : this.contents) {
-            if (stack != null) return false;
+            if (stack != null && !stack.isEmpty()) return false;
         }
         return true;
     }
 
     public void clear() {
         for (int i = 0; i < this.contents.length; ++i) {
-            this.contents[i] = null;
+            this.contents[i] = ItemStack.EMPTY;
         }
     }
 

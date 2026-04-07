@@ -1,6 +1,7 @@
 package thaumcraft.common.tiles;
 
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.world.EnumSkyBlock;
 import thaumcraft.api.TileThaumcraft;
@@ -23,9 +24,17 @@ public class TileArcaneLamp extends TileThaumcraft {
             y = 5;
          }
 
-         if (this.world.isAirBlock(new BlockPos(x, y, z)) && this.world.getBlockState(new BlockPos(x, y, z)).getBlock() != ConfigBlocks.blockAiry && this.world.getLightFor(EnumSkyBlock.BLOCK, new BlockPos(x, y, z)) < 9) {
-            this.
-        world.setBlockState(new net.minecraft.util.math.BlockPos(x, y, z), (ConfigBlocks.blockAiry).getStateFromMeta(3), 3);
+         BlockPos lightPos = new BlockPos(x, y, z);
+         if (this.world.isAirBlock(lightPos) && this.world.getBlockState(lightPos).getBlock() != ConfigBlocks.blockAiry && this.world.getLightFor(EnumSkyBlock.BLOCK, lightPos) < 9) {
+            this.world.setBlockState(lightPos, ConfigBlocks.blockAiry.getStateFromMeta(3), 3);
+            TileEntity te = this.world.getTileEntity(lightPos);
+            if (te instanceof TileArcaneLampLight) {
+               TileArcaneLampLight lampLight = (TileArcaneLampLight)te;
+               lampLight.x = this.getPos().getX();
+               lampLight.y = this.getPos().getY();
+               lampLight.z = this.getPos().getZ();
+               lampLight.markDirty();
+            }
          }
       }
 
@@ -40,12 +49,17 @@ public class TileArcaneLamp extends TileThaumcraft {
    }
 
    public void removeLights() {
+      BlockPos.MutableBlockPos checkPos = new BlockPos.MutableBlockPos();
+      int sx = this.getPos().getX();
+      int sy = this.getPos().getY();
+      int sz = this.getPos().getZ();
       for(int x = -15; x <= 15; ++x) {
          for(int y = -15; y <= 15; ++y) {
             for(int z = -15; z <= 15; ++z) {
-               if (this.world.getBlockState(new net.minecraft.util.math.BlockPos(this.getPos().getX() + x, this.getPos().getY() + y, this.getPos().getZ() + z)).getBlock() == ConfigBlocks.blockAiry && this.
-        world.getBlockState(new net.minecraft.util.math.BlockPos(this.getPos().getX() + x, this.getPos().getY() + y, this.getPos().getZ() + z)).getBlock().getMetaFromState(world.getBlockState(new net.minecraft.util.math.BlockPos(this.getPos().getX() + x, this.getPos().getY() + y, this.getPos().getZ() + z))) == 3) {
-                  this.world.setBlockToAir(new BlockPos(this.getPos().getX() + x, this.getPos().getY() + y, this.getPos().getZ() + z));
+               checkPos.setPos(sx + x, sy + y, sz + z);
+               net.minecraft.block.state.IBlockState state = this.world.getBlockState(checkPos);
+               if (state.getBlock() == ConfigBlocks.blockAiry && state.getBlock().getMetaFromState(state) == 3) {
+                  this.world.setBlockToAir(checkPos);
                }
             }
          }

@@ -1,7 +1,55 @@
 {
   "variants": {
+    "meta=0": {
+      "model": "thaumcraft:blockarcanefurnace_core"
+    },
+    "meta=1": {
+      "model": "thaumcraft:blockarcanefurnace_netherbrick"
+    },
+    "meta=2": {
+      "model": "thaumcraft:blockarcanefurnace_obsidian"
+    },
+    "meta=3": {
+      "model": "thaumcraft:blockarcanefurnace_netherbrick"
+    },
+    "meta=4": {
+      "model": "thaumcraft:blockarcanefurnace_obsidian"
+    },
+    "meta=5": {
+      "model": "thaumcraft:blockarcanefurnace_obsidian"
+    },
+    "meta=6": {
+      "model": "thaumcraft:blockarcanefurnace_obsidian"
+    },
+    "meta=7": {
+      "model": "thaumcraft:blockarcanefurnace_netherbrick"
+    },
+    "meta=8": {
+      "model": "thaumcraft:blockarcanefurnace_obsidian"
+    },
+    "meta=9": {
+      "model": "thaumcraft:blockarcanefurnace_netherbrick"
+    },
+    "meta=10": {
+      "model": "thaumcraft:blockarcanefurnace_bars"
+    },
+    "meta=11": {
+      "model": "thaumcraft:blockarcanefurnace_obsidian"
+    },
+    "meta=12": {
+      "model": "thaumcraft:blockarcanefurnace_obsidian"
+    },
+    "meta=13": {
+      "model": "thaumcraft:blockarcanefurnace_obsidian"
+    },
+    "meta=14": {
+      "model": "thaumcraft:blockarcanefurnace_obsidian"
+    },
+    "meta=15": {
+      "model": "thaumcraft:blockarcanefurnace_obsidian"
+    },
     "normal": {
-      "model": "thaumcraft:blockarcanefurnace"
+      "model": "thaumcraft:blockarcanefurnace_core"
     }
   }
 }

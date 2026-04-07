@@ -100,7 +100,7 @@ public class TileAlembicRenderer extends TileEntitySpecialRenderer<TileAlembic> 
 
       GlStateManager.popMatrix();
       if (tile.getWorld() != null) {
-         UtilsFX.bindTexture("textures/models/Bore.png");
+         UtilsFX.bindTexture("textures/models/bore.png");
 
          for(EnumFacing dir : EnumFacing.values()) {
             if (tile.canOutputTo(dir)) {

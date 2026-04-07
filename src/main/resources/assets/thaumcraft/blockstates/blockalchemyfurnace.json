@@ -1,5 +1,53 @@
 {
   "variants": {
+    "meta=0": {
+      "model": "thaumcraft:blockalchemyfurnace"
+    },
+    "meta=1": {
+      "model": "thaumcraft:blockalchemyfurnace"
+    },
+    "meta=2": {
+      "model": "thaumcraft:blockalchemyfurnace"
+    },
+    "meta=3": {
+      "model": "thaumcraft:blockalchemyfurnace"
+    },
+    "meta=4": {
+      "model": "thaumcraft:blockalchemyfurnace"
+    },
+    "meta=5": {
+      "model": "thaumcraft:blockalchemyfurnace"
+    },
+    "meta=6": {
+      "model": "thaumcraft:blockalchemyfurnace"
+    },
+    "meta=7": {
+      "model": "thaumcraft:blockalchemyfurnace"
+    },
+    "meta=8": {
+      "model": "thaumcraft:blockalchemyfurnace"
+    },
+    "meta=9": {
+      "model": "thaumcraft:blockalchemyfurnace"
+    },
+    "meta=10": {
+      "model": "thaumcraft:blockalchemyfurnace"
+    },
+    "meta=11": {
+      "model": "thaumcraft:blockalchemyfurnace"
+    },
+    "meta=12": {
+      "model": "thaumcraft:blockalchemyfurnace"
+    },
+    "meta=13": {
+      "model": "thaumcraft:blockalchemyfurnace"
+    },
+    "meta=14": {
+      "model": "thaumcraft:blockalchemyfurnace"
+    },
+    "meta=15": {
+      "model": "thaumcraft:blockalchemyfurnace"
+    },
     "normal": {
       "model": "thaumcraft:blockalchemyfurnace"
     }

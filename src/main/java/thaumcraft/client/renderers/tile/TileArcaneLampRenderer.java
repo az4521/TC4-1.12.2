@@ -34,7 +34,7 @@ public class TileArcaneLampRenderer extends TileEntitySpecialRenderer<TileEntity
          }
 
          GlStateManager.pushMatrix();
-         UtilsFX.bindTexture("textures/models/Bore.png");
+         UtilsFX.bindTexture("textures/models/bore.png");
          if (tileentity.getWorld().getTileEntity(tileentity.getPos().offset(dir)) instanceof TileArcaneBoreBase) {
             GlStateManager.pushMatrix();
             GlStateManager.translate((float)x + 0.5F + (float)dir.getXOffset(), (float)y + (float)dir.getYOffset(), (float)z + 0.5F + (float)dir.getZOffset());

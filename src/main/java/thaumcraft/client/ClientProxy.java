@@ -161,6 +161,7 @@ import thaumcraft.client.renderers.item.ItemBowBoneRenderer;
 import thaumcraft.client.renderers.item.ItemThaumometerRenderer;
 import thaumcraft.client.renderers.item.ItemTrunkSpawnerRenderer;
 import thaumcraft.client.renderers.item.ItemWandRenderer;
+import thaumcraft.client.renderers.item.ItemWoodenDeviceRenderer;
 import thaumcraft.client.renderers.models.entities.ModelEldritchGolem;
 import thaumcraft.client.renderers.models.entities.ModelEldritchGuardian;
 import thaumcraft.client.renderers.models.entities.ModelGolem;
@@ -179,6 +180,7 @@ import thaumcraft.client.renderers.tile.TileArcaneLampRenderer;
 import thaumcraft.client.renderers.tile.TileArcaneWorkbenchRenderer;
 import thaumcraft.client.renderers.tile.TileBannerRenderer;
 import thaumcraft.client.renderers.tile.TileBellowsRenderer;
+import thaumcraft.client.renderers.tile.TileBrainboxRenderer;
 import thaumcraft.client.renderers.tile.TileCentrifugeRenderer;
 import thaumcraft.client.renderers.tile.TileChestHungryRenderer;
 import thaumcraft.client.renderers.tile.TileCrucibleRenderer;
@@ -366,6 +368,7 @@ public class ClientProxy extends CommonProxy {
       thaumcraft.client.renderers.compat.IItemRendererTEISR.register(ConfigItems.itemWandCasting, new ItemWandRenderer());
       thaumcraft.client.renderers.compat.IItemRendererTEISR.register(ConfigItems.itemBowBone, new ItemBowBoneRenderer());
       thaumcraft.client.renderers.compat.IItemRendererTEISR.register(ConfigItems.itemTrunkSpawner, new ItemTrunkSpawnerRenderer());
+      thaumcraft.client.renderers.compat.IItemRendererTEISR.register(Item.getItemFromBlock(ConfigBlocks.blockWoodenDevice), new ItemWoodenDeviceRenderer());
       thaumcraft.client.renderers.compat.IItemRendererTEISR.register(ConfigItems.itemJarFilled, new thaumcraft.client.renderers.tile.ItemJarFilledRenderer());
       thaumcraft.client.renderers.compat.IItemRendererTEISR.register(ConfigItems.itemJarNode, new thaumcraft.client.renderers.tile.ItemJarNodeRenderer());
    }
@@ -420,6 +423,31 @@ public class ClientProxy extends CommonProxy {
       event.getMap().registerSprite(new net.minecraft.util.ResourceLocation("thaumcraft", "blocks/fluxgas"));
       event.getMap().registerSprite(new net.minecraft.util.ResourceLocation("thaumcraft", "blocks/fluidpure"));
       event.getMap().registerSprite(new net.minecraft.util.ResourceLocation("thaumcraft", "blocks/fluiddeath"));
+
+      if (ConfigBlocks.blockMetalDevice instanceof thaumcraft.common.blocks.BlockMetalDevice) {
+         thaumcraft.common.blocks.BlockMetalDevice bmd = (thaumcraft.common.blocks.BlockMetalDevice) ConfigBlocks.blockMetalDevice;
+         bmd.icon[0] = event.getMap().registerSprite(new net.minecraft.util.ResourceLocation("thaumcraft", "blocks/metalbase"));
+         for (int i = 1; i <= 6; i++) {
+            bmd.icon[i] = event.getMap().registerSprite(new net.minecraft.util.ResourceLocation("thaumcraft", "blocks/crucible" + i));
+         }
+         bmd.icon[7] = event.getMap().registerSprite(new net.minecraft.util.ResourceLocation("thaumcraft", "blocks/goldbase"));
+         bmd.icon[8] = event.getMap().registerSprite(new net.minecraft.util.ResourceLocation("thaumcraft", "blocks/grate"));
+         bmd.icon[9] = event.getMap().registerSprite(new net.minecraft.util.ResourceLocation("thaumcraft", "blocks/grate_hatch"));
+         bmd.icon[10] = event.getMap().registerSprite(new net.minecraft.util.ResourceLocation("thaumcraft", "blocks/lamp_side"));
+         bmd.icon[11] = event.getMap().registerSprite(new net.minecraft.util.ResourceLocation("thaumcraft", "blocks/lamp_top"));
+         bmd.icon[12] = event.getMap().registerSprite(new net.minecraft.util.ResourceLocation("thaumcraft", "blocks/lamp_grow_side"));
+         bmd.icon[13] = event.getMap().registerSprite(new net.minecraft.util.ResourceLocation("thaumcraft", "blocks/lamp_grow_top"));
+         bmd.icon[14] = event.getMap().registerSprite(new net.minecraft.util.ResourceLocation("thaumcraft", "blocks/lamp_grow_side_off"));
+         bmd.icon[15] = event.getMap().registerSprite(new net.minecraft.util.ResourceLocation("thaumcraft", "blocks/lamp_grow_top_off"));
+         bmd.icon[16] = event.getMap().registerSprite(new net.minecraft.util.ResourceLocation("thaumcraft", "blocks/alchemyblock"));
+         bmd.icon[17] = event.getMap().registerSprite(new net.minecraft.util.ResourceLocation("thaumcraft", "blocks/brainbox"));
+         bmd.icon[18] = event.getMap().registerSprite(new net.minecraft.util.ResourceLocation("thaumcraft", "blocks/lamp_fert_side"));
+         bmd.icon[19] = event.getMap().registerSprite(new net.minecraft.util.ResourceLocation("thaumcraft", "blocks/lamp_fert_top"));
+         bmd.icon[20] = event.getMap().registerSprite(new net.minecraft.util.ResourceLocation("thaumcraft", "blocks/lamp_fert_side_off"));
+         bmd.icon[21] = event.getMap().registerSprite(new net.minecraft.util.ResourceLocation("thaumcraft", "blocks/lamp_fert_top_off"));
+         bmd.icon[22] = event.getMap().registerSprite(new net.minecraft.util.ResourceLocation("thaumcraft", "blocks/alchemyblockadv"));
+         bmd.iconGlow = event.getMap().registerSprite(new net.minecraft.util.ResourceLocation("thaumcraft", "blocks/animatedglow"));
+      }
    }
 
    @SubscribeEvent
@@ -811,12 +839,16 @@ public class ClientProxy extends CommonProxy {
       this.registerTileEntitySpecialRenderer(TileAlembic.class, new TileAlembicRenderer());
       this.registerTileEntitySpecialRenderer(TileArcaneBore.class, new TileArcaneBoreRenderer());
       this.registerTileEntitySpecialRenderer(TileArcaneBoreBase.class, new TileArcaneBoreBaseRenderer());
-      this.registerTileEntitySpecialRenderer(TileArcaneLamp.class, new TileArcaneLampRenderer());
-      this.registerTileEntitySpecialRenderer(TileArcaneLampGrowth.class, new TileArcaneLampRenderer());
-      this.registerTileEntitySpecialRenderer(TileArcaneLampFertility.class, new TileArcaneLampRenderer());
+      this.registerTileEntitySpecialRenderer(TileArcaneLamp.class, new thaumcraft.client.renderers.compat.BlockRendererDispatcherTESR<>(new BlockMetalDeviceRenderer()));
+      this.registerTileEntitySpecialRenderer(TileArcaneLampGrowth.class, new thaumcraft.client.renderers.compat.BlockRendererDispatcherTESR<>(new BlockMetalDeviceRenderer()));
+      this.registerTileEntitySpecialRenderer(TileArcaneLampFertility.class, new thaumcraft.client.renderers.compat.BlockRendererDispatcherTESR<>(new BlockMetalDeviceRenderer()));
       this.registerTileEntitySpecialRenderer(TileArcaneWorkbench.class, new TileArcaneWorkbenchRenderer());
       this.registerTileEntitySpecialRenderer(TileBanner.class, new TileBannerRenderer());
+      this.registerTileEntitySpecialRenderer(TileBrainbox.class, new thaumcraft.client.renderers.compat.BlockRendererDispatcherTESR<>(new BlockMetalDeviceRenderer()));
+      this.registerTileEntitySpecialRenderer(TileMetalDevice.class, new thaumcraft.client.renderers.compat.BlockRendererDispatcherTESR<>(new BlockMetalDeviceRenderer()));
       this.registerTileEntitySpecialRenderer(TileBellows.class, new TileBellowsRenderer());
+      this.registerTileEntitySpecialRenderer(TileSensor.class, new thaumcraft.client.renderers.compat.BlockRendererDispatcherTESR<>(new BlockWoodenDeviceRenderer()));
+      this.registerTileEntitySpecialRenderer(TileArcanePressurePlate.class, new thaumcraft.client.renderers.compat.BlockRendererDispatcherTESR<>(new BlockWoodenDeviceRenderer()));
       this.registerTileEntitySpecialRenderer(thaumcraft.common.tiles.TilePlank.class, new thaumcraft.client.renderers.tile.TilePlankRenderer());
       this.registerTileEntitySpecialRenderer(TileCentrifuge.class, new TileCentrifugeRenderer());
       this.registerTileEntitySpecialRenderer(TileChestHungry.class, new TileChestHungryRenderer());

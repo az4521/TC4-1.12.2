@@ -14,7 +14,7 @@ public class SlotLimitedByWand extends Slot {
    }
 
    public boolean isItemValid(ItemStack stack) {
-      return stack != null && stack.getItem() != null && stack.getItem() instanceof ItemWandCasting && !((ItemWandCasting)stack.getItem()).isStaff(stack);
+      return !stack.isEmpty() && stack.getItem() instanceof ItemWandCasting && !((ItemWandCasting)stack.getItem()).isStaff(stack);
    }
 
    public int getSlotStackLimit() {

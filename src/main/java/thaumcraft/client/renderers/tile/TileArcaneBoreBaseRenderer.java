@@ -16,7 +16,7 @@ public class TileArcaneBoreBaseRenderer extends TileEntitySpecialRenderer<TileEn
    public void renderEntityAt(TileArcaneBoreBase bore, double x, double y, double z, float fq) {
       if (bore == null){return;}
       Minecraft mc = FMLClientHandler.instance().getClient();
-      UtilsFX.bindTexture("textures/models/Bore.png");
+      UtilsFX.bindTexture("textures/models/bore.png");
       GlStateManager.pushMatrix();
       GlStateManager.translate((float)x + 0.5F, (float)y, (float)z + 0.5F);
       GlStateManager.pushMatrix();

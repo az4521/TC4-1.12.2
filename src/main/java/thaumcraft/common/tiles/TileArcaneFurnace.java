@@ -31,34 +31,34 @@ public class TileArcaneFurnace extends TileThaumcraft {
    }
 
    public ItemStack getStackInSlot(int i) {
-      ItemStack s = this.furnaceItemStacks[i]; return s != null ? s : ItemStack.EMPTY;
+      return this.furnaceItemStacks[i];
    }
 
    public ItemStack decrStackSize(int i, int j) {
-      if (this.furnaceItemStacks[i] != null) {
+      if (!this.furnaceItemStacks[i].isEmpty()) {
          if (this.furnaceItemStacks[i].getCount() <= j) {
             ItemStack itemstack = this.furnaceItemStacks[i];
-            this.furnaceItemStacks[i] = null;
+            this.furnaceItemStacks[i] = ItemStack.EMPTY;
             this.markDirty();
             return itemstack;
          } else {
             ItemStack itemstack1 = this.furnaceItemStacks[i].splitStack(j);
             if (this.furnaceItemStacks[i].isEmpty()) {
-               this.furnaceItemStacks[i] = null;
+               this.furnaceItemStacks[i] = ItemStack.EMPTY;
             }
 
             this.markDirty();
             return itemstack1;
          }
       } else {
-         return null;
+         return ItemStack.EMPTY;
       }
    }
 
    public void setInventorySlotContents(int i, ItemStack itemstack) {
-      this.furnaceItemStacks[i] = itemstack;
-      if (itemstack != null && itemstack.getCount() > this.getInventoryStackLimit()) {
-         itemstack.setCount(this.getInventoryStackLimit());
+      this.furnaceItemStacks[i] = itemstack == null ? ItemStack.EMPTY : itemstack;
+      if (!this.furnaceItemStacks[i].isEmpty() && this.furnaceItemStacks[i].getCount() > this.getInventoryStackLimit()) {
+         this.furnaceItemStacks[i].setCount(this.getInventoryStackLimit());
       }
 
       this.markDirty();
@@ -72,6 +72,7 @@ public class TileArcaneFurnace extends TileThaumcraft {
       super.readFromNBT(nbttagcompound);
       NBTTagList nbttaglist = nbttagcompound.getTagList("Items", 10);
       this.furnaceItemStacks = new ItemStack[this.getSizeInventory()];
+      java.util.Arrays.fill(this.furnaceItemStacks, ItemStack.EMPTY);
 
       for(int i = 0; i < nbttaglist.tagCount(); ++i) {
          NBTTagCompound nbttagcompound1 = nbttaglist.getCompoundTagAt(i);
@@ -92,7 +93,7 @@ public class TileArcaneFurnace extends TileThaumcraft {
       NBTTagList nbttaglist = new NBTTagList();
 
       for(int i = 0; i < this.furnaceItemStacks.length; ++i) {
-         if (this.furnaceItemStacks[i] != null) {
+         if (!this.furnaceItemStacks[i].isEmpty()) {
             NBTTagCompound nbttagcompound1 = new NBTTagCompound();
             nbttagcompound1.setByte("Slot", (byte)i);
             this.furnaceItemStacks[i].writeToNBT(nbttagcompound1);
@@ -134,14 +135,14 @@ public class TileArcaneFurnace extends TileThaumcraft {
 
          if (this.furnaceCookTime == 0 && cookedflag) {
             for(int a = 0; a < this.getSizeInventory(); ++a) {
-               if (this.furnaceItemStacks[a] != null) {
+               if (!this.furnaceItemStacks[a].isEmpty()) {
                   ItemStack itemstack = FurnaceRecipes.instance().getSmeltingResult(this.furnaceItemStacks[a]);
-                  if (itemstack != null) {
+                  if (!itemstack.isEmpty()) {
                      this.ejectItem(itemstack.copy(), this.furnaceItemStacks[a]);
                      this.world.addBlockEvent(this.getPos(), ConfigBlocks.blockArcaneFurnace, 3, 0);
                      this.furnaceItemStacks[a].shrink(1);
                      if (this.furnaceItemStacks[a].isEmpty()) {
-                        this.furnaceItemStacks[a] = null;
+                        this.furnaceItemStacks[a] = ItemStack.EMPTY;
                      }
                      break;
                   }
@@ -151,7 +152,7 @@ public class TileArcaneFurnace extends TileThaumcraft {
 
          if (this.furnaceCookTime == 0 && !cookedflag) {
             for(int a = 0; a < this.getSizeInventory(); ++a) {
-               if (this.furnaceItemStacks[a] != null && this.canSmelt(a)) {
+               if (!this.furnaceItemStacks[a].isEmpty() && this.canSmelt(a)) {
                   this.furnaceMaxCookTime = this.calcCookTime();
                   this.furnaceCookTime = this.furnaceMaxCookTime;
                   break;
@@ -186,7 +187,7 @@ public class TileArcaneFurnace extends TileThaumcraft {
 
    public boolean addItemsToInventory(ItemStack items) {
       for(int a = 0; a < this.getSizeInventory(); ++a) {
-         if (this.furnaceItemStacks[a] != null && this.furnaceItemStacks[a].isItemEqual(items) && this.furnaceItemStacks[a].getCount() + items.getCount() <= items.getMaxStackSize()) {
+         if (!this.furnaceItemStacks[a].isEmpty() && this.furnaceItemStacks[a].isItemEqual(items) && this.furnaceItemStacks[a].getCount() + items.getCount() <= items.getMaxStackSize()) {
             ItemStack var10000 = this.furnaceItemStacks[a];
             var10000.grow(items.getCount());
             if (!this.canSmelt(a)) {
@@ -197,7 +198,7 @@ public class TileArcaneFurnace extends TileThaumcraft {
             return true;
          }
 
-         if (this.furnaceItemStacks[a] == null) {
+         if (this.furnaceItemStacks[a].isEmpty()) {
             this.setInventorySlotContents(a, items);
             if (!this.canSmelt(a)) {
                this.destroyItem(a);
@@ -212,7 +213,7 @@ public class TileArcaneFurnace extends TileThaumcraft {
    }
 
    private void destroyItem(int slot) {
-      this.furnaceItemStacks[slot] = null;
+      this.furnaceItemStacks[slot] = ItemStack.EMPTY;
       { net.minecraft.util.SoundEvent _snd = net.minecraft.util.SoundEvent.REGISTRY.getObject(new net.minecraft.util.ResourceLocation("minecraft:random.fizz")); if (_snd != null) this.world.playSound(null, (float)this.getPos().getX() + 0.5F, (float)this.getPos().getY() + 0.5F, (float)this.getPos().getZ() + 0.5F, _snd, net.minecraft.util.SoundCategory.NEUTRAL, 0.3F, 2.6F + (this.world.rand.nextFloat() - this.world.rand.nextFloat()) * 0.8F); };
       double var21 = (float)this.getPos().getX() + this.world.rand.nextFloat();
       double var22 = this.getPos().getY() + 1;
@@ -239,7 +240,7 @@ public class TileArcaneFurnace extends TileThaumcraft {
    }
 
    public void ejectItem(ItemStack items, ItemStack furnaceItemStack) {
-      if (items != null) {
+      if (!items.isEmpty()) {
          ItemStack bit = items.copy();
          int bellows = this.getBellows();
          float lx = 0.5F;
@@ -309,11 +310,11 @@ public class TileArcaneFurnace extends TileThaumcraft {
    }
 
    private boolean canSmelt(int slotIn) {
-      if (this.furnaceItemStacks[slotIn] == null) {
+      if (this.furnaceItemStacks[slotIn].isEmpty()) {
          return false;
       } else {
          ItemStack itemstack = FurnaceRecipes.instance().getSmeltingResult(this.furnaceItemStacks[slotIn]);
-         return itemstack != null;
+         return !itemstack.isEmpty();
       }
    }
 

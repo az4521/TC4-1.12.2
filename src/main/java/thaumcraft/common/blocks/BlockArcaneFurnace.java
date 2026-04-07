@@ -31,12 +31,30 @@ import java.util.List;
 import java.util.Random;
 
 public class BlockArcaneFurnace extends BlockContainer {
+   public static final net.minecraft.block.properties.PropertyInteger META =
+         net.minecraft.block.properties.PropertyInteger.create("meta", 0, 15);
+
+   @Override
+   protected net.minecraft.block.state.BlockStateContainer createBlockState() {
+      return new net.minecraft.block.state.BlockStateContainer(this, META);
+   }
+
+   @Override
+   public net.minecraft.block.state.IBlockState getStateFromMeta(int meta) {
+      return this.getDefaultState().withProperty(META, meta);
+   }
+
+   @Override
+   public int getMetaFromState(net.minecraft.block.state.IBlockState state) {
+      return state.getValue(META);
+   }
 
    public BlockArcaneFurnace() {
       super(Material.ROCK);
       this.setHardness(10.0F);
       this.setResistance(500.0F);
       this.setLightLevel(0.2F);
+      this.setDefaultState(this.blockState.getBaseState().withProperty(META, 0));
    }
 
    // registerBlockIcons, getIcon, calculateTexture, calculateLevel removed —
@@ -245,6 +263,11 @@ public class BlockArcaneFurnace extends BlockContainer {
 
    @Override
    public TileEntity createNewTileEntity(World world, int meta) {
+      if (meta == 0) {
+         return new TileArcaneFurnace();
+      } else if (meta == 2 || meta == 4 || meta == 5 || meta == 6 || meta == 8) {
+         return new TileArcaneFurnaceNozzle();
+      }
       return null;
    }
 
@@ -267,6 +290,6 @@ public class BlockArcaneFurnace extends BlockContainer {
 
    @Override
    public net.minecraft.util.EnumBlockRenderType getRenderType(net.minecraft.block.state.IBlockState state) {
-      return net.minecraft.util.EnumBlockRenderType.INVISIBLE;
+      return net.minecraft.util.EnumBlockRenderType.MODEL;
    }
 }

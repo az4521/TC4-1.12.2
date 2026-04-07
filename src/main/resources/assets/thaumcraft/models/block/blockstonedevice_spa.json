@@ -1,6 +1,8 @@
 {
-  "parent": "block/cube_all",
+  "parent": "block/cube_bottom_top",
   "textures": {
-    "all": "thaumcraft:blocks/spa_side"
+    "bottom": "thaumcraft:blocks/spa_side",
+    "side": "thaumcraft:blocks/spa_side",
+    "top": "thaumcraft:blocks/spa_top"
   }
 }

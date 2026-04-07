@@ -40,44 +40,44 @@ public class TileChestHungry extends TileEntity implements IInventory, net.minec
 
    public ItemStack decrStackSize(int itemIndexInChest, int extractAtMostCount) {
       ItemStack result = this.chestContents[itemIndexInChest];
-      if (result != null) {
+      if (result != null && !result.isEmpty()) {
          //directly output if not greater than extractAtMostCount
          if (result.getCount() <= extractAtMostCount){
-            this.chestContents[itemIndexInChest] = null;
+            this.chestContents[itemIndexInChest] = ItemStack.EMPTY;
             this.markDirty();
-            return result.getCount() == 0 ? null : result;
+            return result.getCount() == 0 ? ItemStack.EMPTY : result;
          }
 
          //tc4 vanilla
          result = result.splitStack(extractAtMostCount);
          if (result.getCount() == 0) {
-            this.chestContents[itemIndexInChest] = null;
+            this.chestContents[itemIndexInChest] = ItemStack.EMPTY;
          }
          this.markDirty();
          return result;
       } else {
-         return null;
+         return ItemStack.EMPTY;
       }
 
    }
 
    public ItemStack removeStackFromSlot(int par1) {
-      if (this.chestContents[par1] != null) {
+      if (this.chestContents[par1] != null && !this.chestContents[par1].isEmpty()) {
          ItemStack var2 = this.chestContents[par1];
-         this.chestContents[par1] = null;
+         this.chestContents[par1] = ItemStack.EMPTY;
          return var2;
       } else {
-         return null;
+         return ItemStack.EMPTY;
       }
    }
 
    public ItemStack getStackInSlotOnClosing(int par1) {
-      if (this.chestContents[par1] != null) {
+      if (this.chestContents[par1] != null && !this.chestContents[par1].isEmpty()) {
          ItemStack var2 = this.chestContents[par1];
-         this.chestContents[par1] = null;
+         this.chestContents[par1] = ItemStack.EMPTY;
          return var2;
       } else {
-         return null;
+         return ItemStack.EMPTY;
       }
    }
 
@@ -111,7 +111,7 @@ public class TileChestHungry extends TileEntity implements IInventory, net.minec
       NBTTagList var2 = new NBTTagList();
 
       for(int var3 = 0; var3 < this.chestContents.length; ++var3) {
-         if (this.chestContents[var3] != null) {
+         if (this.chestContents[var3] != null && !this.chestContents[var3].isEmpty()) {
             NBTTagCompound var4 = new NBTTagCompound();
             var4.setByte("Slot", (byte)var3);
             this.chestContents[var3].writeToNBT(var4);
@@ -216,4 +216,8 @@ public class TileChestHungry extends TileEntity implements IInventory, net.minec
    public String getName() { return blockChestHungry != null ? blockChestHungry.getLocalizedName() : "chest"; }
    @Override
    public boolean hasCustomName() { return false; }
+   @Override
+   public net.minecraft.util.text.ITextComponent getDisplayName() {
+      return new net.minecraft.util.text.TextComponentString(this.getName());
+   }
 }

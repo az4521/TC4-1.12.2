@@ -56,6 +56,7 @@ public class BlockMetalDevice extends BlockContainer {
       this.setResistance(17.0F);
       this.setSoundType(net.minecraft.block.SoundType.METAL);
       this.setCreativeTab(Thaumcraft.tabTC);
+      this.setDefaultState(this.blockState.getBaseState().withProperty(META, 0));
    }
 
    public static final net.minecraft.block.properties.PropertyInteger META =
@@ -645,10 +646,14 @@ public class BlockMetalDevice extends BlockContainer {
          return new TileGrate();
       } else if (metadata == 1) {
          return new TileAlembic();
+      } else if (metadata == 3) {
+         return new TileMetalDevice();
       } else if (metadata == 7) {
          return new TileArcaneLamp();
       } else if (metadata == 8) {
          return new TileArcaneLampGrowth();
+      } else if (metadata == 9) {
+         return new TileMetalDevice();
       } else if (metadata == 10) {
          return new TileThaumatorium();
       } else if (metadata == 11) {
@@ -706,8 +711,9 @@ public class BlockMetalDevice extends BlockContainer {
    @Override
    public net.minecraft.util.EnumBlockRenderType getRenderType(net.minecraft.block.state.IBlockState state) {
       int meta = state.getValue(META);
-      // Arcane ear (5,6) and lamps (2) use block model; rest are TESR-rendered
-      if (meta == 2 || meta == 5 || meta == 6) return net.minecraft.util.EnumBlockRenderType.MODEL;
+      if (meta == 2 || meta == 5 || meta == 6) {
+         return net.minecraft.util.EnumBlockRenderType.MODEL;
+      }
       return net.minecraft.util.EnumBlockRenderType.INVISIBLE;
    }
 }

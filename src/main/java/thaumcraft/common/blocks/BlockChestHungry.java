@@ -120,7 +120,7 @@ public class BlockChestHungry extends BlockContainer {
                   world.addBlockEvent(pos, ConfigBlocks.blockChestHungry, 2, 2);
                }
 
-               if (leftovers != null) {
+               if (leftovers != null && !leftovers.isEmpty()) {
                   ei.setItem(leftovers);
                } else {
                   entity.setDead();
@@ -142,7 +142,7 @@ public class BlockChestHungry extends BlockContainer {
       } else if (world.isRemote) {
          return true;
       } else {
-         player.displayGUIChest((IInventory) te);
+         player.displayGUIChest((IInventory)te);
          return true;
       }
    }

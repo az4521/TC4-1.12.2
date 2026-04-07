@@ -4,13 +4,13 @@
       "model": "thaumcraft:blockwoodendevice"
     },
     "meta=1": {
-      "model": "thaumcraft:blockwoodendevice"
+      "model": "thaumcraft:blockwoodendevice_ear"
     },
     "meta=2": {
-      "model": "thaumcraft:blockwoodendevice"
+      "model": "thaumcraft:blockwoodendevice_pressureplate_up"
     },
     "meta=3": {
-      "model": "thaumcraft:blockwoodendevice"
+      "model": "thaumcraft:blockwoodendevice_pressureplate_down"
     },
     "meta=4": {
       "model": "thaumcraft:blockwoodendevice"

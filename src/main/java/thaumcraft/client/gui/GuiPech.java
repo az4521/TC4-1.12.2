@@ -32,7 +32,7 @@ public class GuiPech extends GuiContainer {
       int var6 = (this.height - this.ySize) / 2;
       GlStateManager.enableBlend();
       this.drawTexturedModalRect(var5, var6, 0, 0, this.xSize, this.ySize);
-      if (this.pech.isValued(this.inventorySlots.getSlot(0).getStack()) && this.inventorySlots.getSlot(0).getStack() != null && this.inventorySlots.getSlot(1).getStack() == null && this.inventorySlots.getSlot(2).getStack() == null && this.inventorySlots.getSlot(3).getStack() == null && this.inventorySlots.getSlot(4).getStack() == null) {
+      if (this.pech.isValued(this.inventorySlots.getSlot(0).getStack()) && !this.inventorySlots.getSlot(0).getStack().isEmpty() && this.inventorySlots.getSlot(1).getStack().isEmpty() && this.inventorySlots.getSlot(2).getStack().isEmpty() && this.inventorySlots.getSlot(3).getStack().isEmpty() && this.inventorySlots.getSlot(4).getStack().isEmpty()) {
          this.drawTexturedModalRect(var5 + 67, var6 + 24, 176, 0, 25, 25);
       }
 
@@ -45,7 +45,7 @@ public class GuiPech extends GuiContainer {
       int gy = (this.height - this.ySize) / 2;
       int var7 = mx - (gx + 67);
       int var8 = my - (gy + 24);
-      if (var7 >= 0 && var8 >= 0 && var7 < 25 && var8 < 25 && this.pech.isValued(this.inventorySlots.getSlot(0).getStack()) && this.inventorySlots.getSlot(0).getStack() != null && this.inventorySlots.getSlot(1).getStack() == null && this.inventorySlots.getSlot(2).getStack() == null && this.inventorySlots.getSlot(3).getStack() == null && this.inventorySlots.getSlot(4).getStack() == null) {
+      if (var7 >= 0 && var8 >= 0 && var7 < 25 && var8 < 25 && this.pech.isValued(this.inventorySlots.getSlot(0).getStack()) && !this.inventorySlots.getSlot(0).getStack().isEmpty() && this.inventorySlots.getSlot(1).getStack().isEmpty() && this.inventorySlots.getSlot(2).getStack().isEmpty() && this.inventorySlots.getSlot(3).getStack().isEmpty() && this.inventorySlots.getSlot(4).getStack().isEmpty()) {
          this.mc.playerController.sendEnchantPacket(this.inventorySlots.windowId, 0);
          this.playButton();
       }

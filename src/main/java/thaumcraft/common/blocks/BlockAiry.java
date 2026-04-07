@@ -324,6 +324,8 @@ public class BlockAiry extends BlockContainer {
          return new TileNode();
       } else if (metadata == 1) {
          return new TileNitor();
+      } else if (metadata == 3) {
+         return new TileArcaneLampLight();
       } else if (metadata == 4) {
          return new TileWardingStoneFence();
       } else {

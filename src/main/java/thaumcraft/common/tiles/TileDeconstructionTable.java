@@ -27,7 +27,7 @@ public class TileDeconstructionTable extends TileThaumcraft implements ISidedInv
    }
 
    public boolean isEmpty() {
-      for (ItemStack s : this.itemStacks) if (s != null) return false;
+      for (ItemStack s : this.itemStacks) if (s != null && !s.isEmpty()) return false;
       return true;
    }
 
@@ -36,39 +36,39 @@ public class TileDeconstructionTable extends TileThaumcraft implements ISidedInv
    }
 
    public ItemStack decrStackSize(int par1, int par2) {
-      if (this.itemStacks[par1] != null) {
+      if (this.itemStacks[par1] != null && !this.itemStacks[par1].isEmpty()) {
          ItemStack itemstack;
          if (this.itemStacks[par1].getCount() <= par2) {
             itemstack = this.itemStacks[par1];
-            this.itemStacks[par1] = null;
+            this.itemStacks[par1] = ItemStack.EMPTY;
          } else {
             itemstack = this.itemStacks[par1].splitStack(par2);
-            if (this.itemStacks[par1].getCount() == 0) {
-               this.itemStacks[par1] = null;
+            if (this.itemStacks[par1].isEmpty()) {
+               this.itemStacks[par1] = ItemStack.EMPTY;
             }
          }
          this.markDirty();
          return itemstack;
       } else {
-         return null;
+         return ItemStack.EMPTY;
       }
    }
 
    public ItemStack removeStackFromSlot(int par1) {
-      if (this.itemStacks[par1] != null) {
+      if (this.itemStacks[par1] != null && !this.itemStacks[par1].isEmpty()) {
          ItemStack itemstack = this.itemStacks[par1];
-         this.itemStacks[par1] = null;
+         this.itemStacks[par1] = ItemStack.EMPTY;
          this.markDirty();
          return itemstack;
       } else {
-         return null;
+         return ItemStack.EMPTY;
       }
    }
 
    public void setInventorySlotContents(int par1, ItemStack par2ItemStack) {
-      this.itemStacks[par1] = par2ItemStack;
-      if (par2ItemStack != null && par2ItemStack.getCount() > this.getInventoryStackLimit()) {
-         par2ItemStack.setCount(this.getInventoryStackLimit());
+      this.itemStacks[par1] = par2ItemStack == null ? ItemStack.EMPTY : par2ItemStack;
+      if (!this.itemStacks[par1].isEmpty() && this.itemStacks[par1].getCount() > this.getInventoryStackLimit()) {
+         this.itemStacks[par1].setCount(this.getInventoryStackLimit());
       }
       this.markDirty();
    }
@@ -168,7 +168,7 @@ public class TileDeconstructionTable extends TileThaumcraft implements ISidedInv
    }
 
    private boolean canBreak() {
-      if (this.itemStacks[0] != null && this.aspect == null) {
+      if (this.itemStacks[0] != null && !this.itemStacks[0].isEmpty() && this.aspect == null) {
          AspectList al = ThaumcraftCraftingManager.getObjectTags(this.itemStacks[0]);
          al = ThaumcraftCraftingManager.getBonusTags(this.itemStacks[0], al);
          return al != null && al.size() != 0;
@@ -187,9 +187,9 @@ public class TileDeconstructionTable extends TileThaumcraft implements ISidedInv
          }
          this.itemStacks[0].shrink(1);
          if (this.itemStacks[0].getCount() <= 0) {
-            this.itemStacks[0] = null;
-         }
+            this.itemStacks[0] = ItemStack.EMPTY;
       }
+   }
    }
 
    public boolean isUsableByPlayer(EntityPlayer par1EntityPlayer) {

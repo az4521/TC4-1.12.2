@@ -28,12 +28,15 @@ import java.util.List;
 import java.util.Random;
 
 public class BlockAlchemyFurnace extends BlockContainer {
+    public static final net.minecraft.block.properties.PropertyInteger META =
+            net.minecraft.block.properties.PropertyInteger.create("meta", 0, 15);
 
     public BlockAlchemyFurnace() {
         super(Material.IRON);
         this.setHardness(3.0F);
         this.setResistance(17.0F);
         this.setSoundType(net.minecraft.block.SoundType.METAL);
+        this.setDefaultState(this.blockState.getBaseState().withProperty(META, 0));
     }
 
     @Override
@@ -44,17 +47,17 @@ public class BlockAlchemyFurnace extends BlockContainer {
 
     @Override
     public net.minecraft.block.state.BlockStateContainer createBlockState() {
-        return new net.minecraft.block.state.BlockStateContainer(this);
+        return new net.minecraft.block.state.BlockStateContainer(this, META);
     }
 
     @Override
     public IBlockState getStateFromMeta(int meta) {
-        return this.getDefaultState();
+        return this.getDefaultState().withProperty(META, meta);
     }
 
     @Override
     public int getMetaFromState(IBlockState state) {
-        return 0;
+        return state.getValue(META);
     }
 
     @Override
@@ -162,6 +165,11 @@ public class BlockAlchemyFurnace extends BlockContainer {
 
     @Override
     public TileEntity createNewTileEntity(World var1, int md) {
+        if (md == 0) {
+            return new TileAlchemyFurnaceAdvanced();
+        } else if (md == 1) {
+            return new TileAlchemyFurnaceAdvancedNozzle();
+        }
         return null;
     }
 
@@ -241,6 +249,6 @@ public class BlockAlchemyFurnace extends BlockContainer {
 
    @Override
    public net.minecraft.util.EnumBlockRenderType getRenderType(net.minecraft.block.state.IBlockState state) {
-      return net.minecraft.util.EnumBlockRenderType.INVISIBLE;
+      return net.minecraft.util.EnumBlockRenderType.MODEL;
    }
 }

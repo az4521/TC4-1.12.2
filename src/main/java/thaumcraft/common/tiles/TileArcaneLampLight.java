@@ -15,13 +15,17 @@ public class TileArcaneLampLight extends TileEntity implements net.minecraft.uti
 
    public void updateEntity() {
       if (!this.world.isRemote) {
+         BlockPos sourcePos = new BlockPos(this.x, this.y, this.z);
+         if (!(this.world.getTileEntity(sourcePos) instanceof TileArcaneLamp)) {
+            this.world.setBlockToAir(this.getPos());
+            return;
+         }
+
          if (this.count == 0) {
             this.count = this.world.rand.nextInt(100);
          }
 
-         if (++this.count % 100 == 0 && !(this.world.getTileEntity(new BlockPos(this.x, this.y, this.z)) instanceof TileArcaneLamp)) {
-            this.world.setBlockToAir(new BlockPos(this.getPos().getX(), this.getPos().getY(), this.getPos().getZ()));
-         }
+         ++this.count;
       }
 
    }

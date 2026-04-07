@@ -175,40 +175,50 @@ public class TileTubeRenderer extends TileEntitySpecialRenderer<TileTube> {
 
     static void drawBox(BufferBuilder buf, Tessellator tess, TextureAtlasSprite sprite,
                          float x1, float y1, float z1, float x2, float y2, float z2) {
-        float u0 = sprite.getMinU(), u1 = sprite.getMaxU();
-        float v0 = sprite.getMinV(), v1 = sprite.getMaxV();
+        float yU0 = sprite.getInterpolatedU(x1 * 16.0F);
+        float yU1 = sprite.getInterpolatedU(x2 * 16.0F);
+        float yV0 = sprite.getInterpolatedV(z1 * 16.0F);
+        float yV1 = sprite.getInterpolatedV(z2 * 16.0F);
+        float xU0 = sprite.getInterpolatedU(z1 * 16.0F);
+        float xU1 = sprite.getInterpolatedU(z2 * 16.0F);
+        float xV0 = sprite.getInterpolatedV((1.0F - y2) * 16.0F);
+        float xV1 = sprite.getInterpolatedV((1.0F - y1) * 16.0F);
+        float zU0 = sprite.getInterpolatedU(x1 * 16.0F);
+        float zU1 = sprite.getInterpolatedU(x2 * 16.0F);
+        float zV0 = sprite.getInterpolatedV((1.0F - y2) * 16.0F);
+        float zV1 = sprite.getInterpolatedV((1.0F - y1) * 16.0F);
 
         buf.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX);
         // Bottom
-        buf.pos(x1, y1, z2).tex(u0, v1).endVertex();
-        buf.pos(x1, y1, z1).tex(u0, v0).endVertex();
-        buf.pos(x2, y1, z1).tex(u1, v0).endVertex();
-        buf.pos(x2, y1, z2).tex(u1, v1).endVertex();
+        buf.pos(x1, y1, z2).tex(yU0, yV1).endVertex();
+        buf.pos(x1, y1, z1).tex(yU0, yV0).endVertex();
+        buf.pos(x2, y1, z1).tex(yU1, yV0).endVertex();
+        buf.pos(x2, y1, z2).tex(yU1, yV1).endVertex();
         // Top
-        buf.pos(x1, y2, z1).tex(u0, v0).endVertex();
-        buf.pos(x1, y2, z2).tex(u0, v1).endVertex();
-        buf.pos(x2, y2, z2).tex(u1, v1).endVertex();
-        buf.pos(x2, y2, z1).tex(u1, v0).endVertex();
+        buf.pos(x1, y2, z1).tex(yU0, yV0).endVertex();
+        buf.pos(x1, y2, z2).tex(yU0, yV1).endVertex();
+        buf.pos(x2, y2, z2).tex(yU1, yV1).endVertex();
+        buf.pos(x2, y2, z1).tex(yU1, yV0).endVertex();
         // North
-        buf.pos(x2, y2, z1).tex(u0, v0).endVertex();
-        buf.pos(x2, y1, z1).tex(u0, v1).endVertex();
-        buf.pos(x1, y1, z1).tex(u1, v1).endVertex();
-        buf.pos(x1, y2, z1).tex(u1, v0).endVertex();
+        buf.pos(x2, y2, z1).tex(zU1, zV0).endVertex();
+        buf.pos(x2, y1, z1).tex(zU1, zV1).endVertex();
+        buf.pos(x1, y1, z1).tex(zU0, zV1).endVertex();
+        buf.pos(x1, y2, z1).tex(zU0, zV0).endVertex();
         // South
-        buf.pos(x1, y2, z2).tex(u0, v0).endVertex();
-        buf.pos(x1, y1, z2).tex(u0, v1).endVertex();
-        buf.pos(x2, y1, z2).tex(u1, v1).endVertex();
-        buf.pos(x2, y2, z2).tex(u1, v0).endVertex();
+        buf.pos(x1, y2, z2).tex(zU0, zV0).endVertex();
+        buf.pos(x1, y1, z2).tex(zU0, zV1).endVertex();
+        buf.pos(x2, y1, z2).tex(zU1, zV1).endVertex();
+        buf.pos(x2, y2, z2).tex(zU1, zV0).endVertex();
         // West
-        buf.pos(x1, y2, z1).tex(u0, v0).endVertex();
-        buf.pos(x1, y1, z1).tex(u0, v1).endVertex();
-        buf.pos(x1, y1, z2).tex(u1, v1).endVertex();
-        buf.pos(x1, y2, z2).tex(u1, v0).endVertex();
+        buf.pos(x1, y2, z1).tex(xU0, xV0).endVertex();
+        buf.pos(x1, y1, z1).tex(xU0, xV1).endVertex();
+        buf.pos(x1, y1, z2).tex(xU1, xV1).endVertex();
+        buf.pos(x1, y2, z2).tex(xU1, xV0).endVertex();
         // East
-        buf.pos(x2, y2, z2).tex(u0, v0).endVertex();
-        buf.pos(x2, y1, z2).tex(u0, v1).endVertex();
-        buf.pos(x2, y1, z1).tex(u1, v1).endVertex();
-        buf.pos(x2, y2, z1).tex(u1, v0).endVertex();
+        buf.pos(x2, y2, z2).tex(xU1, xV0).endVertex();
+        buf.pos(x2, y1, z2).tex(xU1, xV1).endVertex();
+        buf.pos(x2, y1, z1).tex(xU0, xV1).endVertex();
+        buf.pos(x2, y2, z1).tex(xU0, xV0).endVertex();
         tess.draw();
     }
 }

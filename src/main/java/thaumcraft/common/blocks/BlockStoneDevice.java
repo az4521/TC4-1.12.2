@@ -40,20 +40,63 @@ import net.minecraft.util.math.BlockPos;
 public class BlockStoneDevice extends BlockContainer {
    public static final net.minecraft.block.properties.PropertyInteger META =
          net.minecraft.block.properties.PropertyInteger.create("meta", 0, 15);
+   public static final net.minecraft.block.properties.PropertyDirection FACING =
+         net.minecraft.block.properties.PropertyDirection.create("facing", net.minecraft.util.EnumFacing.Plane.HORIZONTAL);
+
+   private static boolean isAlchemyFurnaceMeta(int meta) {
+      return meta == 0 || meta == 6 || meta == 7 || meta == 15;
+   }
 
    @Override
    protected net.minecraft.block.state.BlockStateContainer createBlockState() {
-      return new net.minecraft.block.state.BlockStateContainer(this, META);
+      return new net.minecraft.block.state.BlockStateContainer(this, META, FACING);
    }
 
    @Override
    public net.minecraft.block.state.IBlockState getStateFromMeta(int meta) {
-      return this.getDefaultState().withProperty(META, meta);
+      if (isAlchemyFurnaceMeta(meta)) {
+         return this.getDefaultState()
+               .withProperty(META, 0)
+               .withProperty(FACING, getFacingForAlchemyFurnaceMeta(meta));
+      }
+      return this.getDefaultState().withProperty(META, meta).withProperty(FACING, net.minecraft.util.EnumFacing.SOUTH);
    }
 
    @Override
    public int getMetaFromState(net.minecraft.block.state.IBlockState state) {
-      return state.getValue(META);
+      int meta = state.getValue(META);
+      if (meta == 0) {
+         return getAlchemyFurnaceMetaForFacing(state.getValue(FACING));
+      }
+      return meta;
+   }
+
+   private static net.minecraft.util.EnumFacing getFacingForAlchemyFurnaceMeta(int meta) {
+      switch (meta) {
+         case 6:
+            return net.minecraft.util.EnumFacing.WEST;
+         case 7:
+            return net.minecraft.util.EnumFacing.NORTH;
+         case 15:
+            return net.minecraft.util.EnumFacing.EAST;
+         case 0:
+         default:
+            return net.minecraft.util.EnumFacing.SOUTH;
+      }
+   }
+
+   public static int getAlchemyFurnaceMetaForFacing(net.minecraft.util.EnumFacing facing) {
+      switch (facing) {
+         case WEST:
+            return 6;
+         case NORTH:
+            return 7;
+         case EAST:
+            return 15;
+         case SOUTH:
+         default:
+            return 0;
+      }
    }
 
 
@@ -62,6 +105,7 @@ public class BlockStoneDevice extends BlockContainer {
       this.setHardness(3.0F);
       this.setResistance(25.0F);
       this.setCreativeTab(Thaumcraft.tabTC);
+      this.setDefaultState(this.blockState.getBaseState().withProperty(META, 0).withProperty(FACING, net.minecraft.util.EnumFacing.SOUTH));
    }
 
    @Override
@@ -114,7 +158,7 @@ public class BlockStoneDevice extends BlockContainer {
    @Override
    public int getLightValue(IBlockState state, IBlockAccess world, BlockPos pos) {
       int meta = state.getBlock().getMetaFromState(state);
-      if (meta == 0) {
+      if (isAlchemyFurnaceMeta(meta)) {
          TileEntity te = world.getTileEntity(pos);
          if (te instanceof TileAlchemyFurnace && ((TileAlchemyFurnace) te).isBurning()) {
             return 12;
@@ -128,6 +172,9 @@ public class BlockStoneDevice extends BlockContainer {
    @Override
    public int damageDropped(IBlockState state) {
       int metadata = state.getBlock().getMetaFromState(state);
+      if (isAlchemyFurnaceMeta(metadata)) {
+         return 0;
+      }
       return metadata == 3 ? 7 : (metadata == 4 ? 6 : metadata);
    }
 
@@ -140,7 +187,7 @@ public class BlockStoneDevice extends BlockContainer {
    @Override
    public TileEntity createTileEntity(World world, IBlockState state) {
       int metadata = state.getBlock().getMetaFromState(state);
-      if (metadata == 0) {
+      if (isAlchemyFurnaceMeta(metadata)) {
          return new TileAlchemyFurnace();
       } else if (metadata == 1) {
          return new TilePedestal();
@@ -243,7 +290,7 @@ public class BlockStoneDevice extends BlockContainer {
       }
       int metadata = state.getBlock().getMetaFromState(state);
       TileEntity tileEntity = world.getTileEntity(pos);
-      if (metadata == 0 && tileEntity instanceof TileAlchemyFurnace && !player.isSneaking()) {
+      if (isAlchemyFurnaceMeta(metadata) && tileEntity instanceof TileAlchemyFurnace && !player.isSneaking()) {
          player.openGui(Thaumcraft.instance, 9, world, pos.getX(), pos.getY(), pos.getZ());
          return true;
       } else {
@@ -373,7 +420,12 @@ public class BlockStoneDevice extends BlockContainer {
 
    @Override
    public net.minecraft.util.EnumBlockRenderType getRenderType(net.minecraft.block.state.IBlockState state) {
-      // All stone devices are TESR-rendered (crucible, pedestal, matrix, etc.)
+      // The single-block alchemical furnace and spa use normal baked block models in 1.12.
+      int meta = state.getValue(META);
+      if (meta == 0 || meta == 8 || meta == 12) {
+         return net.minecraft.util.EnumBlockRenderType.MODEL;
+      }
+      // The remaining stone devices still rely on TESR-style rendering or custom bounds.
       return net.minecraft.util.EnumBlockRenderType.INVISIBLE;
    }
 }
