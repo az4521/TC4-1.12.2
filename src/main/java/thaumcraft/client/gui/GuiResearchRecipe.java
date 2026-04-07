@@ -228,10 +228,18 @@ public class GuiResearchRecipe extends GuiScreen {
         int sh = (this.height - this.paneHeight) / 2;
         float var10 = ((float) this.width - (float) this.paneWidth * 1.3F) / 2.0F;
         float var11 = ((float) this.height - (float) this.paneHeight * 1.3F) / 2.0F;
+        GlStateManager.disableRescaleNormal();
+        GlStateManager.enableDepth();
+        GlStateManager.depthMask(true);
+        GlStateManager.enableTexture2D();
+        GlStateManager.enableAlpha();
+        GlStateManager.alphaFunc(516, 0.1F);
+        GlStateManager.disableBlend();
         GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
         UtilsFX.bindTexture(this.tex1);
         GlStateManager.pushMatrix();
         GlStateManager.translate(var10, var11, 0.0F);
+        GlStateManager.disableLighting();
         GlStateManager.enableBlend();
         GlStateManager.scale(1.3F, 1.3F, 1.0F);
         this.drawTexturedModalRect(0, 0, 0, 0, this.paneWidth, this.paneHeight);
@@ -283,7 +291,6 @@ public class GuiResearchRecipe extends GuiScreen {
     }
 
     private void drawPage(ResearchPage pageParm, int side, int x, int y, int mx, int my) {
-        GL11.glPushAttrib(1048575);
         if (this.lastCycle < System.currentTimeMillis()) {
             ++this.cycle;
             this.lastCycle = System.currentTimeMillis() + 1000L;
@@ -307,6 +314,10 @@ public class GuiResearchRecipe extends GuiScreen {
             y += 25;
         }
 
+        GlStateManager.enableTexture2D();
+        GlStateManager.enableAlpha();
+        GlStateManager.disableLighting();
+        GlStateManager.enableBlend();
         GlStateManager.alphaFunc(516, 0.003921569F);
         if (pageParm.type != ResearchPage.PageType.TEXT && pageParm.type != ResearchPage.PageType.TEXT_CONCEALED) {
             if (pageParm.type == ResearchPage.PageType.ASPECTS) {
@@ -330,8 +341,12 @@ public class GuiResearchRecipe extends GuiScreen {
             this.drawTextPage(side, x, y - 10, pageParm.getTranslatedText());
         }
 
+        GlStateManager.disableBlend();
+        GlStateManager.disableLighting();
         GlStateManager.alphaFunc(516, 0.1F);
-        GL11.glPopAttrib();
+        GlStateManager.enableTexture2D();
+        GlStateManager.enableAlpha();
+        GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
     }
 
     private void drawCompoundCraftingPage(int side, int x, int y, int mx, int my, ResearchPage page) {
@@ -578,6 +593,7 @@ public class GuiResearchRecipe extends GuiScreen {
             GlStateManager.pushMatrix();
             GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
             GlStateManager.enableBlend();
+            GlStateManager.blendFunc(770, 771);
             GlStateManager.translate((float) (x + start), (float) y, 0.0F);
             GlStateManager.scale(2.0F, 2.0F, 1.0F);
             this.drawTexturedModalRect(2, 27, 112, 15, 52, 52);
@@ -586,6 +602,7 @@ public class GuiResearchRecipe extends GuiScreen {
             GlStateManager.pushMatrix();
             GlStateManager.color(1.0F, 1.0F, 1.0F, 0.4F);
             GlStateManager.enableBlend();
+            GlStateManager.blendFunc(770, 771);
             GlStateManager.translate((float) (x + start), (float) (y + 164), 0.0F);
             GlStateManager.scale(2.0F, 2.0F, 1.0F);
             this.drawTexturedModalRect(0, 0, 68, 76, 12, 12);
@@ -736,6 +753,7 @@ public class GuiResearchRecipe extends GuiScreen {
             GlStateManager.pushMatrix();
             GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
             GlStateManager.enableBlend();
+            GlStateManager.blendFunc(770, 771);
             GlStateManager.translate((float) (x + start), (float) y, 0.0F);
             GlStateManager.scale(2.0F, 2.0F, 1.0F);
             this.drawTexturedModalRect(2, 32, 60, 15, 52, 52);
@@ -885,6 +903,7 @@ public class GuiResearchRecipe extends GuiScreen {
             GlStateManager.pushMatrix();
             GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
             GlStateManager.enableBlend();
+            GlStateManager.blendFunc(770, 771);
             GlStateManager.translate((float) (x + start), (float) (y + 28), 0.0F);
             GlStateManager.scale(2.0F, 2.0F, 1.0F);
             this.drawTexturedModalRect(0, 0, 0, 3, 56, 17);
@@ -1346,9 +1365,11 @@ public class GuiResearchRecipe extends GuiScreen {
 
     private void drawTextPage(int side, int x, int y, String text) {
         GlStateManager.pushMatrix();
-        RenderHelper.enableGUIStandardItemLighting();
+        GlStateManager.disableLighting();
         GlStateManager.enableBlend();
         this.fr.drawSplitString(text, x - 15 + side * 152, y, 139, 0, this);
+        GlStateManager.disableBlend();
+        GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
         GlStateManager.popMatrix();
     }
 

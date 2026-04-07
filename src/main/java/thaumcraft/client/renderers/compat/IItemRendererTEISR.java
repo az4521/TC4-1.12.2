@@ -2,6 +2,8 @@ package thaumcraft.client.renderers.compat;
 
 import net.minecraft.client.renderer.block.model.ItemCameraTransforms;
 import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.client.renderer.OpenGlHelper;
+import net.minecraft.client.renderer.RenderHelper;
 import net.minecraft.client.renderer.tileentity.TileEntityItemStackRenderer;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -23,7 +25,7 @@ public class IItemRendererTEISR extends TileEntityItemStackRenderer {
 
     @Override
     public void renderByItem(ItemStack stack) {
-        org.lwjgl.opengl.GL11.glPushAttrib(org.lwjgl.opengl.GL11.GL_ALL_ATTRIB_BITS);
+        resetGlStateForLegacyItemRender();
         GlStateManager.pushMatrix();
         IItemRenderer.ItemRenderType type = mapTransformType(ItemRenderContext.get());
         if (type == IItemRenderer.ItemRenderType.INVENTORY) {
@@ -42,7 +44,69 @@ public class IItemRendererTEISR extends TileEntityItemStackRenderer {
             ItemRenderContext.clear();
         }
         GlStateManager.popMatrix();
-        org.lwjgl.opengl.GL11.glPopAttrib();
+        resetGlStateAfterLegacyItemRender();
+    }
+
+    private static void resetGlStateForLegacyItemRender() {
+        org.lwjgl.opengl.GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+        org.lwjgl.opengl.GL11.glDisable(org.lwjgl.opengl.GL11.GL_BLEND);
+        org.lwjgl.opengl.GL11.glEnable(org.lwjgl.opengl.GL11.GL_ALPHA_TEST);
+        org.lwjgl.opengl.GL11.glAlphaFunc(org.lwjgl.opengl.GL11.GL_GREATER, 0.1F);
+        org.lwjgl.opengl.GL11.glEnable(org.lwjgl.opengl.GL11.GL_TEXTURE_2D);
+        org.lwjgl.opengl.GL11.glEnable(org.lwjgl.opengl.GL11.GL_CULL_FACE);
+        org.lwjgl.opengl.GL11.glEnable(org.lwjgl.opengl.GL11.GL_DEPTH_TEST);
+        org.lwjgl.opengl.GL11.glDepthMask(true);
+        org.lwjgl.opengl.GL11.glDisable(org.lwjgl.opengl.GL12.GL_RESCALE_NORMAL);
+        org.lwjgl.opengl.GL11.glDisable(org.lwjgl.opengl.GL11.GL_LIGHTING);
+        OpenGlHelper.setActiveTexture(OpenGlHelper.lightmapTexUnit);
+        org.lwjgl.opengl.GL11.glDisable(org.lwjgl.opengl.GL11.GL_TEXTURE_2D);
+        OpenGlHelper.setActiveTexture(OpenGlHelper.defaultTexUnit);
+
+        GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
+        GlStateManager.disableBlend();
+        GlStateManager.enableAlpha();
+        GlStateManager.alphaFunc(516, 0.1F);
+        GlStateManager.enableTexture2D();
+        GlStateManager.enableCull();
+        GlStateManager.enableDepth();
+        GlStateManager.depthMask(true);
+        GlStateManager.disableRescaleNormal();
+        GlStateManager.disableLighting();
+    }
+
+    /**
+     * Legacy renderers use raw GL state mutation and glPushAttrib/glPopAttrib, but
+     * GlStateManager caches do not get synchronized by those calls. Force a sane
+     * post-render baseline so later GUI/world draws do not inherit stale cached state.
+     */
+    private static void resetGlStateAfterLegacyItemRender() {
+        RenderHelper.disableStandardItemLighting();
+        OpenGlHelper.setActiveTexture(OpenGlHelper.lightmapTexUnit);
+        org.lwjgl.opengl.GL11.glDisable(org.lwjgl.opengl.GL11.GL_TEXTURE_2D);
+        GlStateManager.disableTexture2D();
+        OpenGlHelper.setActiveTexture(OpenGlHelper.defaultTexUnit);
+        org.lwjgl.opengl.GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+        org.lwjgl.opengl.GL11.glDisable(org.lwjgl.opengl.GL11.GL_BLEND);
+        org.lwjgl.opengl.GL11.glBlendFunc(org.lwjgl.opengl.GL11.GL_SRC_ALPHA, org.lwjgl.opengl.GL11.GL_ONE_MINUS_SRC_ALPHA);
+        org.lwjgl.opengl.GL11.glEnable(org.lwjgl.opengl.GL11.GL_ALPHA_TEST);
+        org.lwjgl.opengl.GL11.glAlphaFunc(org.lwjgl.opengl.GL11.GL_GREATER, 0.1F);
+        org.lwjgl.opengl.GL11.glEnable(org.lwjgl.opengl.GL11.GL_TEXTURE_2D);
+        org.lwjgl.opengl.GL11.glEnable(org.lwjgl.opengl.GL11.GL_CULL_FACE);
+        org.lwjgl.opengl.GL11.glEnable(org.lwjgl.opengl.GL11.GL_DEPTH_TEST);
+        org.lwjgl.opengl.GL11.glDepthMask(true);
+        org.lwjgl.opengl.GL11.glDisable(org.lwjgl.opengl.GL12.GL_RESCALE_NORMAL);
+        org.lwjgl.opengl.GL11.glDisable(org.lwjgl.opengl.GL11.GL_LIGHTING);
+        GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
+        GlStateManager.disableBlend();
+        GlStateManager.blendFunc(770, 771);
+        GlStateManager.enableAlpha();
+        GlStateManager.alphaFunc(516, 0.1F);
+        GlStateManager.enableTexture2D();
+        GlStateManager.enableCull();
+        GlStateManager.disableRescaleNormal();
+        GlStateManager.depthMask(true);
+        GlStateManager.enableDepth();
+        GlStateManager.disableLighting();
     }
 
     private IItemRenderer.ItemRenderType mapTransformType(ItemCameraTransforms.TransformType transformType) {
