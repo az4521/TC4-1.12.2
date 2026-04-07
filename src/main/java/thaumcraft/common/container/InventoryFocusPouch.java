@@ -1,5 +1,6 @@
 package thaumcraft.common.container;
 
+import java.util.Arrays;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.Container;
 import net.minecraft.inventory.IInventory;
@@ -14,6 +15,7 @@ public class InventoryFocusPouch implements IInventory {
 
    public InventoryFocusPouch(Container par1Container) {
       this.eventHandler = par1Container;
+      Arrays.fill(this.stackList, ItemStack.EMPTY);
    }
 
    public int getSizeInventory() {
@@ -23,20 +25,20 @@ public class InventoryFocusPouch implements IInventory {
    @Override
    public boolean isEmpty() {
       for (ItemStack stack : this.stackList) {
-         if (stack != null && !stack.isEmpty()) return false;
+         if (!stack.isEmpty()) return false;
       }
       return true;
    }
 
    public ItemStack getStackInSlot(int par1) {
-      return par1 >= this.getSizeInventory() ? ItemStack.EMPTY : (this.stackList[par1] == null ? ItemStack.EMPTY : this.stackList[par1]);
+      return par1 >= this.getSizeInventory() ? ItemStack.EMPTY : this.stackList[par1];
    }
 
    @Override
    public ItemStack removeStackFromSlot(int par1) {
-      if (this.stackList[par1] != null) {
+      if (!this.stackList[par1].isEmpty()) {
          ItemStack var2 = this.stackList[par1];
-         this.stackList[par1] = null;
+         this.stackList[par1] = ItemStack.EMPTY;
          return var2;
       } else {
          return ItemStack.EMPTY;
@@ -44,15 +46,15 @@ public class InventoryFocusPouch implements IInventory {
    }
 
    public ItemStack decrStackSize(int par1, int par2) {
-      if (this.stackList[par1] != null) {
+      if (!this.stackList[par1].isEmpty()) {
           ItemStack var3;
           if (this.stackList[par1].getCount() <= par2) {
               var3 = this.stackList[par1];
-            this.stackList[par1] = null;
+            this.stackList[par1] = ItemStack.EMPTY;
           } else {
               var3 = this.stackList[par1].splitStack(par2);
             if (this.stackList[par1].getCount() == 0) {
-               this.stackList[par1] = null;
+               this.stackList[par1] = ItemStack.EMPTY;
             }
 
           }
@@ -64,7 +66,7 @@ public class InventoryFocusPouch implements IInventory {
    }
 
    public void setInventorySlotContents(int par1, ItemStack par2ItemStack) {
-      this.stackList[par1] = par2ItemStack;
+      this.stackList[par1] = par2ItemStack == null ? ItemStack.EMPTY : par2ItemStack;
       this.eventHandler.onCraftMatrixChanged(this);
    }
 
@@ -78,7 +80,7 @@ public class InventoryFocusPouch implements IInventory {
    }
 
    public boolean isItemValidForSlot(int i, ItemStack itemstack) {
-      return itemstack != null && !itemstack.isEmpty() && itemstack.getItem() instanceof ItemFocusBasic;
+      return !itemstack.isEmpty() && itemstack.getItem() instanceof ItemFocusBasic;
    }
 
    @Override

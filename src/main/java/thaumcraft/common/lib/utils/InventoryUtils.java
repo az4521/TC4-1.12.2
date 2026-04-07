@@ -30,10 +30,18 @@ import thaumcraft.common.tiles.TileArcaneWorkbench;
 import thaumcraft.common.tiles.TileResearchTable;
 
 public class InventoryUtils {
+   private static boolean isNullOrEmpty(ItemStack stack) {
+      return stack == null || stack.isEmpty();
+   }
+
    public static ItemStack placeItemStackIntoInventory(ItemStack stack, IInventory inventory, int side, boolean doit) {
+      if (isNullOrEmpty(stack)) {
+         return ItemStack.EMPTY;
+      }
+
       ItemStack itemstack = stack.copy();
       ItemStack itemstack1 = insertStack(inventory, itemstack, side, doit);
-      if (itemstack1 != null && itemstack1.getCount() != 0) {
+      if (!itemstack1.isEmpty()) {
          return itemstack1.copy();
       } else {
          if (doit) {
@@ -45,25 +53,29 @@ public class InventoryUtils {
    }
 
    public static ItemStack insertStack(IInventory inventory, ItemStack stack1, int side, boolean doit) {
+      if (isNullOrEmpty(stack1)) {
+         return ItemStack.EMPTY;
+      }
+
       if (inventory instanceof ISidedInventory && side > -1) {
          ISidedInventory isidedinventory = (ISidedInventory)inventory;
          int[] aint = isidedinventory.getSlotsForFace(EnumFacing.byIndex(side));
          if (aint != null) {
-            for(int j = 0; j < aint.length && stack1 != null && stack1.getCount() > 0; ++j) {
+            for(int j = 0; j < aint.length && !stack1.isEmpty(); ++j) {
                if (!inventory.getStackInSlot(aint[j]).isEmpty() && inventory.getStackInSlot(aint[j]).isItemEqual(stack1)) {
                   stack1 = attemptInsertion(inventory, stack1, aint[j], side, doit);
                }
 
-               if (stack1 == null || stack1.getCount() == 0) {
+               if (stack1.isEmpty()) {
                   break;
                }
             }
          }
 
-         if (aint != null && stack1 != null && stack1.getCount() > 0) {
-            for(int j = 0; j < aint.length && stack1 != null && stack1.getCount() > 0; ++j) {
+         if (aint != null && !stack1.isEmpty()) {
+            for(int j = 0; j < aint.length && !stack1.isEmpty(); ++j) {
                stack1 = attemptInsertion(inventory, stack1, aint[j], side, doit);
-               if (stack1 == null || stack1.getCount() == 0) {
+               if (stack1.isEmpty()) {
                   break;
                }
             }
@@ -71,52 +83,52 @@ public class InventoryUtils {
       } else {
          int k = inventory.getSizeInventory();
 
-         for(int l = 0; l < k && stack1 != null && stack1.getCount() > 0; ++l) {
+         for(int l = 0; l < k && !stack1.isEmpty(); ++l) {
             if (!inventory.getStackInSlot(l).isEmpty() && inventory.getStackInSlot(l).isItemEqual(stack1)) {
                stack1 = attemptInsertion(inventory, stack1, l, side, doit);
             }
 
-            if (stack1 == null || stack1.getCount() == 0) {
+            if (stack1.isEmpty()) {
                break;
             }
          }
 
-         if (stack1 != null && stack1.getCount() > 0) {
+         if (!stack1.isEmpty()) {
             TileEntityChest dc = null;
             if (inventory instanceof TileEntity) {
                dc = getDoubleChest((TileEntity)inventory);
                if (dc != null) {
                   int k2 = dc.getSizeInventory();
 
-                  for(int l = 0; l < k2 && stack1 != null && stack1.getCount() > 0; ++l) {
+                  for(int l = 0; l < k2 && !stack1.isEmpty(); ++l) {
                      if (!dc.getStackInSlot(l).isEmpty() && dc.getStackInSlot(l).isItemEqual(stack1)) {
                         stack1 = attemptInsertion(dc, stack1, l, side, doit);
                      }
 
-                     if (stack1 == null || stack1.getCount() == 0) {
+                     if (stack1.isEmpty()) {
                         break;
                      }
                   }
                }
             }
 
-            if (stack1 != null && stack1.getCount() > 0) {
-               for(int l = 0; l < k && stack1 != null && stack1.getCount() > 0; ++l) {
+            if (!stack1.isEmpty()) {
+               for(int l = 0; l < k && !stack1.isEmpty(); ++l) {
                   stack1 = attemptInsertion(inventory, stack1, l, side, doit);
-                  if (stack1 == null || stack1.getCount() == 0) {
+                  if (stack1.isEmpty()) {
                      break;
                   }
                }
 
-               if (stack1 != null && stack1.getCount() > 0 && dc != null) {
+               if (!stack1.isEmpty() && dc != null) {
                   int k2 = dc.getSizeInventory();
 
-                  for(int l = 0; l < k2 && stack1 != null && stack1.getCount() > 0; ++l) {
+                  for(int l = 0; l < k2 && !stack1.isEmpty(); ++l) {
                      if (!dc.getStackInSlot(l).isEmpty() && dc.getStackInSlot(l).isItemEqual(stack1)) {
                         stack1 = attemptInsertion(dc, stack1, l, side, doit);
                      }
 
-                     if (stack1 == null || stack1.getCount() == 0) {
+                     if (stack1.isEmpty()) {
                         break;
                      }
                   }
@@ -125,18 +137,14 @@ public class InventoryUtils {
          }
       }
 
-      if (stack1 != null && stack1.getCount() == 0) {
-         stack1 = null;
-      }
-
-      return stack1;
+      return stack1.isEmpty() ? ItemStack.EMPTY : stack1;
    }
 
    private static ItemStack attemptInsertion(IInventory inventory, ItemStack stack, int slot, int side, boolean doit) {
       ItemStack slotStack = inventory.getStackInSlot(slot);
       if (canInsertItemToInventory(inventory, stack, slot, side)) {
          boolean flag = false;
-         if (slotStack == null || slotStack.isEmpty()) {
+         if (isNullOrEmpty(slotStack)) {
             if (inventory.getInventoryStackLimit() < stack.getCount()) {
                ItemStack in = stack.splitStack(inventory.getInventoryStackLimit());
                if (doit) {
@@ -147,7 +155,7 @@ public class InventoryUtils {
                   inventory.setInventorySlotContents(slot, stack);
                }
 
-               stack = null;
+               stack = ItemStack.EMPTY;
             }
 
             flag = true;
@@ -176,22 +184,22 @@ public class InventoryUtils {
    }
 
    public static ItemStack getFirstItemInInventory(IInventory inventory, int size, int side, boolean doit) {
-      ItemStack stack1 = null;
+      ItemStack stack1 = ItemStack.EMPTY;
       if (inventory instanceof ISidedInventory && side > -1) {
          ISidedInventory isidedinventory = (ISidedInventory)inventory;
          int[] aint = isidedinventory.getSlotsForFace(EnumFacing.byIndex(side));
 
           for (int i : aint) {
-              if (stack1 == null && !inventory.getStackInSlot(i).isEmpty()) {
+              if (stack1.isEmpty() && !inventory.getStackInSlot(i).isEmpty()) {
                   stack1 = inventory.getStackInSlot(i).copy();
                   stack1.setCount(size);
               }
 
-              if (stack1 != null) {
+              if (!stack1.isEmpty()) {
                   stack1 = attemptExtraction(inventory, stack1, i, side, false, false, false, doit);
               }
 
-              if (stack1 != null) {
+              if (!stack1.isEmpty()) {
                   break;
               }
           }
@@ -199,22 +207,22 @@ public class InventoryUtils {
          int k = inventory.getSizeInventory();
 
          for(int l = 0; l < k; ++l) {
-            if (stack1 == null && !inventory.getStackInSlot(l).isEmpty()) {
+            if (stack1.isEmpty() && !inventory.getStackInSlot(l).isEmpty()) {
                stack1 = inventory.getStackInSlot(l).copy();
                stack1.setCount(size);
             }
 
-            if (stack1 != null) {
+            if (!stack1.isEmpty()) {
                stack1 = attemptExtraction(inventory, stack1, l, side, false, false, false, doit);
             }
 
-            if (stack1 != null) {
+            if (!stack1.isEmpty()) {
                break;
             }
          }
       }
 
-      if (stack1 != null && stack1.getCount() != 0) {
+      if (!stack1.isEmpty()) {
          return stack1.copy();
       } else {
          if (doit) {
@@ -230,23 +238,27 @@ public class InventoryUtils {
    }
 
    public static ItemStack extractStack(IInventory inventory, ItemStack stack1, int side, boolean useOre, boolean ignoreDamage, boolean ignoreNBT, boolean doit) {
-      ItemStack outStack = null;
+      if (isNullOrEmpty(stack1)) {
+         return ItemStack.EMPTY;
+      }
+
+      ItemStack outStack = ItemStack.EMPTY;
       if (inventory instanceof ISidedInventory && side > -1) {
          ISidedInventory isidedinventory = (ISidedInventory)inventory;
          int[] aint = isidedinventory.getSlotsForFace(EnumFacing.byIndex(side));
 
-         for(int j = 0; j < aint.length && stack1 != null && stack1.getCount() > 0 && outStack == null; ++j) {
+         for(int j = 0; j < aint.length && !stack1.isEmpty() && outStack.isEmpty(); ++j) {
             outStack = attemptExtraction(inventory, stack1, aint[j], side, useOre, ignoreDamage, ignoreNBT, doit);
          }
       } else {
          int k = inventory.getSizeInventory();
 
-         for(int l = 0; l < k && stack1 != null && stack1.getCount() > 0 && outStack == null; ++l) {
+         for(int l = 0; l < k && !stack1.isEmpty() && outStack.isEmpty(); ++l) {
             outStack = attemptExtraction(inventory, stack1, l, side, useOre, ignoreDamage, ignoreNBT, doit);
          }
       }
 
-      return outStack != null && outStack.getCount() != 0 ? outStack.copy() : ItemStack.EMPTY;
+      return !outStack.isEmpty() ? outStack.copy() : ItemStack.EMPTY;
    }
 
    public static ItemStack attemptExtraction(IInventory inventory, ItemStack stack, int slot, int side, boolean useOre, boolean ignoreDamage, boolean ignoreNBT, boolean doit) {
@@ -283,17 +295,17 @@ public class InventoryUtils {
    }
 
    public static boolean canInsertItemToInventory(IInventory inventory, ItemStack stack1, int par2, int par3) {
-      return stack1 != null && inventory.isItemValidForSlot(par2, stack1) && (!(inventory instanceof ISidedInventory) || ((ISidedInventory)inventory).canInsertItem(par2, stack1, EnumFacing.byIndex(par3)));
+      return !isNullOrEmpty(stack1) && inventory.isItemValidForSlot(par2, stack1) && (!(inventory instanceof ISidedInventory) || ((ISidedInventory)inventory).canInsertItem(par2, stack1, EnumFacing.byIndex(par3)));
    }
 
    public static boolean canExtractItemFromInventory(IInventory inventory, ItemStack stack1, int par2, int par3) {
-      return stack1 != null && (!(inventory instanceof ISidedInventory) || ((ISidedInventory)inventory).canExtractItem(par2, stack1, EnumFacing.byIndex(par3)));
+      return !isNullOrEmpty(stack1) && (!(inventory instanceof ISidedInventory) || ((ISidedInventory)inventory).canExtractItem(par2, stack1, EnumFacing.byIndex(par3)));
    }
 
    public static boolean compareMultipleItems(ItemStack c1, ItemStack[] c2) {
-      if (c1 != null && c1.getCount() > 0) {
+      if (!isNullOrEmpty(c1)) {
          for(ItemStack is : c2) {
-            if (is != null && c1.isItemEqual(is) && ItemStack.areItemStackTagsEqual(c1, is)) {
+            if (!isNullOrEmpty(is) && c1.isItemEqual(is) && ItemStack.areItemStackTagsEqual(c1, is)) {
                return true;
             }
          }
@@ -307,11 +319,11 @@ public class InventoryUtils {
    }
 
    public static boolean areItemStacksEqualForCrafting(ItemStack stack0, ItemStack stack1, boolean useOre, boolean ignoreDamage, boolean ignoreNBT) {
-      if (stack0 == null && stack1 != null) {
+      if (isNullOrEmpty(stack0) && !isNullOrEmpty(stack1)) {
          return false;
-      } else if (stack0 != null && stack1 == null) {
+      } else if (!isNullOrEmpty(stack0) && isNullOrEmpty(stack1)) {
          return false;
-      } else if (stack0 == null && stack1 == null) {
+      } else if (isNullOrEmpty(stack0) && isNullOrEmpty(stack1)) {
          return true;
       } else {
          if (useOre && !stack0.isEmpty()) {
@@ -346,11 +358,11 @@ public class InventoryUtils {
    }
 
    public static boolean areItemStacksEqual(ItemStack stack0, ItemStack stack1, boolean useOre, boolean ignoreDamage, boolean ignoreNBT) {
-      if (stack0 == null && stack1 != null) {
+      if (isNullOrEmpty(stack0) && !isNullOrEmpty(stack1)) {
          return false;
-      } else if (stack0 != null && stack1 == null) {
+      } else if (!isNullOrEmpty(stack0) && isNullOrEmpty(stack1)) {
          return false;
-      } else if (stack0 == null) {
+      } else if (isNullOrEmpty(stack0)) {
          return true;
       } else {
          if (useOre && !stack0.isEmpty()) {
@@ -386,7 +398,7 @@ public class InventoryUtils {
 
    public static boolean consumeInventoryItem(EntityPlayer player, Item item, int md) {
       for(int var2 = 0; var2 < player.inventory.mainInventory.size(); ++var2) {
-         if (player.inventory.mainInventory.get(var2) != null && player.inventory.mainInventory.get(var2).getItem() == item && player.inventory.mainInventory.get(var2).getItemDamage() == md) {
+         if (!player.inventory.mainInventory.get(var2).isEmpty() && player.inventory.mainInventory.get(var2).getItem() == item && player.inventory.mainInventory.get(var2).getItemDamage() == md) {
             player.inventory.mainInventory.get(var2).setCount(player.inventory.mainInventory.get(var2).getCount() - 1);
             if (player.inventory.mainInventory.get(var2).getCount() <= 0) {
                player.inventory.mainInventory.set(var2, ItemStack.EMPTY);
@@ -410,7 +422,7 @@ public class InventoryUtils {
          for(int i = 0; i < inventory.getSizeInventory(); ++i) {
             if ((!(tileEntity instanceof TileResearchTable) || md != 15 || i != 9) && (!(tileEntity instanceof TileArcaneWorkbench) || i != 9)) {
                ItemStack item = inventory.getStackInSlot(i);
-               if (item != null && item.getCount() > 0) {
+               if (!item.isEmpty()) {
                   float rx = rand.nextFloat() * 0.8F + 0.1F;
                   float ry = rand.nextFloat() * 0.8F + 0.1F;
                   float rz = rand.nextFloat() * 0.8F + 0.1F;
@@ -443,7 +455,7 @@ public class InventoryUtils {
          for(int i = 0; i < inventory.getSizeInventory(); ++i) {
             if ((!(tileEntity instanceof TileResearchTable) || md != 15 || i != 9) && (!(tileEntity instanceof TileArcaneWorkbench) || i != 9)) {
                ItemStack item = inventory.getStackInSlot(i);
-               if (item != null && item.getCount() > 0) {
+               if (!item.isEmpty()) {
                   EntityItem entityItem = new EntityItem(world, entity.posX, entity.posY + (double)(entity.getEyeHeight() / 2.0F), entity.posZ, item.copy());
                   world.spawnEntity(entityItem);
                   inventory.setInventorySlotContents(i, ItemStack.EMPTY);
@@ -463,7 +475,7 @@ public class InventoryUtils {
             return -1;
          }
 
-         if (player.inventory.mainInventory.get(var2) != null && player.inventory.mainInventory.get(var2).getItem() instanceof ItemWandCasting) {
+         if (!player.inventory.mainInventory.get(var2).isEmpty() && player.inventory.mainInventory.get(var2).getItem() instanceof ItemWandCasting) {
             ItemWandCasting wand = (ItemWandCasting)player.inventory.mainInventory.get(var2).getItem();
             if (wand.addVis(player.inventory.mainInventory.get(var2), aspect, amount, false) < amount) {
                return var2;
@@ -476,7 +488,7 @@ public class InventoryUtils {
 
    public static int isPlayerCarrying(EntityPlayer player, ItemStack stack) {
       for(int var2 = 0; var2 < player.inventory.mainInventory.size(); ++var2) {
-         if (player.inventory.mainInventory.get(var2) != null && player.inventory.mainInventory.get(var2).isItemEqual(stack)) {
+         if (!player.inventory.mainInventory.get(var2).isEmpty() && player.inventory.mainInventory.get(var2).isItemEqual(stack)) {
             return var2;
          }
       }

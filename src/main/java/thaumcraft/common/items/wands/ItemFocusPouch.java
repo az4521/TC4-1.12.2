@@ -1,5 +1,6 @@
 package thaumcraft.common.items.wands;
 
+import java.util.Arrays;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import thaumcraft.client.renderers.compat.IIconRegister;
@@ -55,6 +56,7 @@ public class ItemFocusPouch extends Item {
 
    public ItemStack[] getInventory(ItemStack item) {
       ItemStack[] stackList = new ItemStack[18];
+      Arrays.fill(stackList, ItemStack.EMPTY);
       if (item.hasTagCompound()) {
          NBTTagList var2 = item.getTagCompound().getTagList("Inventory", 10);
 
@@ -74,7 +76,7 @@ public class ItemFocusPouch extends Item {
       NBTTagList var2 = new NBTTagList();
 
       for(int var3 = 0; var3 < stackList.length; ++var3) {
-         if (stackList[var3] != null) {
+         if (stackList[var3] != null && !stackList[var3].isEmpty()) {
             NBTTagCompound var4 = new NBTTagCompound();
             var4.setByte("Slot", (byte)var3);
             stackList[var3].writeToNBT(var4);
