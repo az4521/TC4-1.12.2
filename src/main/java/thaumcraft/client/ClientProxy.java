@@ -47,6 +47,7 @@ import net.minecraftforge.client.event.ModelRegistryEvent;
 import net.minecraft.client.renderer.block.model.ModelBakery;
 import net.minecraftforge.client.model.ModelLoader;
 import net.minecraft.client.renderer.block.model.ModelResourceLocation;
+import net.minecraft.client.renderer.block.model.IBakedModel;
 import thaumcraft.common.config.ConfigItems;
 import thaumcraft.client.renderers.models.AdvancedModelLoader;
 import net.minecraftforge.common.MinecraftForge;
@@ -162,6 +163,7 @@ import thaumcraft.client.renderers.item.ItemThaumometerRenderer;
 import thaumcraft.client.renderers.item.ItemTrunkSpawnerRenderer;
 import thaumcraft.client.renderers.item.ItemWandRenderer;
 import thaumcraft.client.renderers.item.ItemWoodenDeviceRenderer;
+import thaumcraft.client.renderers.compat.TransformTrackingModel;
 import thaumcraft.client.renderers.models.entities.ModelEldritchGolem;
 import thaumcraft.client.renderers.models.entities.ModelEldritchGuardian;
 import thaumcraft.client.renderers.models.entities.ModelGolem;
@@ -778,6 +780,15 @@ public class ClientProxy extends CommonProxy {
         ModelLoader.setCustomModelResourceLocation(Item.getItemFromBlock(ConfigBlocks.blockSlabStone), 1, new ModelResourceLocation("thaumcraft:blockcosmeticslabstone", "half=bottom,variant=eldritch"));
         ModelLoader.setCustomModelResourceLocation(Item.getItemFromBlock(ConfigBlocks.blockSlabWood), 0, new ModelResourceLocation("thaumcraft:blockcosmeticslabwood", "half=bottom,variant=greatwood"));
         ModelLoader.setCustomModelResourceLocation(Item.getItemFromBlock(ConfigBlocks.blockSlabWood), 1, new ModelResourceLocation("thaumcraft:blockcosmeticslabwood", "half=bottom,variant=silverwood"));
+   }
+
+   @SubscribeEvent
+   public void onModelBake(net.minecraftforge.client.event.ModelBakeEvent event) {
+      ModelResourceLocation thaumometerModel = new ModelResourceLocation("thaumcraft:itemthaumometer", "inventory");
+      IBakedModel bakedModel = event.getModelRegistry().getObject(thaumometerModel);
+      if (bakedModel != null) {
+         event.getModelRegistry().putObject(thaumometerModel, new TransformTrackingModel(bakedModel));
+      }
    }
 
    private void setupEntityRenderers() {
@@ -1635,9 +1646,7 @@ public class ClientProxy extends CommonProxy {
    @SubscribeEvent(priority = EventPriority.LOWEST)
    public void onTooltip(ItemTooltipEvent e) {
       if (ConfigurationHandler.INSTANCE.isAddTooltip() && e.getItemStack() != null) {
-         if (e.getItemStack().getItem() == ConfigItems.itemResearchNotes)
-            e.getToolTip().add(TextFormatting.GOLD + I18n.translateToLocal("tc4tweaks.enabled_scrolling"));
-         else if (e.getItemStack().getItem() == ConfigItems.itemWandCasting) {
+         if (e.getItemStack().getItem() == ConfigItems.itemWandCasting) {
             if (!ConfigurationHandler.INSTANCE.isCheckWorkbenchRecipes() || !NetworkedConfiguration.isCheckWorkbenchRecipes()) {
                e.getToolTip().add(TextFormatting.RED + I18n.translateToLocal("tc4tweaks.disable_vanilla"));
             }

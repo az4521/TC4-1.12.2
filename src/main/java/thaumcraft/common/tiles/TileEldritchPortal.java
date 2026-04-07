@@ -32,7 +32,7 @@ public class TileEldritchPortal extends TileEntity implements net.minecraft.util
    public void update() {
       ++this.count;
       if (this.world.isRemote && (this.count % 250 == 0 || this.count == 0)) {
-         this.world.playSound(null, this.getPos(), new net.minecraft.util.SoundEvent(new net.minecraft.util.ResourceLocation("thaumcraft", "evilportal")), net.minecraft.util.SoundCategory.BLOCKS, 1.0F, 1.0F);
+         this.world.playSound(null, this.getPos(), thaumcraft.common.lib.SoundsTC.get("thaumcraft:evilportal"), net.minecraft.util.SoundCategory.BLOCKS, 1.0F, 1.0F);
       }
 
       if (this.world.isRemote && this.opencount < 30) {

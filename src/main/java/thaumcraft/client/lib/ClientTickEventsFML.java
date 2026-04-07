@@ -645,8 +645,6 @@ public class ClientTickEventsFML {
       GlStateManager.disableLighting();
 
       for(int var20 = 0; var20 < gui.inventorySlots.inventorySlots.size(); ++var20) {
-         int xs = UtilsFX.getGuiXSize(gui);
-         int ys = UtilsFX.getGuiYSize(gui);
          int shift = 0;
          int shift2 = 0;
          int shiftx = -8;
@@ -657,9 +655,9 @@ public class ClientTickEventsFML {
          }
 
          Slot var23 = (Slot)gui.inventorySlots.inventorySlots.get(var20);
-         int guiLeft = shift + (gui.width - xs - shift2) / 2;
-         int guiTop = (gui.height - ys) / 2;
-         if (this.isMouseOverSlot(var23, var16, var17, guiLeft, guiTop) && var23.getStack() != null) {
+         int guiLeft = UtilsFX.getGuiLeft(gui);
+         int guiTop = UtilsFX.getGuiTop(gui);
+         if (this.isMouseOverSlot(var23, var16, var17, guiLeft, guiTop) && !var23.getStack().isEmpty()) {
             int h = ScanManager.generateItemHash(var23.getStack().getItem(), var23.getStack().getItemDamage());
             List<String> list = Thaumcraft.proxy.getScannedObjects().get(player.getName());
             if (list != null && (list.contains("@" + h) || list.contains("#" + h))) {

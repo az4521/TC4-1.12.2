@@ -52,7 +52,7 @@ public class BlockFluidDeath extends BlockFluidFinite {
       ParticleEngine.instance.addEffect(world, ef);
       if (rand.nextInt(50) == 0) {
          world.playSound(null, pos,
-               new SoundEvent(new ResourceLocation("liquid", "lavapop")),
+               thaumcraft.common.lib.SoundsTC.get("liquid.lavapop"),
                SoundCategory.BLOCKS,
                0.1F + rand.nextFloat() * 0.1F, 0.9F + rand.nextFloat() * 0.15F);
       }

@@ -287,7 +287,7 @@ public class BlockWoodenDevice extends Block {
                      { net.minecraft.block.state.IBlockState _bs = w.getBlockState(pos); w.notifyBlockUpdate(pos, _bs, _bs, 3); }
                      te.markDirty();
                      w.playSound(null, pos,
-                           new SoundEvent(new net.minecraft.util.ResourceLocation("minecraft", "block.cloth.step")),
+                           thaumcraft.common.lib.SoundsTC.get("minecraft:block.cloth.step"),
                            SoundCategory.BLOCKS, 1.0F, 1.0F);
                   }
                }
@@ -311,7 +311,7 @@ public class BlockWoodenDevice extends Block {
                   }
 
                   w.playSound(null, pos,
-                        new SoundEvent(new net.minecraft.util.ResourceLocation("minecraft", "ui.button.click")),
+                        thaumcraft.common.lib.SoundsTC.get("minecraft:ui.button.click"),
                         SoundCategory.BLOCKS, 0.1F, 0.9F);
                   { net.minecraft.block.state.IBlockState _bs = w.getBlockState(pos); w.notifyBlockUpdate(pos, _bs, _bs, 3); }
                   var6.markDirty();
@@ -427,7 +427,7 @@ public class BlockWoodenDevice extends Block {
             if (par5 == 4) var8 = "bassattack";
 
             par1World.playSound(null, pos,
-                  new SoundEvent(new net.minecraft.util.ResourceLocation("minecraft", "block.note." + var8)),
+                  thaumcraft.common.lib.SoundsTC.get("minecraft:block.note." + var8),
                   SoundCategory.BLOCKS, 3.0F, var7);
          }
 
@@ -517,7 +517,7 @@ public class BlockWoodenDevice extends Block {
          world.notifyNeighborsOfStateChange(pos.down(), this, false);
          { net.minecraft.block.state.IBlockState _bs = world.getBlockState(pos); world.notifyBlockUpdate(pos, _bs, _bs, 3); }
          world.playSound(null, pos,
-               new SoundEvent(new net.minecraft.util.ResourceLocation("minecraft", "ui.button.click")),
+               thaumcraft.common.lib.SoundsTC.get("minecraft:ui.button.click"),
                SoundCategory.BLOCKS, 0.2F, 0.6F);
       }
 
@@ -527,7 +527,7 @@ public class BlockWoodenDevice extends Block {
          world.notifyNeighborsOfStateChange(pos.down(), this, false);
          { net.minecraft.block.state.IBlockState _bs = world.getBlockState(pos); world.notifyBlockUpdate(pos, _bs, _bs, 3); }
          world.playSound(null, pos,
-               new SoundEvent(new net.minecraft.util.ResourceLocation("minecraft", "ui.button.click")),
+               thaumcraft.common.lib.SoundsTC.get("minecraft:ui.button.click"),
                SoundCategory.BLOCKS, 0.2F, 0.5F);
       }
 

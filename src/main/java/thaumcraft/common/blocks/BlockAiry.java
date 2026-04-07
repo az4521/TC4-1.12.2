@@ -93,7 +93,7 @@ public class BlockAiry extends BlockContainer {
       if (md == 0 || md == 5) {
          Thaumcraft.proxy.burst(world, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, 1.0F);
          world.playSound(null, pos,
-               new SoundEvent(new ResourceLocation("thaumcraft", "craftfail")),
+               thaumcraft.common.lib.SoundsTC.get("thaumcraft:craftfail"),
                SoundCategory.BLOCKS, 1.0F, 1.0F);
       }
 
@@ -311,7 +311,7 @@ public class BlockAiry extends BlockContainer {
          ParticleEngine.instance.addEffect(w, ef);
          if (r.nextInt(50) == 0) {
             w.playSound(null, pos,
-                  new SoundEvent(new ResourceLocation("thaumcraft", "jacobs")),
+                  thaumcraft.common.lib.SoundsTC.get("thaumcraft:jacobs"),
                   SoundCategory.BLOCKS, 0.5F, 1.0F + (r.nextFloat() - r.nextFloat()) * 0.2F);
          }
       }

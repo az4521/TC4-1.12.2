@@ -188,7 +188,8 @@ public class BlockCosmeticSolid extends Block {
    }
 
    @Override
-   public void onEntityCollision(World world, BlockPos pos, IBlockState state, Entity e) {
+   public void onEntityWalk(World world, BlockPos pos, Entity e) {
+      IBlockState state = world.getBlockState(pos);
       if (world.getBlockState(pos).getBlock() == this) {
          int md = state.getBlock().getMetaFromState(state);
          if (md == 2 && e instanceof EntityLivingBase) {
@@ -198,6 +199,7 @@ public class BlockCosmeticSolid extends Block {
             ((EntityLivingBase)e).addPotionEffect(new PotionEffect(MobEffects.SPEED, 40, 1));
             ((EntityLivingBase)e).addPotionEffect(new PotionEffect(MobEffects.JUMP_BOOST, 40, 0));
          }
+         super.onEntityWalk(world, pos, e);
       }
    }
 
@@ -227,7 +229,7 @@ public class BlockCosmeticSolid extends Block {
       if (meta == 8) {
          Thaumcraft.proxy.burst(world, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, 1.0F);
          world.playSound(null, pos,
-               new SoundEvent(new ResourceLocation("thaumcraft", "craftfail")),
+               thaumcraft.common.lib.SoundsTC.get("thaumcraft:craftfail"),
                SoundCategory.BLOCKS, 1.0F, 1.0F);
       }
       return super.addDestroyEffects(world, pos, effectRenderer);

@@ -65,20 +65,11 @@ public class ItemThaumometerRenderer implements IItemRenderer {
       }
 
       EntityPlayerSP playermp = mc.player;
-      ItemRenderType renderType = type;
-      if (type == ItemRenderType.EQUIPPED_FIRST_PERSON && playermp != null) {
-         ItemStack held = playermp.getHeldItemMainhand();
-         boolean matchesHeld = !held.isEmpty() && ItemStack.areItemsEqual(held, item) && ItemStack.areItemStackTagsEqual(held, item);
-         if (!(mc.gameSettings.thirdPersonView == 0 && matchesHeld)) {
-            renderType = ItemRenderType.ENTITY;
-         }
-      }
-
       float par1 = UtilsFX.getTimer(mc).renderPartialTicks;
       float var7 = 0.8F;
       EntityPlayerSP playersp = playermp;
       GlStateManager.pushMatrix();
-      if (renderType == ItemRenderType.EQUIPPED_FIRST_PERSON && player_id == rve_id && mc.gameSettings.thirdPersonView == 0) {
+      if (type == ItemRenderType.EQUIPPED_FIRST_PERSON && player_id == rve_id && mc.gameSettings.thirdPersonView == 0) {
          float f1 = UtilsFX.getPrevEquippedProgress(mc.entityRenderer.itemRenderer) + (UtilsFX.getEquippedProgress(mc.entityRenderer.itemRenderer) - UtilsFX.getPrevEquippedProgress(mc.entityRenderer.itemRenderer)) * par1;
          GlStateManager.translate(0.0F, 0.8F + (1.0F - f1) * 0.2F, -1F);
          GlStateManager.rotate(90.0F, 1.0F, 0.0F, 0.0F);
@@ -87,7 +78,7 @@ public class ItemThaumometerRenderer implements IItemRenderer {
          GlStateManager.enableRescaleNormal();
          GlStateManager.scale(1.0F, 1.0F, 1.0F);
       } else {
-         if (renderType == ItemRenderType.ENTITY) {
+         if (type == ItemRenderType.ENTITY) {
             GlStateManager.translate(0.5F, 0.5F, 0.5F);
             GlStateManager.scale(0.12F, 0.12F, 0.12F);
             GlStateManager.rotate(-90.0F, 1.0F, 0.0F, 0.0F);
@@ -96,11 +87,11 @@ public class ItemThaumometerRenderer implements IItemRenderer {
             GlStateManager.scale(0.5F, 0.5F, 0.5F);
          }
 
-         if (renderType == ItemRenderType.EQUIPPED) {
+         if (type == ItemRenderType.EQUIPPED) {
             GlStateManager.translate(1.6F, 0.3F, 2.0F);
             GlStateManager.rotate(90.0F, -1.0F, 0.0F, 0.0F);
             GlStateManager.rotate(30.0F, 0.0F, 0.0F, -1.0F);
-         } else if (renderType == ItemRenderType.INVENTORY) {
+         } else if (type == ItemRenderType.INVENTORY) {
             GlStateManager.rotate(60.0F, 1.0F, 0.0F, 0.0F);
             GlStateManager.rotate(30.0F, 0.0F, 0.0F, -1.0F);
             GlStateManager.rotate(248.0F, 0.0F, -1.0F, 0.0F);
@@ -114,7 +105,7 @@ public class ItemThaumometerRenderer implements IItemRenderer {
       GlStateManager.rotate(90.0F, 1.0F, 0.0F, 0.0F);
       GlStateManager.rotate(90.0F, 0.0F, 0.0F, 1.0F);
       UtilsFX.renderQuadCenteredFromTexture("textures/models/scanscreen.png", 2.5F, 1.0F, 1.0F, 1.0F, (int)(190.0F + MathHelper.sin((float)(playermp.ticksExisted - playermp.world.rand.nextInt(2))) * 10.0F + 10.0F), 771, 1.0F);
-      if (playermp instanceof EntityPlayer && renderType == ItemRenderType.EQUIPPED_FIRST_PERSON && player_id == rve_id && mc.gameSettings.thirdPersonView == 0) {
+      if (playermp instanceof EntityPlayer && type == ItemRenderType.EQUIPPED_FIRST_PERSON && player_id == rve_id && mc.gameSettings.thirdPersonView == 0) {
          RenderHelper.disableStandardItemLighting();
          int j = (int)(190.0F + MathHelper.sin((float)(playermp.ticksExisted - playermp.world.rand.nextInt(2))) * 10.0F + 10.0F);
          int k = j % 65536;

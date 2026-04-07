@@ -36,7 +36,7 @@ public class ItemBootsTraveller extends ItemArmor implements IRepairable, IRunic
       return this.icon;
    }
 
-   public String getArmorTexture(ItemStack stack, Entity entity, int slot, String type) {
+   public String getArmorTexture(ItemStack stack, Entity entity, net.minecraft.inventory.EntityEquipmentSlot slot, String type) {
       return "thaumcraft:textures/models/bootstraveler.png";
    }
 

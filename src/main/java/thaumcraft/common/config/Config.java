@@ -376,7 +376,7 @@ public class Config {
         Property showtags = config.get("general", "display_aspects", false);
         showtags.setComment("Item aspects are hidden by default and pressing shift reveals them. Changing this setting to 'true' will reverse this behaviour and always display aspects unless shift is pressed.");
         showTags = showtags.getBoolean(false);
-        Property cheatsheet = config.get("general", "allow_cheat_sheet", false);
+        Property cheatsheet = config.get("general", "allow_cheat_sheet", true);
         cheatsheet.setComment("Enables a version of the Thauminomicon in creative mode that grants you all the research when you first use it.");
         CallowCheatSheet = allowCheatSheet = cheatsheet.getBoolean(false);
         Property wardstone = config.get("general", "allow_warded_stone", true);

@@ -94,7 +94,7 @@ public class ItemFortressArmor extends ItemArmor implements IRepairable, IRunicA
       return this.model;
    }
 
-   public String getArmorTexture(ItemStack stack, Entity entity, int slot, String type) {
+   public String getArmorTexture(ItemStack stack, Entity entity, net.minecraft.inventory.EntityEquipmentSlot slot, String type) {
       return "thaumcraft:textures/models/fortress_armor.png";
    }
 

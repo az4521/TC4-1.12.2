@@ -170,7 +170,7 @@ public class TileNodeConverter extends TileThaumcraft {
       if (i == 10 && j == 10) {
          if (this.world.isRemote) {
             Thaumcraft.proxy.burst(this.world, (double)this.getPos().getX() + 0.5D, (double)this.getPos().getY() - 0.5D, (double)this.getPos().getZ() + 0.5D, 1.0F);
-            this.world.playSound(null, this.getPos(), new SoundEvent(new ResourceLocation("thaumcraft", "craftfail")), SoundCategory.MASTER, 0.5F, 1.0F);
+            this.world.playSound(null, this.getPos(), thaumcraft.common.lib.SoundsTC.get("thaumcraft:craftfail"), SoundCategory.MASTER, 0.5F, 1.0F);
          }
 
          return true;

@@ -216,7 +216,7 @@ public class BlockEldritch extends BlockContainer {
                tile.markDirty();
                { net.minecraft.block.state.IBlockState _bs = world.getBlockState(pos); world.notifyBlockUpdate(pos, _bs, _bs, 3); }
                world.playSound(null, pos,
-                     new net.minecraft.util.SoundEvent(new net.minecraft.util.ResourceLocation("thaumcraft", "crystal")),
+                     thaumcraft.common.lib.SoundsTC.get("thaumcraft:crystal"),
                      net.minecraft.util.SoundCategory.BLOCKS, 0.2F, 1.0F);
             }
          }
@@ -233,7 +233,7 @@ public class BlockEldritch extends BlockContainer {
             te.markDirty();
             player.getHeldItem(hand).shrink(1);
             world.playSound(null, pos,
-                  new net.minecraft.util.SoundEvent(new net.minecraft.util.ResourceLocation("thaumcraft", "runicShieldCharge")),
+                  thaumcraft.common.lib.SoundsTC.get("thaumcraft:runicShieldCharge"),
                   net.minecraft.util.SoundCategory.BLOCKS, 1.0F, 1.0F);
          }
       }

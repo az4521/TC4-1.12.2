@@ -21,14 +21,14 @@ public class TileTubeValve extends TileTube {
          boolean gettingPower = this.gettingPower();
          if (this.wasPoweredLastTick && !gettingPower && !this.allowFlow) {
             this.allowFlow = true;
-            this.world.playSound(null, this.getPos(), new net.minecraft.util.SoundEvent(new net.minecraft.util.ResourceLocation("thaumcraft", "squeek")), net.minecraft.util.SoundCategory.BLOCKS, 0.7F, 0.9F + this.world.rand.nextFloat() * 0.2F);
+            this.world.playSound(null, this.getPos(), thaumcraft.common.lib.SoundsTC.get("thaumcraft:squeek"), net.minecraft.util.SoundCategory.BLOCKS, 0.7F, 0.9F + this.world.rand.nextFloat() * 0.2F);
             { net.minecraft.block.state.IBlockState _bs = this.world.getBlockState(this.pos); this.world.notifyBlockUpdate(this.pos, _bs, _bs, 3); }
             this.markDirty();
          }
 
          if (!this.wasPoweredLastTick && gettingPower && this.allowFlow) {
             this.allowFlow = false;
-            this.world.playSound(null, this.getPos(), new net.minecraft.util.SoundEvent(new net.minecraft.util.ResourceLocation("thaumcraft", "squeek")), net.minecraft.util.SoundCategory.BLOCKS, 0.7F, 0.9F + this.world.rand.nextFloat() * 0.2F);
+            this.world.playSound(null, this.getPos(), thaumcraft.common.lib.SoundsTC.get("thaumcraft:squeek"), net.minecraft.util.SoundCategory.BLOCKS, 0.7F, 0.9F + this.world.rand.nextFloat() * 0.2F);
             { net.minecraft.block.state.IBlockState _bs = this.world.getBlockState(this.pos); this.world.notifyBlockUpdate(this.pos, _bs, _bs, 3); }
             this.markDirty();
          }
@@ -50,7 +50,7 @@ public class TileTubeValve extends TileTube {
       RayTraceResult hit = RayTracer.retraceBlock(world, player, x, y, z);
        if (hit != null) {
            if (hit.subHit >= 0 && hit.subHit < 6) {
-               player.world.playSound(null, new BlockPos(x, y, z), new net.minecraft.util.SoundEvent(new net.minecraft.util.ResourceLocation("thaumcraft", "tool")), net.minecraft.util.SoundCategory.BLOCKS, 0.5F, 0.9F + player.world.rand.nextFloat() * 0.2F);
+               player.world.playSound(null, new BlockPos(x, y, z), thaumcraft.common.lib.SoundsTC.get("thaumcraft:tool"), net.minecraft.util.SoundCategory.BLOCKS, 0.5F, 0.9F + player.world.rand.nextFloat() * 0.2F);
                player.swingArm(net.minecraft.util.EnumHand.MAIN_HAND);
                this.markDirty();
                { net.minecraft.block.state.IBlockState _bs = world.getBlockState(new BlockPos(x, y, z)); world.notifyBlockUpdate(new BlockPos(x, y, z), _bs, _bs, 3); }
@@ -65,7 +65,7 @@ public class TileTubeValve extends TileTube {
            }
 
            if (hit.subHit == 6) {
-               player.world.playSound(null, new BlockPos(x, y, z), new net.minecraft.util.SoundEvent(new net.minecraft.util.ResourceLocation("thaumcraft", "tool")), net.minecraft.util.SoundCategory.BLOCKS, 0.5F, 0.9F + player.world.rand.nextFloat() * 0.2F);
+               player.world.playSound(null, new BlockPos(x, y, z), thaumcraft.common.lib.SoundsTC.get("thaumcraft:tool"), net.minecraft.util.SoundCategory.BLOCKS, 0.5F, 0.9F + player.world.rand.nextFloat() * 0.2F);
                player.swingArm(net.minecraft.util.EnumHand.MAIN_HAND);
                int a = this.facing.ordinal();
                this.markDirty();

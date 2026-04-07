@@ -48,7 +48,7 @@ public class ItemVoidArmor extends ItemArmor implements IRepairable, IRunicArmor
       return this.armorType == net.minecraft.inventory.EntityEquipmentSlot.HEAD ? this.iconHelm : (this.armorType == net.minecraft.inventory.EntityEquipmentSlot.CHEST ? this.iconChest : (this.armorType == net.minecraft.inventory.EntityEquipmentSlot.LEGS ? this.iconLegs : this.iconBoots));
    }
 
-   public String getArmorTexture(ItemStack stack, Entity entity, int slot, String type) {
+   public String getArmorTexture(ItemStack stack, Entity entity, net.minecraft.inventory.EntityEquipmentSlot slot, String type) {
       if (stack.getItem() != ConfigItems.itemHelmetVoid && stack.getItem() != ConfigItems.itemChestVoid && stack.getItem() != ConfigItems.itemBootsVoid) {
          return stack.getItem() == ConfigItems.itemLegsVoid ? "thaumcraft:textures/models/void_2.png" : "thaumcraft:textures/models/void_1.png";
       } else {

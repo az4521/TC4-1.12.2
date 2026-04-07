@@ -223,7 +223,7 @@ public class BlockTable extends BlockContainer implements IWandable {
          }
          { net.minecraft.block.state.IBlockState _bs = world.getBlockState(pos); world.notifyBlockUpdate(pos, _bs, _bs, 3); }
          world.playSound(null, pos,
-               new SoundEvent(new ResourceLocation("minecraft", "ui.button.click")),
+               thaumcraft.common.lib.SoundsTC.get("minecraft:ui.button.click"),
                SoundCategory.BLOCKS, 0.15F, 0.5F);
          return 0;
       } else {

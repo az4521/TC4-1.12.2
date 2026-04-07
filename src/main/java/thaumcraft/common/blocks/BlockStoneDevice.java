@@ -236,6 +236,77 @@ public class BlockStoneDevice extends BlockContainer {
       return null;
    }
 
+   private BlockPos findNearbyInfusionMatrix(World world, BlockPos pos) {
+      for (int dy = -2; dy <= 2; dy++) {
+         for (int dx = -1; dx <= 1; dx++) {
+            for (int dz = -1; dz <= 1; dz++) {
+               BlockPos check = pos.add(dx, dy, dz);
+               IBlockState checkState = world.getBlockState(check);
+               if (checkState.getBlock() == this && checkState.getBlock().getMetaFromState(checkState) == 2) {
+                  TileEntity te = world.getTileEntity(check);
+                  if (te instanceof TileInfusionMatrix) {
+                     return check;
+                  }
+               }
+            }
+         }
+      }
+      return null;
+   }
+
+   private void deactivateInfusionMatrix(World world, BlockPos pos) {
+      TileEntity te = world.getTileEntity(pos);
+      if (te instanceof TileInfusionMatrix) {
+         TileInfusionMatrix matrix = (TileInfusionMatrix) te;
+         matrix.active = false;
+         matrix.crafting = false;
+         matrix.markDirty();
+         world.notifyBlockUpdate(pos, world.getBlockState(pos), world.getBlockState(pos), 3);
+      }
+   }
+
+   private void revertInfusionPillars(World world, BlockPos matrixPos) {
+      for (int dx = -1; dx <= 1; dx += 2) {
+         for (int dz = -1; dz <= 1; dz += 2) {
+            BlockPos lower = matrixPos.add(dx, -2, dz);
+            IBlockState lowerState = world.getBlockState(lower);
+            if (lowerState.getBlock() == this && lowerState.getBlock().getMetaFromState(lowerState) == 3) {
+               world.setBlockState(lower, ConfigBlocks.blockCosmeticSolid.getStateFromMeta(7), 3);
+            }
+
+            BlockPos upper = matrixPos.add(dx, -1, dz);
+            IBlockState upperState = world.getBlockState(upper);
+            if (upperState.getBlock() == this && upperState.getBlock().getMetaFromState(upperState) == 4) {
+               world.setBlockState(upper, ConfigBlocks.blockCosmeticSolid.getStateFromMeta(6), 3);
+            }
+         }
+      }
+   }
+
+   @Override
+   public boolean removedByPlayer(IBlockState state, World world, BlockPos pos, EntityPlayer player, boolean willHarvest) {
+      int metadata = state.getBlock().getMetaFromState(state);
+      if (!world.isRemote && (metadata == 1 || metadata == 2 || metadata == 3 || metadata == 4)) {
+         BlockPos matrixPos = metadata == 2 ? pos : this.findNearbyInfusionMatrix(world, pos);
+         if (matrixPos != null) {
+            TileEntity te = world.getTileEntity(matrixPos);
+            if (te instanceof TileInfusionMatrix && ((TileInfusionMatrix) te).active) {
+               this.deactivateInfusionMatrix(world, matrixPos);
+               this.revertInfusionPillars(world, matrixPos);
+               if (metadata == 3) {
+                  world.playEvent(2001, pos, Block.getStateId(ConfigBlocks.blockCosmeticSolid.getStateFromMeta(7)));
+                  return false;
+               }
+               if (metadata == 4) {
+                  world.playEvent(2001, pos, Block.getStateId(ConfigBlocks.blockCosmeticSolid.getStateFromMeta(6)));
+                  return false;
+               }
+            }
+         }
+      }
+      return super.removedByPlayer(state, world, pos, player, willHarvest);
+   }
+
    @Override
    public void breakBlock(World world, BlockPos pos, IBlockState state) {
       InventoryUtils.dropItems(world, pos.getX(), pos.getY(), pos.getZ());
@@ -269,14 +340,14 @@ public class BlockStoneDevice extends BlockContainer {
             BlockPos above = pos.up();
             IBlockState aboveState = world.getBlockState(above);
             if (aboveState.getBlock() != this || aboveState.getBlock().getMetaFromState(aboveState) != 4) {
-               Block.spawnAsEntity(world, pos, new ItemStack(this, 1, metadata));
+               Block.spawnAsEntity(world, pos, new ItemStack(ConfigBlocks.blockCosmeticSolid, 1, 7));
                world.setBlockToAir(pos);
             }
          } else if (metadata == 4) {
             BlockPos below = pos.down();
             IBlockState belowState = world.getBlockState(below);
             if (belowState.getBlock() != this || belowState.getBlock().getMetaFromState(belowState) != 3) {
-               Block.spawnAsEntity(world, pos, new ItemStack(this, 1, metadata));
+               Block.spawnAsEntity(world, pos, new ItemStack(ConfigBlocks.blockCosmeticSolid, 1, 6));
                world.setBlockToAir(pos);
             }
          }
@@ -299,7 +370,7 @@ public class BlockStoneDevice extends BlockContainer {
             if (!ped.getStackInSlot(0).isEmpty()) {
                InventoryUtils.dropItemsAtEntity(world, pos.getX(), pos.getY(), pos.getZ(), player);
                world.playSound(null, pos,
-                     new SoundEvent(new net.minecraft.util.ResourceLocation("minecraft", "entity.item.pickup")),
+                     thaumcraft.common.lib.SoundsTC.get("minecraft:entity.item.pickup"),
                      SoundCategory.BLOCKS, 0.2F, ((world.rand.nextFloat() - world.rand.nextFloat()) * 0.7F + 1.0F) * 1.5F);
                return true;
             }
@@ -312,7 +383,7 @@ public class BlockStoneDevice extends BlockContainer {
                held.shrink(1);
                player.inventory.markDirty();
                world.playSound(null, pos,
-                     new SoundEvent(new net.minecraft.util.ResourceLocation("minecraft", "entity.item.pickup")),
+                     thaumcraft.common.lib.SoundsTC.get("minecraft:entity.item.pickup"),
                      SoundCategory.BLOCKS, 0.2F, ((world.rand.nextFloat() - world.rand.nextFloat()) * 0.7F + 1.0F) * 1.6F);
                return true;
             }
@@ -339,7 +410,7 @@ public class BlockStoneDevice extends BlockContainer {
                { net.minecraft.block.state.IBlockState _bs = world.getBlockState(wandPos); world.notifyBlockUpdate(wandPos, _bs, _bs, 3); }
                ped.markDirty();
                world.playSound(null, wandPos,
-                     new SoundEvent(new net.minecraft.util.ResourceLocation("minecraft", "entity.item.pickup")),
+                     thaumcraft.common.lib.SoundsTC.get("minecraft:entity.item.pickup"),
                      SoundCategory.BLOCKS, 0.2F, ((world.rand.nextFloat() - world.rand.nextFloat()) * 0.7F + 1.0F) * 1.5F);
                return true;
             }
@@ -354,7 +425,7 @@ public class BlockStoneDevice extends BlockContainer {
                { net.minecraft.block.state.IBlockState _bs = world.getBlockState(wandPos); world.notifyBlockUpdate(wandPos, _bs, _bs, 3); }
                ped.markDirty();
                world.playSound(null, wandPos,
-                     new SoundEvent(new net.minecraft.util.ResourceLocation("minecraft", "entity.item.pickup")),
+                     thaumcraft.common.lib.SoundsTC.get("minecraft:entity.item.pickup"),
                      SoundCategory.BLOCKS, 0.2F, ((world.rand.nextFloat() - world.rand.nextFloat()) * 0.7F + 1.0F) * 1.6F);
                return true;
             }

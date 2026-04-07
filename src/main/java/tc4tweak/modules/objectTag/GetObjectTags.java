@@ -68,6 +68,9 @@ public class GetObjectTags {
         try {
             item = itemstack.getItem();
             meta = itemstack.getItemDamage();
+            if (itemstack.isItemStackDamageable() || !itemstack.getHasSubtypes()) {
+                meta = OreDictionary.WILDCARD_VALUE;
+            }
         } catch (Exception e) {
             return null;
         }

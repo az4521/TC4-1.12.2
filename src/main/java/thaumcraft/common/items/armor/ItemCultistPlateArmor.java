@@ -49,7 +49,7 @@ public class ItemCultistPlateArmor extends ItemArmor implements IRepairable, IRu
       return this.armorType == net.minecraft.inventory.EntityEquipmentSlot.HEAD ? this.iconHelm : (this.armorType == net.minecraft.inventory.EntityEquipmentSlot.CHEST ? this.iconChest : this.iconLegs);
    }
 
-   public String getArmorTexture(ItemStack stack, Entity entity, int slot, String type) {
+   public String getArmorTexture(ItemStack stack, Entity entity, net.minecraft.inventory.EntityEquipmentSlot slot, String type) {
       return entity instanceof EntityInhabitedZombie ? "thaumcraft:textures/models/zombie_plate_armor.png" : "thaumcraft:textures/models/cultist_plate_armor.png";
    }
 

@@ -937,6 +937,22 @@ public class UtilsFX {
       }
    }
 
+   public static int getGuiLeft(GuiContainer gui) {
+      try {
+         return ReflectionHelper.getPrivateValue(GuiContainer.class, gui, new String[]{"guiLeft", "field_147003_i", "i", "guiLeft"});
+      } catch (Exception var2) {
+         return 0;
+      }
+   }
+
+   public static int getGuiTop(GuiContainer gui) {
+      try {
+         return ReflectionHelper.getPrivateValue(GuiContainer.class, gui, new String[]{"guiTop", "field_147009_r", "j", "guiTop"});
+      } catch (Exception var2) {
+         return 0;
+      }
+   }
+
    public static float getGuiZLevel(Gui gui) {
       try {
          return ReflectionHelper.getPrivateValue(Gui.class, gui, new String[]{"zLevel", "e", "zLevel"});

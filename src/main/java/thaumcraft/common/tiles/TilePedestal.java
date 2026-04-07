@@ -20,6 +20,10 @@ public class TilePedestal extends TileThaumcraft implements ISidedInventory {
    private ItemStack[] inventory = new ItemStack[1];
    private String customName;
 
+   public TilePedestal() {
+      java.util.Arrays.fill(this.inventory, ItemStack.EMPTY);
+   }
+
    @SideOnly(Side.CLIENT)
    public AxisAlignedBB getRenderBoundingBox() {
       return new AxisAlignedBB(this.getPos().getX(), this.getPos().getY(), this.getPos().getZ(), this.getPos().getX() + 1, this.getPos().getY() + 2, this.getPos().getZ() + 1);
@@ -32,13 +36,13 @@ public class TilePedestal extends TileThaumcraft implements ISidedInventory {
    @Override
    public boolean isEmpty() {
       for (ItemStack stack : inventory) {
-         if (!stack.isEmpty()) return false;
+         if (stack != null && !stack.isEmpty()) return false;
       }
       return true;
    }
 
    public ItemStack getStackInSlot(int par1) {
-      return this.inventory[par1];
+      return this.inventory[par1] == null ? ItemStack.EMPTY : this.inventory[par1];
    }
 
    public ItemStack decrStackSize(int par1, int par2) {
@@ -146,7 +150,7 @@ public class TilePedestal extends TileThaumcraft implements ISidedInventory {
       NBTTagList nbttaglist = new NBTTagList();
 
       for(int i = 0; i < this.inventory.length; ++i) {
-         if (!this.inventory[i].isEmpty()) {
+         if (this.inventory[i] != null && !this.inventory[i].isEmpty()) {
             NBTTagCompound nbttagcompound1 = new NBTTagCompound();
             nbttagcompound1.setByte("Slot", (byte)i);
             this.inventory[i].writeToNBT(nbttagcompound1);

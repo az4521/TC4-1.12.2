@@ -54,7 +54,7 @@ public class ItemCultistRobeArmor extends ItemArmor implements IRepairable, IRun
       return this.armorType == net.minecraft.inventory.EntityEquipmentSlot.HEAD ? this.iconHelm : (this.armorType == net.minecraft.inventory.EntityEquipmentSlot.CHEST ? this.iconChest : this.iconLegs);
    }
 
-   public String getArmorTexture(ItemStack stack, Entity entity, int slot, String type) {
+   public String getArmorTexture(ItemStack stack, Entity entity, net.minecraft.inventory.EntityEquipmentSlot slot, String type) {
       return "thaumcraft:textures/models/cultist_robe_armor.png";
    }
 

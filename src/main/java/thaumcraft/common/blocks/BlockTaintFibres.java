@@ -233,7 +233,7 @@ public class BlockTaintFibres extends Block {
       if (id == 1) {
          if (world.isRemote) {
             world.playSound(null, pos,
-                  new SoundEvent(new ResourceLocation("thaumcraft", "roots")),
+                  thaumcraft.common.lib.SoundsTC.get("thaumcraft:roots"),
                   SoundCategory.BLOCKS, 0.1F, 0.9F + world.rand.nextFloat() * 0.2F);
          }
 

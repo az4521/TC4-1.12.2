@@ -79,7 +79,7 @@ public class EntityCultistCleric extends EntityCultist implements IRangedAttackM
          blast.posZ += blast.motionZ / (double)2.0F;
          blast.setPosition(blast.posX, blast.posY, blast.posZ);
          blast.shoot(d0, d1 + (double)2.0F, d2, 0.66F, 3.0F);
-         this.playSound(new net.minecraft.util.SoundEvent(new net.minecraft.util.ResourceLocation("thaumcraft", "egattack")), 1.0F, 1.0F + this.rand.nextFloat() * 0.1F);
+         this.playSound(thaumcraft.common.lib.SoundsTC.get("thaumcraft:egattack"), 1.0F, 1.0F + this.rand.nextFloat() * 0.1F);
          this.world.spawnEntity(blast);
       } else {
          float f1 = MathHelper.sqrt(f) * 0.5F;

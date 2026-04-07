@@ -129,7 +129,7 @@ public class BlockTaint extends Block {
                      spore.setLocationAndAngles((float)x + 0.5F, y, (float)z + 0.5F, 0.0F, 0.0F);
                      world.spawnEntity(spore);
                      world.playSound(null, spore.posX, spore.posY, spore.posZ,
-                           new SoundEvent(new ResourceLocation("thaumcraft", "roots")),
+                           thaumcraft.common.lib.SoundsTC.get("thaumcraft:roots"),
                            SoundCategory.NEUTRAL, 0.1F, 0.9F + world.rand.nextFloat() * 0.2F);
                   }
                } else {
@@ -316,7 +316,7 @@ public class BlockTaint extends Block {
       if (id == 1) {
          if (world.isRemote) {
             world.playSound(null, pos,
-                  new SoundEvent(new ResourceLocation("thaumcraft", "roots")),
+                  thaumcraft.common.lib.SoundsTC.get("thaumcraft:roots"),
                   SoundCategory.BLOCKS, 0.1F, 0.9F + world.rand.nextFloat() * 0.2F);
          }
 

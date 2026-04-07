@@ -31,11 +31,13 @@ public class TileFocalManipulator extends TileThaumcraftInventory implements ITi
 
    public TileFocalManipulator() {
       this.itemStacks = new ItemStack[1];
+      java.util.Arrays.fill(this.itemStacks, ItemStack.EMPTY);
       this.syncedSlots = new int[]{0};
    }
 
    public void readCustomNBT(NBTTagCompound nbttagcompound) {
       this.itemStacks = new ItemStack[1];
+      java.util.Arrays.fill(this.itemStacks, ItemStack.EMPTY);
       this.syncedSlots = new int[]{0};
       super.readCustomNBT(nbttagcompound);
       this.aspects.readFromNBT(nbttagcompound);

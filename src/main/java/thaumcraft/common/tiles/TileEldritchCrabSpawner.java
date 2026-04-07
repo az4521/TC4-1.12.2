@@ -31,13 +31,13 @@ public class TileEldritchCrabSpawner extends TileThaumcraft {
          } else {
             if (this.count == 15 && this.isActivated() && !this.maxEntitiesReached()) {
                this.world.addBlockEvent(this.getPos(), this.getBlockType(), 1, 0);
-               this.world.playSound(null, this.getPos(), new net.minecraft.util.SoundEvent(new net.minecraft.util.ResourceLocation("random.fizz")), net.minecraft.util.SoundCategory.BLOCKS, 0.5F, 1.0F);
+               this.world.playSound(null, this.getPos(), thaumcraft.common.lib.SoundsTC.get("random.fizz"), net.minecraft.util.SoundCategory.BLOCKS, 0.5F, 1.0F);
             }
 
             if (this.count <= 0 && this.isActivated() && !this.maxEntitiesReached()) {
                this.count = 150 + this.world.rand.nextInt(100);
                this.spawnCrab();
-               this.world.playSound(null, this.getPos(), new net.minecraft.util.SoundEvent(new net.minecraft.util.ResourceLocation("thaumcraft", "gore")), net.minecraft.util.SoundCategory.BLOCKS, 0.5F, 1.0F);
+               this.world.playSound(null, this.getPos(), thaumcraft.common.lib.SoundsTC.get("thaumcraft:gore"), net.minecraft.util.SoundCategory.BLOCKS, 0.5F, 1.0F);
             }
          }
       } else if (this.venting > 0) {

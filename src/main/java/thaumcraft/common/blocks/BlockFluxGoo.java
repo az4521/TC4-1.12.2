@@ -86,7 +86,7 @@ public class BlockFluxGoo extends BlockFluidFinite {
          slime.setSlimeSize(1);
          world.spawnEntity(slime);
          world.playSound(null, slime.posX, slime.posY, slime.posZ,
-               new net.minecraft.util.SoundEvent(new net.minecraft.util.ResourceLocation("thaumcraft", "gore")),
+               thaumcraft.common.lib.SoundsTC.get("thaumcraft:gore"),
                net.minecraft.util.SoundCategory.HOSTILE, 1.0F, 1.0F);
       } else if (meta >= 6 && world.isAirBlock(pos.up())) {
          if (rand.nextInt(25) == 0) {
@@ -96,7 +96,7 @@ public class BlockFluxGoo extends BlockFluidFinite {
             slime.setSlimeSize(2);
             world.spawnEntity(slime);
             world.playSound(null, slime.posX, slime.posY, slime.posZ,
-                  new net.minecraft.util.SoundEvent(new net.minecraft.util.ResourceLocation("thaumcraft", "gore")),
+                  thaumcraft.common.lib.SoundsTC.get("thaumcraft:gore"),
                   net.minecraft.util.SoundCategory.HOSTILE, 1.0F, 1.0F);
          } else if (Config.taintFromFlux && rand.nextInt(50) == 0) {
             Utils.setBiomeAt(world, pos.getX(), pos.getZ(), ThaumcraftWorldGenerator.biomeTaint);

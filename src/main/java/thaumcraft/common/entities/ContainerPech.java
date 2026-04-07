@@ -90,7 +90,7 @@ public class ContainerPech extends Container {
          if (this.theWorld.rand.nextInt(100) <= value / 2) {
             this.pech.setTamed(false);
             this.pech.updateAINextTick = true;
-            this.pech.playSound(new net.minecraft.util.SoundEvent(new net.minecraft.util.ResourceLocation("thaumcraft", "pech_trade")), 0.4F, 1.0F);
+            this.pech.playSound(thaumcraft.common.lib.SoundsTC.get("thaumcraft:pech_trade"), 0.4F, 1.0F);
          }
 
          if (this.theWorld.rand.nextInt(5) == 0) {

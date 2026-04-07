@@ -227,6 +227,12 @@ public class BlockWarded extends BlockContainer {
    }
 
    @Override
+   public void onEntityWalk(World world, BlockPos pos, Entity entity) {
+      Block block = this.getBlock(world, pos.getX(), pos.getY(), pos.getZ());
+      block.onEntityWalk(world, pos, entity);
+   }
+
+   @Override
    public void onBlockExploded(World world, BlockPos pos, Explosion explosion) {
       // warded blocks are immune to explosions
    }

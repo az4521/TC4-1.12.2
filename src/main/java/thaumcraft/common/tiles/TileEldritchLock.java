@@ -40,7 +40,7 @@ public class TileEldritchLock extends TileThaumcraft {
             if (this.count != -1) {
          ++this.count;
          if (this.count % 5 == 0) {
-            this.world.playSound(null, this.getPos(), new net.minecraft.util.SoundEvent(new net.minecraft.util.ResourceLocation("thaumcraft", "pump")), net.minecraft.util.SoundCategory.BLOCKS, 1.0F, 1.0F);
+            this.world.playSound(null, this.getPos(), thaumcraft.common.lib.SoundsTC.get("thaumcraft:pump"), net.minecraft.util.SoundCategory.BLOCKS, 1.0F, 1.0F);
          }
 
          if (this.count > 100) {
@@ -51,7 +51,7 @@ public class TileEldritchLock extends TileThaumcraft {
    }
 
    private void doBossSpawn() {
-      this.world.playSound(null, this.getPos(), new net.minecraft.util.SoundEvent(new net.minecraft.util.ResourceLocation("thaumcraft", "ice")), net.minecraft.util.SoundCategory.BLOCKS, 1.0F, 1.0F);
+      this.world.playSound(null, this.getPos(), thaumcraft.common.lib.SoundsTC.get("thaumcraft:ice"), net.minecraft.util.SoundCategory.BLOCKS, 1.0F, 1.0F);
       if (!this.world.isRemote) {
          int cx = this.getPos().getX() >> 4;
          int cz = this.getPos().getZ() >> 4;

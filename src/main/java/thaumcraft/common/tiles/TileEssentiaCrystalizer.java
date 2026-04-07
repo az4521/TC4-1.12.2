@@ -290,7 +290,7 @@ public class TileEssentiaCrystalizer extends TileThaumcraft implements IAspectCo
          this.spawnItem(stack);
       }
 
-      this.world.playSound(null, this.getPos(), new net.minecraft.util.SoundEvent(new net.minecraft.util.ResourceLocation("random.fizz")), net.minecraft.util.SoundCategory.BLOCKS, 0.25F, 2.6F + (this.world.rand.nextFloat() - this.world.rand.nextFloat()) * 0.8F);
+      this.world.playSound(null, this.getPos(), thaumcraft.common.lib.SoundsTC.get("random.fizz"), net.minecraft.util.SoundCategory.BLOCKS, 0.25F, 2.6F + (this.world.rand.nextFloat() - this.world.rand.nextFloat()) * 0.8F);
    }
 
    public boolean spawnItem(ItemStack stack) {

@@ -64,7 +64,7 @@ public class BlockFluidPure extends BlockFluidClassic {
          double var22 = pos.getY() + this.getQuantaPercentage(world, pos);
          double var23 = pos.getZ() + rand.nextFloat();
          world.playSound(null, var21, var22, var23,
-               new net.minecraft.util.SoundEvent(new net.minecraft.util.ResourceLocation("minecraft", "block.lava.pop")),
+               thaumcraft.common.lib.SoundsTC.get("minecraft:block.lava.pop"),
                net.minecraft.util.SoundCategory.BLOCKS,
                0.1F + rand.nextFloat() * 0.1F,
                0.9F + rand.nextFloat() * 0.15F);

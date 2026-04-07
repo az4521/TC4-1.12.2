@@ -312,7 +312,7 @@ public class TileNode extends TileThaumcraft implements INode, IWandable {
    }
 
    public void readCustomNBT(NBTTagCompound nbttagcompound) {
-      System.out.println("[TC4-DEBUG] TileNode.readCustomNBT at " + this.getPos() + " hasAspectsTag=" + nbttagcompound.hasKey("Aspects") + " world=" + (this.world != null));
+      //System.out.println("[TC4-DEBUG] TileNode.readCustomNBT at " + this.getPos() + " hasAspectsTag=" + nbttagcompound.hasKey("Aspects") + " world=" + (this.world != null));
       this.id = nbttagcompound.getString("nodeId");
       if (this.world != null && locations != null) {
          ArrayList<Integer> t = new ArrayList<>();
@@ -332,7 +332,7 @@ public class TileNode extends TileThaumcraft implements INode, IWandable {
       }
 
       this.aspects.readFromNBT(nbttagcompound);
-      System.out.println("[TC4-DEBUG] TileNode aspects loaded: " + this.aspects.size() + " aspects at " + this.getPos());
+      //System.out.println("[TC4-DEBUG] TileNode aspects loaded: " + this.aspects.size() + " aspects at " + this.getPos());
       String de = nbttagcompound.getString("drainer");
       if (de != null && !de.isEmpty() && this.getWorld() != null) {
          this.drainEntity = this.getWorld().getPlayerEntityByName(de);

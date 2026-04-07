@@ -285,7 +285,7 @@ public class TileInfusionMatrix extends TileThaumcraft implements IWandable, IAs
                         this.recipePlayer = player.getName();
                         this.instability = this.symmetry + this.recipeInstability;
                         this.crafting = true;
-                        this.world.playSound(null, this.getPos(), new net.minecraft.util.SoundEvent(new net.minecraft.util.ResourceLocation("thaumcraft", "craftstart")), net.minecraft.util.SoundCategory.BLOCKS, 0.5F, 1.0F);
+                        this.world.playSound(null, this.getPos(), thaumcraft.common.lib.SoundsTC.get("thaumcraft:craftstart"), net.minecraft.util.SoundCategory.BLOCKS, 0.5F, 1.0F);
                         { net.minecraft.block.state.IBlockState _bs = this.world.getBlockState(this.pos); this.world.notifyBlockUpdate(this.pos, _bs, _bs, 3); }
                         this.markDirty();
                     } else {
@@ -311,7 +311,7 @@ public class TileInfusionMatrix extends TileThaumcraft implements IWandable, IAs
                             this.recipeXP = recipe2.calcXP(this.recipeInput);
                             this.instability = this.symmetry + this.recipeInstability;
                             this.crafting = true;
-                            this.world.playSound(null, this.getPos(), new net.minecraft.util.SoundEvent(new net.minecraft.util.ResourceLocation("thaumcraft", "craftstart")), net.minecraft.util.SoundCategory.BLOCKS, 0.5F, 1.0F);
+                            this.world.playSound(null, this.getPos(), thaumcraft.common.lib.SoundsTC.get("thaumcraft:craftstart"), net.minecraft.util.SoundCategory.BLOCKS, 0.5F, 1.0F);
                             { net.minecraft.block.state.IBlockState _bs = this.world.getBlockState(this.pos); this.world.notifyBlockUpdate(this.pos, _bs, _bs, 3); }
                             this.markDirty();
                         }
@@ -398,7 +398,7 @@ public class TileInfusionMatrix extends TileThaumcraft implements IWandable, IAs
             this.crafting = false;
             this.recipeEssentia = new AspectList();
             { net.minecraft.block.state.IBlockState _bs = this.world.getBlockState(this.pos); this.world.notifyBlockUpdate(this.pos, _bs, _bs, 3); }
-            this.world.playSound(null, this.getPos(), new net.minecraft.util.SoundEvent(new net.minecraft.util.ResourceLocation("thaumcraft", "craftfail")), net.minecraft.util.SoundCategory.BLOCKS, 1.0F, 0.6F);
+            this.world.playSound(null, this.getPos(), thaumcraft.common.lib.SoundsTC.get("thaumcraft:craftfail"), net.minecraft.util.SoundCategory.BLOCKS, 1.0F, 0.6F);
             this.markDirty();
         } else if (this.recipeType == 1 && this.recipeXP > 0) {
             List<EntityPlayer> targets =
@@ -588,11 +588,11 @@ public class TileInfusionMatrix extends TileThaumcraft implements IWandable, IAs
                         }
                     } else {
                         this.world.setBlockState(new BlockPos(cc.getX(), cc.getY() + 1, cc.getZ()), ConfigBlocks.blockFluxGas.getStateFromMeta(7), 3);
-                        this.world.playSound(null, this.getPos(), new net.minecraft.util.SoundEvent(new net.minecraft.util.ResourceLocation("random.fizz")), net.minecraft.util.SoundCategory.BLOCKS, 0.3F, 1.0F);
+                        this.world.playSound(null, this.getPos(), thaumcraft.common.lib.SoundsTC.get("random.fizz"), net.minecraft.util.SoundCategory.BLOCKS, 0.3F, 1.0F);
                     }
                 } else {
                     this.world.setBlockState(new BlockPos(cc.getX(), cc.getY() + 1, cc.getZ()), ConfigBlocks.blockFluxGoo.getStateFromMeta(7), 3);
-                    this.world.playSound(null, this.getPos(), new net.minecraft.util.SoundEvent(new net.minecraft.util.ResourceLocation("game.neutral.swim")), net.minecraft.util.SoundCategory.BLOCKS, 0.3F, 1.0F);
+                    this.world.playSound(null, this.getPos(), thaumcraft.common.lib.SoundsTC.get("game.neutral.swim"), net.minecraft.util.SoundCategory.BLOCKS, 0.3F, 1.0F);
                 }
 
                 this.world.addBlockEvent(new BlockPos(cc.getX(), cc.getY(), cc.getZ()), ConfigBlocks.blockStoneDevice, 11, 0);

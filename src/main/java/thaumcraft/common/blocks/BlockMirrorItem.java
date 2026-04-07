@@ -65,7 +65,7 @@ public class BlockMirrorItem extends ItemBlock {
                st.setTagInfo("linkDim", new NBTTagInt(world.provider.getDimension()));
                st.setTagInfo("dimname", new NBTTagString(world.provider.getDimensionType().getName()));
                world.playSound(null, pos,
-                     new net.minecraft.util.SoundEvent(new net.minecraft.util.ResourceLocation("thaumcraft", "jar")),
+                     thaumcraft.common.lib.SoundsTC.get("thaumcraft:jar"),
                      net.minecraft.util.SoundCategory.BLOCKS, 1.0F, 2.0F);
                if (!player.inventory.addItemStackToInventory(st) && !world.isRemote) {
                   world.spawnEntity(new EntityItem(world, player.posX, player.posY, player.posZ, st));
@@ -91,7 +91,7 @@ public class BlockMirrorItem extends ItemBlock {
                st.setTagInfo("linkDim", new NBTTagInt(world.provider.getDimension()));
                st.setTagInfo("dimname", new NBTTagString(world.provider.getDimensionType().getName()));
                world.playSound(null, pos,
-                     new net.minecraft.util.SoundEvent(new net.minecraft.util.ResourceLocation("thaumcraft", "jar")),
+                     thaumcraft.common.lib.SoundsTC.get("thaumcraft:jar"),
                      net.minecraft.util.SoundCategory.BLOCKS, 1.0F, 2.0F);
                if (!player.inventory.addItemStackToInventory(st) && !world.isRemote) {
                   world.spawnEntity(new EntityItem(world, player.posX, player.posY, player.posZ, st));

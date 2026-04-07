@@ -114,7 +114,7 @@ public class BlockChestHungry extends BlockContainer {
                ItemStack leftovers = InventoryUtils.placeItemStackIntoInventory(ei.getItem(), (IInventory) te, 1, true);
                if (leftovers == null || leftovers.getCount() != ei.getItem().getCount()) {
                   world.playSound(null, pos,
-                        new SoundEvent(new ResourceLocation("minecraft", "entity.generic.eat")),
+                        thaumcraft.common.lib.SoundsTC.get("minecraft:entity.generic.eat"),
                         SoundCategory.BLOCKS, 0.25F,
                         (world.rand.nextFloat() - world.rand.nextFloat()) * 0.2F + 1.0F);
                   world.addBlockEvent(pos, ConfigBlocks.blockChestHungry, 2, 2);

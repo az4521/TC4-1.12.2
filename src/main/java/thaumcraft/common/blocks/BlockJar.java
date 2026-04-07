@@ -124,7 +124,7 @@ public class BlockJar extends BlockContainer {
 
    public static void playJarSound(World world, BlockPos pos, float volume) {
       world.playSound(null, pos,
-            new net.minecraft.util.SoundEvent(new net.minecraft.util.ResourceLocation("thaumcraft", "jar")),
+            thaumcraft.common.lib.SoundsTC.get("thaumcraft:jar"),
             net.minecraft.util.SoundCategory.BLOCKS, volume, 1.0F);
    }
 
@@ -282,7 +282,7 @@ public class BlockJar extends BlockContainer {
                if (world.isRemote) {
                   playJarSound(world, pos, .4f);
                   world.playSound(player, pos,
-                        new net.minecraft.util.SoundEvent(new net.minecraft.util.ResourceLocation("minecraft", "entity.generic.swim")),
+                        thaumcraft.common.lib.SoundsTC.get("minecraft:entity.generic.swim"),
                         net.minecraft.util.SoundCategory.BLOCKS,
                         0.5F, 1.0F + (world.rand.nextFloat() - world.rand.nextFloat()) * 0.3F);
                }

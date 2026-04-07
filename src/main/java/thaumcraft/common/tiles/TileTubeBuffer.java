@@ -230,7 +230,7 @@ public class TileTubeBuffer extends TileThaumcraft implements IAspectContainer, 
            if (hit.subHit >= 0 && hit.subHit < 6) {
                player.swingArm(net.minecraft.util.EnumHand.MAIN_HAND);
                if (player.isSneaking()) {
-                   player.world.playSound(null, new BlockPos(x, y, z), new net.minecraft.util.SoundEvent(new net.minecraft.util.ResourceLocation("thaumcraft", "squeek")), net.minecraft.util.SoundCategory.BLOCKS, 0.6F, 1.1F + world.rand.nextFloat() * 0.2F);
+                   player.world.playSound(null, new BlockPos(x, y, z), thaumcraft.common.lib.SoundsTC.get("thaumcraft:squeek"), net.minecraft.util.SoundCategory.BLOCKS, 0.6F, 1.1F + world.rand.nextFloat() * 0.2F);
                    if (!this.world.isRemote) {
                        ++this.chokedSides[hit.subHit];
                        if (this.chokedSides[hit.subHit] > 2) {
@@ -241,7 +241,7 @@ public class TileTubeBuffer extends TileThaumcraft implements IAspectContainer, 
                        { net.minecraft.block.state.IBlockState _bs = world.getBlockState(new BlockPos(x, y, z)); world.notifyBlockUpdate(new BlockPos(x, y, z), _bs, _bs, 3); }
                    }
                } else {
-                   player.world.playSound(null, new BlockPos(x, y, z), new net.minecraft.util.SoundEvent(new net.minecraft.util.ResourceLocation("thaumcraft", "tool")), net.minecraft.util.SoundCategory.BLOCKS, 0.5F, 0.9F + player.world.rand.nextFloat() * 0.2F);
+                   player.world.playSound(null, new BlockPos(x, y, z), thaumcraft.common.lib.SoundsTC.get("thaumcraft:tool"), net.minecraft.util.SoundCategory.BLOCKS, 0.5F, 0.9F + player.world.rand.nextFloat() * 0.2F);
                    this.openSides[hit.subHit] = !this.openSides[hit.subHit];
                    EnumFacing dir = EnumFacing.byIndex(hit.subHit);
                    TileEntity tile = this.world.getTileEntity(new BlockPos(this.getPos().getX() + dir.getXOffset(), this.getPos().getY() + dir.getYOffset(), this.getPos().getZ() + dir.getZOffset()));

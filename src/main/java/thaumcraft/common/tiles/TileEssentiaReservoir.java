@@ -183,7 +183,7 @@ public class TileEssentiaReservoir extends TileThaumcraft implements IAspectSour
          int vs = this.essentia.visSize();
          if (vs > 0) {
             if (this.world.rand.nextInt(500 - vs) == 0) {
-               this.world.playSound(null, this.getPos(), new net.minecraft.util.SoundEvent(new net.minecraft.util.ResourceLocation("thaumcraft", "creak")), net.minecraft.util.SoundCategory.BLOCKS, 1.0F, 1.4F + this.world.rand.nextFloat() * 0.2F);
+               this.world.playSound(null, this.getPos(), thaumcraft.common.lib.SoundsTC.get("thaumcraft:creak"), net.minecraft.util.SoundCategory.BLOCKS, 1.0F, 1.4F + this.world.rand.nextFloat() * 0.2F);
             }
 
             if (this.count % 20 == 0 && this.essentia.size() > 0) {

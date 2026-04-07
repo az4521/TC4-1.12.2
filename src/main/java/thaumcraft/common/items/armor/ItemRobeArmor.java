@@ -107,7 +107,7 @@ public class ItemRobeArmor extends ItemArmor implements IRepairable, IVisDiscoun
       nbttagcompound1.setInteger("color", par2);
    }
 
-   public String getArmorTexture(ItemStack stack, Entity entity, int slot, String type) {
+   public String getArmorTexture(ItemStack stack, Entity entity, net.minecraft.inventory.EntityEquipmentSlot slot, String type) {
       if (stack.getItem() != ConfigItems.itemChestRobe && stack.getItem() != ConfigItems.itemBootsRobe) {
          if (stack.getItem() == ConfigItems.itemLegsRobe) {
             return type == null ? "thaumcraft:textures/models/robes_2.png" : "thaumcraft:textures/models/robes_2_overlay.png";

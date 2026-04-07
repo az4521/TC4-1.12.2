@@ -60,7 +60,7 @@ public class ItemVoidRobeArmor extends ItemArmor implements IRepairable, IRunicA
       this.iconLegsOver = ir.registerSprite("thaumcraft:voidrobelegs");
    }
 
-   public String getArmorTexture(ItemStack stack, Entity entity, int slot, String type) {
+   public String getArmorTexture(ItemStack stack, Entity entity, net.minecraft.inventory.EntityEquipmentSlot slot, String type) {
       return type == null ? "thaumcraft:textures/models/void_robe_armor_overlay.png" : "thaumcraft:textures/models/void_robe_armor.png";
    }
 

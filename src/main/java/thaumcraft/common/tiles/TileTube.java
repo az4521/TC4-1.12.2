@@ -296,7 +296,7 @@ public class TileTube extends TileThaumcraft implements IEssentiaTransport, IWan
    public boolean receiveClientEvent(int i, int j) {
       if (i == 0) {
          if (this.world.isRemote) {
-            this.world.playSound(null, this.getPos(), new net.minecraft.util.SoundEvent(new net.minecraft.util.ResourceLocation("thaumcraft", "creak")), net.minecraft.util.SoundCategory.BLOCKS, 1.0F, 1.3F + this.world.rand.nextFloat() * 0.2F);
+            this.world.playSound(null, this.getPos(), thaumcraft.common.lib.SoundsTC.get("thaumcraft:creak"), net.minecraft.util.SoundCategory.BLOCKS, 1.0F, 1.3F + this.world.rand.nextFloat() * 0.2F);
          }
 
          return true;
@@ -305,7 +305,7 @@ public class TileTube extends TileThaumcraft implements IEssentiaTransport, IWan
       } else {
          if (this.world.isRemote) {
             if (this.venting <= 0) {
-               this.world.playSound(null, this.getPos(), new net.minecraft.util.SoundEvent(new net.minecraft.util.ResourceLocation("minecraft", "block.fire.extinguish")), net.minecraft.util.SoundCategory.BLOCKS, 0.1F, 1.0F + this.world.rand.nextFloat() * 0.1F);
+               this.world.playSound(null, this.getPos(), thaumcraft.common.lib.SoundsTC.get("minecraft:block.fire.extinguish"), net.minecraft.util.SoundCategory.BLOCKS, 0.1F, 1.0F + this.world.rand.nextFloat() * 0.1F);
             }
 
             this.venting = 50;
@@ -324,7 +324,7 @@ public class TileTube extends TileThaumcraft implements IEssentiaTransport, IWan
       RayTraceResult hit = RayTracer.retraceBlock(world, player, x, y, z);
        if (hit != null) {
            if (hit.subHit >= 0 && hit.subHit < 6) {
-               player.world.playSound(null, new BlockPos(x, y, z), new net.minecraft.util.SoundEvent(new net.minecraft.util.ResourceLocation("thaumcraft", "tool")), net.minecraft.util.SoundCategory.BLOCKS, 0.5F, 0.9F + player.world.rand.nextFloat() * 0.2F);
+               player.world.playSound(null, new BlockPos(x, y, z), thaumcraft.common.lib.SoundsTC.get("thaumcraft:tool"), net.minecraft.util.SoundCategory.BLOCKS, 0.5F, 0.9F + player.world.rand.nextFloat() * 0.2F);
                player.swingArm(net.minecraft.util.EnumHand.MAIN_HAND);
                this.markDirty();
                { net.minecraft.block.state.IBlockState _bs = world.getBlockState(new BlockPos(x, y, z)); world.notifyBlockUpdate(new BlockPos(x, y, z), _bs, _bs, 3); }
@@ -339,7 +339,7 @@ public class TileTube extends TileThaumcraft implements IEssentiaTransport, IWan
            }
 
            if (hit.subHit == 6) {
-               player.world.playSound(null, new BlockPos(x, y, z), new net.minecraft.util.SoundEvent(new net.minecraft.util.ResourceLocation("thaumcraft", "tool")), net.minecraft.util.SoundCategory.BLOCKS, 0.5F, 0.9F + player.world.rand.nextFloat() * 0.2F);
+               player.world.playSound(null, new BlockPos(x, y, z), thaumcraft.common.lib.SoundsTC.get("thaumcraft:tool"), net.minecraft.util.SoundCategory.BLOCKS, 0.5F, 0.9F + player.world.rand.nextFloat() * 0.2F);
                player.swingArm(net.minecraft.util.EnumHand.MAIN_HAND);
                int a = this.facing.ordinal();
                this.markDirty();

@@ -123,8 +123,17 @@ public class ItemResearchNotes extends Item {
    }
 
    public String getItemStackDisplayName(ItemStack itemstack) {
-      String name = itemstack.getItemDamage() < 64 ? I18n.translateToLocal("item.researchnotes.name") : I18n.translateToLocal("item.discovery.name");
-      return name;
+      if (itemstack.getItemDamage() == 24 || itemstack.getItemDamage() == 42) {
+         return I18n.translateToLocal("item.researchnotes.unknown.1");
+      }
+
+      String baseName = itemstack.getItemDamage() < 64 ? I18n.translateToLocal("item.researchnotes.name") : I18n.translateToLocal("item.discovery.name");
+      ResearchNoteData rd = ResearchManager.getData(itemstack);
+      if (rd != null && rd.key != null && ResearchCategories.getResearch(rd.key) != null) {
+         return baseName + ": " + ResearchCategories.getResearch(rd.key).getName();
+      }
+
+      return baseName;
    }
 
    public void addInformation(ItemStack stack, @javax.annotation.Nullable net.minecraft.world.World worldIn, List list, net.minecraft.client.util.ITooltipFlag flagIn) {

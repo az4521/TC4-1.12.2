@@ -188,7 +188,7 @@ public class TileCentrifuge extends TileThaumcraft implements IAspectContainer, 
          int pr = (int)this.rotation;
          this.rotation += this.rotationSpeed;
          if (this.rotation % 180.0F <= 20.0F && pr % 180 >= 160 && this.rotationSpeed > 0.0F) {
-            this.world.playSound(null, this.getPos(), new net.minecraft.util.SoundEvent(new net.minecraft.util.ResourceLocation("thaumcraft", "pump")), net.minecraft.util.SoundCategory.BLOCKS, 1.0F, 1.0F);
+            this.world.playSound(null, this.getPos(), thaumcraft.common.lib.SoundsTC.get("thaumcraft:pump"), net.minecraft.util.SoundCategory.BLOCKS, 1.0F, 1.0F);
          }
       }
 
