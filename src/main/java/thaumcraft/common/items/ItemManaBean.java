@@ -152,10 +152,7 @@ public class ItemManaBean extends ItemFood implements IEssentiaContainerItem {
    @Override
    public EnumActionResult onItemUse(EntityPlayer par2EntityPlayer, World par3World, BlockPos pos, EnumHand hand, EnumFacing facing, float par8, float par9, float par10) {
       ItemStack par1ItemStack = par2EntityPlayer.getHeldItem(hand);
-      int par4 = pos.getX();
-      int par5 = pos.getY();
-      int par6 = pos.getZ();
-      if (par2EntityPlayer.canPlayerEdit(pos, facing, par1ItemStack) && facing == EnumFacing.DOWN) {
+      if (par2EntityPlayer.canPlayerEdit(pos, facing, par1ItemStack) && facing.getAxis().isHorizontal()) {
          Biome biome = par3World.getBiome(pos);
          boolean magicBiome = false;
          if (biome != null) {
@@ -169,8 +166,7 @@ public class ItemManaBean extends ItemFood implements IEssentiaContainerItem {
             if (i1 != Blocks.LOG && i1 != Blocks.LOG2 && i1 != ConfigBlocks.blockMagicalLog) {
                return EnumActionResult.FAIL;
             } else {
-               --par5;
-               BlockPos placePos = new BlockPos(par4, par5, par6);
+               BlockPos placePos = pos.offset(facing);
                if (par3World.isAirBlock(placePos)) {
                   par3World.setBlockState(placePos, ConfigBlocks.blockManaPod.getDefaultState(), 2);
                   TileEntity tile = par3World.getTileEntity(placePos);

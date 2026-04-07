@@ -4,8 +4,8 @@ import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import thaumcraft.client.renderers.compat.IIconRegister;
+import net.minecraft.util.ResourceLocation;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.Entity;
 import net.minecraft.item.EnumRarity;
@@ -27,6 +27,15 @@ public class ItemCompassStone extends Item {
       this.setHasSubtypes(true);
       this.setMaxDamage(0);
       this.setCreativeTab(Thaumcraft.tabTC);
+      this.addPropertyOverride(new ResourceLocation("active"), (stack, world, entity) -> {
+         World effectiveWorld = world;
+         Entity effectiveEntity = entity;
+         if (effectiveWorld == null && effectiveEntity != null) {
+            effectiveWorld = effectiveEntity.world;
+         }
+
+         return isActiveForEntity(effectiveWorld, effectiveEntity) ? 1.0F : 0.0F;
+      });
    }
 
    @SideOnly(Side.CLIENT)
@@ -42,25 +51,41 @@ public class ItemCompassStone extends Item {
 
    public void onUpdate(ItemStack stack, World world, Entity entity, int itemSlot, boolean isSelected) {
       if (world.isRemote) {
-         ArrayList<WorldCoordinates> del = new ArrayList<>();
-         this.t = null;
+         this.t = isActiveForEntity(world, entity) ? this.icon[1] : null;
+      }
 
-         for(WorldCoordinates wc : sinisterNodes.keySet()) {
-            if (sinisterNodes.get(wc) < System.currentTimeMillis() - 10000L) {
-               del.add(wc);
-            }
+   }
 
-            if (wc.dim == world.provider.getDimension() && EntityUtils.isVisibleTo(0.66F, entity, (double)wc.x + (double)0.5F, (double)wc.y + (double)0.5F, (double)wc.z + (double)0.5F, 256.0F)) {
-               this.t = this.icon[1];
-               break;
-            }
-         }
+   private static boolean isActiveForEntity(World world, Entity entity) {
+      if (world == null || entity == null || !world.isRemote) {
+         return false;
+      }
 
-         for(WorldCoordinates wc : del) {
-            sinisterNodes.remove(wc);
+      cleanupExpiredNodes();
+
+      for(WorldCoordinates wc : sinisterNodes.keySet()) {
+         if (wc.dim == world.provider.getDimension() && EntityUtils.isVisibleTo(0.66F, entity, (double)wc.x + 0.5D, (double)wc.y + 0.5D, (double)wc.z + 0.5D, 256.0F)) {
+            return true;
          }
       }
 
+      return false;
+   }
+
+   private static void cleanupExpiredNodes() {
+      long cutoff = System.currentTimeMillis() - 10000L;
+      ArrayList<WorldCoordinates> del = new ArrayList<>();
+
+      for(WorldCoordinates wc : sinisterNodes.keySet()) {
+         Long time = sinisterNodes.get(wc);
+         if (time == null || time < cutoff) {
+            del.add(wc);
+         }
+      }
+
+      for(WorldCoordinates wc : del) {
+         sinisterNodes.remove(wc);
+      }
    }
 
    private double directionToPoint(double x1, double z1, double x2, double z2) {

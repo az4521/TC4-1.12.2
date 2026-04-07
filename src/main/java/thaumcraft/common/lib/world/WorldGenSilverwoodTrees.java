@@ -85,6 +85,7 @@ public class WorldGenSilverwoodTrees extends WorldGenAbstractTree {
 
                int chance = (int)((double)height * (double)1.5F);
                boolean lastblock = false;
+               boolean generatedNodeLog = false;
 
                int var29;
                for(var29 = 0; var29 < height; ++var29) {
@@ -93,11 +94,12 @@ public class WorldGenSilverwoodTrees extends WorldGenAbstractTree {
                   if (world.isAirBlock(trunkPos)
                           || block2.isLeaves(world.getBlockState(trunkPos), world, trunkPos)
                           || world.getBlockState(trunkPos).getMaterial().isReplaceable()) {
-                     if (var29 > 0 && !lastblock && random.nextInt(chance) == 0) {
+                     if (var29 > 0 && !generatedNodeLog && !lastblock && random.nextInt(chance) == 0) {
                         this.setBlockAndNotifyAdequately(world, trunkPos, ConfigBlocks.blockMagicalLog.getStateFromMeta(2));
                         ThaumcraftWorldGenerator.createRandomNodeAt(world, x, y + var29, z, random, true, false, false);
                         chance += height;
                         lastblock = true;
+                        generatedNodeLog = true;
                      } else {
                         this.setBlockAndNotifyAdequately(world, trunkPos, ConfigBlocks.blockMagicalLog.getStateFromMeta(1));
                         lastblock = false;

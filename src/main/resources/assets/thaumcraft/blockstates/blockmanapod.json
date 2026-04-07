@@ -1,52 +1,71 @@
 {
   "variants": {
-    "meta=0": {
-      "model": "thaumcraft:blockmanapod"
-    },
-    "meta=1": {
-      "model": "thaumcraft:blockmanapod"
-    },
-    "meta=2": {
-      "model": "thaumcraft:blockmanapod"
-    },
-    "meta=3": {
-      "model": "thaumcraft:blockmanapod"
-    },
-    "meta=4": {
-      "model": "thaumcraft:blockmanapod"
-    },
-    "meta=5": {
-      "model": "thaumcraft:blockmanapod"
-    },
-    "meta=6": {
-      "model": "thaumcraft:blockmanapod"
-    },
-    "meta=7": {
-      "model": "thaumcraft:blockmanapod"
-    },
-    "meta=8": {
-      "model": "thaumcraft:blockmanapod"
-    },
-    "meta=9": {
-      "model": "thaumcraft:blockmanapod"
-    },
-    "meta=10": {
-      "model": "thaumcraft:blockmanapod"
-    },
-    "meta=11": {
-      "model": "thaumcraft:blockmanapod"
-    },
-    "meta=12": {
-      "model": "thaumcraft:blockmanapod"
-    },
-    "meta=13": {
-      "model": "thaumcraft:blockmanapod"
-    },
-    "meta=14": {
-      "model": "thaumcraft:blockmanapod"
-    },
-    "meta=15": {
-      "model": "thaumcraft:blockmanapod"
-    }
+    "facing=north,meta=0": { "model": "thaumcraft:blockmanapod_0_south", "y": 180 },
+    "facing=south,meta=0": { "model": "thaumcraft:blockmanapod_0_south" },
+    "facing=west,meta=0": { "model": "thaumcraft:blockmanapod_0_south", "y": 90 },
+    "facing=east,meta=0": { "model": "thaumcraft:blockmanapod_0_south", "y": 270 },
+
+    "facing=north,meta=1": { "model": "thaumcraft:blockmanapod_1_south", "y": 180 },
+    "facing=south,meta=1": { "model": "thaumcraft:blockmanapod_1_south" },
+    "facing=west,meta=1": { "model": "thaumcraft:blockmanapod_1_south", "y": 90 },
+    "facing=east,meta=1": { "model": "thaumcraft:blockmanapod_1_south", "y": 270 },
+
+    "facing=north,meta=2": { "model": "thaumcraft:blockmanapod_2_south", "y": 180 },
+    "facing=south,meta=2": { "model": "thaumcraft:blockmanapod_2_south" },
+    "facing=west,meta=2": { "model": "thaumcraft:blockmanapod_2_south", "y": 90 },
+    "facing=east,meta=2": { "model": "thaumcraft:blockmanapod_2_south", "y": 270 },
+    "facing=north,meta=3": { "model": "thaumcraft:blockmanapod_2_south", "y": 180 },
+    "facing=south,meta=3": { "model": "thaumcraft:blockmanapod_2_south" },
+    "facing=west,meta=3": { "model": "thaumcraft:blockmanapod_2_south", "y": 90 },
+    "facing=east,meta=3": { "model": "thaumcraft:blockmanapod_2_south", "y": 270 },
+    "facing=north,meta=4": { "model": "thaumcraft:blockmanapod_2_south", "y": 180 },
+    "facing=south,meta=4": { "model": "thaumcraft:blockmanapod_2_south" },
+    "facing=west,meta=4": { "model": "thaumcraft:blockmanapod_2_south", "y": 90 },
+    "facing=east,meta=4": { "model": "thaumcraft:blockmanapod_2_south", "y": 270 },
+    "facing=north,meta=5": { "model": "thaumcraft:blockmanapod_2_south", "y": 180 },
+    "facing=south,meta=5": { "model": "thaumcraft:blockmanapod_2_south" },
+    "facing=west,meta=5": { "model": "thaumcraft:blockmanapod_2_south", "y": 90 },
+    "facing=east,meta=5": { "model": "thaumcraft:blockmanapod_2_south", "y": 270 },
+    "facing=north,meta=6": { "model": "thaumcraft:blockmanapod_2_south", "y": 180 },
+    "facing=south,meta=6": { "model": "thaumcraft:blockmanapod_2_south" },
+    "facing=west,meta=6": { "model": "thaumcraft:blockmanapod_2_south", "y": 90 },
+    "facing=east,meta=6": { "model": "thaumcraft:blockmanapod_2_south", "y": 270 },
+    "facing=north,meta=7": { "model": "thaumcraft:blockmanapod_2_south", "y": 180 },
+    "facing=south,meta=7": { "model": "thaumcraft:blockmanapod_2_south" },
+    "facing=west,meta=7": { "model": "thaumcraft:blockmanapod_2_south", "y": 90 },
+    "facing=east,meta=7": { "model": "thaumcraft:blockmanapod_2_south", "y": 270 },
+
+    "facing=north,meta=8": { "model": "thaumcraft:blockmanapod_2_south", "y": 180 },
+    "facing=south,meta=8": { "model": "thaumcraft:blockmanapod_2_south" },
+    "facing=west,meta=8": { "model": "thaumcraft:blockmanapod_2_south", "y": 90 },
+    "facing=east,meta=8": { "model": "thaumcraft:blockmanapod_2_south", "y": 270 },
+    "facing=north,meta=9": { "model": "thaumcraft:blockmanapod_2_south", "y": 180 },
+    "facing=south,meta=9": { "model": "thaumcraft:blockmanapod_2_south" },
+    "facing=west,meta=9": { "model": "thaumcraft:blockmanapod_2_south", "y": 90 },
+    "facing=east,meta=9": { "model": "thaumcraft:blockmanapod_2_south", "y": 270 },
+    "facing=north,meta=10": { "model": "thaumcraft:blockmanapod_2_south", "y": 180 },
+    "facing=south,meta=10": { "model": "thaumcraft:blockmanapod_2_south" },
+    "facing=west,meta=10": { "model": "thaumcraft:blockmanapod_2_south", "y": 90 },
+    "facing=east,meta=10": { "model": "thaumcraft:blockmanapod_2_south", "y": 270 },
+    "facing=north,meta=11": { "model": "thaumcraft:blockmanapod_2_south", "y": 180 },
+    "facing=south,meta=11": { "model": "thaumcraft:blockmanapod_2_south" },
+    "facing=west,meta=11": { "model": "thaumcraft:blockmanapod_2_south", "y": 90 },
+    "facing=east,meta=11": { "model": "thaumcraft:blockmanapod_2_south", "y": 270 },
+    "facing=north,meta=12": { "model": "thaumcraft:blockmanapod_2_south", "y": 180 },
+    "facing=south,meta=12": { "model": "thaumcraft:blockmanapod_2_south" },
+    "facing=west,meta=12": { "model": "thaumcraft:blockmanapod_2_south", "y": 90 },
+    "facing=east,meta=12": { "model": "thaumcraft:blockmanapod_2_south", "y": 270 },
+    "facing=north,meta=13": { "model": "thaumcraft:blockmanapod_2_south", "y": 180 },
+    "facing=south,meta=13": { "model": "thaumcraft:blockmanapod_2_south" },
+    "facing=west,meta=13": { "model": "thaumcraft:blockmanapod_2_south", "y": 90 },
+    "facing=east,meta=13": { "model": "thaumcraft:blockmanapod_2_south", "y": 270 },
+    "facing=north,meta=14": { "model": "thaumcraft:blockmanapod_2_south", "y": 180 },
+    "facing=south,meta=14": { "model": "thaumcraft:blockmanapod_2_south" },
+    "facing=west,meta=14": { "model": "thaumcraft:blockmanapod_2_south", "y": 90 },
+    "facing=east,meta=14": { "model": "thaumcraft:blockmanapod_2_south", "y": 270 },
+    "facing=north,meta=15": { "model": "thaumcraft:blockmanapod_2_south", "y": 180 },
+    "facing=south,meta=15": { "model": "thaumcraft:blockmanapod_2_south" },
+    "facing=west,meta=15": { "model": "thaumcraft:blockmanapod_2_south", "y": 90 },
+    "facing=east,meta=15": { "model": "thaumcraft:blockmanapod_2_south", "y": 270 }
   }
 }

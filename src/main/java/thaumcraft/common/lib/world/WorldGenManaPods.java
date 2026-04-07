@@ -20,7 +20,7 @@ public class WorldGenManaPods extends WorldGenerator {
 
       for(int i1 = z; y < Math.min(128, par1World.getHeight(x, z)); ++y) {
          if (par1World.isAirBlock(new BlockPos(x, y, z)) && par1World.isAirBlock(new BlockPos(x, y - 1, z))) {
-            if (ConfigBlocks.blockManaPod.canPlaceBlockOnSide(par1World, new BlockPos(x, y, z), EnumFacing.DOWN)) {
+            if (((thaumcraft.common.blocks.BlockManaPod)ConfigBlocks.blockManaPod).canBlockStay(par1World, new BlockPos(x, y, z))) {
         par1World.setBlockState(new net.minecraft.util.math.BlockPos(x, y, z), (ConfigBlocks.blockManaPod).getStateFromMeta(2 + par2Random.nextInt(5)), 2);
                TileEntity tile = par1World.getTileEntity(new BlockPos(x, y, z));
                if (tile instanceof TileManaPod) {

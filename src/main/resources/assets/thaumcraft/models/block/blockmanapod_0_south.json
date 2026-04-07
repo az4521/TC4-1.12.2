@@ -1,0 +1,20 @@
+{
+  "textures": {
+    "particle": "thaumcraft:blocks/manapod_stem_0",
+    "stem": "thaumcraft:blocks/manapod_stem_0"
+  },
+  "elements": [
+    {
+      "from": [7, 12, 10],
+      "to": [9, 16, 16],
+      "faces": {
+        "down": { "texture": "#stem" },
+        "up": { "texture": "#stem" },
+        "north": { "texture": "#stem" },
+        "south": { "texture": "#stem" },
+        "west": { "texture": "#stem" },
+        "east": { "texture": "#stem" }
+      }
+    }
+  ]
+}

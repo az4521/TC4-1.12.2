@@ -33,11 +33,14 @@ import java.util.Random;
 
 public class BlockManaPod extends Block {
    static HashMap<WorldCoordinates, Aspect> st = new HashMap<>();
+   public static final net.minecraft.block.properties.PropertyDirection FACING =
+         net.minecraft.block.properties.PropertyDirection.create("facing", net.minecraft.util.EnumFacing.Plane.HORIZONTAL);
 
    public BlockManaPod() {
       super(Material.PLANTS);
       this.setTickRandomly(true);
       this.blockHardness = 0.5F;
+      this.setDefaultState(this.blockState.getBaseState().withProperty(META, 0).withProperty(FACING, net.minecraft.util.EnumFacing.NORTH));
    }
 
    public static final net.minecraft.block.properties.PropertyInteger META =
@@ -45,17 +48,22 @@ public class BlockManaPod extends Block {
 
    @Override
    public BlockStateContainer createBlockState() {
-      return new BlockStateContainer(this, META);
+      return new BlockStateContainer(this, META, FACING);
    }
 
    @Override
    public IBlockState getStateFromMeta(int meta) {
-      return this.getDefaultState().withProperty(META, meta);
+      return this.getDefaultState().withProperty(META, meta).withProperty(FACING, net.minecraft.util.EnumFacing.NORTH);
    }
 
    @Override
    public int getMetaFromState(IBlockState state) {
       return state.getValue(META);
+   }
+
+   @Override
+   public IBlockState getActualState(IBlockState state, IBlockAccess worldIn, BlockPos pos) {
+      return state.withProperty(FACING, getSupportFacing(worldIn, pos));
    }
 
    @Override
@@ -106,8 +114,7 @@ public class BlockManaPod extends Block {
    @Override
    public void updateTick(World par1World, BlockPos pos, IBlockState state, Random par5Random) {
       if (!this.canBlockStay(par1World, pos)) {
-         int meta = par1World.getBlockState(pos).getBlock().getMetaFromState(par1World.getBlockState(pos));
-         Block.spawnAsEntity(par1World, pos, new ItemStack(this, 1, meta));
+         dropManaBeans(par1World, pos, state);
          par1World.setBlockToAir(pos);
       } else if (par1World.rand.nextInt(30) == 0) {
          TileEntity tile = par1World.getTileEntity(pos);
@@ -126,20 +133,49 @@ public class BlockManaPod extends Block {
          magicBiome = BiomeDictionary.hasType(biome, Type.MAGICAL);
       }
 
-      Block i1 = par1World.getBlockState(pos.up()).getBlock();
-      return magicBiome && (i1 == Blocks.LOG || i1 == Blocks.LOG2 || i1 == ConfigBlocks.blockMagicalLog);
+      if (!magicBiome) {
+         return false;
+      }
+
+      return hasValidSupport(par1World, pos);
    }
 
-   public boolean canPlaceBlockOnSide(World world, BlockPos pos, int side) {
+   @Override
+   public boolean canPlaceBlockOnSide(World world, BlockPos pos, net.minecraft.util.EnumFacing side) {
       Biome biome = world.getBiome(pos);
       boolean magicBiome = false;
       if (biome != null) {
          magicBiome = BiomeDictionary.hasType(biome, Type.MAGICAL);
       }
 
-      Block i1 = world.getBlockState(pos.up()).getBlock();
-      boolean b = i1 == Blocks.LOG || i1 == Blocks.LOG2 || i1 == ConfigBlocks.blockMagicalLog;
-      return side == 0 && b && magicBiome;
+      if (!magicBiome || side.getAxis().isVertical()) {
+         return false;
+      }
+
+      Block support = world.getBlockState(pos.offset(side.getOpposite())).getBlock();
+      return support == Blocks.LOG || support == Blocks.LOG2 || support == ConfigBlocks.blockMagicalLog;
+   }
+
+   public static net.minecraft.util.EnumFacing getSupportFacing(IBlockAccess world, BlockPos pos) {
+      for(net.minecraft.util.EnumFacing facing : net.minecraft.util.EnumFacing.HORIZONTALS) {
+         Block support = world.getBlockState(pos.offset(facing)).getBlock();
+         if (support == Blocks.LOG || support == Blocks.LOG2 || support == ConfigBlocks.blockMagicalLog) {
+            return facing;
+         }
+      }
+
+      return net.minecraft.util.EnumFacing.NORTH;
+   }
+
+   private static boolean hasValidSupport(IBlockAccess world, BlockPos pos) {
+      for(net.minecraft.util.EnumFacing facing : net.minecraft.util.EnumFacing.HORIZONTALS) {
+         Block support = world.getBlockState(pos.offset(facing)).getBlock();
+         if (support == Blocks.LOG || support == Blocks.LOG2 || support == ConfigBlocks.blockMagicalLog) {
+            return true;
+         }
+      }
+
+      return false;
    }
 
    @Override
@@ -151,8 +187,7 @@ public class BlockManaPod extends Block {
    @Override
    public void neighborChanged(IBlockState state, World par1World, BlockPos pos, Block par5, BlockPos fromPos) {
       if (!this.canBlockStay(par1World, pos)) {
-         int meta = par1World.getBlockState(pos).getBlock().getMetaFromState(par1World.getBlockState(pos));
-         Block.spawnAsEntity(par1World, pos, new ItemStack(this, 1, meta));
+         dropManaBeans(par1World, pos, state);
          par1World.setBlockToAir(pos);
       }
    }
@@ -200,6 +235,12 @@ public class BlockManaPod extends Block {
       return dropped;
    }
 
+   private void dropManaBeans(World world, BlockPos pos, IBlockState state) {
+      for(ItemStack stack : getDrops(world, pos, state, 0)) {
+         Block.spawnAsEntity(world, pos, stack);
+      }
+   }
+
    @Override
    @SideOnly(Side.CLIENT)
    public ItemStack getItem(World worldIn, BlockPos pos, IBlockState state) {
@@ -209,6 +250,17 @@ public class BlockManaPod extends Block {
    @Override
    public Item getItemDropped(IBlockState state, Random par2Random, int par3) {
       return Item.getItemById(0);
+   }
+
+   @Override
+   public net.minecraft.util.EnumBlockRenderType getRenderType(IBlockState state) {
+      return net.minecraft.util.EnumBlockRenderType.MODEL;
+   }
+
+   @Override
+   @SideOnly(Side.CLIENT)
+   public net.minecraft.util.BlockRenderLayer getRenderLayer() {
+      return net.minecraft.util.BlockRenderLayer.CUTOUT;
    }
 
    @Override

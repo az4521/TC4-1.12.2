@@ -23,6 +23,18 @@
     "axis=z,variant=silverwood": {
       "model": "thaumcraft:blockmagicallog_silverwood",
       "x": 90
+    },
+    "axis=y,variant=silverwoodknot": {
+      "model": "thaumcraft:blockmagicallog_silverwoodknot"
+    },
+    "axis=x,variant=silverwoodknot": {
+      "model": "thaumcraft:blockmagicallog_silverwoodknot",
+      "x": 90,
+      "y": 90
+    },
+    "axis=z,variant=silverwoodknot": {
+      "model": "thaumcraft:blockmagicallog_silverwoodknot",
+      "x": 90
     }
   }
 }

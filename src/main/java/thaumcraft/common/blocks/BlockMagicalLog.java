@@ -70,7 +70,7 @@ public class BlockMagicalLog extends BlockRotatedPillar {
    }
 
    public enum LogVariant implements net.minecraft.util.IStringSerializable {
-      GREATWOOD("greatwood"), SILVERWOOD("silverwood");
+      GREATWOOD("greatwood"), SILVERWOOD("silverwood"), SILVERWOODKNOT("silverwoodknot");
       private final String name;
       LogVariant(String name) { this.name = name; }
       @Override public String getName() { return name; }

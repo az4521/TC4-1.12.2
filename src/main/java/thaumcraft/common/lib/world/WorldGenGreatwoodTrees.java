@@ -9,6 +9,7 @@ import net.minecraft.tileentity.TileEntityMobSpawner;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
+import net.minecraft.world.storage.loot.LootTableList;
 import net.minecraft.world.gen.feature.WorldGenAbstractTree;
 import net.minecraft.util.EnumFacing;
 import thaumcraft.common.config.ConfigBlocks;
@@ -410,8 +411,10 @@ public class WorldGenGreatwoodTrees extends WorldGenAbstractTree {
                }
 
                par1World.setBlockState(new BlockPos(par3, par4 - 2, par5), Blocks.CHEST.getDefaultState(), 3);
-               // TileEntityChest var16 = (TileEntityChest)par1World.getTileEntity(new BlockPos(par3, par4 - 2, par5));
-               // if (var16 != null) { ... loot table fill ... }
+               TileEntityChest var16 = (TileEntityChest)par1World.getTileEntity(new BlockPos(par3, par4 - 2, par5));
+               if (var16 != null) {
+                  var16.setLootTable(LootTableList.CHESTS_SIMPLE_DUNGEON, par2Random.nextLong());
+               }
             }
          }
 
