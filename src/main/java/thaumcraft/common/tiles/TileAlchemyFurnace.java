@@ -38,6 +38,10 @@ public class TileAlchemyFurnace extends TileThaumcraft implements ISidedInventor
    private String customName;
    int count = 0;
 
+   public TileAlchemyFurnace() {
+      java.util.Arrays.fill(this.furnaceItemStacks, ItemStack.EMPTY);
+   }
+
    public int getSizeInventory() {
       return this.furnaceItemStacks.length;
    }

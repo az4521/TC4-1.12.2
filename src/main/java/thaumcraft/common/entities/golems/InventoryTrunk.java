@@ -19,6 +19,7 @@ public class InventoryTrunk implements IInventory {
    public InventoryTrunk(EntityTravelingTrunk entity, int slots) {
       this.slotCount = slots;
       this.inventory = new ItemStack[36];
+      java.util.Arrays.fill(this.inventory, ItemStack.EMPTY);
       this.inventoryChanged = false;
       this.ent = entity;
    }
@@ -26,6 +27,7 @@ public class InventoryTrunk implements IInventory {
    public InventoryTrunk(EntityTravelingTrunk entity, int slots, int lim) {
       this.slotCount = slots;
       this.inventory = new ItemStack[36];
+      java.util.Arrays.fill(this.inventory, ItemStack.EMPTY);
       this.inventoryChanged = false;
       this.stacklimit = lim;
       this.ent = entity;
@@ -33,7 +35,7 @@ public class InventoryTrunk implements IInventory {
 
    public int getInventorySlotContainItem(Item i) {
       for(int j = 0; j < this.inventory.length; ++j) {
-         if (this.inventory[j] != null && this.inventory[j].getItem() == i) {
+         if (this.inventory[j] != null && !this.inventory[j].isEmpty() && this.inventory[j].getItem() == i) {
             return j;
          }
       }
@@ -42,7 +44,7 @@ public class InventoryTrunk implements IInventory {
 
    public int getFirstEmptyStack() {
       for(int i = 0; i < this.inventory.length; ++i) {
-         if (this.inventory[i] == null) {
+         if (this.inventory[i] == null || this.inventory[i].isEmpty()) {
             return i;
          }
       }
@@ -51,15 +53,15 @@ public class InventoryTrunk implements IInventory {
 
    public ItemStack decrStackSize(int i, int j) {
       ItemStack[] aitemstack = this.inventory;
-      if (aitemstack[i] != null) {
+      if (aitemstack[i] != null && !aitemstack[i].isEmpty()) {
          if (aitemstack[i].getCount() <= j) {
             ItemStack itemstack = aitemstack[i];
-            aitemstack[i] = null;
+            aitemstack[i] = ItemStack.EMPTY;
             return itemstack;
          } else {
             ItemStack itemstack1 = aitemstack[i].splitStack(j);
             if (aitemstack[i].isEmpty()) {
-               aitemstack[i] = null;
+               aitemstack[i] = ItemStack.EMPTY;
             }
             return itemstack1;
          }
@@ -69,21 +71,21 @@ public class InventoryTrunk implements IInventory {
    }
 
    public ItemStack removeStackFromSlot(int i) {
-      if (this.inventory[i] != null) {
+      if (this.inventory[i] != null && !this.inventory[i].isEmpty()) {
          ItemStack stack = this.inventory[i];
-         this.inventory[i] = null;
+         this.inventory[i] = ItemStack.EMPTY;
          return stack;
       }
       return ItemStack.EMPTY;
    }
 
    public void setInventorySlotContents(int i, ItemStack itemstack) {
-      this.inventory[i] = itemstack;
+      this.inventory[i] = itemstack == null ? ItemStack.EMPTY : itemstack;
    }
 
    public NBTTagList writeToNBT(NBTTagList nbttaglist) {
       for(int i = 0; i < this.inventory.length; ++i) {
-         if (this.inventory[i] != null) {
+         if (this.inventory[i] != null && !this.inventory[i].isEmpty()) {
             NBTTagCompound nbttagcompound = new NBTTagCompound();
             nbttagcompound.setByte("Slot", (byte)i);
             this.inventory[i].writeToNBT(nbttagcompound);
@@ -95,6 +97,7 @@ public class InventoryTrunk implements IInventory {
 
    public void readFromNBT(NBTTagList nbttaglist) {
       this.inventory = new ItemStack[this.inventory.length];
+      java.util.Arrays.fill(this.inventory, ItemStack.EMPTY);
       for(int i = 0; i < nbttaglist.tagCount(); ++i) {
          NBTTagCompound nbttagcompound = nbttaglist.getCompoundTagAt(i);
          int j = nbttagcompound.getByte("Slot") & 255;
@@ -166,7 +169,7 @@ public class InventoryTrunk implements IInventory {
    @Override
    public void clear() {
       for (int i = 0; i < this.inventory.length; ++i) {
-         this.inventory[i] = null;
+         this.inventory[i] = ItemStack.EMPTY;
       }
    }
 
@@ -191,9 +194,9 @@ public class InventoryTrunk implements IInventory {
 
    public void dropAllItems() {
       for(int i = 0; i < this.inventory.length; ++i) {
-         if (this.inventory[i] != null) {
+         if (this.inventory[i] != null && !this.inventory[i].isEmpty()) {
             this.ent.entityDropItem(this.inventory[i], 0.0F);
-            this.inventory[i] = null;
+            this.inventory[i] = ItemStack.EMPTY;
          }
       }
    }

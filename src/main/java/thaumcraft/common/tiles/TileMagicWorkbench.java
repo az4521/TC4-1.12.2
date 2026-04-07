@@ -21,6 +21,10 @@ public class TileMagicWorkbench extends TileThaumcraft implements IInventory, IS
    public Container eventHandler;
    protected int count;
 
+   public TileMagicWorkbench() {
+      java.util.Arrays.fill(this.stackList, ItemStack.EMPTY);
+   }
+
    public int getSizeInventory() {
       return this.stackList.length;
    }
@@ -105,7 +109,7 @@ public class TileMagicWorkbench extends TileThaumcraft implements IInventory, IS
    }
 
    public void setInventorySlotContentsSoftly(int par1, ItemStack par2ItemStack) {
-      this.stackList[par1] = par2ItemStack;
+      this.stackList[par1] = par2ItemStack == null ? ItemStack.EMPTY : par2ItemStack;
    }
 
    public int getInventoryStackLimit() {
@@ -119,6 +123,7 @@ public class TileMagicWorkbench extends TileThaumcraft implements IInventory, IS
    public void readCustomNBT(NBTTagCompound par1NBTTagCompound) {
       NBTTagList var2 = par1NBTTagCompound.getTagList("Inventory", 10);
       this.stackList = new ItemStack[this.getSizeInventory()];
+      java.util.Arrays.fill(this.stackList, ItemStack.EMPTY);
 
       for(int var3 = 0; var3 < var2.tagCount(); ++var3) {
          NBTTagCompound var4 = var2.getCompoundTagAt(var3);
@@ -134,7 +139,7 @@ public class TileMagicWorkbench extends TileThaumcraft implements IInventory, IS
       NBTTagList var2 = new NBTTagList();
 
       for(int var3 = 0; var3 < this.stackList.length; ++var3) {
-         if (this.stackList[var3] != null) {
+         if (this.stackList[var3] != null && !this.stackList[var3].isEmpty()) {
             NBTTagCompound var4 = new NBTTagCompound();
             var4.setByte("Slot", (byte)var3);
             this.stackList[var3].writeToNBT(var4);

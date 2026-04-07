@@ -22,6 +22,10 @@ public class TileDeconstructionTable extends TileThaumcraft implements ISidedInv
    private String customName;
    private static final int[] sides = new int[]{0};
 
+   public TileDeconstructionTable() {
+      java.util.Arrays.fill(this.itemStacks, ItemStack.EMPTY);
+   }
+
    public int getSizeInventory() {
       return 1;
    }
@@ -93,6 +97,7 @@ public class TileDeconstructionTable extends TileThaumcraft implements ISidedInv
       this.aspect = Aspect.getAspect(nbttagcompound.getString("Aspect"));
       NBTTagList nbttaglist = nbttagcompound.getTagList("Items", 10);
       this.itemStacks = new ItemStack[this.getSizeInventory()];
+      java.util.Arrays.fill(this.itemStacks, ItemStack.EMPTY);
       for (int i = 0; i < nbttaglist.tagCount(); ++i) {
          NBTTagCompound nbttagcompound1 = nbttaglist.getCompoundTagAt(i);
          byte b0 = nbttagcompound1.getByte("Slot");
@@ -108,7 +113,7 @@ public class TileDeconstructionTable extends TileThaumcraft implements ISidedInv
       }
       NBTTagList nbttaglist = new NBTTagList();
       for (int i = 0; i < this.itemStacks.length; ++i) {
-         if (this.itemStacks[i] != null) {
+         if (this.itemStacks[i] != null && !this.itemStacks[i].isEmpty()) {
             NBTTagCompound nbttagcompound1 = new NBTTagCompound();
             nbttagcompound1.setByte("Slot", (byte)i);
             this.itemStacks[i].writeToNBT(nbttagcompound1);

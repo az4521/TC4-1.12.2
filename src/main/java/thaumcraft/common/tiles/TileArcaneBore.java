@@ -105,6 +105,7 @@ public class TileArcaneBore extends TileThaumcraft implements IInventory, IWanda
     private final int itemsPerVis;
 
     public TileArcaneBore() {
+        java.util.Arrays.fill(this.contents, ItemStack.EMPTY);
         this.digBlock = Blocks.AIR;
         this.digMd = 0;
         this.radInc = 0.0F;

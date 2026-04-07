@@ -23,6 +23,10 @@ public class TileChestHungry extends TileEntity implements IInventory, net.minec
    public int numUsingPlayers;
    private int ticksSinceSync;
 
+   public TileChestHungry() {
+      java.util.Arrays.fill(this.chestContents, ItemStack.EMPTY);
+   }
+
    public boolean isEmpty() {
       for (ItemStack stack : this.chestContents) {
          if (stack != null && !stack.isEmpty()) return false;
@@ -82,9 +86,9 @@ public class TileChestHungry extends TileEntity implements IInventory, net.minec
    }
 
    public void setInventorySlotContents(int par1, ItemStack par2ItemStack) {
-      this.chestContents[par1] = par2ItemStack;
-      if (par2ItemStack != null && par2ItemStack.getCount() > this.getInventoryStackLimit()) {
-         par2ItemStack.setCount(this.getInventoryStackLimit());
+      this.chestContents[par1] = par2ItemStack == null ? ItemStack.EMPTY : par2ItemStack;
+      if (!this.chestContents[par1].isEmpty() && this.chestContents[par1].getCount() > this.getInventoryStackLimit()) {
+         this.chestContents[par1].setCount(this.getInventoryStackLimit());
       }
 
       this.markDirty();
@@ -94,6 +98,7 @@ public class TileChestHungry extends TileEntity implements IInventory, net.minec
       super.readFromNBT(par1NBTTagCompound);
       NBTTagList var2 = par1NBTTagCompound.getTagList("Items", 10);
       this.chestContents = new ItemStack[this.getSizeInventory()];
+      java.util.Arrays.fill(this.chestContents, ItemStack.EMPTY);
 
       for(int var3 = 0; var3 < var2.tagCount(); ++var3) {
          NBTTagCompound var4 = var2.getCompoundTagAt(var3);

@@ -29,6 +29,10 @@ public class TileSpa extends TileThaumcraft implements ISidedInventory, IFluidHa
    private int counter = 0;
    public FluidTank tank = new FluidTank(5000);
 
+   public TileSpa() {
+      java.util.Arrays.fill(this.itemStacks, ItemStack.EMPTY);
+   }
+
    public void toggleMix() {
       this.mix = !this.mix;
       { net.minecraft.block.state.IBlockState _bs = this.world.getBlockState(this.pos); this.world.notifyBlockUpdate(this.pos, _bs, _bs, 3); }
@@ -56,6 +60,7 @@ public class TileSpa extends TileThaumcraft implements ISidedInventory, IFluidHa
       super.readFromNBT(nbttagcompound);
       NBTTagList nbttaglist = nbttagcompound.getTagList("Items", 10);
       this.itemStacks = new ItemStack[this.getSizeInventory()];
+      java.util.Arrays.fill(this.itemStacks, ItemStack.EMPTY);
 
       for(int i = 0; i < nbttaglist.tagCount(); ++i) {
          NBTTagCompound nbttagcompound1 = nbttaglist.getCompoundTagAt(i);
@@ -72,7 +77,7 @@ public class TileSpa extends TileThaumcraft implements ISidedInventory, IFluidHa
       NBTTagList nbttaglist = new NBTTagList();
 
       for(int i = 0; i < this.itemStacks.length; ++i) {
-         if (this.itemStacks[i] != null) {
+         if (this.itemStacks[i] != null && !this.itemStacks[i].isEmpty()) {
             NBTTagCompound nbttagcompound1 = new NBTTagCompound();
             nbttagcompound1.setByte("Slot", (byte)i);
             this.itemStacks[i].writeToNBT(nbttagcompound1);

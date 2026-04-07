@@ -26,12 +26,17 @@ public class TileArcaneFurnace extends TileThaumcraft {
    public int facingX = -5;
    public int facingZ = -5;
 
+   public TileArcaneFurnace() {
+      java.util.Arrays.fill(this.furnaceItemStacks, ItemStack.EMPTY);
+   }
+
    public int getSizeInventory() {
       return this.furnaceItemStacks.length;
    }
 
    public ItemStack getStackInSlot(int i) {
-      return this.furnaceItemStacks[i];
+      ItemStack s = this.furnaceItemStacks[i];
+      return s != null ? s : ItemStack.EMPTY;
    }
 
    public ItemStack decrStackSize(int i, int j) {
