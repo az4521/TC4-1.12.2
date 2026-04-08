@@ -2,6 +2,7 @@ package thaumcraft.common.lib.world.dim;
 
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
+import net.minecraftforge.common.DimensionManager;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
@@ -17,7 +18,7 @@ public class WorldProviderOuter extends WorldProvider {
 
    @Override
    public DimensionType getDimensionType() {
-      return DimensionType.THE_END; // placeholder; register a custom DimensionType at mod init if needed
+      return DimensionManager.getProviderType(Config.dimensionOuterId);
    }
 
    @Override

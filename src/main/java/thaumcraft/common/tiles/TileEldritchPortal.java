@@ -4,8 +4,10 @@ import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import java.util.List;
 import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.math.AxisAlignedBB;
+import net.minecraft.world.WorldServer;
 import thaumcraft.api.ThaumcraftApiHelper;
 import thaumcraft.common.Thaumcraft;
 import thaumcraft.common.config.Config;
@@ -45,23 +47,40 @@ public class TileEldritchPortal extends TileEntity implements net.minecraft.util
             for(Object e : ents) {
                EntityPlayerMP player = (EntityPlayerMP)e;
                if (player.getRidingEntity() == null && !player.isBeingRidden()) {
+                  MinecraftServer server = net.minecraftforge.fml.common.FMLCommonHandler.instance().getMinecraftServerInstance();
                   if (player.timeUntilPortal > 0) {
                      player.timeUntilPortal = 100;
                   } else if (player.dimension != Config.dimensionOuterId) {
                      player.timeUntilPortal = 100;
-                     net.minecraftforge.fml.common.FMLCommonHandler.instance().getMinecraftServerInstance().getPlayerList().transferPlayerToDimension(player, Config.dimensionOuterId, new TeleporterThaumcraft(net.minecraftforge.common.DimensionManager.getWorld(Config.dimensionOuterId)));
+                     WorldServer targetWorld = this.getOrLoadWorld(server, Config.dimensionOuterId);
+                     if (targetWorld != null) {
+                        server.getPlayerList().transferPlayerToDimension(player, Config.dimensionOuterId, new TeleporterThaumcraft(targetWorld));
+                     }
                      if (!ThaumcraftApiHelper.isResearchComplete(player.getName(), "ENTEROUTER")) {
                         PacketHandler.INSTANCE.sendTo(new PacketResearchComplete("ENTEROUTER"), player);
                         Thaumcraft.proxy.getResearchManager().completeResearch(player, "ENTEROUTER");
                      }
                   } else {
                      player.timeUntilPortal = 100;
-                     net.minecraftforge.fml.common.FMLCommonHandler.instance().getMinecraftServerInstance().getPlayerList().transferPlayerToDimension(player, 0, new TeleporterThaumcraft(net.minecraftforge.common.DimensionManager.getWorld(0)));
+                     WorldServer targetWorld = this.getOrLoadWorld(server, 0);
+                     if (targetWorld != null) {
+                        server.getPlayerList().transferPlayerToDimension(player, 0, new TeleporterThaumcraft(targetWorld));
+                     }
                   }
                }
             }
          }
       }
 
+   }
+
+   private WorldServer getOrLoadWorld(MinecraftServer server, int dimension) {
+      WorldServer worldServer = server.getWorld(dimension);
+      if (worldServer == null) {
+         net.minecraftforge.common.DimensionManager.initDimension(dimension);
+         worldServer = server.getWorld(dimension);
+      }
+
+      return worldServer;
    }
 }

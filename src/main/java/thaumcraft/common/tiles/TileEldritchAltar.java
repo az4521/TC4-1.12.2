@@ -10,6 +10,7 @@ import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.EnumFacing;
+import net.minecraft.entity.EntityLiving;
 import thaumcraft.api.TileThaumcraft;
 import thaumcraft.common.entities.monster.EntityCultist;
 import thaumcraft.common.entities.monster.EntityCultistCleric;
@@ -94,16 +95,14 @@ public class TileEldritchAltar extends TileThaumcraft {
             if (ents.size() < 8) {
                 EntityCultistKnight eg = new EntityCultistKnight(this.world);
                 int i1 = this.getPos().getX() + MathHelper.getInt(this.world.rand, 4, 10) * MathHelper.getInt(this.world.rand, -1, 1);
-                int j1 = this.getPos().getY() + MathHelper.getInt(this.world.rand, 0, 3) * MathHelper.getInt(this.world.rand, -1, 1);
                 int k1 = this.getPos().getZ() + MathHelper.getInt(this.world.rand, 4, 10) * MathHelper.getInt(this.world.rand, -1, 1);
-                if (this.world.isSideSolid(new BlockPos(i1, j1 - 1, k1), EnumFacing.UP)) {
-                    eg.setPosition(i1, j1, k1);
-                    if (this.world.checkNoEntityCollision(eg.getEntityBoundingBox()) && this.world.getCollisionBoxes(eg, eg.getEntityBoundingBox()).isEmpty() && !this.world.containsAnyLiquid(eg.getEntityBoundingBox())) {
-                        eg.onInitialSpawn(this.world.getDifficultyForLocation(eg.getPosition()), null);
-                        eg.spawnExplosionParticle();
-                        eg.setHomePosAndDistance(new BlockPos(this.getPos().getX(), this.getPos().getY(), this.getPos().getZ()), 16);
-                        this.world.spawnEntity(eg);
-                    }
+                BlockPos spawnPos = this.findSpawnPosition(eg, i1, this.getPos().getY() - 2, this.getPos().getY() + 3, k1, true);
+                if (spawnPos != null) {
+                    eg.setPosition(spawnPos.getX() + 0.5, spawnPos.getY(), spawnPos.getZ() + 0.5);
+                    eg.onInitialSpawn(this.world.getDifficultyForLocation(eg.getPosition()), null);
+                    eg.spawnExplosionParticle();
+                    eg.setHomePosAndDistance(new BlockPos(this.getPos().getX(), this.getPos().getY(), this.getPos().getZ()), 16);
+                    this.world.spawnEntity(eg);
                 }
             }
 
@@ -113,10 +112,10 @@ public class TileEldritchAltar extends TileThaumcraft {
     private void spawnGuardian() {
         EntityEldritchGuardian eg = new EntityEldritchGuardian(this.world);
         int i1 = this.getPos().getX() + MathHelper.getInt(this.world.rand, 4, 10) * MathHelper.getInt(this.world.rand, -1, 1);
-        int j1 = this.getPos().getY() + MathHelper.getInt(this.world.rand, 0, 3) * MathHelper.getInt(this.world.rand, -1, 1);
         int k1 = this.getPos().getZ() + MathHelper.getInt(this.world.rand, 4, 10) * MathHelper.getInt(this.world.rand, -1, 1);
-        if (this.world.isSideSolid(new BlockPos(i1, j1 - 1, k1), EnumFacing.UP)) {
-            eg.setPosition(i1, j1, k1);
+        BlockPos spawnPos = this.findSpawnPosition(eg, i1, this.getPos().getY() - 2, this.getPos().getY() + 3, k1, false);
+        if (spawnPos != null) {
+            eg.setPosition(spawnPos.getX() + 0.5, spawnPos.getY(), spawnPos.getZ() + 0.5);
             if (eg.getCanSpawnHere()) {
                 eg.onInitialSpawn(this.world.getDifficultyForLocation(eg.getPosition()), null);
                 eg.spawnExplosionParticle();
@@ -152,16 +151,15 @@ public class TileEldritchAltar extends TileThaumcraft {
             }
 
             EntityCultistCleric cleric = new EntityCultistCleric(this.world);
-            if (this.world.isSideSolid(new BlockPos(this.getPos().getX() + xx, this.getPos().getY() - 1, this.getPos().getZ() + zz), EnumFacing.UP)) {
-                cleric.setPosition((double) this.getPos().getX() + (double) 0.5F + (double) xx, this.getPos().getY(), (double) this.getPos().getZ() + (double) 0.5F + (double) zz);
-                if (this.world.checkNoEntityCollision(cleric.getEntityBoundingBox()) && this.world.getCollisionBoxes(cleric, cleric.getEntityBoundingBox()).isEmpty() && !this.world.containsAnyLiquid(cleric.getEntityBoundingBox())) {
-                    cleric.setHomePosAndDistance(new BlockPos(this.getPos().getX(), this.getPos().getY(), this.getPos().getZ()), 8);
-                    cleric.onInitialSpawn(this.world.getDifficultyForLocation(cleric.getPosition()), null);
-                    cleric.spawnExplosionParticle();
-                    if (this.world.spawnEntity(cleric)) {
-                        ++success;
-                        cleric.setIsRitualist(true);
-                    }
+            BlockPos spawnPos = this.findSpawnPosition(cleric, this.getPos().getX() + xx, this.getPos().getY() - 2, this.getPos().getY() + 2, this.getPos().getZ() + zz, true);
+            if (spawnPos != null) {
+                cleric.setPosition(spawnPos.getX() + 0.5, spawnPos.getY(), spawnPos.getZ() + 0.5);
+                cleric.setHomePosAndDistance(new BlockPos(this.getPos().getX(), this.getPos().getY(), this.getPos().getZ()), 8);
+                cleric.onInitialSpawn(this.world.getDifficultyForLocation(cleric.getPosition()), null);
+                cleric.spawnExplosionParticle();
+                if (this.world.spawnEntity(cleric)) {
+                    ++success;
+                    cleric.setIsRitualist(true);
                 }
             }
         }
@@ -171,6 +169,25 @@ public class TileEldritchAltar extends TileThaumcraft {
             this.markDirty();
         }
 
+    }
+
+    private BlockPos findSpawnPosition(EntityLiving entity, int x, int minY, int maxY, int z, boolean requireSolidTop) {
+        for (int floorY = maxY - 1; floorY >= minY - 1; --floorY) {
+            BlockPos floor = new BlockPos(x, floorY, z);
+            BlockPos spawn = floor.up();
+            if (requireSolidTop && !this.world.isSideSolid(floor, EnumFacing.UP)) {
+                continue;
+            }
+
+            entity.setPosition(spawn.getX() + 0.5, spawn.getY(), spawn.getZ() + 0.5);
+            if (this.world.checkNoEntityCollision(entity.getEntityBoundingBox())
+                    && this.world.getCollisionBoxes(entity, entity.getEntityBoundingBox()).isEmpty()
+                    && !this.world.containsAnyLiquid(entity.getEntityBoundingBox())) {
+                return spawn;
+            }
+        }
+
+        return null;
     }
 
     public byte getSpawnType() {

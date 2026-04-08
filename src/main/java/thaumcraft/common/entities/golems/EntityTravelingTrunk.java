@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.block.material.Material;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityList;
 import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.IEntityLivingData;
@@ -566,17 +567,38 @@ public class EntityTravelingTrunk extends EntityLiving implements IEntityOwnable
       if (this.getStay() || this.isDead || this.dimension == par1) {
          return this;
       }
-      // If the owner is in the target dimension, teleport near them after the base transfer.
-      // super.changeDimension handles NBT copy (copyDataFromOld is private to Entity).
+
       try {
          MinecraftServer minecraftserver = this.world.getMinecraftServer();
          WorldServer worldserver1 = minecraftserver != null ? minecraftserver.getWorld(par1) : null;
          Entity target = worldserver1 != null ? worldserver1.getPlayerEntityByName(this.getOwnerName()) : null;
-         Entity result = super.changeDimension(par1);
-         if (result != null && target != null) {
-            result.setLocationAndAngles(target.posX, target.posY + 0.25, target.posZ, result.rotationYaw, result.rotationPitch);
+         if (this.getOwner() == null) {
+            if (worldserver1 == null || target == null) {
+               return this;
+            }
+
+            this.world.removeEntity(this);
+            this.isDead = false;
+            if (this.isEntityAlive()) {
+               this.world.updateEntityWithOptionalForce(this, false);
+            }
+
+            Entity replacement = EntityList.createEntityByIDFromName(EntityList.getKey(this), worldserver1);
+            if (replacement != null) {
+               NBTTagCompound nbt = new NBTTagCompound();
+               this.writeToNBT(nbt);
+               replacement.readFromNBT(nbt);
+               replacement.setLocationAndAngles(target.posX, target.posY + 0.25, target.posZ, replacement.rotationYaw, replacement.rotationPitch);
+               replacement.dimension = par1;
+               worldserver1.spawnEntity(replacement);
+            }
+
+            this.dimension = par1;
+            this.isDead = true;
+            return replacement != null ? replacement : this;
          }
-         return result;
+
+         return super.changeDimension(par1);
       } catch (Exception e) {
          Thaumcraft.log.error("Error while teleporting traveling trunk to dimension {}", par1);
          e.printStackTrace();
