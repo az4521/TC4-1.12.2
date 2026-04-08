@@ -1,6 +1,19 @@
 {
-  "parent": "block/cube_all",
   "textures": {
-    "all": "thaumcraft:blocks/blank"
-  }
+    "portal": "thaumcraft:misc/particlefield"
+  },
+  "elements": [
+    {
+      "from": [1, 1, 1],
+      "to": [15, 15, 15],
+      "faces": {
+        "down":  { "texture": "#portal", "cullface": "down" },
+        "up":    { "texture": "#portal", "cullface": "up" },
+        "north": { "texture": "#portal", "cullface": "north" },
+        "south": { "texture": "#portal", "cullface": "south" },
+        "west":  { "texture": "#portal", "cullface": "west" },
+        "east":  { "texture": "#portal", "cullface": "east" }
+      }
+    }
+  ]
 }

@@ -93,8 +93,8 @@ public class TeleporterThaumcraft extends Teleporter {
                 destinationCoordinateKeys.add(j1);
             }
 
-            double d8 = (double) i + (double) 0.5F + (double) (this.worldServerInstance.rand.nextBoolean() ? 1 : -1);
-            double d4 = (double) k + (double) 0.5F + (double) (this.worldServerInstance.rand.nextBoolean() ? 1 : -1);
+            double d8 = (double) i + 0.5D;
+            double d4 = (double) k + 0.5D;
             par1Entity.motionX = par1Entity.motionY = par1Entity.motionZ = 0.0F;
             par1Entity.setLocationAndAngles(d8, j, d4, par1Entity.rotationYaw, par1Entity.rotationPitch);
             return true;
@@ -105,7 +105,49 @@ public class TeleporterThaumcraft extends Teleporter {
 
     @Override
     public boolean makePortal(Entity par1Entity) {
+        if (this.worldServerInstance.provider.getDimension() == thaumcraft.common.config.Config.dimensionOuterId) {
+            int chunkX = MathHelper.floor(par1Entity.posX) >> 4;
+            int chunkZ = MathHelper.floor(par1Entity.posZ) >> 4;
+            int radius = 32;
+            CellLoc portalCell = this.findPortalCell(chunkX, chunkZ, radius);
+            if (portalCell == null && !MazeHandler.mazesInRange(chunkX, chunkZ, radius, radius)) {
+                (new MazeThread(chunkX, chunkZ, 31, 31, this.random.nextLong())).run();
+                portalCell = this.findPortalCell(chunkX, chunkZ, radius);
+            }
+
+            if (portalCell == null) {
+                portalCell = new CellLoc(chunkX, chunkZ);
+            }
+
+            for (int dx = -radius; dx <= radius; dx++) {
+                for (int dz = -radius; dz <= radius; dz++) {
+                    int gx = portalCell.x + dx;
+                    int gz = portalCell.z + dz;
+                    if (MazeHandler.getFromHashMap(new CellLoc(gx, gz)) == null) {
+                        continue;
+                    }
+
+                    this.worldServerInstance.getChunk(gx, gz);
+                    MazeHandler.generateEldritch(this.worldServerInstance, this.random, gx, gz);
+                    this.worldServerInstance.getChunk(gx, gz).markDirty();
+                }
+            }
+        }
+
         return true;
+    }
+
+    private CellLoc findPortalCell(int chunkX, int chunkZ, int radius) {
+        for (int dx = -radius; dx <= radius; dx++) {
+            for (int dz = -radius; dz <= radius; dz++) {
+                Cell cell = MazeHandler.getFromHashMap(new CellLoc(chunkX + dx, chunkZ + dz));
+                if (cell != null && cell.feature == 1) {
+                    return new CellLoc(chunkX + dx, chunkZ + dz);
+                }
+            }
+        }
+
+        return null;
     }
 
     @Override

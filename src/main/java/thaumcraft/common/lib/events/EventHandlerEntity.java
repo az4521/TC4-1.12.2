@@ -72,6 +72,7 @@ import thaumcraft.common.config.ConfigBlocks;
 import thaumcraft.common.config.ConfigEntities;
 import thaumcraft.common.config.ConfigItems;
 import thaumcraft.common.entities.EntityAspectOrb;
+import thaumcraft.common.entities.golems.EntityTravelingTrunk;
 import thaumcraft.common.entities.golems.EntityGolemBase;
 import thaumcraft.common.entities.monster.EntityBrainyZombie;
 import thaumcraft.common.entities.monster.EntityTaintChicken;
@@ -352,17 +353,7 @@ public class EventHandlerEntity {
             }
          }
 
-         if (event.getEntity() instanceof EntityPlayer) {
-            ArrayList<WeakReference<Entity>> dudes = linkedEntities.get(event.getEntity().getName());
-            if (dudes != null) {
-               for(WeakReference dude : dudes) {
-                  if (dude.get() != null && ((Entity)dude.get()).timeUntilPortal == 0) {
-                     ((Entity)dude.get()).timeUntilPortal = ((Entity)dude.get()).getPortalCooldown();
-                     ((Entity)dude.get()).changeDimension(event.getWorld().provider.getDimension());
-                  }
-               }
-            }
-         } else if (event.getEntity() instanceof EntityMob) {
+         if (event.getEntity() instanceof EntityMob) {
             EntityMob mob = (EntityMob)event.getEntity();
             if (mob.getEntityAttribute(EntityUtils.CHAMPION_MOD).getAttributeValue() < (double)-1.0F) {
                int championChance = event.getWorld().rand.nextInt(100);
@@ -417,6 +408,41 @@ public class EventHandlerEntity {
          }
       }
 
+   }
+
+   @SubscribeEvent
+   public void playerChangedDimension(net.minecraftforge.fml.common.gameevent.PlayerEvent.PlayerChangedDimensionEvent event) {
+      if (!event.player.world.isRemote) {
+         this.moveLinkedEntities(event.player);
+      }
+   }
+
+   @SubscribeEvent
+   public void playerRespawn(net.minecraftforge.fml.common.gameevent.PlayerEvent.PlayerRespawnEvent event) {
+      if (!event.player.world.isRemote) {
+         this.moveLinkedEntities(event.player);
+      }
+   }
+
+   private void moveLinkedEntities(EntityPlayer player) {
+      ArrayList<WeakReference<Entity>> dudes = linkedEntities.get(player.getName());
+      if (dudes == null) {
+         return;
+      }
+
+      ArrayList<WeakReference<Entity>> retained = new ArrayList<>();
+      for (WeakReference<Entity> dude : dudes) {
+         Entity entity = dude.get();
+         if (entity != null && !entity.isDead) {
+            retained.add(dude);
+         }
+      }
+
+      if (retained.isEmpty()) {
+         linkedEntities.remove(player.getName());
+      } else {
+         linkedEntities.put(player.getName(), retained);
+      }
    }
 
    private boolean isDangerousLocation(World world, int x, int y, int z) {

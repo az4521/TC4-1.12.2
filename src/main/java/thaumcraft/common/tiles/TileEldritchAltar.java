@@ -218,11 +218,11 @@ public class TileEldritchAltar extends TileThaumcraft {
         int w = 15 + this.world.rand.nextInt(8) * 2;
         int h = 15 + this.world.rand.nextInt(8) * 2;
         if (!MazeHandler.mazesInRange(this.getPos().getX() >> 4, this.getPos().getZ() >> 4, w, h)) {
-            Thread t = new Thread(new MazeThread(this.getPos().getX() >> 4, this.getPos().getZ() >> 4, w, h, this.world.rand.nextLong()));
-            t.start();
-            return false;
+            (new MazeThread(this.getPos().getX() >> 4, this.getPos().getZ() >> 4, w, h, this.world.rand.nextLong())).run();
         } else {
             return true;
         }
+
+        return MazeHandler.mazesInRange(this.getPos().getX() >> 4, this.getPos().getZ() >> 4, w, h);
     }
 }

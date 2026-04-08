@@ -460,8 +460,7 @@ public class ThaumcraftWorldGenerator implements IWorldGenerator {
                     if (stonering.generate(world, random, new BlockPos(randPosX, randPosY, randPosZ))) {
                         auraGen = true;
                         createRandomNodeAt(world, randPosX, randPosY + 2, randPosZ, random, false, true, false);
-                        Thread t = new Thread(new MazeThread(chunkX, chunkZ, w, h, random.nextLong()));
-                        t.start();
+                        (new MazeThread(chunkX, chunkZ, w, h, random.nextLong())).run();
                     }
                 } else if (random.nextInt(40) == 0) {
                     randPosY += 9;

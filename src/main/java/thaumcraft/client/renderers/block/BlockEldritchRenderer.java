@@ -2,12 +2,15 @@ package thaumcraft.client.renderers.block;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.block.Block;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockAccess;
 import thaumcraft.client.renderers.compat.ISimpleBlockRenderingHandler;
 import thaumcraft.client.renderers.compat.RenderBlocks;
 import thaumcraft.common.config.ConfigBlocks;
+import thaumcraft.common.tiles.TileEldritchLock;
 
 public class BlockEldritchRenderer extends BlockRenderer implements ISimpleBlockRenderingHandler {
    public void renderInventoryBlock(Block block, int metadata, int modelID, RenderBlocks renderer) {
@@ -15,6 +18,19 @@ public class BlockEldritchRenderer extends BlockRenderer implements ISimpleBlock
          renderer.setRenderBounds(W2, W2, W2, W14, W14, W14);
          drawFaces(renderer, block, Minecraft.getMinecraft().getBlockRendererDispatcher()
                .getBlockModelShapes().getTexture(block.getStateFromMeta(metadata)), false);
+         renderer.setRenderBounds(0.0D, 0.0D, 0.0D, 1.0D, 1.0D, 1.0D);
+      } else if (metadata == 7) {
+         TextureAtlasSprite doorway = Minecraft.getMinecraft().getTextureMapBlocks()
+               .getAtlasSprite("thaumcraft:blocks/deco_3");
+         renderer.setRenderBounds(0.0D, 0.0D, 0.0D, 1.0D, 1.0D, 1.0D);
+         drawFaces(renderer, block, doorway, false);
+         renderer.setRenderBounds(0.0D, 0.0D, 0.0D, 1.0D, 1.0D, 1.0D);
+      } else if (metadata == 8) {
+         TextureAtlasSprite front = Minecraft.getMinecraft().getTextureMapBlocks()
+               .getAtlasSprite("thaumcraft:blocks/deco_2");
+         TextureAtlasSprite side = Minecraft.getMinecraft().getTextureMapBlocks()
+               .getAtlasSprite("thaumcraft:blocks/deco_3");
+         drawFaces(renderer, block, side, side, side, side, front, side, false);
          renderer.setRenderBounds(0.0D, 0.0D, 0.0D, 1.0D, 1.0D, 1.0D);
       }
    }
@@ -56,7 +72,37 @@ public class BlockEldritchRenderer extends BlockRenderer implements ISimpleBlock
          return true;
       }
 
-      if (metadata == 7 || metadata == 8 || metadata == 9 || metadata == 10) {
+      if (metadata == 7) {
+         renderer.overrideBlockTexture = Minecraft.getMinecraft().getTextureMapBlocks()
+               .getAtlasSprite("thaumcraft:blocks/deco_3");
+         renderer.setRenderBounds(0.0D, 0.0D, 0.0D, 1.0D, 1.0D, 1.0D);
+         renderer.renderStandardBlock(block, x, y, z);
+         renderer.clearOverrideBlockTexture();
+         renderer.setRenderBounds(0.0D, 0.0D, 0.0D, 1.0D, 1.0D, 1.0D);
+         return true;
+      }
+
+      if (metadata == 8) {
+         TextureAtlasSprite front = Minecraft.getMinecraft().getTextureMapBlocks()
+               .getAtlasSprite("thaumcraft:blocks/deco_2");
+         TextureAtlasSprite side = Minecraft.getMinecraft().getTextureMapBlocks()
+               .getAtlasSprite("thaumcraft:blocks/deco_3");
+         TileEntity te = world.getTileEntity(new BlockPos(x, y, z));
+         EnumFacing facing = te instanceof TileEldritchLock ? EnumFacing.byIndex(((TileEldritchLock) te).getFacing()) : EnumFacing.NORTH;
+
+         renderer.setRenderBounds(0.0D, 0.0D, 0.0D, 1.0D, 1.0D, 1.0D);
+         renderer.renderFaceYNeg(block, x, y, z, side);
+         renderer.renderFaceYPos(block, x, y, z, side);
+         renderer.renderFaceXNeg(block, x, y, z, facing == EnumFacing.WEST ? front : side);
+         renderer.renderFaceXPos(block, x, y, z, facing == EnumFacing.EAST ? front : side);
+         renderer.renderFaceZNeg(block, x, y, z, facing == EnumFacing.NORTH ? front : side);
+         renderer.renderFaceZPos(block, x, y, z, facing == EnumFacing.SOUTH ? front : side);
+         renderer.clearOverrideBlockTexture();
+         renderer.setRenderBounds(0.0D, 0.0D, 0.0D, 1.0D, 1.0D, 1.0D);
+         return true;
+      }
+
+      if (metadata == 9 || metadata == 10) {
          renderer.setRenderBounds(0.0D, 0.0D, 0.0D, 1.0D, 1.0D, 1.0D);
          renderer.renderStandardBlock(block, x, y, z);
          renderer.clearOverrideBlockTexture();

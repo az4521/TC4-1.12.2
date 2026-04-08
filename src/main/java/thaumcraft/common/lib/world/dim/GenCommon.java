@@ -248,7 +248,8 @@ public class GenCommon {
       }
 
       if (block != null) {
-        world.setBlockState(new net.minecraft.util.math.BlockPos(x, y, z), (block).getStateFromMeta(meta), block != ConfigBlocks.blockEldritchNothing && block != Blocks.BEDROCK && block != Blocks.AIR ? 3 : 0);
+        BlockPos pos = new net.minecraft.util.math.BlockPos(x, y, z);
+        world.setBlockState(pos, (block).getStateFromMeta(meta), block != ConfigBlocks.blockEldritchNothing && block != Blocks.BEDROCK && block != Blocks.AIR ? 3 : 0);
       }
 
    }

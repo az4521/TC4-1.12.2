@@ -1,6 +1,51 @@
 {
   "variants": {
-    "normal": {
+    "meta=0": {
+      "model": "thaumcraft:blockportalnothing"
+    },
+    "meta=1": {
+      "model": "thaumcraft:blockportalnothing"
+    },
+    "meta=2": {
+      "model": "thaumcraft:blockportalnothing"
+    },
+    "meta=3": {
+      "model": "thaumcraft:blockportalnothing"
+    },
+    "meta=4": {
+      "model": "thaumcraft:blockportalnothing"
+    },
+    "meta=5": {
+      "model": "thaumcraft:blockportalnothing"
+    },
+    "meta=6": {
+      "model": "thaumcraft:blockportalnothing"
+    },
+    "meta=7": {
+      "model": "thaumcraft:blockportalnothing"
+    },
+    "meta=8": {
+      "model": "thaumcraft:blockportalnothing"
+    },
+    "meta=9": {
+      "model": "thaumcraft:blockportalnothing"
+    },
+    "meta=10": {
+      "model": "thaumcraft:blockportalnothing"
+    },
+    "meta=11": {
+      "model": "thaumcraft:blockportalnothing"
+    },
+    "meta=12": {
+      "model": "thaumcraft:blockportalnothing"
+    },
+    "meta=13": {
+      "model": "thaumcraft:blockportalnothing"
+    },
+    "meta=14": {
+      "model": "thaumcraft:blockportalnothing"
+    },
+    "meta=15": {
       "model": "thaumcraft:blockportalnothing"
     }
   }

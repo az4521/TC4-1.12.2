@@ -199,8 +199,8 @@ import thaumcraft.client.renderers.tile.TileDeconstructionTableRenderer;
 import thaumcraft.client.renderers.tile.TileEldritchCapRenderer;
 import thaumcraft.client.renderers.tile.TileEldritchCrabSpawnerRenderer;
 import thaumcraft.client.renderers.tile.TileEldritchCrystalRenderer;
+import thaumcraft.client.renderers.tile.TileEldritchLockCombinedRenderer;
 import thaumcraft.client.renderers.tile.TileEldritchLockRenderer;
-import thaumcraft.client.renderers.tile.TileEldritchNothingRenderer;
 import thaumcraft.client.renderers.tile.TileEldritchObeliskRenderer;
 import thaumcraft.client.renderers.tile.TileEldritchPortalRenderer;
 import thaumcraft.client.renderers.tile.TileEssentiaCrystalizerRenderer;
@@ -440,6 +440,7 @@ public class ClientProxy extends CommonProxy {
       event.getMap().registerSprite(new net.minecraft.util.ResourceLocation("thaumcraft", "blocks/fluxgas"));
       event.getMap().registerSprite(new net.minecraft.util.ResourceLocation("thaumcraft", "blocks/fluidpure"));
       event.getMap().registerSprite(new net.minecraft.util.ResourceLocation("thaumcraft", "blocks/fluiddeath"));
+      event.getMap().registerSprite(new net.minecraft.util.ResourceLocation("thaumcraft", "misc/particlefield"));
 
       if (ConfigBlocks.blockMetalDevice instanceof thaumcraft.common.blocks.BlockMetalDevice) {
          thaumcraft.common.blocks.BlockMetalDevice bmd = (thaumcraft.common.blocks.BlockMetalDevice) ConfigBlocks.blockMetalDevice;
@@ -789,7 +790,9 @@ public class ClientProxy extends CommonProxy {
             ModelLoader.setCustomModelResourceLocation(Item.getItemFromBlock(ConfigBlocks.blockCandle), i, new ModelResourceLocation("thaumcraft:blockcandle", "normal"));
         }
         // Eldritch per-meta models
-        ModelLoader.setCustomModelResourceLocation(Item.getItemFromBlock(ConfigBlocks.blockEldritch), 4, new ModelResourceLocation("thaumcraft:blockeldritch_4", "inventory"));
+        for (int i = 0; i <= 10; i++) {
+            ModelLoader.setCustomModelResourceLocation(Item.getItemFromBlock(ConfigBlocks.blockEldritch), i, new ModelResourceLocation("thaumcraft:blockeldritch_" + i, "inventory"));
+        }
         ModelLoader.setCustomModelResourceLocation(Item.getItemFromBlock(ConfigBlocks.blockAiry), 0, new ModelResourceLocation("thaumcraft:blockairy_0", "inventory"));
         ModelLoader.setCustomModelResourceLocation(Item.getItemFromBlock(ConfigBlocks.blockManaPod), 0, new ModelResourceLocation("thaumcraft:blockmanapod", "normal"));
         ModelLoader.setCustomModelResourceLocation(Item.getItemFromBlock(ConfigBlocks.blockArcaneFurnace), 0, new ModelResourceLocation("thaumcraft:blockarcanefurnace", "normal"));
@@ -901,11 +904,12 @@ public class ClientProxy extends CommonProxy {
       this.registerTileEntitySpecialRenderer(TileEldritchAltar.class, new TileEldritchCapRenderer("textures/models/obelisk_cap_altar.png"));
       this.registerTileEntitySpecialRenderer(TileEldritchCap.class, new TileEldritchCapRenderer("textures/models/obelisk_cap.png"));
       this.registerTileEntitySpecialRenderer(TileEldritchStone.class, new thaumcraft.client.renderers.compat.BlockRendererDispatcherTESR<>(new BlockEldritchRenderer()));
+      this.registerTileEntitySpecialRenderer(TileEldritchDoorway.class, new thaumcraft.client.renderers.compat.BlockRendererDispatcherTESR<>(new BlockEldritchRenderer()));
       this.registerTileEntitySpecialRenderer(TileEldritchCrabSpawner.class, new TileEldritchCrabSpawnerRenderer());
-      this.registerTileEntitySpecialRenderer(TileEldritchNothing.class, new TileEldritchNothingRenderer());
       this.registerTileEntitySpecialRenderer(TileEldritchObelisk.class, new TileEldritchObeliskRenderer());
       this.registerTileEntitySpecialRenderer(TileEldritchPortal.class, new TileEldritchPortalRenderer());
-      this.registerTileEntitySpecialRenderer(TileEldritchLock.class, new TileEldritchLockRenderer());
+      this.registerTileEntitySpecialRenderer(TileEldritchLock.class, new TileEldritchLockCombinedRenderer());
+      this.registerTileEntitySpecialRenderer(TileEldritchTrap.class, new thaumcraft.client.renderers.compat.BlockRendererDispatcherTESR<>(new BlockEldritchRenderer()));
       this.registerTileEntitySpecialRenderer(TileEssentiaCrystalizer.class, new TileEssentiaCrystalizerRenderer());
       this.registerTileEntitySpecialRenderer(TileEssentiaReservoir.class, new TileEssentiaReservoirRenderer());
       this.registerTileEntitySpecialRenderer(TileEtherealBloom.class, new TileEtherealBloomRenderer());

@@ -30,7 +30,7 @@ public class ChunkProviderOuter implements IChunkProvider, IChunkGenerator {
 
     @Override
     public Chunk getLoadedChunk(int chunkX, int chunkZ) {
-        return this.provideChunk(chunkX, chunkZ);
+        return this.world.isChunkGeneratedAt(chunkX, chunkZ) ? this.world.getChunk(chunkX, chunkZ) : null;
     }
 
     @Override
@@ -55,13 +55,16 @@ public class ChunkProviderOuter implements IChunkProvider, IChunkGenerator {
 
     @Override
     public boolean isChunkGeneratedAt(int x, int z) {
-        return true;
+        return this.world.isChunkGeneratedAt(x, z);
     }
 
     public void populate(int x, int z) {
         BlockFalling.fallInstantly = true;
         int k = x * 16;
         int l = z * 16;
+        this.rand.setSeed((long)x * 341873128712L + (long)z * 132897987541L);
+        MazeHandler.generateEldritch(this.world, this.rand, x, z);
+        this.world.getChunk(x, z).markDirty();
         Biome biome = this.world.getBiome(new BlockPos(k + 16, 0, l + 16));
         biome.decorate(this.world, this.world.rand, new BlockPos(k, 0, l));
         BlockFalling.fallInstantly = false;

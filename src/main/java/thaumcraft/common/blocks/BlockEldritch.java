@@ -2,6 +2,7 @@ package thaumcraft.common.blocks;
 
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
+import net.minecraft.block.Block;
 import net.minecraft.block.BlockContainer;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
@@ -15,6 +16,7 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.NonNullList;
+import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.math.BlockPos;
 
 import net.minecraft.world.IBlockAccess;
@@ -25,7 +27,14 @@ import thaumcraft.client.fx.particles.FXSpark;
 import thaumcraft.common.Thaumcraft;
 import thaumcraft.common.config.ConfigItems;
 import thaumcraft.common.items.ItemEldritchObject;
-import thaumcraft.common.tiles.*;
+import thaumcraft.common.tiles.TileEldritchAltar;
+import thaumcraft.common.tiles.TileEldritchCap;
+import thaumcraft.common.tiles.TileEldritchCrabSpawner;
+import thaumcraft.common.tiles.TileEldritchDoorway;
+import thaumcraft.common.tiles.TileEldritchLock;
+import thaumcraft.common.tiles.TileEldritchObelisk;
+import thaumcraft.common.tiles.TileEldritchStone;
+import thaumcraft.common.tiles.TileEldritchTrap;
 
 import java.util.ArrayList;
 import java.util.Random;
@@ -70,6 +79,25 @@ public class BlockEldritch extends BlockContainer {
       this.setCreativeTab(Thaumcraft.tabTC);
    }
 
+   private void ensureRenderTile(World world, BlockPos pos, IBlockState state) {
+      if (world == null) {
+         return;
+      }
+
+      int meta = this.getMetaFromState(state);
+      if (meta != 7 && meta != 8 && meta != 10) {
+         return;
+      }
+
+      if (world.getTileEntity(pos) == null) {
+         TileEntity te = this.createTileEntity(world, state);
+         if (te != null) {
+            world.setTileEntity(pos, te);
+            world.markBlockRangeForRenderUpdate(pos, pos);
+         }
+      }
+   }
+
    // registerBlockIcons removed — textures are handled by JSON models in 1.12.2
    // getIcon removed — textures are handled by JSON models in 1.12.2
 
@@ -97,7 +125,7 @@ public class BlockEldritch extends BlockContainer {
    @Override
    public boolean hasTileEntity(IBlockState state) {
       int metadata = this.getMetaFromState(state);
-      return metadata == 0 || metadata == 1 || metadata == 3 || metadata == 4 || metadata == 5 || metadata == 6 || metadata == 8 || metadata == 9 || metadata == 10;
+      return metadata == 0 || metadata == 1 || metadata == 3 || metadata == 4 || metadata == 5 || metadata == 6 || metadata == 7 || metadata == 8 || metadata == 9 || metadata == 10;
    }
 
    @Override
@@ -107,6 +135,7 @@ public class BlockEldritch extends BlockContainer {
       if (metadata == 1) return new TileEldritchObelisk();
       if (metadata == 3) return new TileEldritchCap();
       if (metadata == 4 || metadata == 5 || metadata == 6) return new TileEldritchStone();
+      if (metadata == 7) return new TileEldritchDoorway();
       if (metadata == 8) return new TileEldritchLock();
       if (metadata == 9) return new TileEldritchCrabSpawner();
       if (metadata == 10) return new TileEldritchTrap();
@@ -119,10 +148,29 @@ public class BlockEldritch extends BlockContainer {
       if (meta == 1) return new TileEldritchObelisk();
       if (meta == 3) return new TileEldritchCap();
       if (meta == 4 || meta == 5 || meta == 6) return new TileEldritchStone();
+      if (meta == 7) return new TileEldritchDoorway();
       if (meta == 8) return new TileEldritchLock();
       if (meta == 9) return new TileEldritchCrabSpawner();
       if (meta == 10) return new TileEldritchTrap();
       return null;
+   }
+
+   @Override
+   public void onBlockAdded(World world, BlockPos pos, IBlockState state) {
+      super.onBlockAdded(world, pos, state);
+      this.ensureRenderTile(world, pos, state);
+   }
+
+   @Override
+   public void neighborChanged(IBlockState state, World world, BlockPos pos, Block blockIn, BlockPos fromPos) {
+      super.neighborChanged(state, world, pos, blockIn, fromPos);
+      this.ensureRenderTile(world, pos, state);
+   }
+
+   @Override
+   public void updateTick(World world, BlockPos pos, IBlockState state, Random rand) {
+      super.updateTick(world, pos, state, rand);
+      this.ensureRenderTile(world, pos, state);
    }
 
    @Override
@@ -133,6 +181,21 @@ public class BlockEldritch extends BlockContainer {
    @Override
    public boolean isFullCube(IBlockState state) {
       return false;
+   }
+
+   @Override
+   public int getLightOpacity(IBlockState state, IBlockAccess world, BlockPos pos) {
+      return 0;
+   }
+
+   @Override
+   public boolean canRenderInLayer(IBlockState state, BlockRenderLayer layer) {
+      int meta = this.getMetaFromState(state);
+      if (meta == 9) {
+         return layer == BlockRenderLayer.SOLID;
+      }
+
+      return super.canRenderInLayer(state, layer);
    }
 
    @Override
@@ -287,7 +350,10 @@ public class BlockEldritch extends BlockContainer {
    public net.minecraft.util.EnumBlockRenderType getRenderType(net.minecraft.block.state.IBlockState state) {
       int meta = state.getValue(META);
       if (meta >= 4 && meta <= 6) return EnumBlockRenderType.ENTITYBLOCK_ANIMATED;
-      if (meta == 9 || meta == 10) return EnumBlockRenderType.MODEL;
+      if (meta == 7) return EnumBlockRenderType.ENTITYBLOCK_ANIMATED;
+      if (meta == 8) return EnumBlockRenderType.ENTITYBLOCK_ANIMATED;
+      if (meta == 9) return EnumBlockRenderType.MODEL;
+      if (meta == 10) return EnumBlockRenderType.ENTITYBLOCK_ANIMATED;
       return net.minecraft.util.EnumBlockRenderType.INVISIBLE;
    }
 }

@@ -15,6 +15,7 @@ import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.util.math.BlockPos;
 
 public class FXWispEG extends Particle {
+   public final World world;
    Entity target = null;
    double rx = 0.0F;
    double ry = 0.0F;
@@ -23,6 +24,7 @@ public class FXWispEG extends Particle {
 
    public FXWispEG(World world, double posX, double posY, double posZ, Entity target2) {
       super(world, posX, posY, posZ, 0.0F, 0.0F, 0.0F);
+      this.world = world;
       this.target = target2;
       this.motionX = this.rand.nextGaussian() * 0.03;
       this.motionY = -0.05;

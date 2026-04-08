@@ -1,7 +1,5 @@
 package thaumcraft.common.blocks;
 
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraft.block.Block;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
@@ -9,16 +7,14 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.DamageSource;
+import net.minecraft.util.BlockRenderLayer;
+import net.minecraft.util.EnumBlockRenderType;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
-import thaumcraft.common.lib.utils.BlockUtils;
-import thaumcraft.common.tiles.TileEldritchNothing;
-
 import java.util.Random;
 
 public class BlockEldritchNothing extends Block {
@@ -32,21 +28,22 @@ public class BlockEldritchNothing extends Block {
 
    @Override
    public net.minecraft.block.state.IBlockState getStateFromMeta(int meta) {
-      return this.getDefaultState().withProperty(META, meta);
+      return this.getDefaultState().withProperty(META, 0);
    }
 
    @Override
    public int getMetaFromState(net.minecraft.block.state.IBlockState state) {
-      return state.getValue(META);
+      return 0;
    }
 
 
    public BlockEldritchNothing() {
       super(Material.ROCK);
+      this.setDefaultState(this.blockState.getBaseState().withProperty(META, 0));
       this.setBlockUnbreakable();
       this.setResistance(6000000.0F);
       this.setLightLevel(0.2F);
-      this.setTickRandomly(true);
+      this.setTickRandomly(false);
    }
 
    // registerBlockIcons removed — textures are handled by JSON models in 1.12.2
@@ -72,31 +69,23 @@ public class BlockEldritchNothing extends Block {
       return false;
    }
 
-   @Override
-   public boolean hasTileEntity(IBlockState state) {
-      return this.getMetaFromState(state) == 1;
+   public boolean canRenderInLayer(IBlockState state, BlockRenderLayer layer) {
+      return layer == BlockRenderLayer.TRANSLUCENT;
    }
 
    @Override
-   public TileEntity createTileEntity(World world, IBlockState state) {
-      return this.getMetaFromState(state) == 1 ? new TileEldritchNothing() : null;
+   public EnumBlockRenderType getRenderType(IBlockState state) {
+      return EnumBlockRenderType.MODEL;
+   }
+
+   @Override
+   public boolean hasTileEntity(IBlockState state) {
+      return false;
    }
 
    @Override
    public Item getItemDropped(IBlockState state, Random rand, int fortune) {
       return Item.getItemById(0);
-   }
-
-   @Override
-   public void neighborChanged(IBlockState state, World world, BlockPos pos, Block block, BlockPos fromPos) {
-      int x = pos.getX(), y = pos.getY(), z = pos.getZ();
-      if (BlockUtils.isBlockExposed(world, x, y, z)) {
-         world.setBlockState(pos, this.getStateFromMeta(1), 3);
-      } else {
-         world.setBlockState(pos, this.getStateFromMeta(0), 3);
-      }
-
-      super.neighborChanged(state, world, pos, block, fromPos);
    }
 
    @Override

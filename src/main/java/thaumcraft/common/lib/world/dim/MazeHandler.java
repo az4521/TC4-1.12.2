@@ -14,6 +14,7 @@ import net.minecraft.world.World;
 
 public class MazeHandler {
    public static ConcurrentHashMap<CellLoc,Short> labyrinth = new ConcurrentHashMap<>();
+   private static final ConcurrentHashMap<CellLoc, Boolean> pendingMazes = new ConcurrentHashMap<>();
 
    public static synchronized void putToHashMap(CellLoc key, Cell cell) {
       labyrinth.put(key, cell.pack());
@@ -24,7 +25,12 @@ public class MazeHandler {
    }
 
    public static synchronized Cell getFromHashMap(CellLoc key) {
-      return labyrinth.containsKey(key) ? new Cell(labyrinth.get(key)) : null;
+      if (!labyrinth.containsKey(key)) {
+         return null;
+      }
+
+      short packed = labyrinth.get(key);
+      return packed > 0 ? new Cell(packed) : null;
    }
 
    public static synchronized void removeFromHashMap(CellLoc key) {
@@ -110,7 +116,9 @@ public class MazeHandler {
       if (file1.exists()) {
          try {
             NBTTagCompound nbttagcompound = CompressedStreamTools.readCompressed(Files.newInputStream(file1.toPath()));
-            NBTTagCompound nbttagcompound1 = nbttagcompound.getCompoundTag("Data");
+            NBTTagCompound nbttagcompound1 = nbttagcompound.hasKey("Data", 10)
+                    ? nbttagcompound.getCompoundTag("Data")
+                    : nbttagcompound.getCompoundTag("data");
             readNBT(nbttagcompound1);
             return true;
          } catch (Exception exception1) {
@@ -123,6 +131,7 @@ public class MazeHandler {
    public static void saveMaze(World world) {
       NBTTagCompound tag = writeNBT();
       NBTTagCompound parentTag = new NBTTagCompound();
+      parentTag.setTag("Data", tag);
       parentTag.setTag("data", tag);
       final String filename;
 
@@ -176,6 +185,28 @@ public class MazeHandler {
       }
 
       return false;
+   }
+
+   public static boolean ensureMazeAsync(int chunkX, int chunkZ, int w, int h, long seed) {
+      if (mazesInRange(chunkX, chunkZ, w, h)) {
+         return false;
+      }
+
+      CellLoc key = new CellLoc(chunkX, chunkZ);
+      if (pendingMazes.putIfAbsent(key, Boolean.TRUE) != null) {
+         return false;
+      }
+
+      Thread t = new Thread(() -> {
+         try {
+            (new MazeThread(chunkX, chunkZ, w, h, seed)).run();
+         } finally {
+            pendingMazes.remove(key);
+         }
+      }, "TC4-Maze-" + chunkX + "-" + chunkZ);
+      t.setDaemon(true);
+      t.start();
+      return true;
    }
 
    public static void generateEldritch(World world, Random random, int cx, int cz) {
