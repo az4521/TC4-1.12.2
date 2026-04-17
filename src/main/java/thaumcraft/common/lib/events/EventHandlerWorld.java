@@ -177,7 +177,7 @@ public class EventHandlerWorld implements IFuelHandler {
 
    @SubscribeEvent
    public void fillBucket(FillBucketEvent event) {
-      if (event.getTarget().typeOfHit == RayTraceResult.Type.BLOCK) {
+      if (event.getTarget() != null && event.getTarget().typeOfHit == RayTraceResult.Type.BLOCK) {
          BlockPos targetPos = event.getTarget().getBlockPos();
          net.minecraft.block.state.IBlockState targetState = event.getWorld().getBlockState(targetPos);
          if (targetState.getBlock() == ConfigBlocks.blockFluidPure

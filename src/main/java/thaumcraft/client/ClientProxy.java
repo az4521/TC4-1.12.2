@@ -900,6 +900,7 @@ public class ClientProxy extends CommonProxy {
       this.registerTileEntitySpecialRenderer(TileCrucible.class, new TileCrucibleRenderer());
       this.registerTileEntitySpecialRenderer(TileCrystal.class, new TileCrystalRenderer());
       this.registerTileEntitySpecialRenderer(TileEldritchCrystal.class, new TileEldritchCrystalRenderer());
+      this.registerTileEntitySpecialRenderer(thaumcraft.common.tiles.TileEldritchNothing.class, new thaumcraft.client.renderers.tile.TileEldritchNothingRenderer());
       this.registerTileEntitySpecialRenderer(TileDeconstructionTable.class, new TileDeconstructionTableRenderer());
       this.registerTileEntitySpecialRenderer(TileEldritchAltar.class, new TileEldritchCapRenderer("textures/models/obelisk_cap_altar.png"));
       this.registerTileEntitySpecialRenderer(TileEldritchCap.class, new TileEldritchCapRenderer("textures/models/obelisk_cap.png"));

@@ -1,18 +1,18 @@
 {
   "textures": {
-    "portal": "thaumcraft:misc/particlefield"
+    "portal": "thaumcraft:blocks/particlefield32"
   },
   "elements": [
     {
-      "from": [1, 1, 1],
-      "to": [15, 15, 15],
+      "from": [0, 0, 0],
+      "to": [16, 16, 16],
       "faces": {
-        "down":  { "texture": "#portal", "cullface": "down" },
-        "up":    { "texture": "#portal", "cullface": "up" },
-        "north": { "texture": "#portal", "cullface": "north" },
-        "south": { "texture": "#portal", "cullface": "south" },
-        "west":  { "texture": "#portal", "cullface": "west" },
-        "east":  { "texture": "#portal", "cullface": "east" }
+        "down":  { "texture": "#portal" },
+        "up":    { "texture": "#portal" },
+        "north": { "texture": "#portal" },
+        "south": { "texture": "#portal" },
+        "west":  { "texture": "#portal" },
+        "east":  { "texture": "#portal" }
       }
     }
   ]

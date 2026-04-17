@@ -79,8 +79,32 @@ public class BlockEldritchNothing extends Block {
    }
 
    @Override
+   public BlockRenderLayer getRenderLayer() {
+      return BlockRenderLayer.CUTOUT;
+   }
+
+   @Override
    public boolean hasTileEntity(IBlockState state) {
-      return false;
+      return true;
+   }
+
+   @Override
+   public net.minecraft.tileentity.TileEntity createTileEntity(World world, IBlockState state) {
+      return new thaumcraft.common.tiles.TileEldritchNothing();
+   }
+
+   @Override
+   public void onBlockAdded(World world, BlockPos pos, IBlockState state) {
+      if (world.getTileEntity(pos) == null) {
+         world.setTileEntity(pos, createTileEntity(world, state));
+      }
+   }
+
+   @Override
+   public void neighborChanged(IBlockState state, World world, BlockPos pos, Block block, BlockPos fromPos) {
+      if (world.getTileEntity(pos) == null) {
+         world.setTileEntity(pos, createTileEntity(world, state));
+      }
    }
 
    @Override

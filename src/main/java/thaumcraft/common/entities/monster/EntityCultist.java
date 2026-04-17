@@ -8,11 +8,17 @@ import net.minecraft.entity.monster.EntityMob;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import thaumcraft.common.config.ConfigItems;
 import thaumcraft.common.entities.monster.boss.EntityCultistLeader;
 
 public class EntityCultist extends EntityMob {
+   private static final String ALTAR_X = "AltarX";
+   private static final String ALTAR_Y = "AltarY";
+   private static final String ALTAR_Z = "AltarZ";
+   private static final String HAS_ALTAR = "HasAltar";
+
    public EntityCultist(World worldIn) {
       super(worldIn);
       this.setSize(0.6F, 1.8F);
@@ -86,6 +92,10 @@ public class EntityCultist extends EntityMob {
          this.setHomePosAndDistance(new net.minecraft.util.math.BlockPos(nbt.getInteger("HomeX"), nbt.getInteger("HomeY"), nbt.getInteger("HomeZ")), nbt.getInteger("HomeD"));
       }
 
+      if (nbt.getBoolean(HAS_ALTAR)) {
+         this.setAltarPosition(new BlockPos(nbt.getInteger(ALTAR_X), nbt.getInteger(ALTAR_Y), nbt.getInteger(ALTAR_Z)));
+      }
+
    }
 
    public void writeEntityToNBT(NBTTagCompound nbt) {
@@ -97,6 +107,34 @@ public class EntityCultist extends EntityMob {
          nbt.setInteger("HomeZ", this.getHomePosition().getZ());
       }
 
+      BlockPos altar = this.getAltarPosition();
+      if (altar != null) {
+         nbt.setBoolean(HAS_ALTAR, true);
+         nbt.setInteger(ALTAR_X, altar.getX());
+         nbt.setInteger(ALTAR_Y, altar.getY());
+         nbt.setInteger(ALTAR_Z, altar.getZ());
+      }
+
+   }
+
+   public void setAltarPosition(BlockPos pos) {
+      if (pos == null) {
+         this.getEntityData().removeTag(HAS_ALTAR);
+         this.getEntityData().removeTag(ALTAR_X);
+         this.getEntityData().removeTag(ALTAR_Y);
+         this.getEntityData().removeTag(ALTAR_Z);
+      } else {
+         this.getEntityData().setBoolean(HAS_ALTAR, true);
+         this.getEntityData().setInteger(ALTAR_X, pos.getX());
+         this.getEntityData().setInteger(ALTAR_Y, pos.getY());
+         this.getEntityData().setInteger(ALTAR_Z, pos.getZ());
+      }
+   }
+
+   public BlockPos getAltarPosition() {
+      return this.getEntityData().getBoolean(HAS_ALTAR)
+              ? new BlockPos(this.getEntityData().getInteger(ALTAR_X), this.getEntityData().getInteger(ALTAR_Y), this.getEntityData().getInteger(ALTAR_Z))
+              : null;
    }
 
    public boolean isOnSameTeam(EntityLivingBase el) {

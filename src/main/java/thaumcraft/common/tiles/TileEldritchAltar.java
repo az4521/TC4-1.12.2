@@ -11,6 +11,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.entity.EntityLiving;
+import net.minecraft.entity.Entity;
 import thaumcraft.api.TileThaumcraft;
 import thaumcraft.common.entities.monster.EntityCultist;
 import thaumcraft.common.entities.monster.EntityCultistCleric;
@@ -87,18 +88,25 @@ public class TileEldritchAltar extends TileThaumcraft {
     }
 
     private void spawnGuards() {
-        List ents = this.world.getEntitiesWithinAABB(EntityCultistCleric.class, new AxisAlignedBB(this.getPos().getX(), this.getPos().getY(), this.getPos().getZ(), this.getPos().getX() + 1, this.getPos().getY() + 1, this.getPos().getZ() + 1).expand(24.0F, 16.0F, 24.0F));
-        if (ents.isEmpty()) {
+        AxisAlignedBB bounds = (new AxisAlignedBB(this.getPos())).grow(24.0, 16.0, 24.0);
+        int altarClerics = this.countAltarCultists(EntityCultistCleric.class);
+        int homeClerics = this.countCultistsWithHomeInBox(EntityCultistCleric.class, bounds);
+        int nearbyClerics = this.countCultistsInBox(EntityCultistCleric.class, bounds);
+        int clerics = Math.max(altarClerics, Math.max(homeClerics, nearbyClerics));
+        if (clerics <= 0) {
             this.setSpawner(false);
         } else {
-            ents = this.world.getEntitiesWithinAABB(EntityCultist.class, new AxisAlignedBB(this.getPos().getX(), this.getPos().getY(), this.getPos().getZ(), this.getPos().getX() + 1, this.getPos().getY() + 1, this.getPos().getZ() + 1).expand(24.0F, 16.0F, 24.0F));
-            if (ents.size() < 8) {
+            int altarCultists = this.countAltarCultists(EntityCultist.class);
+            int homeCultists = this.countCultistsWithHomeInBox(EntityCultist.class, bounds);
+            int nearbyCultists = this.countCultistsInBox(EntityCultist.class, bounds);
+            if (altarCultists < 8 && homeCultists < 8 && nearbyCultists < 8) {
                 EntityCultistKnight eg = new EntityCultistKnight(this.world);
                 int i1 = this.getPos().getX() + MathHelper.getInt(this.world.rand, 4, 10) * MathHelper.getInt(this.world.rand, -1, 1);
                 int k1 = this.getPos().getZ() + MathHelper.getInt(this.world.rand, 4, 10) * MathHelper.getInt(this.world.rand, -1, 1);
                 BlockPos spawnPos = this.findSpawnPosition(eg, i1, this.getPos().getY() - 2, this.getPos().getY() + 3, k1, true);
                 if (spawnPos != null) {
                     eg.setPosition(spawnPos.getX() + 0.5, spawnPos.getY(), spawnPos.getZ() + 0.5);
+                    eg.setAltarPosition(this.getPos());
                     eg.onInitialSpawn(this.world.getDifficultyForLocation(eg.getPosition()), null);
                     eg.spawnExplosionParticle();
                     eg.setHomePosAndDistance(new BlockPos(this.getPos().getX(), this.getPos().getY(), this.getPos().getZ()), 16);
@@ -107,6 +115,61 @@ public class TileEldritchAltar extends TileThaumcraft {
             }
 
         }
+    }
+
+    private <T extends EntityCultist> int countCultistsWithHomeInBox(Class<T> type, AxisAlignedBB bounds) {
+        int count = 0;
+        for (Entity entity : this.world.loadedEntityList) {
+            if (!type.isInstance(entity) || entity.isDead) {
+                continue;
+            }
+
+            EntityCultist cultist = (EntityCultist) entity;
+            BlockPos home = cultist.getHomePosition();
+            double homeX = home == null ? 0.0 : home.getX() + 0.5;
+            double homeY = home == null ? 0.0 : home.getY() + 0.5;
+            double homeZ = home == null ? 0.0 : home.getZ() + 0.5;
+            if (home != null
+                    && homeX >= bounds.minX && homeX <= bounds.maxX
+                    && homeY >= bounds.minY && homeY <= bounds.maxY
+                    && homeZ >= bounds.minZ && homeZ <= bounds.maxZ) {
+                ++count;
+            }
+        }
+
+        return count;
+    }
+
+    private <T extends EntityCultist> int countAltarCultists(Class<T> type) {
+        int count = 0;
+        for (Entity entity : this.world.loadedEntityList) {
+            if (!type.isInstance(entity) || entity.isDead) {
+                continue;
+            }
+
+            EntityCultist cultist = (EntityCultist) entity;
+            BlockPos altar = cultist.getAltarPosition();
+            if (altar != null && altar.equals(this.getPos())) {
+                ++count;
+            }
+        }
+
+        return count;
+    }
+
+    private <T extends EntityCultist> int countCultistsInBox(Class<T> type, AxisAlignedBB bounds) {
+        int count = 0;
+        for (Entity entity : this.world.loadedEntityList) {
+            if (!type.isInstance(entity) || entity.isDead) {
+                continue;
+            }
+
+            if (entity.getEntityBoundingBox().intersects(bounds)) {
+                ++count;
+            }
+        }
+
+        return count;
     }
 
     private void spawnGuardian() {
@@ -127,9 +190,24 @@ public class TileEldritchAltar extends TileThaumcraft {
     }
 
     private void spawnClerics() {
-        int success = 0;
+        AxisAlignedBB bounds = (new AxisAlignedBB(this.getPos())).grow(24.0, 16.0, 24.0);
+        int altarClerics = this.countAltarCultists(EntityCultistCleric.class);
+        int homeClerics = this.countCultistsWithHomeInBox(EntityCultistCleric.class, bounds);
+        int nearbyClerics = this.countCultistsInBox(EntityCultistCleric.class, bounds);
+        int clerics = Math.max(altarClerics, Math.max(homeClerics, nearbyClerics));
+        if (clerics > 2) {
+            this.spawnedClerics = true;
+            this.markDirty();
+            return;
+        }
+
+        int success = clerics;
 
         for (int a = 0; a < 4; ++a) {
+            if (success > 2) {
+                break;
+            }
+
             int xx = 0;
             int zz = 0;
             switch (a) {
@@ -154,6 +232,7 @@ public class TileEldritchAltar extends TileThaumcraft {
             BlockPos spawnPos = this.findSpawnPosition(cleric, this.getPos().getX() + xx, this.getPos().getY() - 2, this.getPos().getY() + 2, this.getPos().getZ() + zz, true);
             if (spawnPos != null) {
                 cleric.setPosition(spawnPos.getX() + 0.5, spawnPos.getY(), spawnPos.getZ() + 0.5);
+                cleric.setAltarPosition(this.getPos());
                 cleric.setHomePosAndDistance(new BlockPos(this.getPos().getX(), this.getPos().getY(), this.getPos().getZ()), 8);
                 cleric.onInitialSpawn(this.world.getDifficultyForLocation(cleric.getPosition()), null);
                 cleric.spawnExplosionParticle();
